@@ -1,5 +1,10 @@
 {
   "adminPin": "4635",
+  "hostContact": {
+    "phone": "+91 98765 43210",
+    "instagramUrl": "https://instagram.com/",
+    "instagramHandle": "@your_instagram"
+  },
   "propertyOptions": [
     "1 Room / Studio",
     "1 BHK",

@@ -105,6 +105,75 @@
       line-height: 1.5;
     }
 
+    /* Host Contact Pill Bar */
+    .host-contact-box {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .host-contact-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .host-contact-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .contact-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      background: #F1F1F4;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      transition: all 0.15s ease;
+    }
+
+    .contact-pill:hover {
+      background: #E8E8EC;
+      border-color: #C0C0C8;
+    }
+
+    .contact-pill svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .contact-pill.insta-pill {
+      color: #C13584;
+      background: #FDF2F8;
+      border-color: #FBCFE8;
+    }
+
+    .contact-pill.insta-pill:hover {
+      background: #FCE7F3;
+    }
+
+    .contact-pill.phone-pill {
+      color: #0284C7;
+      background: #F0F9FF;
+      border-color: #BAE6FD;
+    }
+
+    .contact-pill.phone-pill:hover {
+      background: #E0F2FE;
+    }
+
     /* Section Cards */
     .form-card {
       background: var(--bg-card);
@@ -578,6 +647,25 @@
       <p class="header-desc">
         Welcome! As required by local hospitality and security regulations, please confirm your travel details and upload government-issued ID for all staying guests before arrival.
       </p>
+
+      <!-- Host Contact & Social Box -->
+      <div class="host-contact-box" id="host-contact-box">
+        <span class="host-contact-label">Need help or early check-in?</span>
+        <div class="host-contact-links">
+          <a href="tel:+919876543210" id="host-phone-link" class="contact-pill phone-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+            </svg>
+            <span id="host-phone-text">+91 Call / WhatsApp</span>
+          </a>
+          <a href="https://instagram.com" target="_blank" id="host-insta-link" class="contact-pill insta-pill">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            <span id="host-insta-text">Instagram</span>
+          </a>
+        </div>
+      </div>
     </header>
 
     <form id="checkin-form">
@@ -870,6 +958,35 @@
         const rulesSpan = document.querySelector('#rulesConsent + span');
         if (rulesSpan) rulesSpan.textContent = appConfig.rulesText;
       }
+
+      // 5. Update Host Contact & Instagram Links
+      if (appConfig.hostContact) {
+        const phoneLink = document.getElementById('host-phone-link');
+        const phoneText = document.getElementById('host-phone-text');
+        const instaLink = document.getElementById('host-insta-link');
+        const instaText = document.getElementById('host-insta-text');
+
+        if (phoneLink && phoneText) {
+          if (appConfig.hostContact.phone) {
+            const rawNum = appConfig.hostContact.phone.replace(/[^0-9+]/g, '');
+            phoneLink.href = 'tel:' + rawNum;
+            phoneText.textContent = appConfig.hostContact.phone;
+            phoneLink.style.display = 'inline-flex';
+          } else {
+            phoneLink.style.display = 'none';
+          }
+        }
+
+        if (instaLink && instaText) {
+          if (appConfig.hostContact.instagramUrl) {
+            instaLink.href = appConfig.hostContact.instagramUrl;
+            instaText.textContent = appConfig.hostContact.instagramHandle || 'Instagram';
+            instaLink.style.display = 'inline-flex';
+          } else {
+            instaLink.style.display = 'none';
+          }
+        }
+      }
     }
 
     // Pre-fill from URL parameters (e.g. ?code=HM12345&property=Sunset+Villa)
@@ -919,15 +1036,13 @@
         const phoneInput = document.getElementById(`guest_${i}_phone`);
         const emailInput = document.getElementById(`guest_${i}_email`);
         const idTypeInput = document.getElementById(`guest_${i}_id_type`);
-        const idNumInput = document.getElementById(`guest_${i}_id_number`);
 
         if (nameInput) existingData[i] = {
           name: nameInput.value,
           age: ageInput ? ageInput.value : '',
           phone: phoneInput ? phoneInput.value : '',
           email: emailInput ? emailInput.value : '',
-          idType: idTypeInput ? idTypeInput.value : '',
-          idNumber: idNumInput ? idNumInput.value : ''
+          idType: idTypeInput ? idTypeInput.value : ''
         };
       }
 
@@ -967,32 +1082,25 @@
             <div class="form-group">
               <label for="guest_${i}_phone">Phone / WhatsApp Number <span class="required-star">*</span></label>
               <input type="tel" id="guest_${i}_phone" name="guest_${i}_phone" 
-                     placeholder="+1 234 567 8900" required value="${previous.phone || ''}">
+                     placeholder="+91 98765 43210" required value="${previous.phone || '+91 '}">
             </div>
             <div class="form-group">
-              <label for="guest_${i}_email">Email Address <span class="required-star">*</span></label>
+              <label for="guest_${i}_email">Email Address <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">(Optional)</span></label>
               <input type="email" id="guest_${i}_email" name="guest_${i}_email" 
-                     placeholder="name@email.com" required value="${previous.email || ''}">
+                     placeholder="name@email.com" value="${previous.email || ''}">
             </div>
           </div>
           ` : ''}
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="guest_${i}_id_type">ID Document Type <span class="required-star">*</span></label>
-              <select id="guest_${i}_id_type" name="guest_${i}_id_type" required>
-                <option value="" disabled ${!previous.idType ? 'selected' : ''}>Select ID type...</option>
-                <option value="Passport" ${previous.idType === 'Passport' ? 'selected' : ''}>Passport</option>
-                <option value="Driver License" ${previous.idType === 'Driver License' ? 'selected' : ''}>Driver's License</option>
-                <option value="National ID / Aadhaar" ${previous.idType === 'National ID / Aadhaar' ? 'selected' : ''}>National ID / Aadhaar</option>
-                <option value="Voter / State ID" ${previous.idType === 'Voter / State ID' ? 'selected' : ''}>State / Voter ID</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="guest_${i}_id_number">ID / Document Number <span class="required-star">*</span></label>
-              <input type="text" id="guest_${i}_id_number" name="guest_${i}_id_number" 
-                     placeholder="e.g. A12345678" required value="${previous.idNumber || ''}">
-            </div>
+          <div class="form-group">
+            <label for="guest_${i}_id_type">ID Document Type <span class="required-star">*</span></label>
+            <select id="guest_${i}_id_type" name="guest_${i}_id_type" required>
+              <option value="" disabled ${!previous.idType ? 'selected' : ''}>Select ID type...</option>
+              <option value="Passport" ${previous.idType === 'Passport' ? 'selected' : ''}>Passport</option>
+              <option value="Driver License" ${previous.idType === 'Driver License' ? 'selected' : ''}>Driver's License</option>
+              <option value="National ID / Aadhaar" ${previous.idType === 'National ID / Aadhaar' ? 'selected' : ''}>National ID / Aadhaar</option>
+              <option value="Voter / State ID" ${previous.idType === 'Voter / State ID' ? 'selected' : ''}>State / Voter ID</option>
+            </select>
           </div>
 
           <!-- Document Upload Slots -->
@@ -1216,7 +1324,7 @@
           phone: document.getElementById(`guest_${i}_phone`) ? document.getElementById(`guest_${i}_phone`).value.trim() : '',
           email: document.getElementById(`guest_${i}_email`) ? document.getElementById(`guest_${i}_email`).value.trim() : '',
           idType: document.getElementById(`guest_${i}_id_type`).value,
-          idNumber: document.getElementById(`guest_${i}_id_number`).value.trim(),
+          idNumber: '', // Removed per host requirement
           frontPhoto: guestFiles[i]?.front || '',
           backPhoto: guestFiles[i]?.back || ''
         });

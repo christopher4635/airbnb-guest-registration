@@ -393,6 +393,30 @@
         </div>
       </div>
 
+      <!-- SECTION 5: Host Contact & Social Media (Shown to Guests) -->
+      <div class="card">
+        <div class="card-title">
+          <span>5. Host Contact & Social Media</span>
+        </div>
+        <p class="card-desc">Shown in the header of the guest check-in form for inquiries & early arrival support.</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Host Phone / WhatsApp Number</label>
+            <input type="text" id="host-phone-input" placeholder="+91 98765 43210" style="width: 100%;">
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Instagram Profile Link</label>
+            <input type="text" id="host-insta-input" placeholder="https://instagram.com/your_handle" style="width: 100%;">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Instagram Display Name / Handle</label>
+          <input type="text" id="host-handle-input" placeholder="@your_handle" style="width: 100%;">
+        </div>
+      </div>
+
       <!-- Action Bar -->
       <div class="action-bar">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -413,6 +437,11 @@
     // State
     let currentConfig = {
       adminPin: "4635",
+      hostContact: {
+        phone: "+91 98765 43210",
+        instagramUrl: "https://instagram.com/",
+        instagramHandle: "@your_instagram"
+      },
       propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
       defaultPropertyOption: "1 BHK",
       standardFields: [
@@ -473,6 +502,11 @@
       renderStandardFields();
       renderCustomFields();
       document.getElementById('rules-text-input').value = currentConfig.rulesText || '';
+      if (currentConfig.hostContact) {
+        document.getElementById('host-phone-input').value = currentConfig.hostContact.phone || '';
+        document.getElementById('host-insta-input').value = currentConfig.hostContact.instagramUrl || '';
+        document.getElementById('host-handle-input').value = currentConfig.hostContact.instagramHandle || '';
+      }
     }
 
     // Property options
@@ -632,6 +666,13 @@
       currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
       const newPin = document.getElementById('new-pin-input').value.trim();
       if (newPin) currentConfig.adminPin = newPin;
+
+      currentConfig.hostContact = {
+        phone: document.getElementById('host-phone-input').value.trim(),
+        instagramUrl: document.getElementById('host-insta-input').value.trim(),
+        instagramHandle: document.getElementById('host-handle-input').value.trim()
+      };
+
       localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
 
       btn.disabled = true;
@@ -700,6 +741,12 @@
       if (newPin) {
         currentConfig.adminPin = newPin;
       }
+
+      currentConfig.hostContact = {
+        phone: document.getElementById('host-phone-input').value.trim(),
+        instagramUrl: document.getElementById('host-insta-input').value.trim(),
+        instagramHandle: document.getElementById('host-handle-input').value.trim()
+      };
 
       localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
       showToast("Settings saved locally! Click 'Publish Live to GitHub' to update for guests.");
