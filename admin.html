@@ -379,21 +379,28 @@
           <textarea id="rules-text-input" rows="3" style="width: 100%; height: 70px;"></textarea>
         </div>
 
-        <div class="input-row">
+        <div class="input-row" style="margin-top: 14px;">
           <div style="flex: 1;">
             <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Change Admin PIN</label>
             <input type="password" id="new-pin-input" placeholder="New PIN (leave blank to keep current)">
           </div>
         </div>
+
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border-color);">
+          <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">GitHub Personal Access Token (for 1-Click Live Publish)</label>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Saved only in your private browser storage so you can publish changes directly to your live GitHub website.</p>
+          <input type="password" id="github-token-input" placeholder="ghp_xxxxxxxxxxxx">
+        </div>
       </div>
 
       <!-- Action Bar -->
       <div class="action-bar">
-        <div>
-          <button type="button" class="btn btn-primary" id="btn-save">💾 Save Changes</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary" id="btn-publish-github" style="background: #10B981;">🚀 Publish Live to GitHub</button>
+          <button type="button" class="btn btn-outline" id="btn-save">💾 Save Locally</button>
           <button type="button" class="btn btn-outline" id="btn-download-config">📥 Download config.json</button>
         </div>
-        <button type="button" class="btn btn-outline" id="btn-copy-config">📋 Copy JSON for GitHub</button>
+        <button type="button" class="btn btn-outline" id="btn-copy-config">📋 Copy JSON</button>
       </div>
 
     </div>
@@ -601,7 +608,91 @@
       renderCustomFields();
     };
 
-    // Save changes
+    // Load saved GitHub token if available
+    const savedToken = localStorage.getItem('airbnb_github_pat');
+    if (savedToken) {
+      document.getElementById('github-token-input').value = savedToken;
+    }
+
+    // 1-Click Publish to GitHub
+    document.getElementById('btn-publish-github').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-publish-github');
+      const token = document.getElementById('github-token-input').value.trim();
+
+      if (!token) {
+        alert("Please enter your GitHub Personal Access Token below to publish directly to your live site.");
+        document.getElementById('github-token-input').focus();
+        return;
+      }
+
+      // Save token locally
+      localStorage.setItem('airbnb_github_pat', token);
+
+      // Collect latest updates
+      currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
+      const newPin = document.getElementById('new-pin-input').value.trim();
+      if (newPin) currentConfig.adminPin = newPin;
+      localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
+
+      btn.disabled = true;
+      btn.textContent = "Publishing to GitHub...";
+
+      try {
+        const repo = "christopher4635/airbnb-guest-registration";
+        const path = "config.json";
+        
+        // 1. Get current file SHA
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!getRes.ok) {
+          throw new Error("Could not access repository. Please check your GitHub Token permissions (ensure 'repo' is checked).");
+        }
+
+        const getData = await getRes.json();
+        const currentSha = getData.sha;
+
+        // 2. Encode config JSON into base64
+        const jsonString = JSON.stringify(currentConfig, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
+
+        // 3. Commit updated config.json to main branch
+        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/vnd.github.v3+json'
+          },
+          body: JSON.stringify({
+            message: "Update form fields via Host Admin",
+            content: encodedContent,
+            sha: currentSha,
+            branch: "main"
+          })
+        });
+
+        if (!putRes.ok) {
+          const errData = await putRes.json();
+          throw new Error(errData.message || "Failed to commit to GitHub.");
+        }
+
+        showToast("🚀 Successfully published live! All guests will see the updated form in ~30 seconds.");
+
+      } catch (err) {
+        console.error(err);
+        alert("Publish error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "🚀 Publish Live to GitHub";
+      }
+    });
+
+    // Save changes locally
     document.getElementById('btn-save').addEventListener('click', () => {
       // Update rules text and PIN
       currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
@@ -611,7 +702,7 @@
       }
 
       localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
-      showToast("Settings saved to browser! Click 'Download config.json' to update GitHub.");
+      showToast("Settings saved locally! Click 'Publish Live to GitHub' to update for guests.");
     });
 
     // Download config.json

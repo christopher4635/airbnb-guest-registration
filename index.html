@@ -787,19 +787,21 @@
     };
 
     async function initConfig() {
-      const local = localStorage.getItem('airbnb_form_config');
-      if (local) {
-        try {
-          appConfig = Object.assign(appConfig, JSON.parse(local));
-        } catch(e) {}
-      } else {
-        try {
-          const res = await fetch('config.json');
-          if (res.ok) {
-            const fetched = await res.json();
-            appConfig = Object.assign(appConfig, fetched);
-          }
-        } catch(e) {}
+      // 1. Always fetch live config from GitHub with cache-busting timestamp
+      try {
+        const res = await fetch('config.json?t=' + Date.now());
+        if (res.ok) {
+          const fetched = await res.json();
+          appConfig = Object.assign(appConfig, fetched);
+        }
+      } catch(e) {
+        // Fallback to localStorage if running offline or local file://
+        const local = localStorage.getItem('airbnb_form_config');
+        if (local) {
+          try {
+            appConfig = Object.assign(appConfig, JSON.parse(local));
+          } catch(err) {}
+        }
       }
       applyConfigToForm();
     }
