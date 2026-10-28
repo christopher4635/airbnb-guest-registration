@@ -295,7 +295,7 @@
       <p style="font-size: 13px; color: var(--text-muted);">Enter your 4-digit Host PIN to manage form fields.</p>
       <input type="password" id="pin-input" class="pin-input" maxlength="8" placeholder="••••" autofocus>
       <button type="button" class="btn btn-primary" id="btn-login" style="width: 100%;">Unlock Admin</button>
-      <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">Default PIN is <strong>1234</strong></p>
+      <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">Protected Host Admin Area</p>
     </div>
 
     <!-- Admin Panel -->
@@ -405,7 +405,7 @@
   <script>
     // State
     let currentConfig = {
-      adminPin: "1234",
+      adminPin: "4635",
       propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
       defaultPropertyOption: "1 BHK",
       standardFields: [
@@ -446,7 +446,7 @@
     // Auth gate
     document.getElementById('btn-login').addEventListener('click', () => {
       const pin = document.getElementById('pin-input').value.trim();
-      const expected = currentConfig.adminPin || "1234";
+      const expected = currentConfig.adminPin || "4635";
       if (pin === expected) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('admin-panel').style.display = 'block';

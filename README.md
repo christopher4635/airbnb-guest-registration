@@ -19,7 +19,7 @@ A mobile-friendly, high-converting Guest Registration and ID Verification web ap
 
 You have a built-in admin dashboard to manage your form:
 - **Live URL**: `https://christopher4635.github.io/airbnb-guest-registration/admin.html`
-- **Default PIN**: `1234` (can be changed in the admin panel)
+- **Host PIN**: `4635` (can be changed in the admin panel)
 
 ### What you can do in Admin:
 1. **Property Types**: Add/remove options like `1 Room / Studio`, `1 BHK`, `2 BHK`, `3 BHK`, `Entire Villa`, etc.
