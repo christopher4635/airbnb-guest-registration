@@ -438,9 +438,9 @@
     let currentConfig = {
       adminPin: "4635",
       hostContact: {
-        phone: "+91 98765 43210",
-        instagramUrl: "https://instagram.com/",
-        instagramHandle: "@your_instagram"
+        phone: "+91 70022 93073",
+        instagramUrl: "",
+        instagramHandle: ""
       },
       propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
       defaultPropertyOption: "1 BHK",
@@ -459,23 +459,21 @@
       signatureRequired: true
     };
 
-    // Load config from localStorage or config.json
+    // Load config from config.json or localStorage
     async function loadConfig() {
-      const local = localStorage.getItem('airbnb_form_config');
-      if (local) {
-        try {
-          currentConfig = JSON.parse(local);
-          return;
-        } catch (e) {}
-      }
-
       try {
-        const res = await fetch('config.json');
+        const res = await fetch('config.json?t=' + Date.now());
         if (res.ok) {
-          currentConfig = await res.json();
+          const fetched = await res.json();
+          currentConfig = Object.assign(currentConfig, fetched);
         }
       } catch (e) {
-        console.log("Using default config");
+        const local = localStorage.getItem('airbnb_form_config');
+        if (local) {
+          try {
+            currentConfig = Object.assign(currentConfig, JSON.parse(local));
+          } catch (err) {}
+        }
       }
     }
 
