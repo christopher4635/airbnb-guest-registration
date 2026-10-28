@@ -3,9 +3,7 @@
   "propertyOptions": [
     "1 Room / Studio",
     "1 BHK",
-    "2 BHK",
-    "3 BHK",
-    "Entire Villa / House"
+    "2 BHK"
   ],
   "defaultPropertyOption": "1 BHK",
   "standardFields": [
@@ -53,7 +51,7 @@
         "Event / Wedding / Festival",
         "Other"
       ],
-      "required": true,
+      "required": false,
       "enabled": true
     },
     {
