@@ -4,12 +4,28 @@ A mobile-friendly, high-converting Guest Registration and ID Verification web ap
 
 ### Why this is better than Google Forms:
 - **No Google login required:** Guests can submit from mobile browsers (WhatsApp, Airbnb in-app browser, Safari, Chrome) without ever being forced to log into a Google Account.
+- **Admin Panel (`admin.html`):** Add or remove fields, customize property types (1 BHK, 2 BHK, 1 Room, etc.), and set fields as required or optional with a PIN lock.
 - **Dynamic Guest Fields:** Starts with **Total Number of Guests**. As the number changes, fields for each guest's Name, Age, and ID uploads appear automatically.
+- **Property Type / Option:** Dropdown for 1 BHK, 2 BHK, 1 Room / Studio, Entire Villa, or custom options.
 - **Address not required:** Streamlined according to your exact requirements.
 - **Trip Information:** Includes mandatory **Coming From**, **Going To**, and **Purpose of Visit**.
 - **Instant Camera Upload & Compression:** Photos taken with high-resolution smartphone cameras (15MB+) are compressed on the guest's device in real time, making uploads instant even on weak mobile connections.
 - **Digital Signature Pad:** Guests sign on their phone touchscreen.
 - **Google Drive & Sheets Integration:** Submissions are automatically filed into your Google Drive (in a dedicated folder per booking) and logged into an "Airbnb Guest Registry" Google Sheet with clickable links to each guest's ID photos.
+
+---
+
+## Host Admin Panel
+
+You have a built-in admin dashboard to manage your form:
+- **Live URL**: `https://christopher4635.github.io/airbnb-guest-registration/admin.html`
+- **Default PIN**: `1234` (can be changed in the admin panel)
+
+### What you can do in Admin:
+1. **Property Types**: Add/remove options like `1 Room / Studio`, `1 BHK`, `2 BHK`, `3 BHK`, `Entire Villa`, etc.
+2. **Standard Fields**: Enable/disable fields or change them between Required and Optional.
+3. **Custom Questions**: Add your own questions (e.g., Vehicle Plate Number, Flight Number, Special Requests).
+4. **House Rules**: Edit the house rules declaration text.
 
 ---
 

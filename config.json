@@ -1,0 +1,93 @@
+{
+  "adminPin": "1234",
+  "propertyOptions": [
+    "1 Room / Studio",
+    "1 BHK",
+    "2 BHK",
+    "3 BHK",
+    "Entire Villa / House"
+  ],
+  "defaultPropertyOption": "1 BHK",
+  "standardFields": [
+    {
+      "id": "propertyOption",
+      "label": "Property / Room Type",
+      "type": "select",
+      "required": true,
+      "enabled": true,
+      "helpText": "Select the room or unit booked"
+    },
+    {
+      "id": "totalGuests",
+      "label": "Total Number of Guests",
+      "type": "stepper",
+      "required": true,
+      "enabled": true
+    },
+    {
+      "id": "comingFrom",
+      "label": "Coming From",
+      "type": "text",
+      "placeholder": "City / Country (Origin)",
+      "required": true,
+      "enabled": true
+    },
+    {
+      "id": "goingTo",
+      "label": "Going To",
+      "type": "text",
+      "placeholder": "City / Country (Next Destination)",
+      "required": true,
+      "enabled": true
+    },
+    {
+      "id": "purposeOfVisit",
+      "label": "Purpose of Visit",
+      "type": "select",
+      "options": [
+        "Tourism / Vacation",
+        "Business / Work",
+        "Visiting Friends / Family",
+        "Medical / Health",
+        "Transit / Layover",
+        "Event / Wedding / Festival",
+        "Other"
+      ],
+      "required": true,
+      "enabled": true
+    },
+    {
+      "id": "checkInDate",
+      "label": "Check-in Date",
+      "type": "date",
+      "required": true,
+      "enabled": true
+    },
+    {
+      "id": "checkOutDate",
+      "label": "Check-out Date",
+      "type": "date",
+      "required": true,
+      "enabled": true
+    },
+    {
+      "id": "reservationCode",
+      "label": "Airbnb Reservation Code",
+      "type": "text",
+      "placeholder": "e.g. HM34XZ891 (Optional)",
+      "required": false,
+      "enabled": true
+    },
+    {
+      "id": "arrivalTime",
+      "label": "Estimated Arrival Time",
+      "type": "text",
+      "placeholder": "e.g. 3:00 PM",
+      "required": false,
+      "enabled": true
+    }
+  ],
+  "customFields": [],
+  "rulesText": "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine.",
+  "signatureRequired": true
+}

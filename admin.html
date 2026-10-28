@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Host Admin — Airbnb Form Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FF385C;
+      --primary-hover: #E00B41;
+      --primary-light: #FFF0F2;
+      --text-main: #222222;
+      --text-muted: #717171;
+      --bg-page: #F7F7F8;
+      --bg-card: #FFFFFF;
+      --border-color: #E2E2E6;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+      --success: #10B981;
+      --danger: #DC2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      padding: 20px 16px 80px;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* Auth Screen */
+    #auth-screen {
+      max-width: 380px;
+      margin: 80px auto 0;
+      background: #fff;
+      padding: 32px 24px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .pin-input {
+      font-size: 24px;
+      letter-spacing: 6px;
+      text-align: center;
+      width: 100%;
+      height: 52px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin: 18px 0;
+      outline: none;
+    }
+    .pin-input:focus { border-color: var(--primary); }
+
+    /* Admin Content */
+    #admin-panel { display: none; }
+
+    .admin-header {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .admin-title h1 { font-size: 22px; font-weight: 700; }
+    .admin-title p { font-size: 13px; color: var(--text-muted); }
+
+    .btn-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 22px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* Property Chips */
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .chip {
+      background: #F1F1F4;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chip button {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"], input[type="password"], select, textarea {
+      flex: 1;
+      height: 42px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--text-main); }
+
+    .btn {
+      height: 42px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: #fff; border: 1.5px solid var(--border-color); color: var(--text-main); }
+    .btn-outline:hover { background: #F8F8FA; }
+    .btn-danger { background: #FEE2E2; color: var(--danger); border: none; }
+
+    /* Field List Item */
+    .field-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      background: #FAFAFB;
+      gap: 12px;
+    }
+
+    .field-info {
+      flex: 1;
+    }
+
+    .field-info strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .field-info span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .field-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .toggle-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    /* Custom Field Creator */
+    .custom-field-box {
+      background: #F8F8FA;
+      border: 1.5px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .custom-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .custom-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Bottom Toolbar */
+    .action-bar {
+      position: sticky;
+      bottom: 16px;
+      background: #fff;
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      border: 1.5px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Lock Screen -->
+    <div id="auth-screen">
+      <h2 style="font-size: 20px; margin-bottom: 6px;">Host Admin Login</h2>
+      <p style="font-size: 13px; color: var(--text-muted);">Enter your 4-digit Host PIN to manage form fields.</p>
+      <input type="password" id="pin-input" class="pin-input" maxlength="8" placeholder="••••" autofocus>
+      <button type="button" class="btn btn-primary" id="btn-login" style="width: 100%;">Unlock Admin</button>
+      <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">Default PIN is <strong>1234</strong></p>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel">
+      
+      <div class="admin-header">
+        <div class="admin-title">
+          <h1>Form Fields & Options Manager</h1>
+          <p>Customize the questions your guests see on the check-in form</p>
+        </div>
+        <div>
+          <a href="index.html" class="btn-link" target="_blank">
+            <span>View Guest Form</span>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- SECTION 1: Property Types (1BHK / 2BHK / 1 Room / etc.) -->
+      <div class="card">
+        <div class="card-title">
+          <span>1. Property Types / Options</span>
+        </div>
+        <p class="card-desc">Options guests can choose from for the property or room they booked.</p>
+
+        <div class="chips-container" id="property-chips"></div>
+
+        <div class="input-row">
+          <input type="text" id="new-property-input" placeholder="e.g. 1 BHK, 2 BHK, 1 Room, Studio, Penthouse...">
+          <button type="button" class="btn btn-primary" id="btn-add-property">+ Add Option</button>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Standard Fields (Toggle on/off, Required) -->
+      <div class="card">
+        <div class="card-title">
+          <span>2. Standard Form Fields</span>
+        </div>
+        <p class="card-desc">Enable, disable, or make fields optional/required.</p>
+
+        <div id="standard-fields-list"></div>
+      </div>
+
+      <!-- SECTION 3: Custom Fields (Add new fields) -->
+      <div class="card">
+        <div class="card-title">
+          <span>3. Custom Additional Fields</span>
+          <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">Optional</span>
+        </div>
+        <p class="card-desc">Add extra questions like Vehicle Number, Flight Info, or Special Requests.</p>
+
+        <div id="custom-fields-list"></div>
+
+        <div class="custom-field-box">
+          <strong style="font-size: 13px; display: block; margin-bottom: 8px;">+ Add New Question</strong>
+          <div class="custom-row">
+            <input type="text" id="custom-label" placeholder="Question / Field Name (e.g. Car Plate No)">
+            <select id="custom-type">
+              <option value="text">Text Input</option>
+              <option value="number">Number</option>
+              <option value="date">Date</option>
+              <option value="select">Dropdown Menu</option>
+            </select>
+            <input type="text" id="custom-options" placeholder="Options (comma separated for dropdown)" style="display: none;">
+            <label class="toggle-label" style="align-self: center;">
+              <input type="checkbox" id="custom-required"> Required
+            </label>
+          </div>
+          <button type="button" class="btn btn-outline" id="btn-add-custom">+ Add Question</button>
+        </div>
+      </div>
+
+      <!-- SECTION 4: House Rules & Security PIN -->
+      <div class="card">
+        <div class="card-title">
+          <span>4. House Rules & Admin Security</span>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">House Rules Declaration Text</label>
+          <textarea id="rules-text-input" rows="3" style="width: 100%; height: 70px;"></textarea>
+        </div>
+
+        <div class="input-row">
+          <div style="flex: 1;">
+            <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px;">Change Admin PIN</label>
+            <input type="password" id="new-pin-input" placeholder="New PIN (leave blank to keep current)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <div>
+          <button type="button" class="btn btn-primary" id="btn-save">💾 Save Changes</button>
+          <button type="button" class="btn btn-outline" id="btn-download-config">📥 Download config.json</button>
+        </div>
+        <button type="button" class="btn btn-outline" id="btn-copy-config">📋 Copy JSON for GitHub</button>
+      </div>
+
+    </div>
+
+    <div class="toast" id="toast">Saved successfully!</div>
+
+  </div>
+
+  <script>
+    // State
+    let currentConfig = {
+      adminPin: "1234",
+      propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
+      defaultPropertyOption: "1 BHK",
+      standardFields: [
+        { id: "propertyOption", label: "Property / Room Type (1BHK/2BHK/1Room...)", type: "select", required: true, enabled: true },
+        { id: "comingFrom", label: "Coming From (Origin)", type: "text", required: true, enabled: true },
+        { id: "goingTo", label: "Going To (Destination)", type: "text", required: true, enabled: true },
+        { id: "purposeOfVisit", label: "Purpose of Visit", type: "select", required: true, enabled: true },
+        { id: "checkInDate", label: "Check-in Date", type: "date", required: true, enabled: true },
+        { id: "checkOutDate", label: "Check-out Date", type: "date", required: true, enabled: true },
+        { id: "reservationCode", label: "Airbnb Reservation Code", type: "text", required: false, enabled: true },
+        { id: "arrivalTime", label: "Estimated Arrival Time", type: "text", required: false, enabled: true }
+      ],
+      customFields: [],
+      rulesText: "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine.",
+      signatureRequired: true
+    };
+
+    // Load config from localStorage or config.json
+    async function loadConfig() {
+      const local = localStorage.getItem('airbnb_form_config');
+      if (local) {
+        try {
+          currentConfig = JSON.parse(local);
+          return;
+        } catch (e) {}
+      }
+
+      try {
+        const res = await fetch('config.json');
+        if (res.ok) {
+          currentConfig = await res.json();
+        }
+      } catch (e) {
+        console.log("Using default config");
+      }
+    }
+
+    // Auth gate
+    document.getElementById('btn-login').addEventListener('click', () => {
+      const pin = document.getElementById('pin-input').value.trim();
+      const expected = currentConfig.adminPin || "1234";
+      if (pin === expected) {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        renderAdmin();
+      } else {
+        alert("Incorrect PIN. Please try again.");
+      }
+    });
+
+    document.getElementById('pin-input').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn-login').click();
+    });
+
+    // Render Admin Controls
+    function renderAdmin() {
+      renderPropertyOptions();
+      renderStandardFields();
+      renderCustomFields();
+      document.getElementById('rules-text-input').value = currentConfig.rulesText || '';
+    }
+
+    // Property options
+    function renderPropertyOptions() {
+      const container = document.getElementById('property-chips');
+      container.innerHTML = '';
+      currentConfig.propertyOptions.forEach((opt, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.innerHTML = `
+          <span>${opt}</span>
+          <button type="button" onclick="removePropertyOption(${idx})" title="Remove option">×</button>
+        `;
+        container.appendChild(chip);
+      });
+    }
+
+    document.getElementById('btn-add-property').addEventListener('click', () => {
+      const input = document.getElementById('new-property-input');
+      const val = input.value.trim();
+      if (val && !currentConfig.propertyOptions.includes(val)) {
+        currentConfig.propertyOptions.push(val);
+        input.value = '';
+        renderPropertyOptions();
+      }
+    });
+
+    window.removePropertyOption = function(idx) {
+      if (currentConfig.propertyOptions.length <= 1) {
+        alert("You must keep at least one property option.");
+        return;
+      }
+      currentConfig.propertyOptions.splice(idx, 1);
+      renderPropertyOptions();
+    };
+
+    // Standard fields
+    function renderStandardFields() {
+      const container = document.getElementById('standard-fields-list');
+      container.innerHTML = '';
+
+      currentConfig.standardFields.forEach((field, idx) => {
+        const item = document.createElement('div');
+        item.className = 'field-item';
+        item.innerHTML = `
+          <div class="field-info">
+            <strong>${field.label}</strong>
+            <span>Type: ${field.type}</span>
+          </div>
+          <div class="field-controls">
+            <label class="toggle-label">
+              <input type="checkbox" ${field.enabled ? 'checked' : ''} onchange="toggleField(${idx}, 'enabled', this.checked)">
+              Active
+            </label>
+            <label class="toggle-label">
+              <input type="checkbox" ${field.required ? 'checked' : ''} onchange="toggleField(${idx}, 'required', this.checked)">
+              Required
+            </label>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    window.toggleField = function(idx, prop, val) {
+      currentConfig.standardFields[idx][prop] = val;
+    };
+
+    // Custom fields
+    document.getElementById('custom-type').addEventListener('change', (e) => {
+      const optInput = document.getElementById('custom-options');
+      optInput.style.display = (e.target.value === 'select') ? 'block' : 'none';
+    });
+
+    document.getElementById('btn-add-custom').addEventListener('click', () => {
+      const label = document.getElementById('custom-label').value.trim();
+      const type = document.getElementById('custom-type').value;
+      const req = document.getElementById('custom-required').checked;
+      const opts = document.getElementById('custom-options').value.trim();
+
+      if (!label) {
+        alert("Please enter a question name.");
+        return;
+      }
+
+      const id = "custom_" + label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const newField = {
+        id: id,
+        label: label,
+        type: type,
+        required: req,
+        enabled: true
+      };
+
+      if (type === 'select' && opts) {
+        newField.options = opts.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      currentConfig.customFields.push(newField);
+      document.getElementById('custom-label').value = '';
+      document.getElementById('custom-options').value = '';
+      document.getElementById('custom-required').checked = false;
+      renderCustomFields();
+    });
+
+    function renderCustomFields() {
+      const container = document.getElementById('custom-fields-list');
+      container.innerHTML = '';
+
+      if (!currentConfig.customFields || currentConfig.customFields.length === 0) {
+        container.innerHTML = '<p style="font-size:13px; color:var(--text-muted); margin-bottom: 10px;">No custom fields added yet.</p>';
+        return;
+      }
+
+      currentConfig.customFields.forEach((field, idx) => {
+        const item = document.createElement('div');
+        item.className = 'field-item';
+        item.innerHTML = `
+          <div class="field-info">
+            <strong>${field.label}</strong>
+            <span>Type: ${field.type} ${field.required ? '(Required)' : '(Optional)'}</span>
+          </div>
+          <div class="field-controls">
+            <button type="button" class="btn btn-danger" onclick="removeCustomField(${idx})" style="height:32px; padding:0 10px; font-size:12px;">Delete</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    window.removeCustomField = function(idx) {
+      currentConfig.customFields.splice(idx, 1);
+      renderCustomFields();
+    };
+
+    // Save changes
+    document.getElementById('btn-save').addEventListener('click', () => {
+      // Update rules text and PIN
+      currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
+      const newPin = document.getElementById('new-pin-input').value.trim();
+      if (newPin) {
+        currentConfig.adminPin = newPin;
+      }
+
+      localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
+      showToast("Settings saved to browser! Click 'Download config.json' to update GitHub.");
+    });
+
+    // Download config.json
+    document.getElementById('btn-download-config').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentConfig, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "config.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("config.json downloaded!");
+    });
+
+    // Copy config to clipboard
+    document.getElementById('btn-copy-config').addEventListener('click', () => {
+      navigator.clipboard.writeText(JSON.stringify(currentConfig, null, 2));
+      showToast("Copied config JSON to clipboard!");
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    // Init
+    loadConfig();
+  </script>
+</body>
+</html>

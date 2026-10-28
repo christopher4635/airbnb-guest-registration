@@ -95,10 +95,11 @@ function doPost(e) {
         }
 
         // Append row to sheet:
-        // [Timestamp, Res Code, Check-in, Check-out, Arrival, Total Guests, Guest #, Guest Name, Age, Phone, Email, Coming From, Going To, Purpose, ID Type, ID Number, Front ID, Back ID, Signature, Drive Folder]
+        // [Timestamp, Res Code, Property Option, Check-in, Check-out, Arrival, Total Guests, Guest #, Guest Name, Age, Phone, Email, Coming From, Going To, Purpose, Custom Details, ID Type, ID Number, Front ID, Back ID, Signature, Drive Folder]
         sheet.appendRow([
           timestamp,
           data.reservationCode || "",
+          data.propertyOption || "",
           data.checkInDate || "",
           data.checkOutDate || "",
           data.arrivalTime || "",
@@ -111,6 +112,7 @@ function doPost(e) {
           data.comingFrom || "",
           data.goingTo || "",
           data.purposeOfVisit || "",
+          data.customDetails ? JSON.stringify(data.customDetails) : "",
           g.idType || "",
           g.idNumber || "",
           frontUrl ? `=HYPERLINK("${frontUrl}", "View Front ID")` : "No upload",
@@ -186,6 +188,7 @@ function getRegistrySheet() {
     const headers = [
       "Timestamp",
       "Reservation Code",
+      "Property Option",
       "Check-in Date",
       "Check-out Date",
       "Arrival Time",
@@ -198,6 +201,7 @@ function getRegistrySheet() {
       "Coming From",
       "Going To",
       "Purpose of Visit",
+      "Custom Details",
       "ID Type",
       "ID Number",
       "Front ID Photo",

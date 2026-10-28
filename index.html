@@ -610,20 +610,33 @@
         <h2 class="section-title">
           <span>2.</span> Travel & Stay Details
         </h2>
-        <p class="section-subtitle">Please let us know your travel itinerary.</p>
+        <p class="section-subtitle">Please let us know your travel itinerary and booking info.</p>
+
+        <!-- Property Option (1BHK / 2BHK / 1 Room / etc.) -->
+        <div class="form-group" id="field-wrap-propertyOption">
+          <label for="propertyOption">Property / Room Type <span class="required-star">*</span></label>
+          <select id="propertyOption" name="propertyOption" required>
+            <option value="" disabled selected>Select property / room type...</option>
+            <option value="1 Room / Studio">1 Room / Studio</option>
+            <option value="1 BHK">1 BHK</option>
+            <option value="2 BHK">2 BHK</option>
+            <option value="3 BHK">3 BHK</option>
+            <option value="Entire Villa / House">Entire Villa / House</option>
+          </select>
+        </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" id="field-wrap-comingFrom">
             <label for="comingFrom">Coming From <span class="required-star">*</span></label>
             <input type="text" id="comingFrom" name="comingFrom" placeholder="City / Country (Origin)" required>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="field-wrap-goingTo">
             <label for="goingTo">Going To <span class="required-star">*</span></label>
             <input type="text" id="goingTo" name="goingTo" placeholder="City / Country (Next Destination)" required>
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="field-wrap-purposeOfVisit">
           <label for="purposeOfVisit">Purpose of Visit <span class="required-star">*</span></label>
           <select id="purposeOfVisit" name="purposeOfVisit" required>
             <option value="" disabled selected>Select purpose...</option>
@@ -638,26 +651,29 @@
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" id="field-wrap-checkInDate">
             <label for="checkInDate">Check-in Date <span class="required-star">*</span></label>
             <input type="date" id="checkInDate" name="checkInDate" required>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="field-wrap-checkOutDate">
             <label for="checkOutDate">Check-out Date <span class="required-star">*</span></label>
             <input type="date" id="checkOutDate" name="checkOutDate" required>
           </div>
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" id="field-wrap-reservationCode">
             <label for="reservationCode">Airbnb Reservation Code</label>
             <input type="text" id="reservationCode" name="reservationCode" placeholder="e.g. HM34XZ891 (Optional)">
           </div>
-          <div class="form-group">
+          <div class="form-group" id="field-wrap-arrivalTime">
             <label for="arrivalTime">Estimated Arrival Time</label>
             <input type="text" id="arrivalTime" name="arrivalTime" placeholder="e.g. 3:00 PM">
           </div>
         </div>
+
+        <!-- Dynamic Custom Fields added by Admin -->
+        <div id="dynamic-custom-fields" style="margin-top: 12px;"></div>
       </section>
 
       <!-- STEP 3: Dynamic Guest Cards Container -->
@@ -706,6 +722,12 @@
       </button>
 
     </form>
+
+    <footer style="margin-top: 36px; text-align: center; font-size: 12px; color: var(--text-muted);">
+      <span>Airbnb Host Registration Portal</span> &bull; 
+      <a href="admin.html" style="color: var(--text-muted); text-decoration: underline;">Host Admin (Edit Fields)</a>
+    </footer>
+
   </div>
 
   <!-- Status / Loading Overlay -->
@@ -747,8 +769,110 @@
     const guestCardsContainer = document.getElementById('guest-cards-container');
     const form = document.getElementById('checkin-form');
 
+    // Configuration State
+    let appConfig = {
+      propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
+      standardFields: [
+        { id: "propertyOption", label: "Property / Room Type", required: true, enabled: true },
+        { id: "comingFrom", label: "Coming From", required: true, enabled: true },
+        { id: "goingTo", label: "Going To", required: true, enabled: true },
+        { id: "purposeOfVisit", label: "Purpose of Visit", required: true, enabled: true },
+        { id: "checkInDate", label: "Check-in Date", required: true, enabled: true },
+        { id: "checkOutDate", label: "Check-out Date", required: true, enabled: true },
+        { id: "reservationCode", label: "Airbnb Reservation Code", required: false, enabled: true },
+        { id: "arrivalTime", label: "Estimated Arrival Time", required: false, enabled: true }
+      ],
+      customFields: [],
+      rulesText: "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine."
+    };
+
+    async function initConfig() {
+      const local = localStorage.getItem('airbnb_form_config');
+      if (local) {
+        try {
+          appConfig = Object.assign(appConfig, JSON.parse(local));
+        } catch(e) {}
+      } else {
+        try {
+          const res = await fetch('config.json');
+          if (res.ok) {
+            const fetched = await res.json();
+            appConfig = Object.assign(appConfig, fetched);
+          }
+        } catch(e) {}
+      }
+      applyConfigToForm();
+    }
+
+    function applyConfigToForm() {
+      // 1. Populate Property Options
+      const propSelect = document.getElementById('propertyOption');
+      if (propSelect && appConfig.propertyOptions && appConfig.propertyOptions.length > 0) {
+        propSelect.innerHTML = '<option value="" disabled selected>Select property / room type...</option>';
+        appConfig.propertyOptions.forEach(opt => {
+          const el = document.createElement('option');
+          el.value = opt;
+          el.textContent = opt;
+          propSelect.appendChild(el);
+        });
+      }
+
+      // 2. Standard field visibility & requirement
+      if (appConfig.standardFields) {
+        appConfig.standardFields.forEach(f => {
+          const wrap = document.getElementById('field-wrap-' + f.id);
+          const input = document.getElementById(f.id);
+          if (wrap) {
+            wrap.style.display = (f.enabled !== false) ? '' : 'none';
+          }
+          if (input) {
+            if (f.enabled === false) {
+              input.removeAttribute('required');
+            } else if (f.required) {
+              input.setAttribute('required', 'required');
+            } else {
+              input.removeAttribute('required');
+            }
+          }
+        });
+      }
+
+      // 3. Render Custom Fields
+      const customContainer = document.getElementById('dynamic-custom-fields');
+      if (customContainer && appConfig.customFields && appConfig.customFields.length > 0) {
+        customContainer.innerHTML = '';
+        appConfig.customFields.forEach(cf => {
+          if (cf.enabled === false) return;
+          const group = document.createElement('div');
+          group.className = 'form-group';
+          group.id = 'field-wrap-' + cf.id;
+          
+          const reqStar = cf.required ? '<span class="required-star">*</span>' : '';
+          let inputHtml = '';
+          if (cf.type === 'select' && cf.options) {
+            inputHtml = `<select id="${cf.id}" name="${cf.id}" ${cf.required ? 'required' : ''}>
+              <option value="" disabled selected>Select...</option>
+              ${cf.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+            </select>`;
+          } else {
+            inputHtml = `<input type="${cf.type || 'text'}" id="${cf.id}" name="${cf.id}" placeholder="${cf.placeholder || cf.label}" ${cf.required ? 'required' : ''}>`;
+          }
+
+          group.innerHTML = `<label for="${cf.id}">${cf.label} ${reqStar}</label>${inputHtml}`;
+          customContainer.appendChild(group);
+        });
+      }
+
+      // 4. Update Rules Text if customized
+      if (appConfig.rulesText) {
+        const rulesSpan = document.querySelector('#rulesConsent + span');
+        if (rulesSpan) rulesSpan.textContent = appConfig.rulesText;
+      }
+    }
+
     // Pre-fill from URL parameters (e.g. ?code=HM12345&property=Sunset+Villa)
     window.addEventListener('DOMContentLoaded', () => {
+      initConfig();
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('code')) {
         document.getElementById('reservationCode').value = urlParams.get('code');
@@ -1096,16 +1220,27 @@
         });
       }
 
+      // Gather custom fields
+      const customValues = {};
+      if (appConfig.customFields) {
+        appConfig.customFields.forEach(cf => {
+          const el = document.getElementById(cf.id);
+          if (el) customValues[cf.label] = el.value.trim();
+        });
+      }
+
       const submission = {
         submittedAt: new Date().toISOString(),
         totalGuests: totalGuests,
-        comingFrom: document.getElementById('comingFrom').value.trim(),
-        goingTo: document.getElementById('goingTo').value.trim(),
-        purposeOfVisit: document.getElementById('purposeOfVisit').value,
-        checkInDate: document.getElementById('checkInDate').value,
-        checkOutDate: document.getElementById('checkOutDate').value,
-        reservationCode: document.getElementById('reservationCode').value.trim(),
-        arrivalTime: document.getElementById('arrivalTime').value.trim(),
+        propertyOption: document.getElementById('propertyOption') ? document.getElementById('propertyOption').value : '',
+        comingFrom: document.getElementById('comingFrom') ? document.getElementById('comingFrom').value.trim() : '',
+        goingTo: document.getElementById('goingTo') ? document.getElementById('goingTo').value.trim() : '',
+        purposeOfVisit: document.getElementById('purposeOfVisit') ? document.getElementById('purposeOfVisit').value : '',
+        checkInDate: document.getElementById('checkInDate') ? document.getElementById('checkInDate').value : '',
+        checkOutDate: document.getElementById('checkOutDate') ? document.getElementById('checkOutDate').value : '',
+        reservationCode: document.getElementById('reservationCode') ? document.getElementById('reservationCode').value.trim() : '',
+        arrivalTime: document.getElementById('arrivalTime') ? document.getElementById('arrivalTime').value.trim() : '',
+        customDetails: customValues,
         guests: guestsList,
         signature: sigBase64
       };
