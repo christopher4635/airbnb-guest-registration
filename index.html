@@ -1387,7 +1387,32 @@
         } else {
           // Demo simulation mode when webhook URL is not yet connected
           console.log("DEMO MODE: Submission payload:", submission);
-          await new Promise(r => setTimeout(r, 1500));
+          const demoEntries = JSON.parse(localStorage.getItem('airbnb_demo_submissions') || '[]');
+          guestsList.forEach(g => {
+            demoEntries.unshift({
+              'Timestamp': new Date().toLocaleString(),
+              'Reservation Code': submission.reservationCode,
+              'Property Option': submission.propertyOption,
+              'Check-in Date': submission.checkInDate,
+              'Check-out Date': submission.checkOutDate,
+              'Arrival Time': submission.arrivalTime,
+              'Total Guests': submission.totalGuests,
+              'Guest Number': `Guest #${g.guestNumber} ${g.isPrimary ? '(Primary)' : ''}`,
+              'Guest Legal Name': g.name,
+              'Age': g.age,
+              'Phone / WhatsApp': g.phone,
+              'Email Address': g.email,
+              'Coming From': submission.comingFrom,
+              'Going To': submission.goingTo,
+              'Purpose of Visit': submission.purposeOfVisit,
+              'ID Type': g.idType,
+              'Front ID Photo': g.frontPhoto,
+              'Back ID Photo': g.backPhoto,
+              'Digital Signature': submission.signature
+            });
+          });
+          localStorage.setItem('airbnb_demo_submissions', JSON.stringify(demoEntries));
+          await new Promise(r => setTimeout(r, 1200));
         }
 
         // Success state

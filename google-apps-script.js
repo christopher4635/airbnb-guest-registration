@@ -135,7 +135,41 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput("Airbnb Guest Registration Webhook is active and listening for POST requests.");
+  // If requested with ?action=getEntries, return all rows as JSON for the Admin Dashboard
+  if (e && e.parameter && e.parameter.action === "getEntries") {
+    try {
+      const sheet = getRegistrySheet();
+      const lastRow = sheet.getLastRow();
+      const lastCol = sheet.getLastColumn();
+
+      if (lastRow <= 1) {
+        return responseJSON({ status: "success", entries: [] });
+      }
+
+      const data = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+      const headers = data[0];
+      const rows = data.slice(1);
+
+      const entries = rows.map(function(row) {
+        const obj = {};
+        headers.forEach(function(h, idx) {
+          let val = row[idx];
+          if (typeof val === 'string' && val.indexOf('=HYPERLINK(') !== -1) {
+            const match = val.match(/=HYPERLINK\("([^"]+)"/);
+            if (match) val = match[1];
+          }
+          obj[h] = val;
+        });
+        return obj;
+      });
+
+      return responseJSON({ status: "success", entries: entries });
+    } catch (err) {
+      return responseJSON({ status: "error", message: err.toString() });
+    }
+  }
+
+  return ContentService.createTextOutput("Airbnb Guest Registration Webhook is active and listening.");
 }
 
 // ---------------- Helper Utilities ----------------
