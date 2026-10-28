@@ -1,5 +1,10 @@
 {
   "adminPin": "4635",
+  "hostContact": {
+    "phone": "+917002293073",
+    "instagramUrl": "https://www.instagram.com/elitehomes.kokrajhar/",
+    "instagramHandle": "Elite Homes"
+  },
   "propertyOptions": [
     "1 Room / Studio",
     "1 BHK",
@@ -87,10 +92,5 @@
   ],
   "customFields": [],
   "rulesText": "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine.",
-  "signatureRequired": true,
-  "hostContact": {
-    "phone": "+917002293073",
-    "instagramUrl": "",
-    "instagramHandle": ""
-  }
+  "signatureRequired": true
 }
