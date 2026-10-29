@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "airbnb-db",
-      "database_id": "00000000-0000-0000-0000-000000000000" // Replace with output from: npx wrangler d1 create airbnb-db
+      "database_id": "aa4ef584-3db3-4c2c-8bbd-873b80979869" // Replace with output from: npx wrangler d1 create airbnb-db
     }
   ],
 
