@@ -62,16 +62,18 @@ uploadsRoute.post('/', async (c) => {
 
     const key = `uploads/${folder}/${filename}`;
 
-    // Upload to Cloudflare R2
-    await c.env.IMAGES_BUCKET.put(key, buffer, {
-      httpMetadata: {
-        contentType: mimeType,
-        cacheControl: 'public, max-age=31536000, immutable'
-      },
-      customMetadata: {
-        uploadedAt: new Date().toISOString()
-      }
-    });
+    // Upload to Cloudflare R2 if bucket is bound
+    if (c.env.IMAGES_BUCKET) {
+      await c.env.IMAGES_BUCKET.put(key, buffer, {
+        httpMetadata: {
+          contentType: mimeType,
+          cacheControl: 'public, max-age=31536000, immutable'
+        },
+        customMetadata: {
+          uploadedAt: new Date().toISOString()
+        }
+      });
+    }
 
     const publicUrl = `/api/uploads/${key}`;
 
@@ -96,6 +98,10 @@ uploadsRoute.get('/*', async (c) => {
 
     if (!key) {
       return c.json({ error: 'Missing key' }, 400);
+    }
+
+    if (!c.env.IMAGES_BUCKET) {
+      return c.text('R2 Storage Bucket is not bound yet. Enable R2 in Cloudflare Dashboard.', 503);
     }
 
     const object = await c.env.IMAGES_BUCKET.get(key);

@@ -43,7 +43,7 @@ function mapDbRowToSubmission(row: any): Submission {
 
 // Helper to save base64 photo directly to Cloudflare R2
 async function saveToR2(
-  bucket: R2Bucket,
+  bucket: R2Bucket | undefined,
   dataUri: string,
   keyPrefix: string,
   filenameSuffix: string
@@ -56,16 +56,23 @@ async function saveToR2(
   const ext = parsed.contentType.includes('png') ? 'png' : 'jpg';
   const key = `guests/${keyPrefix}/${filenameSuffix}_${Date.now()}.${ext}`;
 
-  await bucket.put(key, parsed.buffer, {
-    httpMetadata: {
-      contentType: parsed.contentType,
-      cacheControl: 'public, max-age=31536000, immutable'
-    }
-  });
+  if (bucket) {
+    await bucket.put(key, parsed.buffer, {
+      httpMetadata: {
+        contentType: parsed.contentType,
+        cacheControl: 'public, max-age=31536000, immutable'
+      }
+    });
+    return {
+      key,
+      url: `/api/uploads/${key}`
+    };
+  }
 
+  // Fallback to data URI if R2 bucket is not yet active
   return {
-    key,
-    url: `/api/uploads/${key}`
+    key: `local_${key}`,
+    url: dataUri
   };
 }
 

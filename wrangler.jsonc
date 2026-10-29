@@ -16,17 +16,17 @@
     {
       "binding": "DB",
       "database_name": "airbnb-db",
-      "database_id": "00000000-0000-0000-0000-000000000000" // Replace with your D1 database ID from: npx wrangler d1 create airbnb-db
+      "database_id": "aa4ef584-3db3-4c2c-8bbd-873b80979869" // Replace with your D1 database ID from: npx wrangler d1 create airbnb-db
     }
   ],
 
-  // 3. Cloudflare R2 Storage (Zero Egress Object Store for Guest IDs & Signatures)
-  "r2_buckets": [
-    {
-      "binding": "IMAGES_BUCKET",
-      "bucket_name": "airbnb-guest-images" // Created via: npx wrangler r2 bucket create airbnb-guest-images
-    }
-  ],
+  // 3. Cloudflare R2 Storage (Uncomment once R2 is enabled in Cloudflare Dashboard)
+  // "r2_buckets": [
+  //   {
+  //     "binding": "IMAGES_BUCKET",
+  //     "bucket_name": "airbnb-guest-images"
+  //   }
+  // ],
 
   // 4. Environment Variables
   "vars": {
