@@ -6,6 +6,8 @@ import bookingsRoute from './routes/bookings';
 import submissionsRoute from './routes/submissions';
 import uploadsRoute from './routes/uploads';
 import configRoute from './routes/config';
+import propertiesRoute from './routes/properties';
+import icalRoute from './routes/ical';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -47,6 +49,9 @@ app.route('/api/bookings', bookingsRoute);
 app.route('/api/submissions', submissionsRoute);
 app.route('/api/uploads', uploadsRoute);
 app.route('/api/config', configRoute);
+app.route('/api/properties', propertiesRoute);
+app.route('/api/ical', icalRoute);
+app.route('/ical', icalRoute);
 
 // 5. 404 Handler
 app.notFound((c) => {

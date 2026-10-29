@@ -1131,6 +1131,100 @@
       line-height: 1.4;
     }
 
+    /* Room Manager & iCal Sync Styles */
+    .room-manage-card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .room-manage-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    .room-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .room-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .room-color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.06);
+    }
+    .room-name-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .room-bookings-badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: #F1F5F9;
+      color: #475569;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .room-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .feed-copy-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: var(--radius-sm);
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .feed-url-text {
+      flex: 1;
+      font-family: monospace;
+      color: #334155;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      user-select: all;
+    }
+    .btn-copy-sm {
+      background: #fff;
+      border: 1px solid #CBD5E1;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #1E293B;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .btn-copy-sm:hover {
+      background: #F1F5F9;
+      border-color: #94A3B8;
+    }
+    .btn-copy-sm.copied {
+      background: #ECFDF5;
+      border-color: #10B981;
+      color: #065F46;
+    }
+
   </style>
   <script src="js/api.js"></script>
 </head>
@@ -1279,7 +1373,7 @@
           <!-- Action Buttons -->
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <button type="button" class="btn btn-outline" onclick="forceSyncServerBookings()" style="background:#ECFDF5; border-color:#10B981; color:#065F46; font-weight:600;" title="Reload live confirmed bookings">
-              <span>🔄 Refresh Live Data</span>
+              <span>🔄 Refresh Data</span>
             </button>
             <button type="button" class="btn btn-primary" id="btn-open-add-booking" onclick="openAddBookingModal()" style="display: inline-flex; align-items: center; gap: 5px;">
               <span>➕ Add Booking</span>
@@ -1287,8 +1381,11 @@
             <button type="button" class="btn btn-outline" id="btn-open-quick-block" onclick="openQuickBlockModal()" title="Block dates for maintenance, cleaning, or owner stay">
               <span>🔒 Block Dates</span>
             </button>
-            <button type="button" class="btn btn-outline" id="btn-open-ical-sync" onclick="openIcalSyncModal()" title="Sync Airbnb Calendars via iCal">
-              <span>🔄 Airbnb iCal</span>
+            <button type="button" class="btn btn-outline" id="btn-open-manage-rooms" onclick="openManageRoomsModal()" title="Add, rename, and manage rooms and custom units">
+              <span>🏡 Manage Rooms</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-open-ical-sync" onclick="openIcalSyncModal()" style="background:#EFF6FF; border-color:#3B82F6; color:#1D4ED8; font-weight:600;" title="Two-Way iCal Sync with Airbnb & Booking.com">
+              <span>🔄 Sync Channels</span>
             </button>
             <button type="button" class="btn btn-outline" id="btn-open-backup-export" onclick="openBackupModal()" title="Backup & Export Bookings">
               <span>💾 Backup</span>
@@ -1537,44 +1634,152 @@
         </div>
       </div>
 
-      <!-- MODAL 3: Airbnb iCal Sync Modal -->
-      <div class="modal-backdrop" id="modal-ical-sync">
-        <div class="modal-dialog" style="max-width: 620px;">
+      <!-- MODAL 3: Manage Rooms & Properties -->
+      <div class="modal-backdrop" id="modal-manage-rooms">
+        <div class="modal-dialog" style="max-width: 680px;">
           <div class="modal-header">
-            <h3>🔄 Airbnb Calendar iCal Sync</h3>
-            <button type="button" class="modal-close-btn" onclick="closeIcalSyncModal()">&times;</button>
+            <div>
+              <h3>🏡 Manage Rooms &amp; Units</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Add new rooms, rename existing rooms, and configure calendar sync</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeManageRoomsModal()">&times;</button>
           </div>
           <div class="modal-body">
             
-            <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-bottom: 18px; font-size: 12px; line-height: 1.6; color: var(--text-main);">
-              <strong>How to get your Airbnb iCal link:</strong><br>
-              1. Open Airbnb &rarr; <strong>Listings</strong> &rarr; Select your property.<br>
-              2. Go to <strong>Pricing and availability</strong> &rarr; Scroll to <strong>Calendar sync</strong>.<br>
-              3. Click <strong>Export calendar</strong> &rarr; Copy the link (ends in <code>.ics</code>).<br>
-              4. Paste the links below for each of your 3 properties.
+            <!-- Add New Room Card -->
+            <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px;">
+              <strong style="font-size: 13px; display: block; margin-bottom: 8px; color: var(--text-main);">➕ Add New Room / Unit</strong>
+              <div style="display: grid; grid-template-columns: 1fr 130px auto; gap: 10px; align-items: end;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label style="font-size: 12px; margin-bottom: 4px;">Room / Unit Name *</label>
+                  <input type="text" id="new-room-name-input" placeholder="e.g. 3 BHK Penthouse, Studio Suite..." style="height: 38px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label style="font-size: 12px; margin-bottom: 4px;">Badge Color</label>
+                  <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="color" id="new-room-color-input" value="#3B82F6" style="width: 40px; height: 38px; padding: 2px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer;">
+                    <span style="font-size: 11px; color: var(--text-muted);" id="new-room-color-label">#3B82F6</span>
+                  </div>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-primary" onclick="handleAddRoom()" style="height: 38px; padding: 0 16px;">
+                    + Add Room
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <div id="ical-inputs-container">
-              <!-- Dynamically populated for all 3 properties -->
-            </div>
-
-            <div style="border-top: 1px dashed var(--border-color); padding-top: 14px; margin-top: 14px;">
-              <strong style="font-size: 13px; display: block; margin-bottom: 6px;">Alternative: Import from .ics File or Text</strong>
-              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
-                If browser restrictions block fetching directly from airbnb.com, upload your downloaded <code>.ics</code> file here:
-              </p>
-              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
-                <select id="file-import-property" style="max-width: 180px; height: 36px; font-size: 12px;">
-                  <!-- Property options -->
-                </select>
-                <input type="file" id="ical-file-input" accept=".ics" style="font-size: 12px;">
+            <!-- Current Rooms List -->
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <strong style="font-size: 14px; color: var(--text-main);">Current Rooms &amp; Units (<span id="rooms-count-display">0</span>)</strong>
+                <span style="font-size: 11px; color: var(--text-muted);">Renaming a room cascades to all existing bookings</span>
+              </div>
+              <div id="rooms-list-container" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Populated dynamically -->
               </div>
             </div>
 
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-outline" onclick="closeIcalSyncModal()">Close</button>
-            <button type="button" class="btn btn-primary" onclick="saveAndSyncIcals()">Save & Sync All</button>
+            <button type="button" class="btn btn-outline" onclick="closeManageRoomsModal()">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 4: Rename Room (With Cascading Updates) -->
+      <div class="modal-backdrop" id="modal-rename-room" style="z-index: 10000;">
+        <div class="modal-dialog" style="max-width: 480px;">
+          <div class="modal-header">
+            <h3>✏️ Rename Room</h3>
+            <button type="button" class="modal-close-btn" onclick="closeRenameRoomModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="rename-room-old-name">
+            <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #1E40AF; line-height: 1.5;">
+              ℹ️ <strong>Automatic Cloudflare D1 Cascade:</strong> Renaming this room will automatically update all existing confirmed bookings, calendar timeline bars, and guest check-in submissions from <strong id="rename-room-current-label"></strong> to the new name!
+            </div>
+
+            <div class="form-group">
+              <label>New Room Name *</label>
+              <input type="text" id="rename-room-new-name" placeholder="Enter new room name">
+            </div>
+
+            <div class="form-group">
+              <label>Room Badge Color</label>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="color" id="rename-room-color" value="#FF385C" style="width: 44px; height: 38px; padding: 2px; border-radius: 6px; cursor: pointer;">
+                <span style="font-size: 12px; color: var(--text-muted);">Select a theme color for timeline blocks</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeRenameRoomModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-confirm-rename" onclick="handleConfirmRenameRoom()">Save &amp; Rename</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 5: Two-Way iCal Channel Sync Modal -->
+      <div class="modal-backdrop" id="modal-ical-sync">
+        <div class="modal-dialog" style="max-width: 720px;">
+          <div class="modal-header">
+            <div>
+              <h3>🔄 iCal Channel Manager &amp; Two-Way Sync</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Sync calendars with Airbnb, Booking.com, VRBO &amp; Google Calendar</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeIcalSyncModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            
+            <!-- Explainer Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+              <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 12px; font-size: 12px; line-height: 1.5; color: #166534;">
+                <strong style="display: flex; align-items: center; gap: 4px; font-size: 13px; margin-bottom: 4px;">
+                  <span>📤</span> Outbound Sync (This Portal &rarr; Channels)
+                </strong>
+                Copy each room's <strong>Outgoing iCal Link</strong> below and paste it into Airbnb &amp; Booking.com. Bookings made here automatically block dates on those platforms!
+              </div>
+
+              <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 12px; font-size: 12px; line-height: 1.5; color: #1E40AF;">
+                <strong style="display: flex; align-items: center; gap: 4px; font-size: 13px; margin-bottom: 4px;">
+                  <span>📥</span> Inbound Sync (Channels &rarr; This Portal)
+                </strong>
+                Paste your Airbnb &amp; Booking.com export links below. Click <strong>"Sync All Channels Now"</strong> to fetch all external reservations into your calendar instantly!
+              </div>
+            </div>
+
+            <!-- Sync Results Alert Banner -->
+            <div id="ical-sync-status-banner" style="display: none; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px;"></div>
+
+            <!-- Feeds per Property Container -->
+            <div id="ical-feeds-list-container" style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- Dynamically populated for each room -->
+            </div>
+
+            <!-- Alternative File Import (Collapsible) -->
+            <div style="border-top: 1px dashed var(--border-color); padding-top: 12px; margin-top: 16px;">
+              <details style="font-size: 12px; color: var(--text-muted);">
+                <summary style="cursor: pointer; font-weight: 600; color: var(--text-main);">Optional: Import from downloaded .ics file</summary>
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+                  <select id="file-import-property" style="max-width: 180px; height: 36px; font-size: 12px;"></select>
+                  <input type="file" id="ical-file-input" accept=".ics" onchange="handleIcalFileImport(event)" style="font-size: 12px;">
+                </div>
+              </details>
+            </div>
+
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 11px; color: var(--text-muted);" id="ical-sync-last-time"></div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-outline" onclick="closeIcalSyncModal()">Close</button>
+              <button type="button" class="btn btn-outline" onclick="saveIcalFeedUrls()" style="border-color: #3B82F6; color: #1D4ED8;">
+                💾 Save Feed URLs
+              </button>
+              <button type="button" class="btn btn-primary" id="btn-sync-all-channels" onclick="triggerChannelSyncNow()" style="background: #10B981; border-color: #10B981;">
+                🔄 Sync All Channels Now
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1895,34 +2100,52 @@
     function renderPropertyOptions() {
       const container = document.getElementById('property-chips');
       container.innerHTML = '';
-      currentConfig.propertyOptions.forEach((opt, idx) => {
+      const list = getPropertiesList();
+      list.forEach((opt, idx) => {
         const chip = document.createElement('div');
         chip.className = 'chip';
+        chip.style.display = 'inline-flex';
+        chip.style.alignItems = 'center';
+        chip.style.gap = '8px';
         chip.innerHTML = `
           <span>${opt}</span>
-          <button type="button" onclick="removePropertyOption(${idx})" title="Remove option">×</button>
+          <button type="button" onclick="openRenameRoomModal('${opt.replace(/'/g, "\\'")}')" title="Rename Room" style="background:none; border:none; color:#2563EB; font-size:13px; cursor:pointer; padding:0 2px;">✏️</button>
+          <button type="button" onclick="removePropertyOption(${idx})" title="Remove Room" style="background:none; border:none; color:var(--danger); font-size:15px; cursor:pointer; padding:0 2px;">×</button>
         `;
         container.appendChild(chip);
       });
     }
 
-    document.getElementById('btn-add-property').addEventListener('click', () => {
+    document.getElementById('btn-add-property').addEventListener('click', async () => {
       const input = document.getElementById('new-property-input');
       const val = input.value.trim();
-      if (val && !currentConfig.propertyOptions.includes(val)) {
-        currentConfig.propertyOptions.push(val);
+      if (val && !getPropertiesList().includes(val)) {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.addProperty === 'function') {
+          try {
+            await window.AirbnbAPI.addProperty({ name: val });
+          } catch(e) {
+            console.warn("Could not save to D1 properties table directly:", e);
+          }
+        }
+        if (!currentConfig.propertyOptions.includes(val)) {
+          currentConfig.propertyOptions.push(val);
+        }
         input.value = '';
+        await fetchProperties();
         renderPropertyOptions();
+        renderBookingsPortal();
+        showToast(`🏡 Room "${val}" added!`);
       }
     });
 
     window.removePropertyOption = function(idx) {
-      if (currentConfig.propertyOptions.length <= 1) {
+      const list = getPropertiesList();
+      if (list.length <= 1) {
         alert("You must keep at least one property option.");
         return;
       }
-      currentConfig.propertyOptions.splice(idx, 1);
-      renderPropertyOptions();
+      const propToRemove = list[idx];
+      handleDeleteRoom(propToRemove, 0);
     };
 
     // Standard fields
@@ -2655,6 +2878,7 @@
     ];
 
     let currentBookings = [];
+    let loadedProperties = [];
     let currentCalYear = 2026;
     let currentCalMonth = 9; // 0-indexed: 9 = October, 10 = November
     let currentCalView = 'timeline'; // 'timeline' | 'month' | 'list'
@@ -2663,6 +2887,9 @@
 
     // Helpers to get active properties
     function getPropertiesList() {
+      if (loadedProperties && loadedProperties.length > 0) {
+        return loadedProperties.map(p => p.name);
+      }
       if (currentConfig && Array.isArray(currentConfig.propertyOptions) && currentConfig.propertyOptions.length > 0) {
         return currentConfig.propertyOptions;
       }
@@ -2673,12 +2900,46 @@
       if (propName === 'Blocked') {
         return { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' };
       }
+      const propObj = loadedProperties.find(p => p.name.toLowerCase() === (propName || '').toLowerCase());
+      if (propObj && propObj.color) {
+        return {
+          color: propObj.color,
+          bg: propObj.color + '1A', // ~10% tint
+          border: propObj.color + '66',
+          text: propObj.color
+        };
+      }
       const list = getPropertiesList();
       const idx = list.indexOf(propName);
       if (idx >= 0) {
         return PROPERTY_THEMES[idx % PROPERTY_THEMES.length];
       }
       return PROPERTY_THEMES[0];
+    }
+
+    async function fetchProperties() {
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getProperties === 'function') {
+        try {
+          const props = await window.AirbnbAPI.getProperties();
+          if (Array.isArray(props) && props.length > 0) {
+            loadedProperties = props;
+            currentConfig.propertyOptions = props.map(p => p.name);
+            updatePropertiesSummaryKpi();
+            return props;
+          }
+        } catch(e) {
+          console.warn('[Cloudflare D1] Using cached property options:', e);
+        }
+      }
+      return [];
+    }
+
+    function updatePropertiesSummaryKpi() {
+      const props = getPropertiesList();
+      const countEl = document.querySelector('.portal-kpi-grid .kpi-card:first-child .kpi-value');
+      const subEl = document.getElementById('kpi-properties-summary');
+      if (countEl) countEl.textContent = `${props.length} Units`;
+      if (subEl) subEl.textContent = props.join(' • ');
     }
 
     // Default Sample Bookings (Realistic 3-property bookings covering Oct/Nov 2026)
@@ -2808,8 +3069,22 @@
 
     // Force Sync Bookings from Server
     window.forceSyncServerBookings = async function() {
-      if (typeof showToast === 'function') showToast("Syncing latest bookings from server...");
+      if (typeof showToast === 'function') showToast("🔄 Syncing latest bookings & rooms from Cloudflare D1...");
       try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
+          const [d1Bookings, d1Props] = await Promise.all([
+            window.AirbnbAPI.getBookings(),
+            fetchProperties()
+          ]);
+          if (Array.isArray(d1Bookings) && d1Bookings.length > 0) {
+            currentBookings = d1Bookings;
+            localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+            localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
+            renderBookingsPortal();
+            if (typeof showToast === 'function') showToast(`✅ ${d1Bookings.length} bookings loaded from Cloudflare D1!`);
+            return;
+          }
+        }
         const resp = await fetch('bookings.json?nocache=' + Date.now());
         if (resp.ok) {
           const freshData = await resp.json();
@@ -2819,18 +3094,11 @@
             localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
             renderBookingsPortal();
             if (typeof showToast === 'function') showToast("✅ Real bookings synced successfully!");
-            alert(`✅ Real bookings loaded!
-
-1. 1BHK & 2BHK: Oct 29-31 (Offline Guest • ₹2,500, Advance ₹1,000)
-2. 2BHK: Oct 31-Nov 1 (Adhikari Anuj • ₹4,000, Booking.com)
-3. 2BHK: Nov 1-8 (Nikunjan • ₹2,700/nt, Offline)
-4. 2BHK: Nov 8-11 (Faucauld Laurent • ₹3,135/nt, Booking.com)
-5. 2BHK: Nov 11-15 (Kaudek Sonia • ₹16,000, Booking.com)`);
             return;
           }
         }
       } catch(e) {
-        console.warn("Could not fetch remote bookings.json, using local fallback.", e);
+        console.warn("Could not fetch remote bookings, using local fallback.", e);
       }
       currentBookings = getDefaultSampleBookings();
       localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
@@ -2847,7 +3115,10 @@
 
     // Init Bookings
     async function initBookingsPortal() {
-      // 1. Try loading from Cloudflare D1 via Hono backend
+      // 1. Try loading rooms & properties from Cloudflare D1
+      await fetchProperties();
+
+      // 2. Try loading bookings from Cloudflare D1 via Hono backend
       if (window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
         try {
           const d1Bookings = await window.AirbnbAPI.getBookings();
@@ -3724,53 +3995,466 @@
     }
 
     // =========================================================================
-    // 6. AIRBNB ICAL SYNC
+    // 6. ROOM MANAGEMENT (ADD, RENAME & DELETE WITH D1 CASCADE)
     // =========================================================================
-    function openIcalSyncModal() {
-      const container = document.getElementById('ical-inputs-container');
+    window.openManageRoomsModal = async function() {
+      await fetchProperties();
+      renderRoomsList();
+      document.getElementById('modal-manage-rooms').style.display = 'flex';
+    };
+
+    window.closeManageRoomsModal = function() {
+      document.getElementById('modal-manage-rooms').style.display = 'none';
+    };
+
+    function renderRoomsList() {
+      const container = document.getElementById('rooms-list-container');
+      const countDisplay = document.getElementById('rooms-count-display');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const props = loadedProperties && loadedProperties.length > 0 
+        ? loadedProperties 
+        : getPropertiesList().map((name, i) => ({ id: `p_${i}`, name, color: PROPERTY_THEMES[i % PROPERTY_THEMES.length].color, active_bookings_count: 0 }));
+
+      if (countDisplay) countDisplay.textContent = props.length;
+
+      props.forEach(p => {
+        const activeBookings = currentBookings.filter(b => b.property === p.name && b.status !== 'Cancelled').length;
+        const color = p.color || '#3B82F6';
+        const exportUrl = window.AirbnbAPI ? window.AirbnbAPI.getIcalExportUrl(p.name) : `${window.location.origin}/api/ical/export/${encodeURIComponent(p.name)}.ics`;
+
+        const card = document.createElement('div');
+        card.className = 'room-manage-card';
+        card.innerHTML = `
+          <div class="room-card-header">
+            <div class="room-title-group">
+              <span class="room-color-dot" style="background: ${color};"></span>
+              <span class="room-name-text">${escapeHtml(p.name)}</span>
+              <span class="room-bookings-badge">${activeBookings} active booking${activeBookings === 1 ? '' : 's'}</span>
+            </div>
+            <div class="room-actions">
+              <button type="button" class="btn btn-outline" onclick="openRenameRoomModal('${escapeJsString(p.name)}', '${color}')" style="height: 32px; padding: 0 10px; font-size: 12px;" title="Rename room (cascades to all bookings)">
+                ✏️ Rename
+              </button>
+              <button type="button" class="btn btn-outline" onclick="openIcalSyncModal('${escapeJsString(p.name)}')" style="height: 32px; padding: 0 10px; font-size: 12px; color: #1D4ED8; border-color: #BFDBFE;" title="Configure iCal feeds for this room">
+                🔄 iCal
+              </button>
+              <button type="button" class="btn btn-outline" onclick="handleDeleteRoom('${escapeJsString(p.name)}', ${activeBookings})" style="height: 32px; padding: 0 10px; font-size: 12px; color: var(--danger); border-color: #FECACA;" title="Delete this room">
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <!-- Outbound iCal URL Bar -->
+          <div class="feed-copy-box">
+            <span style="font-weight: 700; color: #475569; font-size: 11px; white-space: nowrap;">Outgoing .ics:</span>
+            <span class="feed-url-text">${exportUrl}</span>
+            <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${exportUrl}', this)" title="Copy URL to paste into Airbnb/Booking.com">
+              📋 Copy Link
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    window.handleAddRoom = async function() {
+      const nameInput = document.getElementById('new-room-name-input');
+      const colorInput = document.getElementById('new-room-color-input');
+      const name = (nameInput?.value || '').trim();
+      const color = colorInput?.value || '#3B82F6';
+
+      if (!name) {
+        alert("Please enter a room or unit name.");
+        return;
+      }
+
+      const existingNames = getPropertiesList().map(n => n.toLowerCase());
+      if (existingNames.includes(name.toLowerCase())) {
+        alert(`A room named "${name}" already exists.`);
+        return;
+      }
+
+      // 1. Save to backend D1 database
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.addProperty === 'function') {
+        try {
+          const res = await window.AirbnbAPI.addProperty({ name, color });
+          if (!res.success && res.error) {
+            alert(res.error);
+            return;
+          }
+        } catch(e) {
+          console.warn("Backend addProperty warning:", e);
+        }
+      }
+
+      // 2. Update local state
+      nameInput.value = '';
+      if (!currentConfig.propertyOptions.includes(name)) {
+        currentConfig.propertyOptions.push(name);
+      }
+
+      await fetchProperties();
+      renderRoomsList();
+      renderPropertyOptions();
+      renderBookingsPortal();
+      showToast(`🏡 Room "${name}" created successfully!`);
+    };
+
+    window.openRenameRoomModal = function(oldName, currentColor) {
+      document.getElementById('rename-room-old-name').value = oldName;
+      document.getElementById('rename-room-new-name').value = oldName;
+      document.getElementById('rename-room-current-label').textContent = `"${oldName}"`;
+      if (currentColor) {
+        document.getElementById('rename-room-color').value = currentColor;
+      }
+      document.getElementById('modal-rename-room').style.display = 'flex';
+      document.getElementById('rename-room-new-name').focus();
+    };
+
+    window.closeRenameRoomModal = function() {
+      document.getElementById('modal-rename-room').style.display = 'none';
+    };
+
+    window.handleConfirmRenameRoom = async function() {
+      const oldName = document.getElementById('rename-room-old-name').value;
+      const newName = (document.getElementById('rename-room-new-name').value || '').trim();
+      const color = document.getElementById('rename-room-color').value;
+
+      if (!newName) {
+        alert("New room name cannot be empty.");
+        return;
+      }
+
+      if (newName.toLowerCase() !== oldName.toLowerCase()) {
+        const existingNames = getPropertiesList().map(n => n.toLowerCase());
+        if (existingNames.includes(newName.toLowerCase())) {
+          alert(`Another room is already named "${newName}". Please choose a distinct name.`);
+          return;
+        }
+      }
+
+      const btn = document.getElementById('btn-confirm-rename');
+      const origText = btn.textContent;
+      btn.textContent = 'Saving...';
+      btn.disabled = true;
+
+      try {
+        // Call backend API to cascade update D1 bookings and properties
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.updateProperty === 'function') {
+          const res = await window.AirbnbAPI.updateProperty(oldName, { newName, color });
+          if (!res.success && res.error) {
+            alert(res.error);
+            btn.textContent = origText;
+            btn.disabled = false;
+            return;
+          }
+        }
+
+        // Cascade rename in local in-memory bookings
+        currentBookings.forEach(b => {
+          if (b.property === oldName) {
+            b.property = newName;
+          }
+        });
+        localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+
+        // Update currentConfig
+        if (currentConfig && Array.isArray(currentConfig.propertyOptions)) {
+          currentConfig.propertyOptions = currentConfig.propertyOptions.map(opt => opt === oldName ? newName : opt);
+        }
+
+        await fetchProperties();
+        renderRoomsList();
+        renderPropertyOptions();
+        renderBookingsPortal();
+        closeRenameRoomModal();
+        showToast(`✅ Room renamed from "${oldName}" to "${newName}". All bookings updated!`);
+      } catch(err) {
+        alert("Failed to rename room: " + err.message);
+      } finally {
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    };
+
+    window.handleDeleteRoom = async function(name, activeCount) {
+      if (activeCount > 0) {
+        const proceed = confirm(`Room "${name}" has ${activeCount} active booking(s).\n\nDeleting this room will cancel those bookings. Are you sure you want to proceed?`);
+        if (!proceed) return;
+      } else {
+        const proceed = confirm(`Are you sure you want to delete room "${name}"?`);
+        if (!proceed) return;
+      }
+
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.deleteProperty === 'function') {
+        try {
+          await window.AirbnbAPI.deleteProperty(name, true);
+        } catch(e) {
+          console.warn('Backend deleteProperty warning:', e);
+        }
+      }
+
+      // Remove from current bookings or mark cancelled
+      currentBookings.forEach(b => {
+        if (b.property === name) b.status = 'Cancelled';
+      });
+      localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+
+      if (currentConfig && Array.isArray(currentConfig.propertyOptions)) {
+        currentConfig.propertyOptions = currentConfig.propertyOptions.filter(opt => opt !== name);
+      }
+
+      await fetchProperties();
+      renderRoomsList();
+      renderPropertyOptions();
+      renderBookingsPortal();
+      showToast(`Room "${name}" removed.`);
+    };
+
+    // =========================================================================
+    // 7. TWO-WAY ICAL CHANNEL SYNC (OUTBOUND & INBOUND)
+    // =========================================================================
+    window.openIcalSyncModal = async function(targetRoomName = null) {
+      await fetchProperties();
+      const container = document.getElementById('ical-feeds-list-container');
       const filePropSelect = document.getElementById('file-import-property');
+      const banner = document.getElementById('ical-sync-status-banner');
+      if (banner) banner.style.display = 'none';
+
       container.innerHTML = '';
       filePropSelect.innerHTML = '';
 
-      const props = getPropertiesList();
-      const savedIcals = JSON.parse(localStorage.getItem('airbnb_icals') || '{}');
+      const props = loadedProperties && loadedProperties.length > 0 ? loadedProperties : [];
 
       props.forEach((prop, idx) => {
-        // Inputs
-        const div = document.createElement('div');
-        div.className = 'form-group';
-        div.innerHTML = `
-          <label>Airbnb iCal URL for: <strong>${prop}</strong></label>
-          <input type="text" id="ical-url-${idx}" value="${savedIcals[prop] || ''}" placeholder="https://www.airbnb.com/calendar/ical/...ics">
-        `;
-        container.appendChild(div);
+        const color = prop.color || '#3B82F6';
+        const exportUrl = window.AirbnbAPI 
+          ? window.AirbnbAPI.getIcalExportUrl(prop.name) 
+          : `${window.location.origin}/api/ical/export/${encodeURIComponent(prop.name)}.ics`;
 
-        // File dropdown option
+        const card = document.createElement('div');
+        card.className = 'room-manage-card';
+        card.style.background = '#FAFAFC';
+        card.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="room-color-dot" style="background: ${color};"></span>
+              <strong style="font-size: 15px; color: var(--text-main);">${escapeHtml(prop.name)}</strong>
+            </div>
+            <span style="font-size: 11px; color: var(--text-muted);">
+              ${prop.last_synced_at ? '🕒 Last Synced: ' + new Date(prop.last_synced_at).toLocaleString() : '🕒 Not synced yet'}
+            </span>
+          </div>
+
+          <!-- Outbound Export URL Box -->
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #166534; display: block; margin-bottom: 3px;">
+              📤 Outgoing iCal Feed (Airbnb &amp; Booking.com import this):
+            </label>
+            <div class="feed-copy-box">
+              <span class="feed-url-text">${exportUrl}</span>
+              <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${exportUrl}', this)">
+                📋 Copy Feed URL
+              </button>
+              <a href="${exportUrl}" target="_blank" class="btn-copy-sm" style="text-decoration:none;" title="Open or test .ics feed in browser">
+                📥 Test .ics
+              </a>
+            </div>
+          </div>
+
+          <!-- Inbound Channel URL Inputs -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600;">
+                Airbnb Calendar Export URL:
+              </label>
+              <input type="text" id="feed-airbnb-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 12px; height: 36px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600;">
+                Booking.com Calendar Export URL:
+              </label>
+              <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 36px;">
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+
+        // File import select
         const opt = document.createElement('option');
-        opt.value = prop;
-        opt.textContent = prop;
+        opt.value = prop.name;
+        opt.textContent = prop.name;
         filePropSelect.appendChild(opt);
       });
 
+      // Outbound All Properties Feed Box at the bottom
+      const allExportUrl = window.AirbnbAPI ? window.AirbnbAPI.getIcalExportUrl('all') : `${window.location.origin}/api/ical/export/all.ics`;
+      const allBox = document.createElement('div');
+      allBox.style.padding = '10px 14px';
+      allBox.style.background = '#F0FDF4';
+      allBox.style.border = '1px solid #BBF7D0';
+      allBox.style.borderRadius = 'var(--radius-sm)';
+      allBox.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+          <div>
+            <strong style="font-size: 12px; color: #166534;">🌟 Combined Portfolio Feed (All Units in One Calendar):</strong>
+            <div style="font-family: monospace; font-size: 11px; color: #15803D; word-break: break-all;">${allExportUrl}</div>
+          </div>
+          <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${allExportUrl}', this)" style="background:#fff; border-color:#86EFAC; color:#166534;">
+            📋 Copy All-Units Feed
+          </button>
+        </div>
+      `;
+      container.appendChild(allBox);
+
       document.getElementById('modal-ical-sync').style.display = 'flex';
-    }
+    };
 
-    function closeIcalSyncModal() {
+    window.closeIcalSyncModal = function() {
       document.getElementById('modal-ical-sync').style.display = 'none';
-    }
+    };
 
-    function saveAndSyncIcals() {
-      const props = getPropertiesList();
-      const savedIcals = {};
+    window.saveIcalFeedUrls = async function() {
+      const inputs = document.querySelectorAll('#ical-feeds-list-container input[id^="feed-"]');
+      const feedsByProp = {};
 
-      props.forEach((prop, idx) => {
-        const val = (document.getElementById(`ical-url-${idx}`)?.value || '').trim();
-        if (val) savedIcals[prop] = val;
+      inputs.forEach(input => {
+        const propName = input.getAttribute('data-prop');
+        if (!propName) return;
+        if (!feedsByProp[propName]) feedsByProp[propName] = {};
+
+        if (input.id.startsWith('feed-airbnb-')) {
+          feedsByProp[propName].airbnbIcalUrl = input.value.trim();
+        } else if (input.id.startsWith('feed-booking-')) {
+          feedsByProp[propName].bookingComIcalUrl = input.value.trim();
+        }
       });
 
-      localStorage.setItem('airbnb_icals', JSON.stringify(savedIcals));
-      showToast("iCal URLs saved. To sync live Airbnb feeds, use the .ics file import below or your Google Webhook!");
-      closeIcalSyncModal();
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.updateIcalFeeds === 'function') {
+        try {
+          for (const propName of Object.keys(feedsByProp)) {
+            await window.AirbnbAPI.updateIcalFeeds(propName, feedsByProp[propName]);
+          }
+          await fetchProperties();
+          showToast("💾 iCal feed URLs saved successfully!");
+        } catch(e) {
+          alert("Error saving feed URLs: " + e.message);
+        }
+      }
+    };
+
+    window.triggerChannelSyncNow = async function() {
+      const btn = document.getElementById('btn-sync-all-channels');
+      const banner = document.getElementById('ical-sync-status-banner');
+      const origText = btn.innerHTML;
+
+      btn.innerHTML = '⏳ Fetching Airbnb &amp; Booking.com...';
+      btn.disabled = true;
+
+      // 1. Auto-save current input values first
+      await saveIcalFeedUrls();
+
+      try {
+        if (!window.AirbnbAPI || typeof window.AirbnbAPI.syncIcalChannels !== 'function') {
+          throw new Error("Cloudflare iCal sync API client not available.");
+        }
+
+        const res = await window.AirbnbAPI.syncIcalChannels();
+        if (res.success) {
+          // Re-fetch fresh bookings from D1
+          const fresh = await window.AirbnbAPI.getBookings();
+          if (Array.isArray(fresh)) {
+            currentBookings = fresh;
+            localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+          }
+
+          await fetchProperties();
+          renderBookingsPortal();
+
+          // Show banner
+          if (banner) {
+            banner.style.display = 'block';
+            banner.style.background = '#ECFDF5';
+            banner.style.border = '1px solid #10B981';
+            banner.style.color = '#065F46';
+            banner.innerHTML = `
+              <strong>✅ Channel Sync Complete!</strong><br>
+              ${res.stats.totalImported} new reservation(s) imported, ${res.stats.totalUpdated} updated.
+              ${res.stats.errors && res.stats.errors.length > 0 ? `<br><small style="color:#B91C1C;">Errors: ${res.stats.errors.join(', ')}</small>` : ''}
+            `;
+          }
+
+          showToast(`✅ iCal Sync Complete! ${res.stats.totalImported} imported, ${res.stats.totalUpdated} updated.`);
+        } else {
+          throw new Error(res.error || "Channel sync failed.");
+        }
+      } catch(err) {
+        if (banner) {
+          banner.style.display = 'block';
+          banner.style.background = '#FEF2F2';
+          banner.style.border = '1px solid #F87171';
+          banner.style.color = '#991B1B';
+          banner.textContent = '❌ Sync Failed: ' + err.message;
+        }
+        alert("iCal Sync Error: " + err.message);
+      } finally {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    };
+
+    window.copyIcalUrl = function(url, btn) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          markCopied(btn);
+        }).catch(() => fallbackCopy(url, btn));
+      } else {
+        fallbackCopy(url, btn);
+      }
+    };
+
+    function markCopied(btn) {
+      if (!btn) return;
+      const origText = btn.textContent;
+      btn.textContent = '✅ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = origText;
+        btn.classList.remove('copied');
+      }, 2000);
+      showToast("📋 Calendar link copied! Paste into Airbnb or Booking.com.");
+    }
+
+    function fallbackCopy(text, btn) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        markCopied(btn);
+      } catch (err) {
+        prompt("Copy calendar link below:", text);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeJsString(str) {
+      if (!str) return '';
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
     }
 
     function handleIcalFileImport(e) {
@@ -3802,7 +4486,6 @@
           cur = { property: propertyName, platform: 'Airbnb', status: 'Confirmed' };
         } else if (line.startsWith('END:VEVENT')) {
           if (cur.checkInDate && cur.checkOutDate) {
-            // Check if booking already exists with same dates & property
             const exists = currentBookings.some(b => b.property === propertyName && b.checkInDate === cur.checkInDate && b.checkOutDate === cur.checkOutDate);
             if (!exists) {
               const nights = Math.round((new Date(cur.checkOutDate) - new Date(cur.checkInDate)) / (1000 * 60 * 60 * 24));

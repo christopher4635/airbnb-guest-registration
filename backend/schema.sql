@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     guests_count INTEGER NOT NULL DEFAULT 1,
     platform TEXT NOT NULL DEFAULT 'Direct',  -- 'Direct', 'Booking.com', 'Airbnb', 'Blocked'
     reservation_code TEXT,
+    external_uid TEXT,
     payout TEXT,                              -- e.g. '₹2,500'
     payment_status TEXT DEFAULT 'Pay on Arrival', -- 'Paid in Full', 'Deposit Paid', 'Pay on Arrival'
     status TEXT NOT NULL DEFAULT 'Confirmed', -- 'Confirmed', 'Checked In', 'Completed', 'Cancelled', 'Blocked'
@@ -25,8 +26,21 @@ CREATE TABLE IF NOT EXISTS bookings (
 
 CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(check_in_date, check_out_date);
 CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings(property);
+CREATE INDEX IF NOT EXISTS idx_bookings_external_uid ON bookings(external_uid);
 
--- 2. Guest Submissions & Check-ins Table
+-- 2. Properties / Rooms Table (Multi-room management & iCal Sync)
+CREATE TABLE IF NOT EXISTS properties (
+    id TEXT PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,                -- e.g. '1 BHK', '2 BHK', 'Studio'
+    color TEXT DEFAULT '#FF385C',             -- Calendar badge color
+    airbnb_ical_url TEXT,                     -- Inbound Airbnb iCal feed
+    booking_com_ical_url TEXT,                -- Inbound Booking.com iCal feed
+    other_ical_url TEXT,                      -- Other OTA/VRBO/Google Calendar feed
+    last_synced_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- 3. Guest Submissions & Check-ins Table
 CREATE TABLE IF NOT EXISTS submissions (
     id TEXT PRIMARY KEY,
     reservation_code TEXT,

@@ -198,6 +198,69 @@
     },
 
     // --------------------------------------------------------------------------
+    // Properties & Rooms (D1 Database)
+    // --------------------------------------------------------------------------
+    getProperties: async function() {
+      try {
+        const res = await this.request('/api/properties');
+        if (res && res.data) {
+          localStorage.setItem('airbnb_properties_cache', JSON.stringify(res.data));
+          return res.data;
+        }
+      } catch (e) {
+        const cached = localStorage.getItem('airbnb_properties_cache');
+        if (cached) return JSON.parse(cached);
+      }
+      return [];
+    },
+
+    addProperty: async function(propertyData) {
+      return await this.request('/api/properties', {
+        method: 'POST',
+        body: JSON.stringify(propertyData)
+      });
+    },
+
+    updateProperty: async function(oldName, propertyData) {
+      return await this.request(`/api/properties/${encodeURIComponent(oldName)}`, {
+        method: 'PUT',
+        body: JSON.stringify(propertyData)
+      });
+    },
+
+    deleteProperty: async function(name, force = false) {
+      return await this.request(`/api/properties/${encodeURIComponent(name)}${force ? '?force=true' : ''}`, {
+        method: 'DELETE'
+      });
+    },
+
+    // --------------------------------------------------------------------------
+    // iCal Calendar Sync (Outbound & Inbound Sync)
+    // --------------------------------------------------------------------------
+    getIcalFeeds: async function() {
+      return await this.request('/api/ical/feeds');
+    },
+
+    updateIcalFeeds: async function(name, feedsData) {
+      return await this.request(`/api/ical/feeds/${encodeURIComponent(name)}`, {
+        method: 'PUT',
+        body: JSON.stringify(feedsData)
+      });
+    },
+
+    syncIcalChannels: async function(property = null) {
+      return await this.request('/api/ical/sync', {
+        method: 'POST',
+        body: JSON.stringify(property ? { property } : {})
+      });
+    },
+
+    getIcalExportUrl: function(propertyName) {
+      const base = getApiBaseUrl() || window.location.origin;
+      return `${base}/api/ical/export/${encodeURIComponent(propertyName)}.ics`;
+    },
+
+    // --------------------------------------------------------------------------
     // Configuration (D1 Database)
     // --------------------------------------------------------------------------
     getConfig: async function() {

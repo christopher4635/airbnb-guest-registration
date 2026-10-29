@@ -1682,8 +1682,17 @@
       signatureRequired: true
     };
 
-    // Load config from config.json or localStorage
+    // Load config from Cloudflare D1, config.json or localStorage
     async function loadConfig() {
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getConfig === 'function') {
+        try {
+          const remoteConfig = await window.AirbnbAPI.getConfig();
+          if (remoteConfig) {
+            currentConfig = Object.assign(currentConfig, remoteConfig);
+            return;
+          }
+        } catch(e) {}
+      }
       try {
         const res = await fetch('config.json?t=' + Date.now());
         if (res.ok) {

@@ -17,6 +17,7 @@ function mapDbRowToBooking(row: any): Booking {
     guestsCount: Number(row.guests_count) || 1,
     platform: row.platform || 'Direct',
     reservationCode: row.reservation_code || '',
+    externalUid: row.external_uid || '',
     payout: row.payout || '',
     paymentStatus: row.payment_status || 'Pay on Arrival',
     status: row.status || 'Confirmed',
@@ -74,6 +75,7 @@ bookingsRoute.post('/', async (c) => {
     const guestsCount = Number(body.guestsCount) || 1;
     const platform = body.platform || 'Direct';
     const reservationCode = body.reservationCode || '';
+    const externalUid = body.externalUid || null;
     const payout = body.payout || '';
     const paymentStatus = body.paymentStatus || 'Pay on Arrival';
     const status = body.status || 'Confirmed';
@@ -107,13 +109,13 @@ bookingsRoute.post('/', async (c) => {
       INSERT INTO bookings (
         id, property, guest_name, phone, email,
         check_in_date, check_out_date, nights, guests_count,
-        platform, reservation_code, payout, payment_status,
+        platform, reservation_code, external_uid, payout, payment_status,
         status, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id, property, guestName, phone, email,
       checkInDate, checkOutDate, nights, guestsCount,
-      platform, reservationCode, payout, paymentStatus,
+      platform, reservationCode, externalUid, payout, paymentStatus,
       status, notes, now, now
     ).run();
 

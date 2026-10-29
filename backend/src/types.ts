@@ -22,12 +22,25 @@ export interface Booking {
   guestsCount: number;
   platform: string;           // 'Direct' | 'Booking.com' | 'Airbnb' | 'Blocked'
   reservationCode?: string;
+  externalUid?: string;
   payout?: string;
   paymentStatus?: string;     // 'Paid in Full' | 'Deposit Paid' | 'Pay on Arrival'
   status: string;             // 'Confirmed' | 'Checked In' | 'Completed' | 'Cancelled' | 'Blocked'
   notes?: string;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface Property {
+  id: string;
+  name: string;
+  color: string;
+  airbnbIcalUrl?: string;
+  bookingComIcalUrl?: string;
+  otherIcalUrl?: string;
+  lastSyncedAt?: string;
+  createdAt?: string;
+  activeBookingsCount?: number;
 }
 
 export interface Submission {
