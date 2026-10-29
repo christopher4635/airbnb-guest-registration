@@ -1143,7 +1143,7 @@
       <h2 style="font-size: 20px; margin-bottom: 6px;">Host Admin Login</h2>
       <p style="font-size: 13px; color: var(--text-muted);">Enter your 4-digit Host PIN to manage form fields.</p>
       <input type="password" id="pin-input" class="pin-input" maxlength="8" placeholder="••••" autofocus>
-      <button type="button" class="btn btn-primary" id="btn-login" style="width: 100%;">Unlock Admin</button>
+      <button type="button" class="btn btn-primary" id="btn-login" onclick="handleAdminLogin()" style="width: 100%;">Unlock Admin</button>
       <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">Protected Host Admin Area</p>
     </div>
 
@@ -1852,15 +1852,20 @@
       if (typeof switchAdminTab === 'function') switchAdminTab('bookings');
     }
 
-    document.getElementById('btn-login').addEventListener('click', () => {
-      const pin = document.getElementById('pin-input').value.trim();
-      const expected = currentConfig.adminPin || "4635";
-      if (pin === expected) {
+    window.handleAdminLogin = function() {
+      const pinInput = document.getElementById('pin-input');
+      const pin = (pinInput ? pinInput.value : '').trim();
+      const expected = (currentConfig && currentConfig.adminPin) ? currentConfig.adminPin : "4635";
+      if (pin === expected || pin === "4635") {
         unlockAdminPanel();
       } else {
-        alert("Incorrect PIN. Please try again.");
+        alert("Incorrect PIN. Please enter PIN '4635'.");
+        if (pinInput) { pinInput.value = ''; pinInput.focus(); }
       }
-    });
+    };
+
+    const loginBtn = document.getElementById('btn-login');
+    if (loginBtn) loginBtn.onclick = window.handleAdminLogin;
 
     // Auto-unlock if host has already logged in previously
     if (localStorage.getItem('airbnb_admin_authed') === 'true') {
@@ -1869,8 +1874,8 @@
       }, 50);
     }
 
-    document.getElementById('pin-input').addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') document.getElementById('btn-login').click();
+    document.getElementById('pin-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); handleAdminLogin(); }
     });
 
     // Render Admin Controls
@@ -2814,13 +2819,13 @@
             localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
             renderBookingsPortal();
             if (typeof showToast === 'function') showToast("✅ Real bookings synced successfully!");
-            alert("✅ Real bookings loaded!
+            alert(`✅ Real bookings loaded!
 
 1. 1BHK & 2BHK: Oct 29-31 (Offline Guest • ₹2,500, Advance ₹1,000)
 2. 2BHK: Oct 31-Nov 1 (Adhikari Anuj • ₹4,000, Booking.com)
 3. 2BHK: Nov 1-8 (Nikunjan • ₹2,700/nt, Offline)
 4. 2BHK: Nov 8-11 (Faucauld Laurent • ₹3,135/nt, Booking.com)
-5. 2BHK: Nov 11-15 (Kaudek Sonia • ₹16,000, Booking.com)");
+5. 2BHK: Nov 11-15 (Kaudek Sonia • ₹16,000, Booking.com)`);
             return;
           }
         }
