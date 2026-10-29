@@ -2480,168 +2480,137 @@
     }
 
     // Default Sample Bookings (Realistic 3-property bookings covering Oct/Nov 2026)
+        // Actual Real Bookings Data
     function getDefaultSampleBookings() {
       return [
         {
-          id: "bk_demo_1",
-          property: "1 BHK",
-          guestName: "Priya & Amit Patel",
-          phone: "+91 98201 12345",
-          email: "priya.patel@gmail.com",
-          checkInDate: "2026-10-27",
-          checkOutDate: "2026-10-31",
-          nights: 4,
-          guestsCount: 2,
-          platform: "Airbnb",
-          reservationCode: "HM92K481",
-          payout: "₹14,800",
-          paymentStatus: "Paid in Full",
-          status: "Checked In",
-          notes: "Arrived Oct 27, requested extra towel set. Very quiet guests.",
-          createdAt: "2026-10-20T10:00:00Z"
+                "id": "bk_real_1bhk_1",
+                "property": "1 BHK",
+                "guestName": "Offline Guest",
+                "phone": "",
+                "email": "",
+                "checkInDate": "2026-10-29",
+                "checkOutDate": "2026-10-31",
+                "nights": 2,
+                "guestsCount": 2,
+                "platform": "Direct",
+                "reservationCode": "OFFLINE-1029",
+                "payout": "₹2,500",
+                "paymentStatus": "Deposit Paid",
+                "status": "Checked In",
+                "notes": "Booked Rate: ₹2,500 | Advance Paid: ₹1,000 | Booking Mode: Offline",
+                "createdAt": "2026-10-29T10:00:00Z"
         },
         {
-          id: "bk_demo_2",
-          property: "2 BHK",
-          guestName: "David & Sarah Miller",
-          phone: "+1 415 555 2671",
-          email: "miller.family@yahoo.com",
-          checkInDate: "2026-10-28",
-          checkOutDate: "2026-11-02",
-          nights: 5,
-          guestsCount: 4,
-          platform: "Airbnb",
-          reservationCode: "HM77Y81P",
-          payout: "₹28,500",
-          paymentStatus: "Paid in Full",
-          status: "Checked In",
-          notes: "Family of 4 traveling from San Francisco. Requested baby cot.",
-          createdAt: "2026-10-18T14:30:00Z"
+                "id": "bk_real_2bhk_1",
+                "property": "2 BHK",
+                "guestName": "Offline Guest",
+                "phone": "",
+                "email": "",
+                "checkInDate": "2026-10-29",
+                "checkOutDate": "2026-10-31",
+                "nights": 2,
+                "guestsCount": 2,
+                "platform": "Direct",
+                "reservationCode": "OFFLINE-1029",
+                "payout": "₹2,500",
+                "paymentStatus": "Deposit Paid",
+                "status": "Checked In",
+                "notes": "Booked Rate: ₹2,500 | Advance Paid: ₹1,000 | Booking Mode: Offline",
+                "createdAt": "2026-10-29T10:00:00Z"
         },
         {
-          id: "bk_demo_3",
-          property: "1 Room / Studio",
-          guestName: "Rohan Verma",
-          phone: "+91 98112 34567",
-          email: "rohan.v@techstartup.in",
-          checkInDate: "2026-11-01",
-          checkOutDate: "2026-11-05",
-          nights: 4,
-          guestsCount: 1,
-          platform: "Direct",
-          reservationCode: "DIR-1101",
-          payout: "₹9,200",
-          paymentStatus: "Deposit Paid",
-          status: "Confirmed",
-          notes: "Remote work stay. Checked speed of Wi-Fi. Late check-in around 8 PM.",
-          createdAt: "2026-10-25T09:15:00Z"
+                "id": "bk_real_2bhk_2",
+                "property": "2 BHK",
+                "guestName": "Adhikari Anuj",
+                "phone": "",
+                "email": "",
+                "checkInDate": "2026-10-31",
+                "checkOutDate": "2026-11-01",
+                "nights": 1,
+                "guestsCount": 2,
+                "platform": "Booking.com",
+                "reservationCode": "BK-ANUJ",
+                "payout": "₹4,000",
+                "paymentStatus": "Pay on Arrival",
+                "status": "Confirmed",
+                "notes": "Booked Rate: ₹4,000 | Advance: ₹0 | Booking Mode: Booking.com",
+                "createdAt": "2026-10-29T11:00:00Z"
         },
         {
-          id: "bk_demo_4",
-          property: "1 BHK",
-          guestName: "AC Servicing & Sanitization",
-          phone: "",
-          email: "",
-          checkInDate: "2026-11-04",
-          checkOutDate: "2026-11-06",
-          nights: 2,
-          guestsCount: 0,
-          platform: "Blocked",
-          reservationCode: "MAINT-101",
-          payout: "—",
-          paymentStatus: "Paid in Full",
-          status: "Blocked",
-          notes: "Deep cleaning, AC duct filter cleaning & pest treatment.",
-          createdAt: "2026-10-26T12:00:00Z"
+                "id": "bk_real_2bhk_3",
+                "property": "2 BHK",
+                "guestName": "Nikunjan",
+                "phone": "",
+                "email": "",
+                "checkInDate": "2026-11-01",
+                "checkOutDate": "2026-11-08",
+                "nights": 7,
+                "guestsCount": 2,
+                "platform": "Direct",
+                "reservationCode": "OFFLINE-NIK",
+                "payout": "₹18,900",
+                "paymentStatus": "Pay on Arrival",
+                "status": "Confirmed",
+                "notes": "Booked Rate: ₹2,700/night (Total: ₹18,900) | Advance: ₹0 | Booking Mode: Offline",
+                "createdAt": "2026-10-29T11:30:00Z"
         },
         {
-          id: "bk_demo_5",
-          property: "2 BHK",
-          guestName: "Elena Rostova",
-          phone: "+44 7700 900123",
-          email: "elena.rostova@outlook.com",
-          checkInDate: "2026-11-08",
-          checkOutDate: "2026-11-14",
-          nights: 6,
-          guestsCount: 3,
-          platform: "Airbnb",
-          reservationCode: "HM901Q52",
-          payout: "₹34,200",
-          paymentStatus: "Paid in Full",
-          status: "Confirmed",
-          notes: "Vacation booking. Flight arriving at 2:30 PM.",
-          createdAt: "2026-10-22T16:20:00Z"
+                "id": "bk_real_2bhk_4",
+                "property": "2 BHK",
+                "guestName": "Faucauld Laurent",
+                "phone": "",
+                "email": "",
+                "checkInDate": "2026-11-08",
+                "checkOutDate": "2026-11-11",
+                "nights": 3,
+                "guestsCount": 2,
+                "platform": "Booking.com",
+                "reservationCode": "BK-LAURENT",
+                "payout": "₹9,405",
+                "paymentStatus": "Pay on Arrival",
+                "status": "Confirmed",
+                "notes": "Booked Rate: ₹3,135/night (Total: ₹9,405) | Advance: ₹0 | Booking Mode: Booking.com",
+                "createdAt": "2026-10-29T12:00:00Z"
         },
         {
-          id: "bk_demo_6",
-          property: "1 Room / Studio",
-          guestName: "Ananya Sen",
-          phone: "+91 97480 98765",
-          email: "ananya.sen@gmail.com",
-          checkInDate: "2026-11-10",
-          checkOutDate: "2026-11-16",
-          nights: 6,
-          guestsCount: 2,
-          platform: "Booking.com",
-          reservationCode: "BK-882910",
-          payout: "₹13,800",
-          paymentStatus: "Pay on Arrival",
-          status: "Confirmed",
-          notes: "Attending friend wedding. Requested iron and ironing board.",
-          createdAt: "2026-10-24T18:40:00Z"
-        },
-        {
-          id: "bk_demo_7",
-          property: "1 BHK",
-          guestName: "Vikram Malhotra",
-          phone: "+91 98450 11223",
-          email: "vikram.m@corporatemail.com",
-          checkInDate: "2026-11-12",
-          checkOutDate: "2026-11-17",
-          nights: 5,
-          guestsCount: 2,
-          platform: "Airbnb",
-          reservationCode: "HM482X99",
-          payout: "₹18,500",
-          paymentStatus: "Paid in Full",
-          status: "Confirmed",
-          notes: "Business trip with colleague. Need invoice.",
-          createdAt: "2026-10-26T11:00:00Z"
-        },
-        {
-          id: "bk_demo_8",
-          property: "2 BHK",
-          guestName: "Rajesh & Meera Gupta",
-          phone: "+91 98220 54321",
-          email: "rajesh.gupta@pune.org",
-          checkInDate: "2026-11-18",
-          checkOutDate: "2026-11-23",
-          nights: 5,
-          guestsCount: 4,
-          platform: "Direct",
-          reservationCode: "DIR-8812",
-          payout: "₹26,000",
-          paymentStatus: "Deposit Paid",
-          status: "Confirmed",
-          notes: "Repeat guest from last year. Prefers ground floor car park.",
-          createdAt: "2026-10-27T15:10:00Z"
+                "id": "bk_real_2bhk_5",
+                "property": "2 BHK",
+                "guestName": "Kaudek Sonia",
+                "phone": "",
+                "email": "",
+                "checkInDate": "2026-11-11",
+                "checkOutDate": "2026-11-15",
+                "nights": 4,
+                "guestsCount": 2,
+                "platform": "Booking.com",
+                "reservationCode": "BK-SONIA",
+                "payout": "₹16,000",
+                "paymentStatus": "Pay on Arrival",
+                "status": "Confirmed",
+                "notes": "Booked Rate: ₹16,000 (₹4,000/night) | Advance: ₹0 | Booking Mode: Booking.com",
+                "createdAt": "2026-10-29T12:30:00Z"
         }
-      ];
+];
     }
 
-    // Init Bookings
+        // Init Bookings
     function initBookingsPortal() {
+      const CURRENT_DATA_VERSION = 'v2_real_bookings_active';
+      const storedVersion = localStorage.getItem('airbnb_bookings_version');
       const stored = localStorage.getItem('airbnb_bookings');
-      if (stored) {
+
+      if (!stored || storedVersion !== CURRENT_DATA_VERSION) {
+        currentBookings = getDefaultSampleBookings();
+        localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
+        saveBookings();
+      } else {
         try {
           currentBookings = JSON.parse(stored);
         } catch(e) {
           currentBookings = getDefaultSampleBookings();
           saveBookings();
         }
-      } else {
-        currentBookings = getDefaultSampleBookings();
-        saveBookings();
       }
 
       // Default calendar to today's month
