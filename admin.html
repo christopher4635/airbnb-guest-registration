@@ -1693,7 +1693,7 @@
 
       <!-- MODAL 3: Manage Rooms & Properties -->
       <div class="modal-backdrop" id="modal-manage-rooms">
-        <div class="modal-dialog" style="max-width: 680px;">
+        <div class="modal-dialog" style="max-width: 740px;">
           <div class="modal-header">
             <div>
               <h3>🏡 Manage Rooms &amp; Units</h3>
@@ -1730,15 +1730,18 @@
             <div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <strong style="font-size: 14px; color: var(--text-main);">Current Rooms &amp; Units (<span id="rooms-count-display">0</span>)</strong>
-                <span style="font-size: 11px; color: var(--text-muted);">Renaming a room cascades to all existing bookings</span>
+                <span style="font-size: 11px; color: var(--text-muted);">Manage outgoing feeds, incoming channels, and rename rooms</span>
               </div>
-              <div id="rooms-list-container" style="display: flex; flex-direction: column; gap: 10px;">
+              <div id="rooms-list-container" style="display: flex; flex-direction: column; gap: 14px;">
                 <!-- Populated dynamically -->
               </div>
             </div>
 
           </div>
-          <div class="modal-footer">
+          <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn btn-primary" onclick="triggerChannelSyncNow(this)" style="background: #10B981; border-color: #059669; font-weight: 600;">
+              🔄 Sync All Channels Now
+            </button>
             <button type="button" class="btn btn-outline" onclick="closeManageRoomsModal()">Close</button>
           </div>
         </div>
@@ -1759,7 +1762,7 @@
 
             <div class="form-group">
               <label>New Room Name *</label>
-              <input type="text" id="rename-room-new-name" placeholder="Enter new room name">
+              <input type="text" id="rename-room-new-name" placeholder="Enter new room name" onkeydown="if(event.key==='Enter') handleConfirmRenameRoom()">
             </div>
 
             <div class="form-group">
@@ -3061,7 +3064,7 @@
       if (currentConfig && Array.isArray(currentConfig.propertyOptions) && currentConfig.propertyOptions.length > 0) {
         return currentConfig.propertyOptions;
       }
-      return ["1 BHK", "2 BHK", "1 Room / Studio"];
+      return ["Ripple 1 BHK", "2 BHK", "Studio"];
     }
 
     function getPropertyTheme(propName) {
@@ -3116,7 +3119,7 @@
       return [
         {
                 "id": "bk_real_1bhk_1",
-                "property": "1 BHK",
+                "property": "Ripple 1 BHK",
                 "guestName": "Offline Guest",
                 "phone": "",
                 "email": "",
@@ -4809,49 +4812,170 @@
 
       const props = loadedProperties && loadedProperties.length > 0 
         ? loadedProperties 
-        : getPropertiesList().map((name, i) => ({ id: `p_${i}`, name, color: PROPERTY_THEMES[i % PROPERTY_THEMES.length].color, active_bookings_count: 0 }));
+        : getPropertiesList().map((name, i) => ({ id: `p_${i}`, name, color: (PROPERTY_THEMES[i % PROPERTY_THEMES.length] || {}).color || '#3B82F6', active_bookings_count: 0 }));
 
       if (countDisplay) countDisplay.textContent = props.length;
 
-      props.forEach(p => {
+      props.forEach((p, idx) => {
         const activeBookings = currentBookings.filter(b => b.property === p.name && b.status !== 'Cancelled').length;
         const color = p.color || '#3B82F6';
-        const exportUrl = window.AirbnbAPI ? window.AirbnbAPI.getIcalExportUrl(p.name) : `${window.location.origin}/api/ical/export/${encodeURIComponent(p.name)}.ics`;
+        const exportUrl = window.AirbnbAPI ? window.AirbnbAPI.getIcalExportUrl(p.name) : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(p.name)}.ics`;
 
         const card = document.createElement('div');
         card.className = 'room-manage-card';
+        card.style.background = '#FFFFFF';
+        card.style.border = '1px solid #E2E8F0';
+        card.style.borderRadius = 'var(--radius-md)';
+        card.style.padding = '14px 16px';
+        card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+
         card.innerHTML = `
-          <div class="room-card-header">
-            <div class="room-title-group">
-              <span class="room-color-dot" style="background: ${color};"></span>
-              <span class="room-name-text">${escapeHtml(p.name)}</span>
-              <span class="room-bookings-badge">${activeBookings} active booking${activeBookings === 1 ? '' : 's'}</span>
+          <!-- Room Header & Actions -->
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="room-color-dot" style="background: ${color}; width: 14px; height: 14px; border-radius: 50%; display: inline-block;"></span>
+              <strong style="font-size: 16px; color: var(--text-main);">${escapeHtml(p.name)}</strong>
+              <span style="font-size: 11px; font-weight: 600; background: #EEF2F6; color: #475569; padding: 2px 8px; border-radius: 12px;">
+                ${activeBookings} active booking${activeBookings === 1 ? '' : 's'}
+              </span>
             </div>
-            <div class="room-actions">
-              <button type="button" class="btn btn-outline" onclick="openRenameRoomModal('${escapeJsString(p.name)}', '${color}')" style="height: 32px; padding: 0 10px; font-size: 12px;" title="Rename room (cascades to all bookings)">
-                ✏️ Rename
-              </button>
-              <button type="button" class="btn btn-outline" onclick="openIcalSyncModal('${escapeJsString(p.name)}')" style="height: 32px; padding: 0 10px; font-size: 12px; color: #1D4ED8; border-color: #BFDBFE;" title="Configure iCal feeds for this room">
-                🔄 iCal
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-outline" onclick="openRenameRoomModal('${escapeJsString(p.name)}', '${color}')" style="height: 32px; padding: 0 12px; font-size: 12px; font-weight: 600; color: #2563EB; border-color: #BFDBFE;" title="Rename room (cascades to all bookings in Cloudflare D1)">
+                ✏️ Rename Room
               </button>
               <button type="button" class="btn btn-outline" onclick="handleDeleteRoom('${escapeJsString(p.name)}', ${activeBookings})" style="height: 32px; padding: 0 10px; font-size: 12px; color: var(--danger); border-color: #FECACA;" title="Delete this room">
-                🗑️
+                🗑️ Delete
               </button>
             </div>
           </div>
 
-          <!-- Outbound iCal URL Bar -->
-          <div class="feed-copy-box">
-            <span style="font-weight: 700; color: #475569; font-size: 11px; white-space: nowrap;">Outgoing .ics:</span>
-            <span class="feed-url-text">${exportUrl}</span>
-            <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${exportUrl}', this)" title="Copy URL to paste into Airbnb/Booking.com">
-              📋 Copy Link
-            </button>
+          <!-- Outbound / Outgoing iCal Feed -->
+          <div style="margin-top: 10px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 10px 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+              <span style="font-weight: 700; color: #166534; font-size: 11px;">
+                📤 Outgoing Calendar Feed (Copy &amp; paste this into Airbnb / Booking.com):
+              </span>
+              <a href="${exportUrl}" target="_blank" style="font-size: 11px; color: #15803D; text-decoration: underline;" title="Download or preview live .ics feed">📥 Test Feed</a>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" readonly value="${exportUrl}" style="background: #FFFFFF; font-family: monospace; font-size: 11px; height: 32px; flex: 1; border: 1px solid #86EFAC; color: #15803D; padding: 0 8px; border-radius: 4px; user-select: all;" onclick="this.select()">
+              <button type="button" class="btn btn-outline" onclick="copyIcalUrl('${exportUrl}', this)" style="height: 32px; padding: 0 12px; font-size: 12px; background: #FFFFFF; border-color: #86EFAC; color: #166534; white-space: nowrap; font-weight: 600;">
+                📋 Copy Link
+              </button>
+            </div>
+          </div>
+
+          <!-- Inbound / Incoming Channel Links (Airbnb & Booking.com) -->
+          <div style="margin-top: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-weight: 700; color: #334155; font-size: 11px;">
+                📥 Incoming Calendar Feeds (Paste your channel calendar links below):
+              </span>
+              <span style="font-size: 10px; color: #64748B;">
+                ${p.last_synced_at ? '🕒 Last synced: ' + new Date(p.last_synced_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '🕒 Not synced yet'}
+              </span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">
+                  Airbnb Calendar Link:
+                </label>
+                <input type="url" id="room-feed-airbnb-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 12px; height: 34px; width: 100%; border: 1px solid #CBD5E1; border-radius: 4px; padding: 0 8px;">
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">
+                  Booking.com / Other Link:
+                </label>
+                <input type="url" id="room-feed-booking-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 34px; width: 100%; border: 1px solid #CBD5E1; border-radius: 4px; padding: 0 8px;">
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+              <button type="button" class="btn btn-outline" onclick="saveSingleRoomFeeds('${escapeJsString(p.name)}', ${idx}, this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #1D4ED8; border-color: #BFDBFE;">
+                💾 Save Links
+              </button>
+              <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(p.name)}', this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
+                🔄 Sync This Room
+              </button>
+            </div>
           </div>
         `;
         container.appendChild(card);
       });
     }
+
+    window.saveSingleRoomFeeds = async function(propName, idx, btn) {
+      const airbnbInput = document.getElementById(`room-feed-airbnb-${idx}`) || document.getElementById(`feed-airbnb-${idx}`);
+      const bookingInput = document.getElementById(`room-feed-booking-${idx}`) || document.getElementById(`feed-booking-${idx}`);
+      
+      const airbnbIcalUrl = airbnbInput ? airbnbInput.value.trim() : '';
+      const bookingComIcalUrl = bookingInput ? bookingInput.value.trim() : '';
+
+      const origText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+      }
+
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.updateIcalFeeds === 'function') {
+          await window.AirbnbAPI.updateIcalFeeds(propName, { airbnbIcalUrl, bookingComIcalUrl });
+        }
+        await fetchProperties();
+        showToast(`💾 Feeds saved for "${propName}"!`);
+      } catch(err) {
+        alert(`Failed to save feeds for ${propName}: ` + err.message);
+      } finally {
+        if (btn) {
+          btn.textContent = origText || '💾 Save Links';
+          btn.disabled = false;
+        }
+      }
+    };
+
+    window.syncSingleRoom = async function(propName, btn) {
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.innerHTML = '⏳ Syncing...';
+        btn.disabled = true;
+      }
+
+      try {
+        // Save feeds first if inputs exist
+        const propIdx = loadedProperties.findIndex(p => p.name === propName);
+        if (propIdx >= 0) {
+          const airbnbInput = document.getElementById(`room-feed-airbnb-${propIdx}`) || document.getElementById(`feed-airbnb-${propIdx}`);
+          const bookingInput = document.getElementById(`room-feed-booking-${propIdx}`) || document.getElementById(`feed-booking-${propIdx}`);
+          if (airbnbInput || bookingInput) {
+            await window.AirbnbAPI.updateIcalFeeds(propName, {
+              airbnbIcalUrl: airbnbInput ? airbnbInput.value.trim() : '',
+              bookingComIcalUrl: bookingInput ? bookingInput.value.trim() : ''
+            });
+          }
+        }
+
+        const res = await window.AirbnbAPI.syncIcalChannels(propName);
+        if (res.success) {
+          const fresh = await window.AirbnbAPI.getBookings();
+          if (Array.isArray(fresh)) {
+            currentBookings = fresh;
+            localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+          }
+          await fetchProperties();
+          renderRoomsList();
+          renderBookingsPortal();
+          showToast(`🔄 "${propName}" synced! ${res.stats?.totalImported || 0} imported, ${res.stats?.totalUpdated || 0} updated.`);
+        } else {
+          throw new Error(res.error || "Room sync failed");
+        }
+      } catch(err) {
+        alert(`Failed to sync ${propName}: ` + err.message);
+      } finally {
+        if (btn) {
+          btn.innerHTML = origText || '🔄 Sync This Room';
+          btn.disabled = false;
+        }
+      }
+    };
 
     window.handleAddRoom = async function() {
       const nameInput = document.getElementById('new-room-name-input');
@@ -4904,7 +5028,13 @@
         document.getElementById('rename-room-color').value = currentColor;
       }
       document.getElementById('modal-rename-room').style.display = 'flex';
-      document.getElementById('rename-room-new-name').focus();
+      setTimeout(() => {
+        const inp = document.getElementById('rename-room-new-name');
+        if (inp) {
+          inp.focus();
+          inp.select();
+        }
+      }, 50);
     };
 
     window.closeRenameRoomModal = function() {
@@ -4930,9 +5060,11 @@
       }
 
       const btn = document.getElementById('btn-confirm-rename');
-      const origText = btn.textContent;
-      btn.textContent = 'Saving...';
-      btn.disabled = true;
+      const origText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+      }
 
       try {
         // Call backend API to cascade update D1 bookings and properties
@@ -4940,8 +5072,10 @@
           const res = await window.AirbnbAPI.updateProperty(oldName, { newName, color });
           if (!res.success && res.error) {
             alert(res.error);
-            btn.textContent = origText;
-            btn.disabled = false;
+            if (btn) {
+              btn.textContent = origText;
+              btn.disabled = false;
+            }
             return;
           }
         }
@@ -4968,8 +5102,10 @@
       } catch(err) {
         alert("Failed to rename room: " + err.message);
       } finally {
-        btn.textContent = origText;
-        btn.disabled = false;
+        if (btn) {
+          btn.textContent = origText || 'Save & Rename';
+          btn.disabled = false;
+        }
       }
     };
 
@@ -5026,15 +5162,19 @@
         const color = prop.color || '#3B82F6';
         const exportUrl = window.AirbnbAPI 
           ? window.AirbnbAPI.getIcalExportUrl(prop.name) 
-          : `${window.location.origin}/api/ical/export/${encodeURIComponent(prop.name)}.ics`;
+          : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(prop.name)}.ics`;
 
         const card = document.createElement('div');
         card.className = 'room-manage-card';
-        card.style.background = '#FAFAFC';
+        card.style.background = '#FFFFFF';
+        card.style.border = '1px solid #E2E8F0';
+        card.style.borderRadius = 'var(--radius-md)';
+        card.style.padding = '14px 16px';
+        card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
         card.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="room-color-dot" style="background: ${color};"></span>
+              <span class="room-color-dot" style="background: ${color}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
               <strong style="font-size: 15px; color: var(--text-main);">${escapeHtml(prop.name)}</strong>
             </div>
             <span style="font-size: 11px; color: var(--text-muted);">
@@ -5043,7 +5183,7 @@
           </div>
 
           <!-- Outbound Export URL Box -->
-          <div>
+          <div style="margin-top: 10px;">
             <label style="font-size: 11px; font-weight: 700; color: #166534; display: block; margin-bottom: 3px;">
               📤 Outgoing iCal Feed (Airbnb &amp; Booking.com import this):
             </label>
@@ -5059,7 +5199,7 @@
           </div>
 
           <!-- Inbound Channel URL Inputs -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
             <div class="form-group" style="margin-bottom: 0;">
               <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600;">
                 Airbnb Calendar Export URL:
@@ -5074,6 +5214,15 @@
               <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 36px;">
             </div>
           </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+            <button type="button" class="btn btn-outline" onclick="saveSingleRoomFeeds('${escapeJsString(prop.name)}', ${idx}, this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #1D4ED8; border-color: #BFDBFE;">
+              💾 Save Links
+            </button>
+            <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(prop.name)}', this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
+              🔄 Sync This Room
+            </button>
+          </div>
         `;
         container.appendChild(card);
 
@@ -5085,7 +5234,7 @@
       });
 
       // Outbound All Properties Feed Box at the bottom
-      const allExportUrl = window.AirbnbAPI ? window.AirbnbAPI.getIcalExportUrl('all') : `${window.location.origin}/api/ical/export/all.ics`;
+      const allExportUrl = window.AirbnbAPI ? window.AirbnbAPI.getIcalExportUrl('all') : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/all.ics`;
       const allBox = document.createElement('div');
       allBox.style.padding = '10px 14px';
       allBox.style.background = '#F0FDF4';
@@ -5112,7 +5261,7 @@
     };
 
     window.saveIcalFeedUrls = async function() {
-      const inputs = document.querySelectorAll('#ical-feeds-list-container input[id^="feed-"]');
+      const inputs = document.querySelectorAll('#ical-feeds-list-container input[id*="airbnb"], #ical-feeds-list-container input[id*="booking"], #rooms-list-container input[id*="airbnb"], #rooms-list-container input[id*="booking"]');
       const feedsByProp = {};
 
       inputs.forEach(input => {
@@ -5120,9 +5269,9 @@
         if (!propName) return;
         if (!feedsByProp[propName]) feedsByProp[propName] = {};
 
-        if (input.id.startsWith('feed-airbnb-')) {
+        if (input.id.includes('airbnb')) {
           feedsByProp[propName].airbnbIcalUrl = input.value.trim();
-        } else if (input.id.startsWith('feed-booking-')) {
+        } else if (input.id.includes('booking')) {
           feedsByProp[propName].bookingComIcalUrl = input.value.trim();
         }
       });
@@ -5140,13 +5289,15 @@
       }
     };
 
-    window.triggerChannelSyncNow = async function() {
-      const btn = document.getElementById('btn-sync-all-channels');
+    window.triggerChannelSyncNow = async function(btnEl = null) {
+      const btn = btnEl || document.getElementById('btn-sync-all-channels');
       const banner = document.getElementById('ical-sync-status-banner');
-      const origText = btn.innerHTML;
+      const origText = btn ? btn.innerHTML : '';
 
-      btn.innerHTML = '⏳ Fetching Airbnb &amp; Booking.com...';
-      btn.disabled = true;
+      if (btn) {
+        btn.innerHTML = '⏳ Fetching Airbnb &amp; Booking.com...';
+        btn.disabled = true;
+      }
 
       // 1. Auto-save current input values first
       await saveIcalFeedUrls();
@@ -5166,6 +5317,7 @@
           }
 
           await fetchProperties();
+          renderRoomsList();
           renderBookingsPortal();
 
           // Show banner
@@ -5195,8 +5347,10 @@
         }
         alert("iCal Sync Error: " + err.message);
       } finally {
-        btn.innerHTML = origText;
-        btn.disabled = false;
+        if (btn) {
+          btn.innerHTML = origText || '🔄 Sync All Channels Now';
+          btn.disabled = false;
+        }
       }
     };
 

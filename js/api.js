@@ -7,20 +7,26 @@
 (function (window) {
   'use strict';
 
+  const WORKER_BACKEND_URL = 'https://airbnb-management.elitehomes-portal.workers.dev';
+
   // Determine API base URL
   function getApiBaseUrl() {
     // 1. Explicit override saved by host
     const custom = localStorage.getItem('airbnb_api_base_url');
     if (custom) return custom.replace(/\/+$/, '');
 
-    // 2. If running on Cloudflare (same origin) or local wrangler dev
+    // 2. If running on Cloudflare Worker domain directly
+    if (window.location.hostname.includes('elitehomes-portal.workers.dev')) {
+      return '';
+    }
+
+    // 3. If running on local wrangler dev
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      // In local dev, backend usually runs on 8787 or same port
       return window.location.port === '8787' ? '' : 'http://127.0.0.1:8787';
     }
 
-    // 3. Same origin for Cloudflare Pages / Workers with Assets
-    return '';
+    // 4. Default for Cloudflare Pages (*.pages.dev) or custom domain -> Route directly to Worker API
+    return WORKER_BACKEND_URL;
   }
 
   const apiClient = {
@@ -292,7 +298,7 @@
     },
 
     getIcalExportUrl: function(propertyName) {
-      const base = getApiBaseUrl() || window.location.origin;
+      const base = WORKER_BACKEND_URL;
       return `${base}/api/ical/export/${encodeURIComponent(propertyName)}.ics`;
     },
 
