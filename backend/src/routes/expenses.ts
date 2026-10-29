@@ -68,7 +68,7 @@ expensesRoute.get('/summary', async (c) => {
     // 1. Fetch all non-cancelled bookings for this month
     // A booking belongs to this month if its check_in or check_out overlaps with the month
     const { results: bookingRows } = await c.env.DB.prepare(`
-      SELECT id, property, guest_name, payout, check_in_date, check_out_date, platform, notes
+      SELECT id, property, guest_name, payout, check_in_date, check_out_date, nights, platform, notes
       FROM bookings
       WHERE status != 'Cancelled'
         AND (strftime('%Y-%m', check_in_date) = ? OR strftime('%Y-%m', check_out_date) = ?)
@@ -80,16 +80,25 @@ expensesRoute.get('/summary', async (c) => {
     (bookingRows || []).forEach((b: any) => {
       let amount = 0;
       if (b.payout) {
-        // Parse numbers out of payout string e.g. '₹2,500' -> 2500
+        // Parse numbers out of payout string e.g. '₹7,500' -> 7500
         const num = parseFloat(String(b.payout).replace(/[^0-9.]/g, ''));
         if (!isNaN(num)) amount = num;
       }
       if (amount === 0 && b.notes) {
-        // Fallback: check if notes contain 'Rate: 2500' or similar
-        const match = String(b.notes).match(/Rate:\s*₹?\s*([0-9,.]+)/i);
-        if (match) {
-          const num = parseFloat(match[1].replace(/,/g, ''));
+        // Fallback: check if notes contain 'Total: ₹7,500' or 'Rate: 2500'
+        const totMatch = String(b.notes).match(/Total:\s*₹?\s*([0-9,.]+)/i);
+        if (totMatch) {
+          const num = parseFloat(totMatch[1].replace(/,/g, ''));
           if (!isNaN(num)) amount = num;
+        } else {
+          const match = String(b.notes).match(/Rate:\s*₹?\s*([0-9,.]+)/i);
+          if (match) {
+            const num = parseFloat(match[1].replace(/,/g, ''));
+            if (!isNaN(num)) {
+              const nights = Number(b.nights) || 1;
+              amount = num * nights;
+            }
+          }
         }
       }
 

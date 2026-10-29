@@ -1522,14 +1522,13 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>Booking Platform *</label>
-                <select id="mb-platform">
-                  <option value="Airbnb">Airbnb</option>
+                <label>Booking Mode *</label>
+                <select id="mb-booking-mode">
+                  <option value="Offline">Offline / Direct Guest</option>
                   <option value="Booking.com">Booking.com</option>
-                  <option value="Direct">Direct / WhatsApp / Phone</option>
-                  <option value="Vrbo">Vrbo</option>
-                  <option value="Agoda">Agoda</option>
-                  <option value="Blocked">Blocked / Maintenance</option>
+                  <option value="Airbnb">Airbnb</option>
+                  <option value="Direct Call / WhatsApp">Direct Call / WhatsApp</option>
+                  <option value="Other">Other Mode</option>
                 </select>
               </div>
             </div>
@@ -1562,33 +1561,35 @@
             </div>
 
             <!-- Pricing, Mode & Financials -->
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>Booked Rate / Total (₹) *</label>
-                <input type="number" id="mb-rate" min="0" placeholder="e.g. 2500" oninput="calculateBalanceDue()" required>
-                <input type="hidden" id="mb-payout">
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px;">
+              <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                💰 Rates, Total Revenue &amp; Payment Details
               </div>
-              <div class="form-group">
-                <label>Advance Received (₹)</label>
-                <input type="number" id="mb-advance" min="0" placeholder="e.g. 1000" oninput="calculateBalanceDue()">
+              <div class="form-row-2">
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label>Room Rate per Night (₹) *</label>
+                  <input type="number" id="mb-nightly-rate" min="0" placeholder="e.g. 2500" oninput="calculatePricingAndBalance(true)" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 10px;">
+                  <label>Total Booked Amount (₹) * <small style="color: #059669; font-weight: 600;">(Rate &times; Nights &rarr; Revenue)</small></label>
+                  <input type="number" id="mb-total-amount" min="0" placeholder="e.g. 7500" oninput="calculatePricingAndBalance(false)" required style="font-weight: 700; color: #065F46;">
+                  <input type="hidden" id="mb-payout">
+                </div>
               </div>
-              <div class="form-group">
-                <label>Balance Due (₹)</label>
-                <input type="text" id="mb-balance" placeholder="₹0" readonly style="background: #F8FAFC; font-weight: 700; color: #065F46;">
+
+              <div class="form-row-2">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Advance Received (₹)</label>
+                  <input type="number" id="mb-advance" min="0" placeholder="e.g. 1000" oninput="calculatePricingAndBalance(false)">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Balance Due (₹)</label>
+                  <input type="text" id="mb-balance" placeholder="₹0" readonly style="background: #FFFFFF; font-weight: 700; color: #065F46;">
+                </div>
               </div>
             </div>
 
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>Booking Mode *</label>
-                <select id="mb-booking-mode" onchange="onBookingModeChange()">
-                  <option value="Offline">Offline / Direct Guest</option>
-                  <option value="Booking.com">Booking.com</option>
-                  <option value="Airbnb">Airbnb</option>
-                  <option value="Direct Call / WhatsApp">Direct Call / WhatsApp</option>
-                  <option value="Other">Other Mode</option>
-                </select>
-              </div>
+            <div class="form-row-2">
               <div class="form-group">
                 <label>Payment Status</label>
                 <select id="mb-pay-status">
@@ -3524,10 +3525,15 @@
           if (!isNaN(num)) amt = num;
         }
         if (amt === 0 && b.notes) {
-          const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
-          if (m) {
-            const num = parseFloat(m[1].replace(/,/g, ''));
-            if (!isNaN(num)) amt = num;
+          const totMatch = b.notes.match(/Total:\s*₹?\s*([0-9,]+)/i);
+          if (totMatch) {
+            amt = parseFloat(totMatch[1].replace(/,/g, ''));
+          } else {
+            const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
+            if (m) {
+              const rate = parseFloat(m[1].replace(/,/g, ''));
+              if (!isNaN(rate)) amt = rate * (b.nights || 1);
+            }
           }
         }
         monthRev += amt;
@@ -3948,42 +3954,62 @@
       });
     }
 
-    // Helper: Calculate Balance Due dynamically
-    function calculateBalanceDue() {
-      const rateInput = document.getElementById('mb-rate');
-      const advInput = document.getElementById('mb-advance');
-      const rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
-      const advance = advInput ? parseFloat(advInput.value) || 0 : 0;
-      const balance = Math.max(0, rate - advance);
+    // Helper: Get nights count from modal dates
+    function getModalNights() {
+      const checkIn = document.getElementById('mb-checkin')?.value;
+      const checkOut = document.getElementById('mb-checkout')?.value;
+      if (!checkIn || !checkOut) return 1;
+      const d1 = new Date(checkIn);
+      const d2 = new Date(checkOut);
+      const n = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      return n > 0 ? n : 1;
+    }
 
-      const balEl = document.getElementById('mb-balance');
-      if (balEl) balEl.value = '₹' + balance.toLocaleString('en-IN');
+    // Helper: Calculate Total Amount (Rate * Nights) and Balance Due dynamically
+    function calculatePricingAndBalance(updateTotal = true) {
+      const nightlyInput = document.getElementById('mb-nightly-rate');
+      const totalInput = document.getElementById('mb-total-amount');
+      const advInput = document.getElementById('mb-advance');
+      const balInput = document.getElementById('mb-balance');
+      const payStatusEl = document.getElementById('mb-pay-status');
+
+      const nights = getModalNights();
+      const nightlyRate = parseFloat(nightlyInput?.value) || 0;
+
+      let totalAmount = 0;
+      if (updateTotal) {
+        if (nightlyRate > 0) {
+          totalAmount = nightlyRate * nights;
+          if (totalInput) totalInput.value = totalAmount;
+        } else {
+          totalAmount = parseFloat(totalInput?.value) || 0;
+        }
+      } else {
+        totalAmount = parseFloat(totalInput?.value) || 0;
+      }
 
       const payoutEl = document.getElementById('mb-payout');
-      if (payoutEl) payoutEl.value = rate > 0 ? ('₹' + rate.toLocaleString('en-IN')) : '';
+      if (payoutEl) {
+        payoutEl.value = totalAmount > 0 ? ('₹' + totalAmount.toLocaleString('en-IN')) : '';
+      }
 
-      const payStatusEl = document.getElementById('mb-pay-status');
+      const advance = parseFloat(advInput?.value) || 0;
+      const balance = Math.max(0, totalAmount - advance);
+
+      if (balInput) {
+        balInput.value = '₹' + balance.toLocaleString('en-IN');
+      }
+
+      // Auto-adjust payment status
       if (payStatusEl) {
-        if (rate > 0 && advance >= rate) {
+        if (totalAmount > 0 && advance >= totalAmount) {
           payStatusEl.value = 'Paid in Full';
         } else if (advance > 0) {
           payStatusEl.value = 'Deposit Paid';
-        } else if (rate > 0) {
+        } else if (totalAmount > 0) {
           payStatusEl.value = 'Pay on Arrival';
         }
       }
-    }
-
-    // Helper: Map booking mode to platform
-    function onBookingModeChange() {
-      const bModeEl = document.getElementById('mb-booking-mode');
-      const platEl = document.getElementById('mb-platform');
-      if (!bModeEl || !platEl) return;
-      const mode = bModeEl.value;
-      if (mode === 'Offline') platEl.value = 'Direct';
-      else if (mode === 'Booking.com') platEl.value = 'Booking.com';
-      else if (mode === 'Airbnb') platEl.value = 'Airbnb';
-      else if (mode === 'Direct Call / WhatsApp') platEl.value = 'Direct';
     }
 
     function openAddBookingModal(prefillProp = '', prefillDate = '') {
@@ -4000,22 +4026,18 @@
       document.getElementById('mb-phone').value = '';
       document.getElementById('mb-email').value = '';
       document.getElementById('mb-res-code').value = '';
-      document.getElementById('mb-platform').value = 'Direct';
-      document.getElementById('mb-payout').value = '';
       document.getElementById('mb-guests-count').value = '2';
       document.getElementById('mb-pay-status').value = 'Pay on Arrival';
       document.getElementById('mb-status').value = 'Confirmed';
       document.getElementById('mb-notes').value = '';
 
-      // Reset rate, advance, balance, booking mode
-      const rateEl = document.getElementById('mb-rate');
-      if (rateEl) rateEl.value = '';
-      const advEl = document.getElementById('mb-advance');
-      if (advEl) advEl.value = '';
-      const balEl = document.getElementById('mb-balance');
-      if (balEl) balEl.value = '₹0';
-      const bModeEl = document.getElementById('mb-booking-mode');
-      if (bModeEl) bModeEl.value = 'Offline';
+      // Reset rates & mode
+      document.getElementById('mb-nightly-rate').value = '';
+      document.getElementById('mb-total-amount').value = '';
+      document.getElementById('mb-advance').value = '';
+      document.getElementById('mb-balance').value = '₹0';
+      document.getElementById('mb-payout').value = '';
+      document.getElementById('mb-booking-mode').value = 'Offline';
 
       // Dates
       const start = prefillDate || new Date().toISOString().slice(0, 10);
@@ -4045,7 +4067,6 @@
       document.getElementById('mb-phone').value = b.phone || '';
       document.getElementById('mb-email').value = b.email || '';
       document.getElementById('mb-res-code').value = b.reservationCode || '';
-      document.getElementById('mb-platform').value = b.platform || 'Airbnb';
       document.getElementById('mb-payout').value = b.payout || '';
       document.getElementById('mb-guests-count').value = b.guestsCount || 2;
       document.getElementById('mb-pay-status').value = b.paymentStatus || 'Paid in Full';
@@ -4054,26 +4075,54 @@
       document.getElementById('mb-checkin').value = b.checkInDate;
       document.getElementById('mb-checkout').value = b.checkOutDate;
 
-      // Extract rate and advance from payout or notes
-      let rateVal = '';
+      // Extract nightly rate, total amount, and advance
+      let nightlyRate = '';
+      let totalAmount = '';
+
       if (b.payout) {
         const num = parseFloat(String(b.payout).replace(/[^0-9.]/g, ''));
-        if (!isNaN(num) && num > 0) rateVal = num;
+        if (!isNaN(num) && num > 0) totalAmount = num;
       }
-      if (!rateVal && b.notes) {
-        const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
-        if (m) rateVal = parseFloat(m[1].replace(/,/g, ''));
+
+      if (b.notes) {
+        const nrMatch = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)\/night/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)\/night/i);
+        if (nrMatch) {
+          nightlyRate = parseFloat(nrMatch[1].replace(/,/g, ''));
+        }
+
+        const totMatch = b.notes.match(/Total:\s*₹?\s*([0-9,]+)/i);
+        if (totMatch) {
+          totalAmount = parseFloat(totMatch[1].replace(/,/g, ''));
+        }
+
+        if (!nightlyRate) {
+          const rateMatch = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
+          if (rateMatch) {
+            const parsedRate = parseFloat(rateMatch[1].replace(/,/g, ''));
+            if (b.nights > 1 && (!totalAmount || totalAmount === parsedRate)) {
+              nightlyRate = parsedRate;
+              totalAmount = parsedRate * b.nights;
+            } else {
+              nightlyRate = parsedRate;
+            }
+          }
+        }
       }
+
+      if (totalAmount && !nightlyRate && b.nights > 0) {
+        nightlyRate = Math.round(totalAmount / b.nights);
+      }
+
       let advVal = '';
       if (b.notes) {
         const m = b.notes.match(/Advance(?:\s*Paid)?:\s*₹?\s*([0-9,]+)/i);
         if (m) advVal = parseFloat(m[1].replace(/,/g, ''));
       }
-      const rateEl = document.getElementById('mb-rate');
-      if (rateEl) rateEl.value = rateVal;
-      const advEl = document.getElementById('mb-advance');
-      if (advEl) advEl.value = advVal;
-      calculateBalanceDue();
+
+      document.getElementById('mb-nightly-rate').value = nightlyRate;
+      document.getElementById('mb-total-amount').value = totalAmount;
+      document.getElementById('mb-advance').value = advVal;
+      calculatePricingAndBalance(false);
 
       const bModeEl = document.getElementById('mb-booking-mode');
       if (bModeEl) {
@@ -4109,7 +4158,7 @@
       editingBookingId = null;
     }
 
-    // Real-Time Overlap / Double-Booking Conflict Detection
+    // Real-Time Overlap / Double-Booking Conflict Detection & Nights Calculation
     function onBookingDateOrPropChange() {
       const prop = document.getElementById('mb-property').value;
       const checkIn = document.getElementById('mb-checkin').value;
@@ -4129,6 +4178,9 @@
         nightsLabel.textContent = `🌙 ${nights} Night${nights > 1 ? 's' : ''} Stay`;
         nightsLabel.style.color = 'var(--primary)';
       }
+
+      // Automatically recalculate total amount = nightly rate * nights
+      calculatePricingAndBalance(true);
 
       // Check for overlap conflicts on the same property
       const conflictAlert = document.getElementById('modal-conflict-alert');
@@ -4159,10 +4211,13 @@
       const name = document.getElementById('mb-guest-name').value.trim();
       const checkIn = document.getElementById('mb-checkin').value;
       const checkOut = document.getElementById('mb-checkout').value;
-      const rateInput = document.getElementById('mb-rate');
-      const advInput = document.getElementById('mb-advance');
-      const rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
-      const advance = advInput ? parseFloat(advInput.value) || 0 : 0;
+      const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+      const nightlyRate = parseFloat(document.getElementById('mb-nightly-rate')?.value) || 0;
+      let totalAmount = parseFloat(document.getElementById('mb-total-amount')?.value) || 0;
+      if (totalAmount === 0 && nightlyRate > 0) {
+        totalAmount = nightlyRate * (nights > 0 ? nights : 1);
+      }
+      const advance = parseFloat(document.getElementById('mb-advance')?.value) || 0;
       const mode = document.getElementById('mb-booking-mode')?.value || 'Offline';
 
       if (!name) {
@@ -4181,14 +4236,16 @@
         return;
       }
 
-      const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-      const payoutStr = rate > 0 ? ('₹' + rate.toLocaleString('en-IN')) : (document.getElementById('mb-payout').value.trim() || '—');
+      const payoutStr = totalAmount > 0 ? ('₹' + totalAmount.toLocaleString('en-IN')) : '—';
 
-      // Preserve structured rate metadata in notes
+      // Preserve structured rate metadata: Rate/night, Total amount, and Booking Mode
       let userNotes = document.getElementById('mb-notes').value.trim();
       userNotes = userNotes.replace(/^Booked Rate:[^\n]+\n?/m, '').trim();
-      const metaLine = `Booked Rate: ₹${rate.toLocaleString('en-IN')} | Advance Paid: ₹${advance.toLocaleString('en-IN')} | Booking Mode: ${mode}`;
+      const metaLine = `Booked Rate: ₹${nightlyRate.toLocaleString('en-IN')}/night (Total: ₹${totalAmount.toLocaleString('en-IN')}) | Advance Paid: ₹${advance.toLocaleString('en-IN')} | Booking Mode: ${mode}`;
       const finalNotes = userNotes ? `${metaLine}\n${userNotes}` : metaLine;
+
+      let platformVal = mode;
+      if (mode === 'Offline' || mode === 'Direct Call / WhatsApp') platformVal = 'Direct';
 
       const bookingId = editingBookingId || ('bk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
 
@@ -4202,7 +4259,7 @@
         checkOutDate: checkOut,
         nights: nights,
         guestsCount: parseInt(document.getElementById('mb-guests-count').value, 10) || 1,
-        platform: document.getElementById('mb-platform').value,
+        platform: platformVal,
         reservationCode: document.getElementById('mb-res-code').value.trim(),
         payout: payoutStr,
         paymentStatus: document.getElementById('mb-pay-status').value,
@@ -4449,10 +4506,15 @@
           if (!isNaN(num)) amt = num;
         }
         if (amt === 0 && b.notes) {
-          const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
-          if (m) {
-            const num = parseFloat(m[1].replace(/,/g, ''));
-            if (!isNaN(num)) amt = num;
+          const totMatch = b.notes.match(/Total:\s*₹?\s*([0-9,]+)/i);
+          if (totMatch) {
+            amt = parseFloat(totMatch[1].replace(/,/g, ''));
+          } else {
+            const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
+            if (m) {
+              const rate = parseFloat(m[1].replace(/,/g, ''));
+              if (!isNaN(rate)) amt = rate * (b.nights || 1);
+            }
           }
         }
         b._calcAmount = amt;
@@ -4514,6 +4576,16 @@
 
       bookings.forEach(b => {
         const theme = getPropertyTheme(b.property);
+        const nights = b.nights || 1;
+        const total = b._calcAmount || 0;
+        const nightly = total > 0 && nights > 0 ? Math.round(total / nights) : 0;
+
+        let modeLabel = b.platform || 'Offline';
+        if (b.notes && b.notes.includes('Booking Mode:')) {
+          const m = b.notes.match(/Booking Mode:\s*([^\n|]+)/i);
+          if (m) modeLabel = m[1].trim();
+        }
+
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
         tr.onclick = () => openEditBookingModal(b.id);
@@ -4529,15 +4601,15 @@
           </td>
           <td style="font-size: 12px; white-space: nowrap;">
             ${b.checkInDate} &rarr; ${b.checkOutDate}
-            <div style="font-size: 11px; color: var(--text-muted);">${b.nights || 1} night${(b.nights || 1) > 1 ? 's' : ''}</div>
+            <div style="font-size: 11px; color: var(--text-muted);">${nights} night${nights > 1 ? 's' : ''} ${nightly > 0 ? '• ₹' + nightly.toLocaleString('en-IN') + '/nt' : ''}</div>
           </td>
           <td>
             <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 11px;">
-              ${escapeHtml(b.platform || 'Direct')}
+              ${escapeHtml(modeLabel)}
             </span>
           </td>
           <td style="text-align: right; font-weight: 700; color: #065F46; font-size: 14px;">
-            ₹${(b._calcAmount || 0).toLocaleString('en-IN')}
+            ₹${total.toLocaleString('en-IN')}
           </td>
         `;
         tbody.appendChild(tr);
