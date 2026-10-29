@@ -1,0 +1,3545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Airbnb Multi-Property Bookings Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --primary: #FF385C;
+      --primary-hover: #E00B41;
+      --primary-light: #FFF0F2;
+      --text-main: #222222;
+      --text-muted: #717171;
+      --bg-page: #F7F7F8;
+      --bg-card: #FFFFFF;
+      --border-color: #E2E2E6;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+      --success: #10B981;
+      --danger: #DC2626;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-page);
+      color: var(--text-main);
+      padding: 20px 16px 80px;
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    .settings-container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    /* Auth Screen */
+    #auth-screen {
+      max-width: 380px;
+      margin: 80px auto 0;
+      background: #fff;
+      padding: 32px 24px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+
+    .pin-input {
+      font-size: 24px;
+      letter-spacing: 6px;
+      text-align: center;
+      width: 100%;
+      height: 52px;
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin: 18px 0;
+      outline: none;
+    }
+    .pin-input:focus { border-color: var(--primary); }
+
+    /* Admin Content */
+    #admin-panel { display: none; }
+
+    .admin-header {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .admin-title h1 { font-size: 22px; font-weight: 700; }
+    .admin-title p { font-size: 13px; color: var(--text-muted); }
+
+    .btn-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 22px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* Property Chips */
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .chip {
+      background: #F1F1F4;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chip button {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"], input[type="password"], select, textarea {
+      flex: 1;
+      height: 42px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--text-main); }
+
+    .btn {
+      height: 42px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: #fff; border: 1.5px solid var(--border-color); color: var(--text-main); }
+    .btn-outline:hover { background: #F8F8FA; }
+    .btn-danger { background: #FEE2E2; color: var(--danger); border: none; }
+
+    /* Field List Item */
+    .field-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      background: #FAFAFB;
+      gap: 12px;
+    }
+
+    .field-info {
+      flex: 1;
+    }
+
+    .field-info strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .field-info span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .field-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .toggle-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    /* Custom Field Creator */
+    .custom-field-box {
+      background: #F8F8FA;
+      border: 1.5px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .custom-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .custom-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Bottom Toolbar */
+    .action-bar {
+      position: sticky;
+      bottom: 16px;
+      background: #fff;
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      border: 1.5px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
+      z-index: 999;
+    }
+
+    /* Admin Nav Tabs */
+    .admin-tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 2px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      font-family: inherit;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+    }
+
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 3px;
+    }
+
+    /* Submissions Dashboard UI */
+    .filter-bar {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 680px) {
+      .filter-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .entry-card {
+      background: #fff;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      transition: all 0.15s ease;
+    }
+
+    .entry-card:hover {
+      border-color: #C0C0C8;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--border-color);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .entry-guest-name {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .entry-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #F1F1F4;
+      color: var(--text-main);
+    }
+
+    .badge-pill.date-badge {
+      background: #E8F4FD;
+      color: #0369A1;
+    }
+
+    .badge-pill.prop-badge {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .entry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    .entry-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      display: block;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      font-weight: 600;
+    }
+
+    .entry-value {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .entry-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 10px;
+      border-top: 1px solid #F1F1F4;
+    }
+
+    .btn-action-pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #F8F8FA;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      transition: all 0.15s ease;
+    }
+
+    .btn-action-pill:hover {
+      background: #ECECEF;
+    }
+  
+    /* ==========================================================================
+       PORTAL & MULTI-PROPERTY CALENDAR STYLES
+       ========================================================================== */
+    .portal-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .kpi-card:hover {
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    }
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Property Themes */
+    .theme-prop-0 { --prop-color: #FF385C; --prop-bg: #FFF0F2; --prop-border: #FDA4AF; --prop-text: #9F1239; }
+    .theme-prop-1 { --prop-color: #059669; --prop-bg: #ECFDF5; --prop-border: #A7F3D0; --prop-text: #065F46; }
+    .theme-prop-2 { --prop-color: #6366F1; --prop-bg: #EEF2FF; --prop-border: #C7D2FE; --prop-text: #3730A3; }
+    .theme-prop-3 { --prop-color: #D97706; --prop-bg: #FEF3C7; --prop-border: #FDE68A; --prop-text: #92400E; }
+    .theme-prop-blocked { --prop-color: #64748B; --prop-bg: #F1F5F9; --prop-border: #CBD5E1; --prop-text: #334155; }
+
+    /* Portal Controls Bar */
+    .portal-controls-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .date-nav-wrapper {
+      display: inline-flex;
+      align-items: center;
+      background: #F8F8FA;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 2px;
+    }
+    .date-nav-btn {
+      background: transparent;
+      border: none;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.12s ease;
+    }
+    .date-nav-btn:hover { background: #fff; box-shadow: var(--shadow-sm); }
+    .month-display-text {
+      font-size: 15px;
+      font-weight: 700;
+      padding: 0 12px;
+      color: var(--text-main);
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .prop-pill-filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .prop-pill-btn {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: #fff;
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .prop-pill-btn:hover {
+      border-color: #bbb;
+    }
+    .prop-pill-btn.active {
+      background: var(--text-main);
+      color: #fff;
+      border-color: var(--text-main);
+    }
+    .prop-pill-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .view-mode-toggle {
+      display: inline-flex;
+      background: #F1F1F4;
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 2px;
+    }
+    .view-mode-btn {
+      padding: 6px 12px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .view-mode-btn.active {
+      background: #fff;
+      color: var(--text-main);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    /* ==========================================================================
+       VIEW 1: TIMELINE / CHANNEL MANAGER GANTT GRID
+       ========================================================================== */
+    .timeline-container {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .timeline-scroll-container {
+      position: relative;
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: flex;
+      user-select: none;
+    }
+    .timeline-sidebar {
+      position: sticky;
+      left: 0;
+      z-index: 30;
+      background: #FFFFFF;
+      min-width: 210px;
+      max-width: 210px;
+      border-right: 2px solid var(--border-color);
+      box-shadow: 4px 0 12px rgba(0,0,0,0.04);
+      flex-shrink: 0;
+    }
+    .timeline-sidebar-head {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-color);
+      background: #FAFAFC;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .timeline-sidebar-row {
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--border-color);
+      background: #fff;
+    }
+    .timeline-sidebar-row:last-child {
+      border-bottom: none;
+    }
+    .timeline-prop-name-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+      max-width: 140px;
+    }
+    .timeline-prop-accent {
+      width: 4px;
+      height: 38px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .timeline-prop-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .timeline-prop-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .timeline-quick-add-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: #F8F8FA;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 700;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .timeline-quick-add-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .timeline-grid-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .timeline-dates-header {
+      display: flex;
+      height: 60px;
+      border-bottom: 1px solid var(--border-color);
+      background: #FAFAFC;
+    }
+    .timeline-date-col {
+      min-width: 52px;
+      max-width: 52px;
+      width: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid #ECECEF;
+      font-size: 12px;
+      position: relative;
+    }
+    .timeline-date-col.is-weekend {
+      background: #F4F4F6;
+    }
+    .timeline-date-col.is-today {
+      background: #FFF0F2;
+      border-top: 3px solid var(--primary);
+    }
+    .timeline-date-col.is-today .timeline-day-name {
+      color: var(--primary);
+    }
+    .timeline-day-name {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .timeline-day-number {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .timeline-date-col.is-today .timeline-day-number {
+      background: var(--primary);
+      color: #fff;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timeline-row-track {
+      display: flex;
+      height: 86px;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+      background: #fff;
+    }
+    .timeline-row-track:last-child {
+      border-bottom: none;
+    }
+    .timeline-day-cell {
+      min-width: 52px;
+      max-width: 52px;
+      width: 52px;
+      height: 100%;
+      border-right: 1px solid #F1F1F4;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .timeline-day-cell:hover {
+      background: #F0F7FF;
+    }
+    .timeline-day-cell:hover::after {
+      content: '+';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 16px;
+      color: var(--primary);
+      font-weight: 800;
+    }
+    .timeline-day-cell.is-weekend {
+      background: #FAFAFC;
+    }
+    .timeline-day-cell.is-today {
+      background: #FFFBFB;
+    }
+
+    /* Floating Booking Bar */
+    .timeline-booking-bar {
+      position: absolute;
+      top: 14px;
+      height: 58px;
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      border: 1px solid transparent;
+    }
+    .timeline-booking-bar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+      filter: brightness(0.97);
+      z-index: 20;
+    }
+    .tbar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      line-height: 1;
+    }
+    .tbar-platform {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-radius: 4px;
+      padding: 2px 5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .tbar-nights {
+      font-size: 10px;
+      font-weight: 700;
+      opacity: 0.85;
+    }
+    .tbar-guest {
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+    .tbar-meta {
+      font-size: 10px;
+      opacity: 0.85;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ==========================================================================
+       VIEW 2: MONTH GRID VIEW
+       ========================================================================== */
+    .month-grid-wrapper {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .month-grid-table {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: var(--border-color);
+      gap: 1px;
+    }
+    .month-grid-head-cell {
+      background: #FAFAFC;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .month-grid-day-cell {
+      background: #FFFFFF;
+      min-height: 110px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .month-grid-day-cell:hover {
+      background: #F9FAFD;
+    }
+    .month-grid-day-cell.is-outside-month {
+      background: #F8F8FA;
+      opacity: 0.55;
+    }
+    .month-grid-day-cell.is-today {
+      background: #FFFBFB;
+    }
+    .mday-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .mday-num {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    .month-grid-day-cell.is-today .mday-num {
+      background: var(--primary);
+      color: #fff;
+    }
+    .mday-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 6px;
+      border-radius: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid transparent;
+      line-height: 1.2;
+    }
+
+    /* ==========================================================================
+       VIEW 3: BOOKINGS LIST VIEW
+       ========================================================================== */
+    .list-filter-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+    .bookings-table-wrapper {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-card);
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    .bookings-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+    }
+    .bookings-table th {
+      background: #FAFAFC;
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .bookings-table td {
+      padding: 14px;
+      border-bottom: 1px solid #F1F1F4;
+      vertical-align: middle;
+      background: #fff;
+    }
+    .bookings-table tr:hover td {
+      background: #FAFAFD;
+    }
+    .bookings-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-dialog {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close-btn:hover {
+      background: #F1F1F4;
+      color: var(--text-main);
+    }
+    .modal-body {
+      padding: 20px 22px;
+    }
+    .modal-footer {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border-color);
+      background: #FAFAFC;
+      border-bottom-left-radius: var(--radius-lg);
+      border-bottom-right-radius: var(--radius-lg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      outline: none;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* Conflict Warning Banner */
+    .conflict-alert {
+      background: #FEF2F2;
+      border: 1px solid #F87171;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      color: #991B1B;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+  
+
+    .portal-top-nav {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 16px 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .portal-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .portal-logo-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 10px rgba(255, 56, 92, 0.28);
+    }
+    .portal-brand-text h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+    .portal-brand-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+      <div style="font-size: 38px; margin-bottom: 12px;">🏡</div>
+      <h2 style="font-size: 20px; margin-bottom: 6px;">Host Portal Login</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">Enter your 4-digit Host PIN to access the 3-property bookings calendar.</p>
+      <input type="password" id="pin-input" class="pin-input" maxlength="8" placeholder="••••" autofocus>
+      <button type="button" class="btn btn-primary" id="btn-login" style="width: 100%;">Unlock Portal</button>
+      <p style="font-size: 11px; color: var(--text-muted); margin-top: 14px;">Protected Multi-Property Portal</p>
+    </div>
+
+    <!-- Portal Panel -->
+    <div id="admin-panel" style="display: none;">
+
+      <!-- Top Header Navigation -->
+      <div class="portal-top-nav">
+        <div class="portal-brand">
+          <div class="portal-logo-icon">🏡</div>
+          <div class="portal-brand-text">
+            <h1>Airbnb Multi-Property Bookings Portal</h1>
+            <p>Unified Calendar & Reservations Manager &bull; 3 Active Units</p>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <a href="admin.html" class="btn-link" style="background: #F1F5F9; color: #334155; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none;">
+            <span>⚙️ Admin & Form Settings</span>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+          <a href="index.html" class="btn-link" target="_blank" style="background: var(--primary-light); color: var(--primary); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255, 56, 92, 0.2); text-decoration: none;">
+            <span>📋 Guest Check-in Form</span>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Bookings View Container -->
+      <div id="view-bookings">
+        <!-- KPI Summary Cards Row -->
+        <div class="portal-kpi-grid">
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label">🏡 Multi-Property Portfolio</div>
+              <div class="kpi-value">3 Units</div>
+            </div>
+            <div class="kpi-sub" id="kpi-properties-summary">1 BHK &bull; 2 BHK &bull; Studio</div>
+          </div>
+          
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label">📅 Bookings this Month</div>
+              <div class="kpi-value" id="kpi-bookings-count">0</div>
+            </div>
+            <div class="kpi-sub" id="kpi-nights-count">0 total nights booked</div>
+          </div>
+
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label">🛎️ Turnovers & Stays Today</div>
+              <div class="kpi-value" id="kpi-turnover-count">0 In / 0 Out</div>
+            </div>
+            <div class="kpi-sub" id="kpi-turnover-sub">No check-ins today</div>
+          </div>
+
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label">📈 Portfolio Occupancy</div>
+              <div class="kpi-value" id="kpi-occupancy-rate">0%</div>
+            </div>
+            <div class="kpi-sub" id="kpi-occupancy-sub">Across all 3 properties</div>
+          </div>
+        </div>
+
+        <!-- Controls Bar: Navigation, Property Filters, View Toggle, Actions -->
+        <div class="portal-controls-card">
+          <!-- Month & Year Navigation -->
+          <div class="date-nav-wrapper">
+            <button type="button" class="date-nav-btn" id="btn-cal-prev" title="Previous Month">◀</button>
+            <button type="button" class="date-nav-btn" id="btn-cal-today">Today</button>
+            <button type="button" class="date-nav-btn" id="btn-cal-next" title="Next Month">▶</button>
+            <span class="month-display-text" id="month-display-label">October 2026</span>
+          </div>
+
+          <!-- Property Filter Pills -->
+          <div class="prop-pill-filters" id="portal-prop-pills">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <!-- View Switcher -->
+          <div class="view-mode-toggle">
+            <button type="button" class="view-mode-btn active" id="btn-view-timeline" onclick="switchCalendarView('timeline')">
+              📊 Timeline
+            </button>
+            <button type="button" class="view-mode-btn" id="btn-view-month" onclick="switchCalendarView('month')">
+              🗓️ Month
+            </button>
+            <button type="button" class="view-mode-btn" id="btn-view-list" onclick="switchCalendarView('list')">
+              📋 List (<span id="list-count-badge">0</span>)
+            </button>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" id="btn-open-add-booking" onclick="openAddBookingModal()" style="display: inline-flex; align-items: center; gap: 5px;">
+              <span>➕ Add Booking</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-open-quick-block" onclick="openQuickBlockModal()" title="Block dates for maintenance, cleaning, or owner stay">
+              <span>🔒 Block Dates</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-open-ical-sync" onclick="openIcalSyncModal()" title="Sync Airbnb Calendars via iCal">
+              <span>🔄 Airbnb iCal</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-open-backup-export" onclick="openBackupModal()" title="Backup & Export Bookings">
+              <span>💾 Backup</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW 1: Multi-Property Timeline (Channel Manager Gantt Grid) -->
+        <div id="calendar-timeline-view" class="timeline-container">
+          <div class="timeline-scroll-container" id="timeline-scroll-area">
+            <div class="timeline-sidebar" id="timeline-sidebar-col"></div>
+            <div class="timeline-grid-area" id="timeline-grid-area"></div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: Month Grid View -->
+        <div id="calendar-month-view" class="month-grid-wrapper" style="display: none;">
+          <div class="month-grid-table" id="month-grid-table"></div>
+        </div>
+
+        <!-- VIEW 3: Bookings List View -->
+        <div id="calendar-list-view" style="display: none;">
+          <div class="card" style="padding: 16px; margin-bottom: 16px;">
+            <div class="list-filter-bar">
+              <div style="flex: 1; min-width: 220px;">
+                <input type="text" id="list-search-input" placeholder="🔍 Search by guest name, reservation code, or phone...">
+              </div>
+              <div>
+                <select id="list-status-filter" style="height: 38px;">
+                  <option value="">All Statuses</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Checked In">Checked In</option>
+                  <option value="Checked Out">Checked Out</option>
+                  <option value="Blocked">Blocked / Maintenance</option>
+                </select>
+              </div>
+              <div>
+                <select id="list-prop-filter" style="height: 38px;">
+                  <option value="">All Properties</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="bookings-table-wrapper">
+            <table class="bookings-table">
+              <thead>
+                <tr>
+                  <th>Property</th>
+                  <th>Guest Name</th>
+                  <th>Dates & Nights</th>
+                  <th>Platform / Code</th>
+                  <th>Payout & Guests</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="bookings-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ====================================================================
+           MODALS
+           ==================================================================== -->
+      
+      <!-- MODAL 1: Add / Edit Booking Modal -->
+      <div class="modal-backdrop" id="modal-booking">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h3 id="modal-booking-title">➕ Add New Booking</h3>
+            <button type="button" class="modal-close-btn" onclick="closeBookingModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            
+            <!-- Conflict Warning Banner -->
+            <div class="conflict-alert" id="modal-conflict-alert">
+              <span style="font-size: 18px;">⚠️</span>
+              <div>
+                <strong style="display: block; font-size: 13px;" id="conflict-title">Double-Booking Conflict Detected!</strong>
+                <span id="conflict-detail">This property is already booked for another guest during these dates.</span>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Select Property *</label>
+                <select id="mb-property" onchange="onBookingDateOrPropChange()">
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Booking Platform *</label>
+                <select id="mb-platform">
+                  <option value="Airbnb">Airbnb</option>
+                  <option value="Booking.com">Booking.com</option>
+                  <option value="Direct">Direct / WhatsApp / Phone</option>
+                  <option value="Vrbo">Vrbo</option>
+                  <option value="Agoda">Agoda</option>
+                  <option value="Blocked">Blocked / Maintenance</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Guest Legal Name *</label>
+                <input type="text" id="mb-guest-name" placeholder="e.g. Sarah Jenkins">
+              </div>
+              <div class="form-group">
+                <label>Reservation Code</label>
+                <input type="text" id="mb-res-code" placeholder="e.g. HM34XZ891">
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Check-in Date *</label>
+                <input type="date" id="mb-checkin" onchange="onBookingDateOrPropChange()">
+              </div>
+              <div class="form-group">
+                <label>Check-out Date *</label>
+                <input type="date" id="mb-checkout" onchange="onBookingDateOrPropChange()">
+              </div>
+            </div>
+
+            <!-- Nights pill -->
+            <div style="margin-top: -6px; margin-bottom: 14px; font-size: 12px; font-weight: 700; color: var(--primary);" id="mb-nights-label">
+              🌙 1 Night Stay
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Guests Count</label>
+                <input type="number" id="mb-guests-count" min="1" max="20" value="2">
+              </div>
+              <div class="form-group">
+                <label>Total Payout</label>
+                <input type="text" id="mb-payout" placeholder="e.g. ₹15,000">
+              </div>
+              <div class="form-group">
+                <label>Payment Status</label>
+                <select id="mb-pay-status">
+                  <option value="Paid in Full">Paid in Full</option>
+                  <option value="Deposit Paid">Deposit Paid</option>
+                  <option value="Pay on Arrival">Pay on Arrival</option>
+                  <option value="Unpaid">Unpaid</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Guest Phone / WhatsApp</label>
+                <input type="text" id="mb-phone" placeholder="e.g. +91 98765 43210">
+              </div>
+              <div class="form-group">
+                <label>Guest Email</label>
+                <input type="email" id="mb-email" placeholder="e.g. guest@example.com">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Booking Status</label>
+              <select id="mb-status">
+                <option value="Confirmed">Confirmed</option>
+                <option value="Checked In">Checked In</option>
+                <option value="Checked Out">Checked Out</option>
+                <option value="Blocked">Blocked / Maintenance</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Host Notes / Special Requests</label>
+              <textarea id="mb-notes" rows="2" placeholder="e.g. Late flight arrival (10:30 PM), requested extra towels..."></textarea>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <div id="modal-booking-delete-wrap">
+              <button type="button" class="btn btn-outline" id="btn-delete-booking" onclick="deleteCurrentBooking()" style="color: var(--danger); border-color: #FECACA; display: none;">
+                🗑️ Delete
+              </button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-outline" onclick="closeBookingModal()">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btn-save-booking" onclick="saveBookingFromModal()">Save Booking</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 2: Quick Block Dates Modal -->
+      <div class="modal-backdrop" id="modal-quick-block">
+        <div class="modal-dialog" style="max-width: 480px;">
+          <div class="modal-header">
+            <h3>🔒 Quick Block Dates</h3>
+            <button type="button" class="modal-close-btn" onclick="closeQuickBlockModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+              Prevent bookings for maintenance, deep cleaning, personal stay, or private owner use.
+            </p>
+
+            <div class="form-group">
+              <label>Select Property *</label>
+              <select id="qblock-property"></select>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Start Date *</label>
+                <input type="date" id="qblock-start">
+              </div>
+              <div class="form-group">
+                <label>End Date *</label>
+                <input type="date" id="qblock-end">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Reason / Block Label *</label>
+              <input type="text" id="qblock-reason" placeholder="e.g. AC Servicing & Deep Cleaning">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeQuickBlockModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveQuickBlock()">Block Dates</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 3: Airbnb iCal Sync Modal -->
+      <div class="modal-backdrop" id="modal-ical-sync">
+        <div class="modal-dialog" style="max-width: 620px;">
+          <div class="modal-header">
+            <h3>🔄 Airbnb Calendar iCal Sync</h3>
+            <button type="button" class="modal-close-btn" onclick="closeIcalSyncModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            
+            <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; margin-bottom: 18px; font-size: 12px; line-height: 1.6; color: var(--text-main);">
+              <strong>How to get your Airbnb iCal link:</strong><br>
+              1. Open Airbnb &rarr; <strong>Listings</strong> &rarr; Select your property.<br>
+              2. Go to <strong>Pricing and availability</strong> &rarr; Scroll to <strong>Calendar sync</strong>.<br>
+              3. Click <strong>Export calendar</strong> &rarr; Copy the link (ends in <code>.ics</code>).<br>
+              4. Paste the links below for each of your 3 properties.
+            </div>
+
+            <div id="ical-inputs-container"></div>
+
+            <div style="border-top: 1px dashed var(--border-color); padding-top: 14px; margin-top: 14px;">
+              <strong style="font-size: 13px; display: block; margin-bottom: 6px;">Alternative: Import from .ics File or Text</strong>
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+                If browser restrictions block fetching directly from airbnb.com, upload your downloaded <code>.ics</code> file here:
+              </p>
+              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+                <select id="file-import-property" style="max-width: 180px; height: 36px; font-size: 12px;"></select>
+                <input type="file" id="ical-file-input" accept=".ics" style="font-size: 12px;">
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeIcalSyncModal()">Close</button>
+            <button type="button" class="btn btn-primary" onclick="saveAndSyncIcals()">Save & Sync All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL 4: Backup & Export Modal -->
+      <div class="modal-backdrop" id="modal-backup-export">
+        <div class="modal-dialog" style="max-width: 480px;">
+          <div class="modal-header">
+            <h3>💾 Backup & Data Management</h3>
+            <button type="button" class="modal-close-btn" onclick="closeBackupModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">
+              Your bookings are stored securely in your browser's private storage. You can export or restore backups anytime.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <button type="button" class="btn btn-outline" onclick="exportBookingsJson()" style="justify-content: flex-start; padding: 12px 16px;">
+                <span>📥 Download Bookings Backup (JSON)</span>
+              </button>
+              
+              <button type="button" class="btn btn-outline" onclick="exportBookingsCsv()" style="justify-content: flex-start; padding: 12px 16px;">
+                <span>📊 Export Bookings Spreadsheet (CSV)</span>
+              </button>
+
+              <label class="btn btn-outline" style="justify-content: flex-start; padding: 12px 16px; cursor: pointer;">
+                <span>📤 Restore Bookings from Backup (JSON)</span>
+                <input type="file" id="restore-json-input" accept=".json" onchange="importBookingsJson(event)" style="display: none;">
+              </label>
+
+              <div style="border-top: 1px dashed var(--border-color); margin: 10px 0;"></div>
+
+              <button type="button" class="btn btn-outline" onclick="reloadDemoBookings()" style="justify-content: flex-start; padding: 12px 16px; color: var(--primary);">
+                <span>✨ Reload Sample Bookings</span>
+              </button>
+
+              <button type="button" class="btn btn-outline" onclick="clearAllBookings()" style="justify-content: flex-start; padding: 12px 16px; color: var(--danger); border-color: #FECACA;">
+                <span>🗑️ Clear All Bookings</span>
+              </button>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeBackupModal()">Close</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Hidden element for badge count binding -->
+    <span id="bookings-count-badge" style="display: none;">0</span>
+
+    <div class="toast" id="toast">Saved successfully!</div>
+
+  </div>
+
+  <script>
+
+    // State
+    let currentConfig = {
+      adminPin: "4635",
+      hostContact: {
+        phone: "+91 70022 93073",
+        instagramUrl: "",
+        instagramHandle: ""
+      },
+      propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
+      defaultPropertyOption: "1 BHK",
+      standardFields: [
+        { id: "propertyOption", label: "Property / Room Type (1BHK/2BHK/1Room...)", type: "select", required: true, enabled: true },
+        { id: "comingFrom", label: "Coming From (Origin)", type: "text", required: true, enabled: true },
+        { id: "goingTo", label: "Going To (Destination)", type: "text", required: true, enabled: true },
+        { id: "purposeOfVisit", label: "Purpose of Visit", type: "select", required: true, enabled: true },
+        { id: "checkInDate", label: "Check-in Date", type: "date", required: true, enabled: true },
+        { id: "checkOutDate", label: "Check-out Date", type: "date", required: true, enabled: true },
+        { id: "reservationCode", label: "Airbnb Reservation Code", type: "text", required: false, enabled: true },
+        { id: "arrivalTime", label: "Estimated Arrival Time", type: "text", required: false, enabled: true }
+      ],
+      customFields: [],
+      rulesText: "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine.",
+      signatureRequired: true
+    };
+
+    // Load config from config.json or localStorage
+    async function loadConfig() {
+      try {
+        const res = await fetch('config.json?t=' + Date.now());
+        if (res.ok) {
+          const fetched = await res.json();
+          currentConfig = Object.assign(currentConfig, fetched);
+        }
+      } catch (e) {
+        const local = localStorage.getItem('airbnb_form_config');
+        if (local) {
+          try {
+            currentConfig = Object.assign(currentConfig, JSON.parse(local));
+          } catch (err) {}
+        }
+      }
+    }
+
+    // Auth gate
+    document.getElementById('btn-login').addEventListener('click', () => {
+      const pin = document.getElementById('pin-input').value.trim();
+      const expected = currentConfig.adminPin || "4635";
+      if (pin === expected) {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'block';
+        initBookingsPortal();
+      } else {
+        alert("Incorrect PIN. Please try again.");
+      }
+    });
+
+    document.getElementById('pin-input').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') document.getElementById('btn-login').click();
+    });
+
+    // Render Admin Controls
+    function renderAdmin() {
+      renderPropertyOptions();
+      renderStandardFields();
+      renderCustomFields();
+      document.getElementById('rules-text-input').value = currentConfig.rulesText || '';
+      if (currentConfig.hostContact) {
+        document.getElementById('host-phone-input').value = currentConfig.hostContact.phone || '';
+        document.getElementById('host-insta-input').value = currentConfig.hostContact.instagramUrl || '';
+        document.getElementById('host-handle-input').value = currentConfig.hostContact.instagramHandle || '';
+      }
+    }
+
+    // Property options
+    function renderPropertyOptions() {
+      const container = document.getElementById('property-chips');
+      container.innerHTML = '';
+      currentConfig.propertyOptions.forEach((opt, idx) => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.innerHTML = `
+          <span>${opt}</span>
+          <button type="button" onclick="removePropertyOption(${idx})" title="Remove option">×</button>
+        `;
+        container.appendChild(chip);
+      });
+    }
+
+    document.getElementById('btn-add-property').addEventListener('click', () => {
+      const input = document.getElementById('new-property-input');
+      const val = input.value.trim();
+      if (val && !currentConfig.propertyOptions.includes(val)) {
+        currentConfig.propertyOptions.push(val);
+        input.value = '';
+        renderPropertyOptions();
+      }
+    });
+
+    window.removePropertyOption = function(idx) {
+      if (currentConfig.propertyOptions.length <= 1) {
+        alert("You must keep at least one property option.");
+        return;
+      }
+      currentConfig.propertyOptions.splice(idx, 1);
+      renderPropertyOptions();
+    };
+
+    // Standard fields
+    function renderStandardFields() {
+      const container = document.getElementById('standard-fields-list');
+      container.innerHTML = '';
+
+      currentConfig.standardFields.forEach((field, idx) => {
+        const item = document.createElement('div');
+        item.className = 'field-item';
+        item.innerHTML = `
+          <div class="field-info">
+            <strong>${field.label}</strong>
+            <span>Type: ${field.type}</span>
+          </div>
+          <div class="field-controls">
+            <label class="toggle-label">
+              <input type="checkbox" ${field.enabled ? 'checked' : ''} onchange="toggleField(${idx}, 'enabled', this.checked)">
+              Active
+            </label>
+            <label class="toggle-label">
+              <input type="checkbox" ${field.required ? 'checked' : ''} onchange="toggleField(${idx}, 'required', this.checked)">
+              Required
+            </label>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    window.toggleField = function(idx, prop, val) {
+      currentConfig.standardFields[idx][prop] = val;
+    };
+
+    // Custom fields
+    document.getElementById('custom-type').addEventListener('change', (e) => {
+      const optInput = document.getElementById('custom-options');
+      optInput.style.display = (e.target.value === 'select') ? 'block' : 'none';
+    });
+
+    document.getElementById('btn-add-custom').addEventListener('click', () => {
+      const label = document.getElementById('custom-label').value.trim();
+      const type = document.getElementById('custom-type').value;
+      const req = document.getElementById('custom-required').checked;
+      const opts = document.getElementById('custom-options').value.trim();
+
+      if (!label) {
+        alert("Please enter a question name.");
+        return;
+      }
+
+      const id = "custom_" + label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const newField = {
+        id: id,
+        label: label,
+        type: type,
+        required: req,
+        enabled: true
+      };
+
+      if (type === 'select' && opts) {
+        newField.options = opts.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      currentConfig.customFields.push(newField);
+      document.getElementById('custom-label').value = '';
+      document.getElementById('custom-options').value = '';
+      document.getElementById('custom-required').checked = false;
+      renderCustomFields();
+    });
+
+    function renderCustomFields() {
+      const container = document.getElementById('custom-fields-list');
+      container.innerHTML = '';
+
+      if (!currentConfig.customFields || currentConfig.customFields.length === 0) {
+        container.innerHTML = '<p style="font-size:13px; color:var(--text-muted); margin-bottom: 10px;">No custom fields added yet.</p>';
+        return;
+      }
+
+      currentConfig.customFields.forEach((field, idx) => {
+        const item = document.createElement('div');
+        item.className = 'field-item';
+        item.innerHTML = `
+          <div class="field-info">
+            <strong>${field.label}</strong>
+            <span>Type: ${field.type} ${field.required ? '(Required)' : '(Optional)'}</span>
+          </div>
+          <div class="field-controls">
+            <button type="button" class="btn btn-danger" onclick="removeCustomField(${idx})" style="height:32px; padding:0 10px; font-size:12px;">Delete</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    window.removeCustomField = function(idx) {
+      currentConfig.customFields.splice(idx, 1);
+      renderCustomFields();
+    };
+
+    // Load saved GitHub token if available
+    const savedToken = localStorage.getItem('airbnb_github_pat');
+    if (savedToken) {
+      document.getElementById('github-token-input').value = savedToken;
+    }
+
+    // 1-Click Publish to GitHub
+    document.getElementById('btn-publish-github').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-publish-github');
+      const token = document.getElementById('github-token-input').value.trim();
+
+      if (!token) {
+        alert("Please enter your GitHub Personal Access Token below to publish directly to your live site.");
+        document.getElementById('github-token-input').focus();
+        return;
+      }
+
+      // Save token locally
+      localStorage.setItem('airbnb_github_pat', token);
+
+      // Collect latest updates
+      currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
+      const newPin = document.getElementById('new-pin-input').value.trim();
+      if (newPin) currentConfig.adminPin = newPin;
+
+      currentConfig.hostContact = {
+        phone: document.getElementById('host-phone-input').value.trim(),
+        instagramUrl: document.getElementById('host-insta-input').value.trim(),
+        instagramHandle: document.getElementById('host-handle-input').value.trim()
+      };
+
+      localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
+
+      btn.disabled = true;
+      btn.textContent = "Publishing to GitHub...";
+
+      try {
+        const repo = "christopher4635/airbnb-guest-registration";
+        const path = "config.json";
+        
+        // 1. Get current file SHA
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!getRes.ok) {
+          throw new Error("Could not access repository. Please check your GitHub Token permissions (ensure 'repo' is checked).");
+        }
+
+        const getData = await getRes.json();
+        const currentSha = getData.sha;
+
+        // 2. Encode config JSON into base64
+        const jsonString = JSON.stringify(currentConfig, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
+
+        // 3. Commit updated config.json to main branch
+        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/vnd.github.v3+json'
+          },
+          body: JSON.stringify({
+            message: "Update form fields via Host Admin",
+            content: encodedContent,
+            sha: currentSha,
+            branch: "main"
+          })
+        });
+
+        if (!putRes.ok) {
+          const errData = await putRes.json();
+          throw new Error(errData.message || "Failed to commit to GitHub.");
+        }
+
+        showToast("🚀 Successfully published live! All guests will see the updated form in ~30 seconds.");
+
+      } catch (err) {
+        console.error(err);
+        alert("Publish error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "🚀 Publish Live to GitHub";
+      }
+    });
+
+    // Save changes locally
+    document.getElementById('btn-save').addEventListener('click', () => {
+      // Update rules text and PIN
+      currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
+      const newPin = document.getElementById('new-pin-input').value.trim();
+      if (newPin) {
+        currentConfig.adminPin = newPin;
+      }
+
+      currentConfig.hostContact = {
+        phone: document.getElementById('host-phone-input').value.trim(),
+        instagramUrl: document.getElementById('host-insta-input').value.trim(),
+        instagramHandle: document.getElementById('host-handle-input').value.trim()
+      };
+
+      localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
+      showToast("Settings saved locally! Click 'Publish Live to GitHub' to update for guests.");
+    });
+
+    // Download config.json
+    document.getElementById('btn-download-config').addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentConfig, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "config.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast("config.json downloaded!");
+    });
+
+    // Copy config to clipboard
+    document.getElementById('btn-copy-config').addEventListener('click', () => {
+      navigator.clipboard.writeText(JSON.stringify(currentConfig, null, 2));
+      showToast("Copied config JSON to clipboard!");
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    // Init
+    loadConfig();
+
+    // Tab switching
+    window.switchAdminTab = function(tab) {
+      const btnBookings = document.getElementById('tab-btn-bookings');
+      const btnEntries = document.getElementById('tab-btn-entries');
+      const btnSettings = document.getElementById('tab-btn-settings');
+      const viewBookings = document.getElementById('view-bookings');
+      const viewEntries = document.getElementById('view-entries');
+      const viewSettings = document.getElementById('view-settings');
+
+      if (btnBookings) btnBookings.classList.remove('active');
+      if (btnEntries) btnEntries.classList.remove('active');
+      if (btnSettings) btnSettings.classList.remove('active');
+      if (viewBookings) viewBookings.style.display = 'none';
+      if (viewEntries) viewEntries.style.display = 'none';
+      if (viewSettings) viewSettings.style.display = 'none';
+
+      if (tab === 'bookings') {
+        if (btnBookings) btnBookings.classList.add('active');
+        if (viewBookings) viewBookings.style.display = 'block';
+        renderBookingsPortal();
+      } else if (tab === 'entries') {
+        if (btnEntries) btnEntries.classList.add('active');
+        if (viewEntries) viewEntries.style.display = 'block';
+        if (typeof fetchSubmissions === 'function') fetchSubmissions();
+      } else if (tab === 'settings') {
+        if (btnSettings) btnSettings.classList.add('active');
+        if (viewSettings) viewSettings.style.display = 'block';
+      }
+    };
+
+    // Submissions State
+    let allSubmissions = [];
+
+    // Webhook Connect
+    document.getElementById('btn-save-webhook').addEventListener('click', () => {
+      const url = document.getElementById('webhook-url-input').value.trim();
+      if (!url) {
+        alert("Please paste your Google Apps Script Web App URL.");
+        return;
+      }
+      localStorage.setItem('airbnb_webhook_url', url);
+      showToast("Webhook URL connected!");
+      fetchSubmissions();
+    });
+
+    // Populate property filter
+    function updatePropertyFilterDropdown() {
+      const select = document.getElementById('filter-prop');
+      const currentVal = select.value;
+      select.innerHTML = '<option value="">All Property Types</option>';
+      if (currentConfig.propertyOptions) {
+        currentConfig.propertyOptions.forEach(opt => {
+          const el = document.createElement('option');
+          el.value = opt;
+          el.textContent = opt;
+          if (opt === currentVal) el.selected = true;
+          select.appendChild(el);
+        });
+      }
+    }
+
+    // Fetch Submissions from Google Apps Script Webhook
+    async function fetchSubmissions() {
+      updatePropertyFilterDropdown();
+      const webhookUrl = localStorage.getItem('airbnb_webhook_url') || "";
+      if (webhookUrl) {
+        document.getElementById('webhook-url-input').value = webhookUrl;
+      }
+
+      const container = document.getElementById('submissions-container');
+
+      if (!webhookUrl) {
+        // Load demo/locally submitted entries if available
+        const localSubmissions = JSON.parse(localStorage.getItem('airbnb_demo_submissions') || '[]');
+        if (localSubmissions.length > 0) {
+          allSubmissions = localSubmissions;
+          document.getElementById('entries-count-badge').textContent = allSubmissions.length;
+          renderSubmissions(allSubmissions);
+          return;
+        }
+
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="font-size: 36px; margin-bottom: 8px;">📋</div>
+            <strong style="display: block; font-size: 16px; margin-bottom: 4px; color: var(--text-main);">Connect Your Google Sheets Webhook</strong>
+            <p style="font-size: 13px; max-width: 480px; margin: 0 auto 16px; line-height: 1.5;">
+              Paste your Google Apps Script Web App URL into the box above and click <strong>Connect</strong> to view live guest registrations, search by name or check-in date, and view uploaded ID cards.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div class="spinner" style="margin: 0 auto 12px; width: 36px; height: 36px; border: 3px solid #eee; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          <p style="font-size: 14px;">Loading guest registrations from Google Sheets...</p>
+        </div>
+      `;
+
+      try {
+        const fetchUrl = webhookUrl + (webhookUrl.includes('?') ? '&' : '?') + 'action=getEntries&t=' + Date.now();
+        const res = await fetch(fetchUrl);
+        if (!res.ok) throw new Error("Could not reach Google Webhook");
+        const json = await res.json();
+        
+        if (json.status === "success" && json.entries) {
+          allSubmissions = json.entries;
+          document.getElementById('entries-count-badge').textContent = allSubmissions.length;
+          filterSubmissions();
+        } else {
+          container.innerHTML = `<div style="text-align: center; padding: 30px; color: var(--danger);">Error: ${json.message || 'Failed to load entries'}</div>`;
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px 20px; background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <p style="font-size: 14px; color: var(--text-main); font-weight: 600; margin-bottom: 6px;">Could not load entries from Webhook</p>
+            <p style="font-size: 12px; color: var(--text-muted); max-width: 420px; margin: 0 auto 12px;">Make sure your Google Apps Script has been deployed with access set to "Anyone" and includes the latest doGet code.</p>
+            <button type="button" class="btn btn-outline" onclick="fetchSubmissions()">Retry</button>
+          </div>
+        `;
+      }
+    }
+
+    // Filter Submissions
+    function filterSubmissions() {
+      const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+      const dateFilter = document.getElementById('filter-date')?.value || '';
+      const propFilter = document.getElementById('filter-prop')?.value || '';
+
+      const filtered = allSubmissions.filter(entry => {
+        // Query match: Guest Name, Phone, Email, Coming From, Going To, Res Code
+        const guestName = (entry['Guest Legal Name'] || entry['Guest Name'] || '').toLowerCase();
+        const phone = (entry['Phone / WhatsApp'] || entry['Phone'] || '').toLowerCase();
+        const email = (entry['Email Address'] || entry['Email'] || '').toLowerCase();
+        const comingFrom = (entry['Coming From'] || '').toLowerCase();
+        const goingTo = (entry['Going To'] || '').toLowerCase();
+        const resCode = (entry['Reservation Code'] || '').toLowerCase();
+
+        const matchesQuery = !query || 
+          guestName.includes(query) ||
+          phone.includes(query) ||
+          email.includes(query) ||
+          comingFrom.includes(query) ||
+          goingTo.includes(query) ||
+          resCode.includes(query);
+
+        // Date match: Check-in Date
+        const checkIn = (entry['Check-in Date'] || entry['Check-in'] || '').toString();
+        const matchesDate = !dateFilter || checkIn.startsWith(dateFilter);
+
+        // Property match
+        const prop = (entry['Property Option'] || entry['Property / Room Type'] || '').toString();
+        const matchesProp = !propFilter || prop === propFilter;
+
+        return matchesQuery && matchesDate && matchesProp;
+      });
+
+      renderSubmissions(filtered);
+    }
+
+    // Search & Filter Listeners
+    document.getElementById('search-input').addEventListener('input', filterSubmissions);
+    document.getElementById('filter-date').addEventListener('change', filterSubmissions);
+    document.getElementById('filter-prop').addEventListener('change', filterSubmissions);
+    document.getElementById('btn-reset-filters').addEventListener('click', () => {
+      document.getElementById('search-input').value = '';
+      document.getElementById('filter-date').value = '';
+      document.getElementById('filter-prop').value = '';
+      filterSubmissions();
+    });
+    document.getElementById('btn-refresh-entries').addEventListener('click', fetchSubmissions);
+
+    // Render Submissions Cards
+    function renderSubmissions(entries) {
+      const container = document.getElementById('submissions-container');
+      
+      if (!entries || entries.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px; background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-color); color: var(--text-muted);">
+            <div style="font-size: 28px; margin-bottom: 6px;">🔍</div>
+            <strong style="color: var(--text-main); font-size: 15px;">No matching entries found</strong>
+            <p style="font-size: 12px; margin-top: 4px;">Try clearing your search query or date filter.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+
+      entries.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'entry-card';
+
+        const name = item['Guest Legal Name'] || item['Guest Name'] || 'Guest #' + (idx + 1);
+        const checkIn = item['Check-in Date'] || item['Check-in'] || 'N/A';
+        const checkOut = item['Check-out Date'] || item['Check-out'] || 'N/A';
+        const propOption = item['Property Option'] || item['Property / Room Type'] || '';
+        const phone = item['Phone / WhatsApp'] || item['Phone'] || '';
+        const email = item['Email Address'] || item['Email'] || '';
+        const comingFrom = item['Coming From'] || '';
+        const goingTo = item['Going To'] || '';
+        const purpose = item['Purpose of Visit'] || '';
+        const resCode = item['Reservation Code'] || '';
+        const idType = item['ID Type'] || 'Government ID';
+        const frontUrl = item['Front ID Photo'] || item['Front ID'] || '';
+        const backUrl = item['Back ID Photo'] || item['Back ID'] || '';
+        const sigUrl = item['Digital Signature'] || item['Signature'] || '';
+        const folderUrl = item['Drive Folder'] || '';
+
+        // WhatsApp direct link
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '';
+
+        card.innerHTML = `
+          <div class="entry-header">
+            <div>
+              <div class="entry-guest-name">${name}</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                ${item['Guest Number'] || ''} ${resCode ? `&bull; Booking Code: <strong>${resCode}</strong>` : ''}
+              </div>
+            </div>
+            <div class="entry-badges">
+              <span class="badge-pill date-badge">📅 ${checkIn} ➔ ${checkOut}</span>
+              ${propOption ? `<span class="badge-pill prop-badge">🏠 ${propOption}</span>` : ''}
+              ${item['Total Guests'] ? `<span class="badge-pill">👥 ${item['Total Guests']} Guests</span>` : ''}
+            </div>
+          </div>
+
+          <div class="entry-grid">
+            ${phone ? `
+              <div>
+                <span class="entry-label">Phone / WhatsApp</span>
+                <span class="entry-value">${phone}</span>
+              </div>
+            ` : ''}
+            ${email ? `
+              <div>
+                <span class="entry-label">Email</span>
+                <span class="entry-value">${email}</span>
+              </div>
+            ` : ''}
+            ${comingFrom ? `
+              <div>
+                <span class="entry-label">Coming From</span>
+                <span class="entry-value">${comingFrom}</span>
+              </div>
+            ` : ''}
+            ${goingTo ? `
+              <div>
+                <span class="entry-label">Going To</span>
+                <span class="entry-value">${goingTo}</span>
+              </div>
+            ` : ''}
+            ${purpose ? `
+              <div>
+                <span class="entry-label">Purpose</span>
+                <span class="entry-value">${purpose}</span>
+              </div>
+            ` : ''}
+            <div>
+              <span class="entry-label">ID Type</span>
+              <span class="entry-value">${idType}</span>
+            </div>
+          </div>
+
+          <div class="entry-actions">
+            ${frontUrl && frontUrl.startsWith('http') ? `
+              <a href="${frontUrl}" target="_blank" class="btn-action-pill" style="color:#0369A1; background:#E0F2FE;">
+                🪪 View Front ID
+              </a>
+            ` : ''}
+            ${backUrl && backUrl.startsWith('http') ? `
+              <a href="${backUrl}" target="_blank" class="btn-action-pill" style="color:#0369A1; background:#E0F2FE;">
+                🪪 View Back ID
+              </a>
+            ` : ''}
+            ${sigUrl && sigUrl.startsWith('http') ? `
+              <a href="${sigUrl}" target="_blank" class="btn-action-pill">
+                ✍️ Signature
+              </a>
+            ` : ''}
+            ${folderUrl && folderUrl.startsWith('http') ? `
+              <a href="${folderUrl}" target="_blank" class="btn-action-pill" style="color:#15803D; background:#DCFCE7;">
+                📁 Google Drive Folder
+              </a>
+            ` : ''}
+            ${waLink ? `
+              <a href="${waLink}" target="_blank" class="btn-action-pill" style="color:#059669; background:#ECFDF5;">
+                💬 WhatsApp Guest
+              </a>
+            ` : ''}
+            ${phone ? `
+              <a href="tel:${phone.replace(/[^0-9+]/g, '')}" class="btn-action-pill">
+                📞 Call
+              </a>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Export to CSV
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      if (!allSubmissions || allSubmissions.length === 0) {
+        alert("No entries available to export.");
+        return;
+      }
+
+      const headers = Object.keys(allSubmissions[0]);
+      let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+      allSubmissions.forEach(row => {
+        const values = headers.map(h => {
+          let val = (row[h] || '').toString().replace(/"/g, '""');
+          return `"${val}"`;
+        });
+        csvContent += values.join(",") + "\n";
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `airbnb_guest_registry_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showToast("CSV downloaded successfully!");
+    });
+  
+    /* ==========================================================================
+       BOOKINGS & MULTI-PROPERTY CALENDAR LOGIC
+       ========================================================================== */
+
+    const PROPERTY_THEMES = [
+      { key: 'prop-0', color: '#FF385C', bg: '#FFF0F2', border: '#FDA4AF', text: '#9F1239' }, // Coral
+      { key: 'prop-1', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', text: '#065F46' }, // Emerald
+      { key: 'prop-2', color: '#6366F1', bg: '#EEF2FF', border: '#C7D2FE', text: '#3730A3' }, // Indigo
+      { key: 'prop-3', color: '#D97706', bg: '#FEF3C7', border: '#FDE68A', text: '#92400E' }  // Amber
+    ];
+
+    let currentBookings = [];
+    let currentCalYear = 2026;
+    let currentCalMonth = 9; // 0-indexed: 9 = October, 10 = November
+    let currentCalView = 'timeline'; // 'timeline' | 'month' | 'list'
+    let selectedPropFilter = 'ALL';
+    let editingBookingId = null;
+
+    // Helpers to get active properties
+    function getPropertiesList() {
+      if (currentConfig && Array.isArray(currentConfig.propertyOptions) && currentConfig.propertyOptions.length > 0) {
+        return currentConfig.propertyOptions;
+      }
+      return ["1 BHK", "2 BHK", "1 Room / Studio"];
+    }
+
+    function getPropertyTheme(propName) {
+      if (propName === 'Blocked') {
+        return { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' };
+      }
+      const list = getPropertiesList();
+      const idx = list.indexOf(propName);
+      if (idx >= 0) {
+        return PROPERTY_THEMES[idx % PROPERTY_THEMES.length];
+      }
+      return PROPERTY_THEMES[0];
+    }
+
+    // Default Sample Bookings (Realistic 3-property bookings covering Oct/Nov 2026)
+    function getDefaultSampleBookings() {
+      return [
+        {
+          id: "bk_demo_1",
+          property: "1 BHK",
+          guestName: "Priya & Amit Patel",
+          phone: "+91 98201 12345",
+          email: "priya.patel@gmail.com",
+          checkInDate: "2026-10-27",
+          checkOutDate: "2026-10-31",
+          nights: 4,
+          guestsCount: 2,
+          platform: "Airbnb",
+          reservationCode: "HM92K481",
+          payout: "₹14,800",
+          paymentStatus: "Paid in Full",
+          status: "Checked In",
+          notes: "Arrived Oct 27, requested extra towel set. Very quiet guests.",
+          createdAt: "2026-10-20T10:00:00Z"
+        },
+        {
+          id: "bk_demo_2",
+          property: "2 BHK",
+          guestName: "David & Sarah Miller",
+          phone: "+1 415 555 2671",
+          email: "miller.family@yahoo.com",
+          checkInDate: "2026-10-28",
+          checkOutDate: "2026-11-02",
+          nights: 5,
+          guestsCount: 4,
+          platform: "Airbnb",
+          reservationCode: "HM77Y81P",
+          payout: "₹28,500",
+          paymentStatus: "Paid in Full",
+          status: "Checked In",
+          notes: "Family of 4 traveling from San Francisco. Requested baby cot.",
+          createdAt: "2026-10-18T14:30:00Z"
+        },
+        {
+          id: "bk_demo_3",
+          property: "1 Room / Studio",
+          guestName: "Rohan Verma",
+          phone: "+91 98112 34567",
+          email: "rohan.v@techstartup.in",
+          checkInDate: "2026-11-01",
+          checkOutDate: "2026-11-05",
+          nights: 4,
+          guestsCount: 1,
+          platform: "Direct",
+          reservationCode: "DIR-1101",
+          payout: "₹9,200",
+          paymentStatus: "Deposit Paid",
+          status: "Confirmed",
+          notes: "Remote work stay. Checked speed of Wi-Fi. Late check-in around 8 PM.",
+          createdAt: "2026-10-25T09:15:00Z"
+        },
+        {
+          id: "bk_demo_4",
+          property: "1 BHK",
+          guestName: "AC Servicing & Sanitization",
+          phone: "",
+          email: "",
+          checkInDate: "2026-11-04",
+          checkOutDate: "2026-11-06",
+          nights: 2,
+          guestsCount: 0,
+          platform: "Blocked",
+          reservationCode: "MAINT-101",
+          payout: "—",
+          paymentStatus: "Paid in Full",
+          status: "Blocked",
+          notes: "Deep cleaning, AC duct filter cleaning & pest treatment.",
+          createdAt: "2026-10-26T12:00:00Z"
+        },
+        {
+          id: "bk_demo_5",
+          property: "2 BHK",
+          guestName: "Elena Rostova",
+          phone: "+44 7700 900123",
+          email: "elena.rostova@outlook.com",
+          checkInDate: "2026-11-08",
+          checkOutDate: "2026-11-14",
+          nights: 6,
+          guestsCount: 3,
+          platform: "Airbnb",
+          reservationCode: "HM901Q52",
+          payout: "₹34,200",
+          paymentStatus: "Paid in Full",
+          status: "Confirmed",
+          notes: "Vacation booking. Flight arriving at 2:30 PM.",
+          createdAt: "2026-10-22T16:20:00Z"
+        },
+        {
+          id: "bk_demo_6",
+          property: "1 Room / Studio",
+          guestName: "Ananya Sen",
+          phone: "+91 97480 98765",
+          email: "ananya.sen@gmail.com",
+          checkInDate: "2026-11-10",
+          checkOutDate: "2026-11-16",
+          nights: 6,
+          guestsCount: 2,
+          platform: "Booking.com",
+          reservationCode: "BK-882910",
+          payout: "₹13,800",
+          paymentStatus: "Pay on Arrival",
+          status: "Confirmed",
+          notes: "Attending friend wedding. Requested iron and ironing board.",
+          createdAt: "2026-10-24T18:40:00Z"
+        },
+        {
+          id: "bk_demo_7",
+          property: "1 BHK",
+          guestName: "Vikram Malhotra",
+          phone: "+91 98450 11223",
+          email: "vikram.m@corporatemail.com",
+          checkInDate: "2026-11-12",
+          checkOutDate: "2026-11-17",
+          nights: 5,
+          guestsCount: 2,
+          platform: "Airbnb",
+          reservationCode: "HM482X99",
+          payout: "₹18,500",
+          paymentStatus: "Paid in Full",
+          status: "Confirmed",
+          notes: "Business trip with colleague. Need invoice.",
+          createdAt: "2026-10-26T11:00:00Z"
+        },
+        {
+          id: "bk_demo_8",
+          property: "2 BHK",
+          guestName: "Rajesh & Meera Gupta",
+          phone: "+91 98220 54321",
+          email: "rajesh.gupta@pune.org",
+          checkInDate: "2026-11-18",
+          checkOutDate: "2026-11-23",
+          nights: 5,
+          guestsCount: 4,
+          platform: "Direct",
+          reservationCode: "DIR-8812",
+          payout: "₹26,000",
+          paymentStatus: "Deposit Paid",
+          status: "Confirmed",
+          notes: "Repeat guest from last year. Prefers ground floor car park.",
+          createdAt: "2026-10-27T15:10:00Z"
+        }
+      ];
+    }
+
+    // Init Bookings
+    function initBookingsPortal() {
+      const stored = localStorage.getItem('airbnb_bookings');
+      if (stored) {
+        try {
+          currentBookings = JSON.parse(stored);
+        } catch(e) {
+          currentBookings = getDefaultSampleBookings();
+          saveBookings();
+        }
+      } else {
+        currentBookings = getDefaultSampleBookings();
+        saveBookings();
+      }
+
+      // Default calendar to today's month
+      const today = new Date();
+      currentCalYear = today.getFullYear();
+      currentCalMonth = today.getMonth();
+
+      // Navigation listeners
+      document.getElementById('btn-cal-prev').onclick = () => {
+        currentCalMonth--;
+        if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+        renderBookingsPortal();
+      };
+      document.getElementById('btn-cal-next').onclick = () => {
+        currentCalMonth++;
+        if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+        renderBookingsPortal();
+      };
+      document.getElementById('btn-cal-today').onclick = () => {
+        const now = new Date();
+        currentCalYear = now.getFullYear();
+        currentCalMonth = now.getMonth();
+        renderBookingsPortal();
+        autoScrollTimelineToToday();
+      };
+
+      // Search & Filters in List view
+      document.getElementById('list-search-input').oninput = renderBookingsListView;
+      document.getElementById('list-status-filter').onchange = renderBookingsListView;
+      document.getElementById('list-prop-filter').onchange = renderBookingsListView;
+
+      // iCal file upload listener
+      const icalFileInput = document.getElementById('ical-file-input');
+      if (icalFileInput) {
+        icalFileInput.onchange = handleIcalFileImport;
+      }
+
+      renderBookingsPortal();
+      setTimeout(autoScrollTimelineToToday, 150);
+    }
+
+    function saveBookings() {
+      localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+      document.getElementById('bookings-count-badge').textContent = currentBookings.filter(b => b.status !== 'Cancelled').length;
+    }
+
+    // Main Render function
+    function renderBookingsPortal() {
+      renderPropertyPills();
+      renderKpis();
+      updateMonthLabel();
+
+      if (currentCalView === 'timeline') {
+        document.getElementById('calendar-timeline-view').style.display = 'block';
+        document.getElementById('calendar-month-view').style.display = 'none';
+        document.getElementById('calendar-list-view').style.display = 'none';
+        renderTimelineView();
+      } else if (currentCalView === 'month') {
+        document.getElementById('calendar-timeline-view').style.display = 'none';
+        document.getElementById('calendar-month-view').style.display = 'block';
+        document.getElementById('calendar-list-view').style.display = 'none';
+        renderMonthGridView();
+      } else {
+        document.getElementById('calendar-timeline-view').style.display = 'none';
+        document.getElementById('calendar-month-view').style.display = 'none';
+        document.getElementById('calendar-list-view').style.display = 'block';
+        renderBookingsListView();
+      }
+    }
+
+    function switchCalendarView(view) {
+      currentCalView = view;
+      document.getElementById('btn-view-timeline').classList.toggle('active', view === 'timeline');
+      document.getElementById('btn-view-month').classList.toggle('active', view === 'month');
+      document.getElementById('btn-view-list').classList.toggle('active', view === 'list');
+      renderBookingsPortal();
+      if (view === 'timeline') {
+        setTimeout(autoScrollTimelineToToday, 100);
+      }
+    }
+
+    function updateMonthLabel() {
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      document.getElementById('month-display-label').textContent = `${monthNames[currentCalMonth]} ${currentCalYear}`;
+    }
+
+    // Property Filter Pills
+    function renderPropertyPills() {
+      const container = document.getElementById('portal-prop-pills');
+      container.innerHTML = '';
+
+      const props = getPropertiesList();
+      
+      // All pill
+      const allBtn = document.createElement('button');
+      allBtn.type = 'button';
+      allBtn.className = `prop-pill-btn ${selectedPropFilter === 'ALL' ? 'active' : ''}`;
+      allBtn.innerHTML = `<span>All ${props.length} Units</span>`;
+      allBtn.onclick = () => { selectedPropFilter = 'ALL'; renderBookingsPortal(); };
+      container.appendChild(allBtn);
+
+      props.forEach((prop, idx) => {
+        const theme = PROPERTY_THEMES[idx % PROPERTY_THEMES.length];
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `prop-pill-btn ${selectedPropFilter === prop ? 'active' : ''}`;
+        btn.innerHTML = `<span class="prop-pill-dot" style="background:${theme.color};"></span><span>${prop}</span>`;
+        btn.onclick = () => { selectedPropFilter = prop; renderBookingsPortal(); };
+        container.appendChild(btn);
+      });
+
+      // Update list prop filter dropdown
+      const listSelect = document.getElementById('list-prop-filter');
+      const curVal = listSelect.value;
+      listSelect.innerHTML = '<option value="">All Properties</option>';
+      props.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        if (p === curVal) opt.selected = true;
+        listSelect.appendChild(opt);
+      });
+    }
+
+    // KPIs & Stats calculation
+    function renderKpis() {
+      const props = getPropertiesList();
+      document.getElementById('kpi-properties-summary').textContent = props.join(' • ');
+
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const monthStartStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-01`;
+      const monthEndStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
+      // Active bookings in this month
+      const activeBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled') return false;
+        if (selectedPropFilter !== 'ALL' && b.property !== selectedPropFilter) return false;
+        return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
+      });
+
+      document.getElementById('kpi-bookings-count').textContent = activeBookings.length;
+
+      // Calculate total nights booked in this month
+      let totalNights = 0;
+      let bookedDaySet = new Set(); // prop + date
+
+      activeBookings.forEach(b => {
+        const inD = new Date(b.checkInDate);
+        const outD = new Date(b.checkOutDate);
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+          const curD = new Date(currentCalYear, currentCalMonth, d);
+          if (curD >= inD && curD < outD) {
+            totalNights++;
+            bookedDaySet.add(`${b.property}_${d}`);
+          }
+        }
+      });
+
+      document.getElementById('kpi-nights-count').textContent = `${totalNights} nights booked`;
+
+      // Occupancy rate calculation
+      const totalPossibleRoomNights = (selectedPropFilter === 'ALL' ? props.length : 1) * daysInMonth;
+      const occPercent = totalPossibleRoomNights > 0 ? Math.round((bookedDaySet.size / totalPossibleRoomNights) * 100) : 0;
+      document.getElementById('kpi-occupancy-rate').textContent = `${occPercent}%`;
+      document.getElementById('kpi-occupancy-sub').textContent = selectedPropFilter === 'ALL' ? 'Across all 3 properties' : `For ${selectedPropFilter}`;
+
+      // Today's Turnovers & Stays
+      const todayStr = new Date().toISOString().slice(0, 10);
+      let checkInsToday = 0;
+      let checkOutsToday = 0;
+      let firstGuestName = "";
+
+      currentBookings.forEach(b => {
+        if (b.status === 'Cancelled') return false;
+        if (b.checkInDate === todayStr) {
+          checkInsToday++;
+          if (!firstGuestName) firstGuestName = `Check-in: ${b.guestName} (${b.property})`;
+        }
+        if (b.checkOutDate === todayStr) {
+          checkOutsToday++;
+          if (!firstGuestName) firstGuestName = `Check-out: ${b.guestName} (${b.property})`;
+        }
+      });
+
+      document.getElementById('kpi-turnover-count').textContent = `${checkInsToday} In / ${checkOutsToday} Out`;
+      document.getElementById('kpi-turnover-sub').textContent = firstGuestName || (checkInsToday === 0 && checkOutsToday === 0 ? "No turnovers today" : "");
+    }
+
+    // =========================================================================
+    // 1. TIMELINE (CHANNEL MANAGER) VIEW RENDERER
+    // =========================================================================
+    function renderTimelineView() {
+      const props = getPropertiesList();
+      const visibleProps = selectedPropFilter === 'ALL' ? props : [selectedPropFilter];
+
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const today = new Date();
+      const isCurrentMonth = (today.getFullYear() === currentCalYear && today.getMonth() === currentCalMonth);
+      const todayDateNum = today.getDate();
+
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+      // 1. Render Sticky Sidebar
+      const sidebar = document.getElementById('timeline-sidebar-col');
+      sidebar.innerHTML = `
+        <div class="timeline-sidebar-head">
+          <span>Properties (${visibleProps.length})</span>
+        </div>
+      `;
+
+      visibleProps.forEach((prop, idx) => {
+        const theme = getPropertyTheme(prop);
+        const row = document.createElement('div');
+        row.className = 'timeline-sidebar-row';
+        row.innerHTML = `
+          <div class="timeline-prop-name-box">
+            <div class="timeline-prop-accent" style="background:${theme.color};"></div>
+            <div>
+              <div class="timeline-prop-title" title="${prop}">${prop}</div>
+              <div class="timeline-prop-meta">Airbnb Listing</div>
+            </div>
+          </div>
+          <button type="button" class="timeline-quick-add-btn" onclick="openAddBookingModal('${prop}')" title="Add booking for ${prop}">+</button>
+        `;
+        sidebar.appendChild(row);
+      });
+
+      // 2. Render Grid Area (Dates Header + Property Tracks)
+      const gridArea = document.getElementById('timeline-grid-area');
+      gridArea.innerHTML = '';
+
+      // Header row with dates
+      const headerRow = document.createElement('div');
+      headerRow.className = 'timeline-dates-header';
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dt = new Date(currentCalYear, currentCalMonth, d);
+        const dayOfWeek = dt.getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const isToday = (isCurrentMonth && d === todayDateNum);
+
+        const col = document.createElement('div');
+        col.className = `timeline-date-col ${isWeekend ? 'is-weekend' : ''} ${isToday ? 'is-today' : ''}`;
+        col.innerHTML = `
+          <span class="timeline-day-name">${dayNames[dayOfWeek]}</span>
+          <span class="timeline-day-number">${d}</span>
+        `;
+        headerRow.appendChild(col);
+      }
+      gridArea.appendChild(headerRow);
+
+      // Property Rows
+      const monthStartStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-01`;
+      const monthEndStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
+      visibleProps.forEach(prop => {
+        const theme = getPropertyTheme(prop);
+        const track = document.createElement('div');
+        track.className = 'timeline-row-track';
+        track.style.width = `${daysInMonth * 52}px`;
+
+        // Day cells in the track (clickable for adding bookings)
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dt = new Date(currentCalYear, currentCalMonth, d);
+          const dayOfWeek = dt.getDay();
+          const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+          const isToday = (isCurrentMonth && d === todayDateNum);
+          const dateStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+          const cell = document.createElement('div');
+          cell.className = `timeline-day-cell ${isWeekend ? 'is-weekend' : ''} ${isToday ? 'is-today' : ''}`;
+          cell.title = `Click to add booking for ${prop} on ${dateStr}`;
+          cell.onclick = () => openAddBookingModal(prop, dateStr);
+          track.appendChild(cell);
+        }
+
+        // Floating Booking Ribbons on this track
+        const propBookings = currentBookings.filter(b => {
+          if (b.property !== prop) return false;
+          if (b.status === 'Cancelled') return false;
+          return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
+        });
+
+        propBookings.forEach(booking => {
+          let startDay;
+          let isFromPrev = false;
+          if (booking.checkInDate < monthStartStr) {
+            startDay = 1;
+            isFromPrev = true;
+          } else {
+            startDay = parseInt(booking.checkInDate.split('-')[2], 10);
+          }
+
+          let endDay;
+          let isToNext = false;
+          if (booking.checkOutDate > monthEndStr) {
+            endDay = daysInMonth;
+            isToNext = true;
+          } else {
+            endDay = parseInt(booking.checkOutDate.split('-')[2], 10);
+          }
+
+          // Geometry calculation:
+          // Check-in afternoon starts at halfway (24px into cell), checkout morning ends at halfway (24px)
+          const startPx = (startDay - 1) * 52 + (isFromPrev ? 0 : 24);
+          const endPx = (endDay - 1) * 52 + (isToNext ? 52 : 24);
+          let width = Math.max(endPx - startPx, 44);
+
+          const isBlocked = booking.platform === 'Blocked' || booking.status === 'Blocked';
+          const bTheme = isBlocked ? { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' } : theme;
+
+          const ribbon = document.createElement('div');
+          ribbon.className = 'timeline-booking-bar';
+          ribbon.style.left = `${startPx}px`;
+          ribbon.style.width = `${width}px`;
+          ribbon.style.background = bTheme.bg;
+          ribbon.style.borderColor = bTheme.border;
+          ribbon.style.color = bTheme.text;
+          ribbon.title = `${booking.guestName} (${booking.checkInDate} to ${booking.checkOutDate}, ${booking.nights || 1} nights)`;
+
+          let platformBadgeBg = '#FF385C';
+          if (booking.platform === 'Booking.com') platformBadgeBg = '#003580';
+          else if (booking.platform === 'Direct') platformBadgeBg = '#0D9488';
+          else if (booking.platform === 'Blocked') platformBadgeBg = '#64748B';
+
+          ribbon.innerHTML = `
+            <div class="tbar-header">
+              <span class="tbar-platform" style="background:${platformBadgeBg}; color:#fff;">
+                ${isFromPrev ? '◀ ' : ''}${booking.platform || 'Airbnb'}${isToNext ? ' ▶' : ''}
+              </span>
+              <span class="tbar-nights">${booking.nights || 1} nts</span>
+            </div>
+            <div class="tbar-guest">${booking.guestName}</div>
+            <div class="tbar-meta">
+              <span>${booking.reservationCode || booking.status || 'Confirmed'}</span>
+              <span>${booking.payout ? booking.payout : ''}</span>
+            </div>
+          `;
+
+          ribbon.onclick = (e) => {
+            e.stopPropagation();
+            openEditBookingModal(booking.id);
+          };
+
+          track.appendChild(ribbon);
+        });
+
+        gridArea.appendChild(track);
+      });
+    }
+
+    function autoScrollTimelineToToday() {
+      const todayCell = document.querySelector('.timeline-date-col.is-today');
+      const scrollArea = document.getElementById('timeline-scroll-area');
+      if (todayCell && scrollArea && todayCell.offsetLeft > 320) {
+        scrollArea.scrollLeft = todayCell.offsetLeft - 320;
+      }
+    }
+
+    // =========================================================================
+    // 2. MONTH GRID VIEW RENDERER
+    // =========================================================================
+    function renderMonthGridView() {
+      const grid = document.getElementById('month-grid-table');
+      grid.innerHTML = '';
+
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      dayNames.forEach(name => {
+        const h = document.createElement('div');
+        h.className = 'month-grid-head-cell';
+        h.textContent = name;
+        grid.appendChild(h);
+      });
+
+      const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const prevMonthDays = new Date(currentCalYear, currentCalMonth, 0).getDate();
+
+      const today = new Date();
+      const isCurrentMonth = (today.getFullYear() === currentCalYear && today.getMonth() === currentCalMonth);
+      const todayDateNum = today.getDate();
+
+      // Prev month filler cells
+      for (let i = firstDay - 1; i >= 0; i--) {
+        const cell = document.createElement('div');
+        cell.className = 'month-grid-day-cell is-outside-month';
+        cell.innerHTML = `<div class="mday-top"><span class="mday-num">${prevMonthDays - i}</span></div>`;
+        grid.appendChild(cell);
+      }
+
+      // Current month cells
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const isToday = (isCurrentMonth && d === todayDateNum);
+
+        const cell = document.createElement('div');
+        cell.className = `month-grid-day-cell ${isToday ? 'is-today' : ''}`;
+        
+        let cellHtml = `
+          <div class="mday-top">
+            <span class="mday-num">${d}</span>
+            <span style="font-size: 10px; color: var(--text-muted);">${isToday ? 'Today' : ''}</span>
+          </div>
+        `;
+
+        // Find bookings active on this date
+        const dayBookings = currentBookings.filter(b => {
+          if (b.status === 'Cancelled') return false;
+          if (selectedPropFilter !== 'ALL' && b.property !== selectedPropFilter) return false;
+          return (b.checkInDate <= dateStr && b.checkOutDate >= dateStr);
+        });
+
+        dayBookings.forEach(b => {
+          const theme = getPropertyTheme(b.property);
+          const isCheckIn = (b.checkInDate === dateStr);
+          const isCheckOut = (b.checkOutDate === dateStr);
+          let tag = '';
+          if (isCheckIn) tag = '▶ In: ';
+          else if (isCheckOut) tag = '◀ Out: ';
+
+          cellHtml += `
+            <div class="mday-pill" style="background:${theme.bg}; color:${theme.text}; border-color:${theme.border};" onclick="event.stopPropagation(); openEditBookingModal('${b.id}')" title="${b.property}: ${b.guestName} (${b.checkInDate} to ${b.checkOutDate})">
+              <span>${tag}${b.guestName}</span>
+            </div>
+          `;
+        });
+
+        cell.innerHTML = cellHtml;
+        cell.onclick = () => openAddBookingModal(selectedPropFilter !== 'ALL' ? selectedPropFilter : '', dateStr);
+        grid.appendChild(cell);
+      }
+
+      // Next month filler cells to complete 7-col grid
+      const totalCells = firstDay + daysInMonth;
+      const nextMonthFiller = (7 - (totalCells % 7)) % 7;
+      for (let n = 1; n <= nextMonthFiller; n++) {
+        const cell = document.createElement('div');
+        cell.className = 'month-grid-day-cell is-outside-month';
+        cell.innerHTML = `<div class="mday-top"><span class="mday-num">${n}</span></div>`;
+        grid.appendChild(cell);
+      }
+    }
+
+    // =========================================================================
+    // 3. BOOKINGS LIST VIEW RENDERER
+    // =========================================================================
+    function renderBookingsListView() {
+      const q = (document.getElementById('list-search-input')?.value || '').toLowerCase().trim();
+      const statusFilter = document.getElementById('list-status-filter')?.value || '';
+      const propFilter = document.getElementById('list-prop-filter')?.value || '';
+
+      const filtered = currentBookings.filter(b => {
+        if (b.status === 'Cancelled' && statusFilter !== 'Cancelled') return false;
+        if (propFilter && b.property !== propFilter) return false;
+        if (statusFilter && b.status !== statusFilter) return false;
+        if (selectedPropFilter !== 'ALL' && !propFilter && b.property !== selectedPropFilter) return false;
+
+        if (q) {
+          const matchName = (b.guestName || '').toLowerCase().includes(q);
+          const matchCode = (b.reservationCode || '').toLowerCase().includes(q);
+          const matchPhone = (b.phone || '').toLowerCase().includes(q);
+          return matchName || matchCode || matchPhone;
+        }
+        return true;
+      });
+
+      // Sort by checkInDate descending
+      filtered.sort((a, b) => b.checkInDate.localeCompare(a.checkInDate));
+
+      document.getElementById('list-count-badge').textContent = filtered.length;
+
+      const tbody = document.getElementById('bookings-table-body');
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+              No bookings match the selected search and filters.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      filtered.forEach(b => {
+        const theme = getPropertyTheme(b.property);
+        const tr = document.createElement('tr');
+
+        const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+        const waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(b.guestName)},%20looking%20forward%20to%20hosting%20you%20at%20${encodeURIComponent(b.property)}!` : '';
+        const checkinFormLink = `index.html?prop=${encodeURIComponent(b.property)}&code=${encodeURIComponent(b.reservationCode || '')}&name=${encodeURIComponent(b.guestName || '')}`;
+
+        tr.innerHTML = `
+          <td>
+            <span class="badge-pill" style="background:${theme.bg}; color:${theme.text}; border: 1px solid ${theme.border};">
+              🏠 ${b.property}
+            </span>
+          </td>
+          <td>
+            <strong style="color: var(--text-main); font-size: 14px;">${b.guestName}</strong>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              ${b.phone ? `📞 ${b.phone}` : ''} ${b.email ? `&bull; ✉️ ${b.email}` : ''}
+            </div>
+          </td>
+          <td>
+            <div style="font-weight: 600;">📅 ${b.checkInDate} &rarr; ${b.checkOutDate}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">🌙 ${b.nights || 1} nights</div>
+          </td>
+          <td>
+            <span class="badge-pill" style="background: #F1F1F4;">${b.platform || 'Airbnb'}</span>
+            ${b.reservationCode ? `<div style="font-size: 11px; font-family: monospace; color: var(--text-muted); margin-top: 4px;">#${b.reservationCode}</div>` : ''}
+          </td>
+          <td>
+            <div style="font-weight: 700; color: var(--text-main);">${b.payout || '—'}</div>
+            <div style="font-size: 11px; color: var(--text-muted);">👥 ${b.guestsCount || 1} Guests &bull; ${b.paymentStatus || 'Paid'}</div>
+          </td>
+          <td>
+            <span class="badge-pill" style="background: ${b.status === 'Checked In' ? '#DCFCE7; color: #15803D;' : (b.status === 'Blocked' ? '#F1F5F9; color:#475569;' : '#E0F2FE; color:#0369A1;')}">
+              ${b.status || 'Confirmed'}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: inline-flex; gap: 6px; align-items: center;">
+              ${waLink ? `
+                <a href="${waLink}" target="_blank" class="btn-action-pill" style="color: #059669; background: #ECFDF5;" title="Message on WhatsApp">
+                  💬 WhatsApp
+                </a>
+              ` : ''}
+              <a href="${checkinFormLink}" target="_blank" class="btn-action-pill" style="color: var(--primary); background: var(--primary-light);" title="Open Guest Check-in Form for this booking">
+                🔗 Check-in Link
+              </a>
+              <button type="button" class="btn-action-pill" onclick="openEditBookingModal('${b.id}')">✏️ Edit</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // =========================================================================
+    // 4. ADD / EDIT BOOKING MODAL & CONFLICT DETECTION
+    // =========================================================================
+    function populateModalPropertyDropdown() {
+      const select = document.getElementById('mb-property');
+      select.innerHTML = '';
+      getPropertiesList().forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        select.appendChild(opt);
+      });
+    }
+
+    function openAddBookingModal(prefillProp = '', prefillDate = '') {
+      editingBookingId = null;
+      document.getElementById('modal-booking-title').textContent = '➕ Add New Booking';
+      document.getElementById('btn-delete-booking').style.display = 'none';
+
+      populateModalPropertyDropdown();
+      if (prefillProp) {
+        document.getElementById('mb-property').value = prefillProp;
+      }
+
+      document.getElementById('mb-guest-name').value = '';
+      document.getElementById('mb-phone').value = '';
+      document.getElementById('mb-email').value = '';
+      document.getElementById('mb-res-code').value = '';
+      document.getElementById('mb-platform').value = 'Airbnb';
+      document.getElementById('mb-payout').value = '';
+      document.getElementById('mb-guests-count').value = '2';
+      document.getElementById('mb-pay-status').value = 'Paid in Full';
+      document.getElementById('mb-status').value = 'Confirmed';
+      document.getElementById('mb-notes').value = '';
+
+      // Dates
+      const start = prefillDate || new Date().toISOString().slice(0, 10);
+      const nextD = new Date(start);
+      nextD.setDate(nextD.getDate() + 3);
+      const end = nextD.toISOString().slice(0, 10);
+
+      document.getElementById('mb-checkin').value = start;
+      document.getElementById('mb-checkout').value = end;
+
+      onBookingDateOrPropChange();
+      document.getElementById('modal-booking').style.display = 'flex';
+      setTimeout(() => document.getElementById('mb-guest-name').focus(), 100);
+    }
+
+    function openEditBookingModal(bookingId) {
+      const b = currentBookings.find(x => x.id === bookingId);
+      if (!b) return;
+
+      editingBookingId = bookingId;
+      document.getElementById('modal-booking-title').textContent = '✏️ Edit Booking Details';
+      document.getElementById('btn-delete-booking').style.display = 'inline-block';
+
+      populateModalPropertyDropdown();
+      document.getElementById('mb-property').value = b.property;
+      document.getElementById('mb-guest-name').value = b.guestName || '';
+      document.getElementById('mb-phone').value = b.phone || '';
+      document.getElementById('mb-email').value = b.email || '';
+      document.getElementById('mb-res-code').value = b.reservationCode || '';
+      document.getElementById('mb-platform').value = b.platform || 'Airbnb';
+      document.getElementById('mb-payout').value = b.payout || '';
+      document.getElementById('mb-guests-count').value = b.guestsCount || 2;
+      document.getElementById('mb-pay-status').value = b.paymentStatus || 'Paid in Full';
+      document.getElementById('mb-status').value = b.status || 'Confirmed';
+      document.getElementById('mb-notes').value = b.notes || '';
+      document.getElementById('mb-checkin').value = b.checkInDate;
+      document.getElementById('mb-checkout').value = b.checkOutDate;
+
+      onBookingDateOrPropChange();
+      document.getElementById('modal-booking').style.display = 'flex';
+    }
+
+    function closeBookingModal() {
+      document.getElementById('modal-booking').style.display = 'none';
+      editingBookingId = null;
+    }
+
+    // Real-Time Overlap / Double-Booking Conflict Detection
+    function onBookingDateOrPropChange() {
+      const prop = document.getElementById('mb-property').value;
+      const checkIn = document.getElementById('mb-checkin').value;
+      const checkOut = document.getElementById('mb-checkout').value;
+
+      if (!checkIn || !checkOut) return;
+
+      const d1 = new Date(checkIn);
+      const d2 = new Date(checkOut);
+      const nights = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+
+      const nightsLabel = document.getElementById('mb-nights-label');
+      if (nights <= 0) {
+        nightsLabel.textContent = '⚠️ Check-out date must be after check-in date!';
+        nightsLabel.style.color = 'var(--danger)';
+      } else {
+        nightsLabel.textContent = `🌙 ${nights} Night${nights > 1 ? 's' : ''} Stay`;
+        nightsLabel.style.color = 'var(--primary)';
+      }
+
+      // Check for overlap conflicts on the same property
+      const conflictAlert = document.getElementById('modal-conflict-alert');
+      const conflictTitle = document.getElementById('conflict-title');
+      const conflictDetail = document.getElementById('conflict-detail');
+
+      const clashing = currentBookings.filter(b => {
+        if (editingBookingId && b.id === editingBookingId) return false;
+        if (b.property !== prop) return false;
+        if (b.status === 'Cancelled') return false;
+
+        // Hotel room overlap condition:
+        // checkIn < b.checkOutDate AND checkOut > b.checkInDate
+        return (checkIn < b.checkOutDate && checkOut > b.checkInDate);
+      });
+
+      if (clashing.length > 0) {
+        const first = clashing[0];
+        conflictTitle.textContent = `⚠️ Double-Booking Conflict Detected!`;
+        conflictDetail.textContent = `Unit "${prop}" is already booked for ${first.guestName} from ${first.checkInDate} to ${first.checkOutDate} (${first.reservationCode || first.platform}).`;
+        conflictAlert.style.display = 'flex';
+      } else {
+        conflictAlert.style.display = 'none';
+      }
+    }
+
+    function saveBookingFromModal() {
+      const prop = document.getElementById('mb-property').value;
+      const name = document.getElementById('mb-guest-name').value.trim();
+      const checkIn = document.getElementById('mb-checkin').value;
+      const checkOut = document.getElementById('mb-checkout').value;
+
+      if (!name) {
+        alert("Please enter the guest legal name or booking label.");
+        document.getElementById('mb-guest-name').focus();
+        return;
+      }
+
+      if (!checkIn || !checkOut) {
+        alert("Please specify both check-in and check-out dates.");
+        return;
+      }
+
+      if (checkOut <= checkIn) {
+        alert("Check-out date must be after check-in date.");
+        return;
+      }
+
+      const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+
+      const bookingData = {
+        id: editingBookingId || ('bk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+        property: prop,
+        guestName: name,
+        phone: document.getElementById('mb-phone').value.trim(),
+        email: document.getElementById('mb-email').value.trim(),
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        nights: nights,
+        guestsCount: parseInt(document.getElementById('mb-guests-count').value, 10) || 1,
+        platform: document.getElementById('mb-platform').value,
+        reservationCode: document.getElementById('mb-res-code').value.trim(),
+        payout: document.getElementById('mb-payout').value.trim(),
+        paymentStatus: document.getElementById('mb-pay-status').value,
+        status: document.getElementById('mb-status').value,
+        notes: document.getElementById('mb-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (editingBookingId) {
+        const idx = currentBookings.findIndex(x => x.id === editingBookingId);
+        if (idx >= 0) currentBookings[idx] = Object.assign(currentBookings[idx], bookingData);
+        showToast("Booking updated successfully!");
+      } else {
+        bookingData.createdAt = new Date().toISOString();
+        currentBookings.push(bookingData);
+        showToast("New booking added to calendar!");
+      }
+
+      saveBookings();
+      closeBookingModal();
+      renderBookingsPortal();
+    }
+
+    function deleteCurrentBooking() {
+      if (!editingBookingId) return;
+      if (!confirm("Are you sure you want to delete this booking from the calendar?")) return;
+
+      currentBookings = currentBookings.filter(x => x.id !== editingBookingId);
+      saveBookings();
+      closeBookingModal();
+      renderBookingsPortal();
+      showToast("Booking deleted from calendar.");
+    }
+
+    // =========================================================================
+    // 5. QUICK BLOCK DATES
+    // =========================================================================
+    function openQuickBlockModal() {
+      const select = document.getElementById('qblock-property');
+      select.innerHTML = '';
+      getPropertiesList().forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        select.appendChild(opt);
+      });
+
+      const today = new Date().toISOString().slice(0, 10);
+      const nextD = new Date();
+      nextD.setDate(nextD.getDate() + 2);
+
+      document.getElementById('qblock-start').value = today;
+      document.getElementById('qblock-end').value = nextD.toISOString().slice(0, 10);
+      document.getElementById('qblock-reason').value = 'AC Servicing & Deep Cleaning';
+
+      document.getElementById('modal-quick-block').style.display = 'flex';
+    }
+
+    function closeQuickBlockModal() {
+      document.getElementById('modal-quick-block').style.display = 'none';
+    }
+
+    function saveQuickBlock() {
+      const prop = document.getElementById('qblock-property').value;
+      const start = document.getElementById('qblock-start').value;
+      const end = document.getElementById('qblock-end').value;
+      const reason = document.getElementById('qblock-reason').value.trim() || 'Blocked / Maintenance';
+
+      if (!start || !end || end <= start) {
+        alert("Please enter a valid start and end date range.");
+        return;
+      }
+
+      const nights = Math.round((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
+
+      currentBookings.push({
+        id: 'block_' + Date.now(),
+        property: prop,
+        guestName: reason,
+        phone: '',
+        email: '',
+        checkInDate: start,
+        checkOutDate: end,
+        nights: nights,
+        guestsCount: 0,
+        platform: 'Blocked',
+        reservationCode: 'BLOCK',
+        payout: '—',
+        paymentStatus: 'Paid in Full',
+        status: 'Blocked',
+        notes: reason,
+        createdAt: new Date().toISOString()
+      });
+
+      saveBookings();
+      closeQuickBlockModal();
+      renderBookingsPortal();
+      showToast(`Dates blocked on ${prop}!`);
+    }
+
+    // =========================================================================
+    // 6. AIRBNB ICAL SYNC
+    // =========================================================================
+    function openIcalSyncModal() {
+      const container = document.getElementById('ical-inputs-container');
+      const filePropSelect = document.getElementById('file-import-property');
+      container.innerHTML = '';
+      filePropSelect.innerHTML = '';
+
+      const props = getPropertiesList();
+      const savedIcals = JSON.parse(localStorage.getItem('airbnb_icals') || '{}');
+
+      props.forEach((prop, idx) => {
+        // Inputs
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        div.innerHTML = `
+          <label>Airbnb iCal URL for: <strong>${prop}</strong></label>
+          <input type="text" id="ical-url-${idx}" value="${savedIcals[prop] || ''}" placeholder="https://www.airbnb.com/calendar/ical/...ics">
+        `;
+        container.appendChild(div);
+
+        // File dropdown option
+        const opt = document.createElement('option');
+        opt.value = prop;
+        opt.textContent = prop;
+        filePropSelect.appendChild(opt);
+      });
+
+      document.getElementById('modal-ical-sync').style.display = 'flex';
+    }
+
+    function closeIcalSyncModal() {
+      document.getElementById('modal-ical-sync').style.display = 'none';
+    }
+
+    function saveAndSyncIcals() {
+      const props = getPropertiesList();
+      const savedIcals = {};
+
+      props.forEach((prop, idx) => {
+        const val = (document.getElementById(`ical-url-${idx}`)?.value || '').trim();
+        if (val) savedIcals[prop] = val;
+      });
+
+      localStorage.setItem('airbnb_icals', JSON.stringify(savedIcals));
+      showToast("iCal URLs saved. To sync live Airbnb feeds, use the .ics file import below or your Google Webhook!");
+      closeIcalSyncModal();
+    }
+
+    function handleIcalFileImport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const prop = document.getElementById('file-import-property').value;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const text = evt.target.result;
+        const count = parseAndImportIcs(text, prop);
+        showToast(`Successfully imported ${count} reservations for ${prop}!`);
+        closeIcalSyncModal();
+        renderBookingsPortal();
+      };
+      reader.readAsText(file);
+    }
+
+    function parseAndImportIcs(icsText, propertyName) {
+      const lines = icsText.split(/\r\n|\n|\r/);
+      let inEvent = false;
+      let cur = {};
+      let importedCount = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.startsWith('BEGIN:VEVENT')) {
+          inEvent = true;
+          cur = { property: propertyName, platform: 'Airbnb', status: 'Confirmed' };
+        } else if (line.startsWith('END:VEVENT')) {
+          if (cur.checkInDate && cur.checkOutDate) {
+            // Check if booking already exists with same dates & property
+            const exists = currentBookings.some(b => b.property === propertyName && b.checkInDate === cur.checkInDate && b.checkOutDate === cur.checkOutDate);
+            if (!exists) {
+              const nights = Math.round((new Date(cur.checkOutDate) - new Date(cur.checkInDate)) / (1000 * 60 * 60 * 24));
+              currentBookings.push({
+                id: 'ical_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                property: propertyName,
+                guestName: cur.guestName || 'Airbnb Guest',
+                phone: '',
+                email: '',
+                checkInDate: cur.checkInDate,
+                checkOutDate: cur.checkOutDate,
+                nights: nights,
+                guestsCount: 2,
+                platform: 'Airbnb',
+                reservationCode: cur.reservationCode || '',
+                payout: '',
+                paymentStatus: 'Paid in Full',
+                status: 'Confirmed',
+                notes: cur.notes || 'Imported via Airbnb iCal',
+                createdAt: new Date().toISOString()
+              });
+              importedCount++;
+            }
+          }
+          inEvent = false;
+        } else if (inEvent) {
+          if (line.startsWith('DTSTART')) {
+            const raw = line.split(':').pop().trim();
+            cur.checkInDate = `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
+          } else if (line.startsWith('DTEND')) {
+            const raw = line.split(':').pop().trim();
+            cur.checkOutDate = `${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`;
+          } else if (line.startsWith('SUMMARY:')) {
+            const sum = line.substring(8).trim();
+            cur.guestName = sum;
+            const m = sum.match(/([A-Z0-9]{8,12})/);
+            if (m) cur.reservationCode = m[1];
+          } else if (line.startsWith('DESCRIPTION:')) {
+            const desc = line.substring(12).trim();
+            cur.notes = desc;
+            const m = desc.match(/details\/([A-Z0-9]+)/i);
+            if (m) cur.reservationCode = m[1];
+          }
+        }
+      }
+
+      if (importedCount > 0) saveBookings();
+      return importedCount;
+    }
+
+    // =========================================================================
+    // 7. BACKUP & EXPORT
+    // =========================================================================
+    function openBackupModal() {
+      document.getElementById('modal-backup-export').style.display = 'flex';
+    }
+
+    function closeBackupModal() {
+      document.getElementById('modal-backup-export').style.display = 'none';
+    }
+
+    function exportBookingsJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentBookings, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `airbnb_bookings_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+      showToast("Bookings JSON backup downloaded!");
+    }
+
+    function importBookingsJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            currentBookings = imported;
+            saveBookings();
+            renderBookingsPortal();
+            closeBackupModal();
+            showToast(`Restored ${imported.length} bookings successfully!`);
+          } else {
+            alert("Invalid backup file format. Expected a JSON array.");
+          }
+        } catch(err) {
+          alert("Error parsing JSON backup file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportBookingsCsv() {
+      if (currentBookings.length === 0) {
+        alert("No bookings available to export.");
+        return;
+      }
+
+      const headers = ["ID", "Property", "Guest Legal Name", "Phone", "Email", "Check-in", "Check-out", "Nights", "Guests", "Platform", "Reservation Code", "Payout", "Payment Status", "Status", "Notes"];
+      let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+
+      currentBookings.forEach(b => {
+        const row = [
+          b.id,
+          b.property,
+          b.guestName,
+          b.phone,
+          b.email,
+          b.checkInDate,
+          b.checkOutDate,
+          b.nights,
+          b.guestsCount,
+          b.platform,
+          b.reservationCode,
+          b.payout,
+          b.paymentStatus,
+          b.status,
+          (b.notes || '').replace(/\n/g, ' ')
+        ].map(v => `"${(v || '').toString().replace(/"/g, '""')}"`);
+        csvContent += row.join(",") + "\n";
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `airbnb_bookings_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showToast("Bookings CSV spreadsheet downloaded!");
+    }
+
+    function reloadDemoBookings() {
+      if (!confirm("This will replace current bookings with the sample demo bookings for all 3 properties. Continue?")) return;
+      currentBookings = getDefaultSampleBookings();
+      saveBookings();
+      renderBookingsPortal();
+      closeBackupModal();
+      showToast("Sample demo bookings reloaded!");
+    }
+
+    function clearAllBookings() {
+      if (!confirm("Are you sure you want to delete ALL bookings from the calendar?")) return;
+      currentBookings = [];
+      saveBookings();
+      renderBookingsPortal();
+      closeBackupModal();
+      showToast("All bookings cleared.");
+    }
+
+  
+  </script>
+</body>
+</html>

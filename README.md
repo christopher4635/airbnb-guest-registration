@@ -1,31 +1,37 @@
-# Airbnb Guest Check-in & ID Verification Webform
+# Airbnb Multi-Property Booking Portal & Guest Registration System
 
-A mobile-friendly, high-converting Guest Registration and ID Verification web application built specifically for Airbnb and vacation rental hosts.
+A unified, mobile-friendly Host Management Portal and Guest ID Verification web application built specifically for Airbnb and vacation rental hosts managing multiple properties.
 
-### Why this is better than Google Forms:
-- **No Google login required:** Guests can submit from mobile browsers (WhatsApp, Airbnb in-app browser, Safari, Chrome) without ever being forced to log into a Google Account.
-- **Admin Panel (`admin.html`):** Add or remove fields, customize property types (1 BHK, 2 BHK, 1 Room, etc.), and set fields as required or optional with a PIN lock.
-- **Dynamic Guest Fields:** Starts with **Total Number of Guests**. As the number changes, fields for each guest's Name, Age, and ID uploads appear automatically.
-- **Property Type / Option:** Dropdown for 1 BHK, 2 BHK, 1 Room / Studio, Entire Villa, or custom options.
-- **Address not required:** Streamlined according to your exact requirements.
-- **Trip Information:** Includes mandatory **Coming From**, **Going To**, and **Purpose of Visit**.
-- **Instant Camera Upload & Compression:** Photos taken with high-resolution smartphone cameras (15MB+) are compressed on the guest's device in real time, making uploads instant even on weak mobile connections.
-- **Digital Signature Pad:** Guests sign on their phone touchscreen.
-- **Google Drive & Sheets Integration:** Submissions are automatically filed into your Google Drive (in a dedicated folder per booking) and logged into an "Airbnb Guest Registry" Google Sheet with clickable links to each guest's ID photos.
+### Key Capabilities:
+- **Unified 3-Property Bookings Calendar (`admin.html` & `portal.html`):** View all 3 of your Airbnb properties side-by-side in one place with distinctive color coding (1 BHK: Coral, 2 BHK: Emerald, Studio: Indigo).
+- **Channel Manager Timeline View:** A visual horizontal timeline across the month (days 1–31) showing check-ins, check-outs, guest names, nights, and booking platforms with smooth auto-scroll to today.
+- **Traditional Month Calendar View:** 7-column calendar showing all bookings, turnovers, and stays on any day.
+- **Add / Edit Bookings in Real-Time:** Add new reservations as they arrive via Airbnb, Booking.com, WhatsApp, or phone.
+- **Real-Time Double-Booking Conflict Detection:** Live warnings if you accidentally select dates that overlap with an existing booking on that property!
+- **Quick Block Dates:** Block dates in 1 click for maintenance, deep cleaning, or personal owner stays.
+- **Airbnb iCal Sync:** Paste Airbnb calendar export links to sync bookings automatically, or import `.ics` files.
+- **1-Click WhatsApp & Guest Check-in Link:** Message guests on WhatsApp or send personalized ID verification links with pre-filled booking details.
+- **Guest ID Verification Form (`index.html`):** Guests upload front & back ID photos and sign on their touchscreen without needing a Google account.
+- **Google Drive & Sheets Integration (`google-apps-script.js`):** Automatically files guest IDs into dedicated Drive folders and logs bookings and check-in registries into Google Sheets.
 
 ---
 
-## Host Admin Panel
+## Accessing the Host Portal
 
-You have a built-in admin dashboard to manage your form:
-- **Live URL**: `https://christopher4635.github.io/airbnb-guest-registration/admin.html`
-- **Host PIN**: `4635` (can be changed in the admin panel)
+You can access the portal locally or live on GitHub Pages:
+- **Admin & Bookings Portal**: `https://christopher4635.github.io/airbnb-guest-registration/admin.html`
+- **Fullscreen Bookings Portal**: `https://christopher4635.github.io/airbnb-guest-registration/portal.html`
+- **Guest Check-in Form**: `https://christopher4635.github.io/airbnb-guest-registration/index.html`
+- **Default Host PIN**: `4635` (can be customized in Admin Settings)
 
-### What you can do in Admin:
-1. **Property Types**: Add/remove options like `1 Room / Studio`, `1 BHK`, `2 BHK`, `3 BHK`, `Entire Villa`, etc.
-2. **Standard Fields**: Enable/disable fields or change them between Required and Optional.
-3. **Custom Questions**: Add your own questions (e.g., Vehicle Plate Number, Flight Number, Special Requests).
-4. **House Rules**: Edit the house rules declaration text.
+### What you can do in the Host Portal:
+1. **Multi-Property Calendar**: Switch between Timeline view (Gantt grid), Month Grid view, and filterable Bookings List.
+2. **Add / Edit Bookings**: Click any date directly on the calendar or click **+ Add Booking** to log new reservations with guest names, platforms, payout amounts, and status.
+3. **Prevent Double-Bookings**: Automatic real-time conflict detector warns you if a unit is already occupied.
+4. **Maintenance Blocks**: Use **Block Dates** to take a property off the calendar for cleaning or owner stays.
+5. **Sync Airbnb iCal**: Export your calendar `.ics` links from Airbnb and sync them across all 3 listings.
+6. **Backup & CSV**: Export JSON backups or download CSV spreadsheets anytime.
+7. **Form Customization**: Add custom questions, change required fields, and edit house rules in the settings tab.
 
 ---
 

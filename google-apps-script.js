@@ -41,6 +41,31 @@ function doPost(e) {
     }
 
     const data = JSON.parse(e.postData.contents);
+
+    // If saving a booking from the Admin Portal
+    if (data.action === "saveBooking" && data.booking) {
+      const bSheet = getBookingsSheet();
+      const b = data.booking;
+      bSheet.appendRow([
+        b.id || Utilities.getUuid(),
+        b.property || "",
+        b.guestName || "",
+        b.phone || "",
+        b.email || "",
+        b.checkInDate || "",
+        b.checkOutDate || "",
+        b.nights || 1,
+        b.guestsCount || 1,
+        b.platform || "Airbnb",
+        b.reservationCode || "",
+        b.payout || "",
+        b.paymentStatus || "Paid in Full",
+        b.status || "Confirmed",
+        b.notes || "",
+        Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss")
+      ]);
+      return responseJSON({ status: "success", message: "Booking logged to Google Sheets" });
+    }
     
     // 1. Get or create root Drive folder
     const rootFolder = getOrCreateFolder(ROOT_FOLDER_NAME);
@@ -169,6 +194,35 @@ function doGet(e) {
     }
   }
 
+  // If requested with ?action=getBookings, return all bookings from the Bookings tab
+  if (e && e.parameter && e.parameter.action === "getBookings") {
+    try {
+      const bSheet = getBookingsSheet();
+      const lastRow = bSheet.getLastRow();
+      const lastCol = bSheet.getLastColumn();
+
+      if (lastRow <= 1) {
+        return responseJSON({ status: "success", bookings: [] });
+      }
+
+      const data = bSheet.getRange(1, 1, lastRow, lastCol).getValues();
+      const headers = data[0];
+      const rows = data.slice(1);
+
+      const bookings = rows.map(function(row) {
+        const obj = {};
+        headers.forEach(function(h, idx) {
+          obj[h] = row[idx];
+        });
+        return obj;
+      });
+
+      return responseJSON({ status: "success", bookings: bookings });
+    } catch (err) {
+      return responseJSON({ status: "error", message: err.toString() });
+    }
+  }
+
   return ContentService.createTextOutput("Airbnb Guest Registration Webhook is active and listening.");
 }
 
@@ -261,6 +315,48 @@ function getRegistrySheet() {
   }
 
   return sheet;
+}
+
+function getBookingsSheet() {
+  const regSheet = getRegistrySheet();
+  const ss = regSheet.getParent();
+  let bSheet = ss.getSheetByName("Bookings");
+
+  if (!bSheet) {
+    bSheet = ss.insertSheet("Bookings");
+    const headers = [
+      "Booking ID",
+      "Property",
+      "Guest Legal Name",
+      "Phone / WhatsApp",
+      "Email Address",
+      "Check-in Date",
+      "Check-out Date",
+      "Total Nights",
+      "Guests Count",
+      "Platform",
+      "Reservation Code",
+      "Payout",
+      "Payment Status",
+      "Booking Status",
+      "Host Notes",
+      "Timestamp"
+    ];
+    bSheet.appendRow(headers);
+
+    const headerRange = bSheet.getRange(1, 1, 1, headers.length);
+    headerRange.setBackground("#FF385C");
+    headerRange.setFontColor("#FFFFFF");
+    headerRange.setFontWeight("bold");
+    headerRange.setFontFamily("Arial");
+    bSheet.setFrozenRows(1);
+
+    for (let c = 1; c <= headers.length; c++) {
+      bSheet.autoResizeColumn(c);
+    }
+  }
+
+  return bSheet;
 }
 
 function sanitizeFileName(name) {
