@@ -1,0 +1,27 @@
+{
+  "name": "airbnb-multi-property-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Fullstack Cloudflare Monorepo: Hono Backend, Cloudflare D1 Database, Cloudflare R2 Storage, Static Frontend",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "deploy": "wrangler deploy",
+    "deploy:backend": "npm --prefix backend run deploy",
+    "deploy:frontend": "npm --prefix frontend run deploy",
+    "d1:create": "wrangler d1 create airbnb-db",
+    "d1:migrate:local": "wrangler d1 execute airbnb-db --local --file=./backend/schema.sql",
+    "d1:migrate:remote": "wrangler d1 execute airbnb-db --remote --file=./backend/schema.sql",
+    "d1:seed:local": "wrangler d1 execute airbnb-db --local --file=./backend/seed.sql",
+    "d1:seed:remote": "wrangler d1 execute airbnb-db --remote --file=./backend/seed.sql",
+    "r2:create": "wrangler r2 bucket create airbnb-guest-images"
+  },
+  "devDependencies": {
+    "wrangler": "^3.84.0"
+  }
+}

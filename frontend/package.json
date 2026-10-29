@@ -1,0 +1,13 @@
+{
+  "name": "airbnb-management-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend for Airbnb Multi-Property Portal (Static Assets hosted on Cloudflare)",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^3.84.0"
+  }
+}

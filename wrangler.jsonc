@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "airbnb-management",
+  "main": "./backend/src/index.ts",
+  "compatibility_date": "2024-10-22",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // 1. Static Assets Frontend (Serves index.html, admin.html, portal.html, js/api.js)
+  "assets": {
+    "directory": "./frontend",
+    "binding": "ASSETS"
+  },
+
+  // 2. Cloudflare D1 Database (Edge SQLite)
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "airbnb-db",
+      "database_id": "00000000-0000-0000-0000-000000000000" // Replace with your D1 database ID from: npx wrangler d1 create airbnb-db
+    }
+  ],
+
+  // 3. Cloudflare R2 Storage (Zero Egress Object Store for Guest IDs & Signatures)
+  "r2_buckets": [
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "airbnb-guest-images" // Created via: npx wrangler r2 bucket create airbnb-guest-images
+    }
+  ],
+
+  // 4. Environment Variables
+  "vars": {
+    "ADMIN_PIN": "4635",
+    "ENVIRONMENT": "production"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

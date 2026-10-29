@@ -1,0 +1,25 @@
+{
+  "name": "airbnb-management-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker Backend powered by Hono, D1 Database, and R2 Image Storage",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "d1:create": "wrangler d1 create airbnb-db",
+    "d1:migrate:local": "wrangler d1 execute airbnb-db --local --file=./schema.sql",
+    "d1:migrate:remote": "wrangler d1 execute airbnb-db --remote --file=./schema.sql",
+    "d1:seed:local": "wrangler d1 execute airbnb-db --local --file=./seed.sql",
+    "d1:seed:remote": "wrangler d1 execute airbnb-db --remote --file=./seed.sql",
+    "r2:create": "wrangler r2 bucket create airbnb-guest-images"
+  },
+  "dependencies": {
+    "hono": "^4.6.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "typescript": "^5.6.3",
+    "wrangler": "^3.84.0"
+  }
+}

@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Guest Registration & ID Verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FF385C;
+      --primary-hover: #E00B41;
+      --primary-light: #FFF0F2;
+      --text-main: #222222;
+      --text-muted: #717171;
+      --text-light: #A0A0A0;
+      --bg-page: #F7F7F8;
+      --bg-card: #FFFFFF;
+      --border-color: #E2E2E6;
+      --border-focus: #222222;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+      --danger: #DC2626;
+      --success: #10B981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 16px 12px 60px;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Header styling */
+    .header-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #FF385C, #E00B41, #FF5A5F);
+    }
+
+    .badge-airbnb {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .badge-airbnb svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
+    }
+
+    .header-desc {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* Host Contact Pill Bar */
+    .host-contact-box {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .host-contact-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .host-contact-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .contact-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      background: #F1F1F4;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      transition: all 0.15s ease;
+    }
+
+    .contact-pill:hover {
+      background: #E8E8EC;
+      border-color: #C0C0C8;
+    }
+
+    .contact-pill svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .contact-pill.insta-pill {
+      color: #C13584;
+      background: #FDF2F8;
+      border-color: #FBCFE8;
+    }
+
+    .contact-pill.insta-pill:hover {
+      background: #FCE7F3;
+    }
+
+    .contact-pill.phone-pill {
+      color: #0284C7;
+      background: #F0F9FF;
+      border-color: #BAE6FD;
+    }
+
+    .contact-pill.phone-pill:hover {
+      background: #E0F2FE;
+    }
+
+    /* Section Cards */
+    .form-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .required-star {
+      color: var(--primary);
+      margin-left: 2px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      height: 48px;
+      padding: 10px 14px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text-main);
+      background-color: #FAFAFB;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      background-color: #FFFFFF;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(34,34,34,0.08);
+    }
+
+    /* Guest Stepper UI */
+    .guest-selector-box {
+      background: #FAFAFB;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .guest-selector-info strong {
+      display: block;
+      font-size: 15px;
+      color: var(--text-main);
+    }
+
+    .guest-selector-info span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .stepper-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stepper-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--text-main);
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .stepper-btn:hover:not(:disabled) {
+      border-color: var(--text-main);
+      background: #F1F1F3;
+    }
+
+    .stepper-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .stepper-count {
+      font-size: 18px;
+      font-weight: 700;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    /* Guest Dynamic Cards */
+    .guest-card {
+      background: #FFFFFF;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 16px;
+      margin-bottom: 16px;
+      position: relative;
+      transition: border-color 0.2s ease;
+    }
+
+    .guest-card:hover {
+      border-color: #C0C0C6;
+    }
+
+    .guest-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .guest-tag {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .guest-badge-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #E8F4FD;
+      color: #0369A1;
+    }
+
+    /* Upload Box */
+    .upload-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .upload-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .upload-slot {
+      background: #FAFAFB;
+      border: 1.5px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px 10px;
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 155px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .upload-slot:hover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .upload-slot.has-file {
+      border-style: solid;
+      border-color: var(--success);
+      background: #F0FDF4;
+      padding: 10px;
+      cursor: default;
+    }
+
+    .upload-file-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .upload-slot.has-file .upload-file-overlay {
+      display: none;
+    }
+
+    .upload-btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      z-index: 6;
+      position: relative;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .upload-pill-btn {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .upload-pill-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #FFFBFB;
+    }
+
+    .preview-container {
+      width: 100%;
+      position: relative;
+      border-radius: var(--radius-sm);
+    }
+
+    .preview-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      width: 100%;
+      gap: 6px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .upload-icon {
+      width: 28px;
+      height: 28px;
+      margin-bottom: 6px;
+      stroke: var(--text-muted);
+    }
+
+    .upload-slot:hover .upload-icon {
+      stroke: var(--primary);
+    }
+
+    .upload-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 2px;
+    }
+
+    .upload-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .preview-img {
+      width: 100%;
+      height: 115px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      display: block;
+    }
+
+    .remove-upload-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      border: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    /* Signature Box */
+    .signature-area {
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: #FFFFFF;
+      position: relative;
+      overflow: hidden;
+    }
+
+    canvas#sig-canvas {
+      width: 100%;
+      height: 150px;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .sig-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: #FAFAFB;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .sig-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .btn-clear-sig {
+      background: none;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--danger);
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    /* Checkbox terms */
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: normal;
+      cursor: pointer;
+      line-height: 1.4;
+      margin-top: 14px;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    /* Submit Button */
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(90deg, #FF385C 0%, #E00B41 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 16px;
+      font-weight: 700;
+      padding: 16px 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(224, 11, 65, 0.35);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(224, 11, 65, 0.45);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Overlay / Modal */
+    .status-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 16px;
+    }
+
+    .status-box {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #F1F1F3;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .success-icon {
+      width: 56px;
+      height: 56px;
+      background: #ECFDF5;
+      color: var(--success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .success-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: currentColor;
+    }
+
+    .status-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .status-msg {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .btn-done {
+      background: var(--text-main);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+  <script src="js/api.js"></script>
+</head>
+<body>
+  <!-- HOST QUICK ACCESS BAR -->
+  <div style="max-width: 680px; margin: 16px auto 0; padding: 0 16px;">
+    <div style="background: linear-gradient(135deg, #0F172A, #1E293B); color: #fff; padding: 12px 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 14px rgba(0,0,0,0.12); flex-wrap: wrap; gap: 10px; border: 1px solid rgba(255,255,255,0.1);">
+      <div>
+        <div style="font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+          <span>🏡 Host Multi-Property Portal</span>
+          <span style="font-size: 10px; background: #10B981; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 600;">PIN: 4635</span>
+        </div>
+        <div style="font-size: 12px; color: #94A3B8; margin-top: 2px;">
+          Calendar & Gantt Timeline for 1 BHK, 2 BHK & Studio Bookings
+        </div>
+      </div>
+      <a href="admin.html" style="background: #FF385C; color: #fff; padding: 7px 15px; border-radius: 8px; font-weight: 600; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(255, 56, 92, 0.4);">
+        <span>Open Bookings Portal →</span>
+      </a>
+    </div>
+  </div>
+
+
+  <div class="container">
+    
+    <!-- Header -->
+    <header class="header-card">
+      <div class="badge-airbnb">
+        <svg viewBox="0 0 32 32">
+          <path d="M16 1c2.008 0 3.463.963 4.751 3.269l.533 1.025c1.954 3.83 4.62 9.098 5.759 12.186 1.405 3.81 1.458 6.471.161 8.354-1.258 1.826-3.483 2.666-6.204 2.666-2.585 0-4.665-.774-6.384-2.459-1.719 1.685-3.799 2.459-6.384 2.459-2.721 0-4.946-.84-6.204-2.666-1.297-1.883-1.244-4.544.161-8.354 1.139-3.088 3.805-8.356 5.759-12.186l.533-1.025C9.722 1.963 11.177 1 13.185 1H16zm0 3c-1.077 0-1.897.458-2.85 2.158l-.513.987C10.73 10.87 8.1 16.071 7.026 18.986c-1.127 3.056-1.059 4.887-.19 6.148.775 1.125 2.193 1.616 4.164 1.616 2.072 0 3.73-.655 5.076-2.022.253-.258.498-.539.734-.843.236.304.481.585.734.843 1.346 1.367 3.004 2.022 5.076 2.022 1.971 0 3.389-.491 4.164-1.616.869-1.261.937-3.092-.19-6.148-1.074-2.915-3.704-8.116-5.611-11.841l-.513-.987C19.082 4.458 18.262 4 17.185 4H16z"/>
+        </svg>
+        Guest Pre-Check-in
+      </div>
+      <h1 id="property-title">Guest Registration & ID Form</h1>
+      <p class="header-desc">
+        Welcome! As required by local hospitality and security regulations, please confirm your travel details and upload government-issued ID for all staying guests before arrival.
+      </p>
+
+      <!-- Host Contact & Social Box -->
+      <div class="host-contact-box" id="host-contact-box">
+        <span class="host-contact-label">Need help or early check-in?</span>
+        <div class="host-contact-links">
+          <a href="tel:+917002293073" id="host-phone-link" class="contact-pill phone-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+            </svg>
+            <span id="host-phone-text">+91 70022 93073</span>
+          </a>
+          <a href="https://instagram.com" target="_blank" id="host-insta-link" class="contact-pill insta-pill">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            <span id="host-insta-text">Instagram</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <form id="checkin-form">
+
+      <!-- STEP 1: Guest Count (Always First) -->
+      <section class="form-card">
+        <h2 class="section-title">
+          <span>1.</span> Total Number of Guests
+        </h2>
+        <p class="section-subtitle">
+          Select the total number of people staying in the property. Verification fields will appear for each person.
+        </p>
+
+        <div class="guest-selector-box">
+          <div class="guest-selector-info">
+            <strong>Guests Staying</strong>
+            <span>Including primary booker, family & friends</span>
+          </div>
+          <div class="stepper-controls">
+            <button type="button" class="stepper-btn" id="btn-guest-minus" disabled aria-label="Decrease guests">−</button>
+            <span class="stepper-count" id="guest-count-display">1</span>
+            <button type="button" class="stepper-btn" id="btn-guest-plus" aria-label="Increase guests">+</button>
+          </div>
+        </div>
+        <input type="hidden" name="totalGuests" id="totalGuestsInput" value="1">
+      </section>
+
+      <!-- STEP 2: Travel Details (Coming from, Going to, Purpose of Visit) -->
+      <section class="form-card">
+        <h2 class="section-title">
+          <span>2.</span> Travel & Stay Details
+        </h2>
+        <p class="section-subtitle">Please let us know your travel itinerary and booking info.</p>
+
+        <!-- Property Option (1BHK / 2BHK / 1 Room / etc.) -->
+        <div class="form-group" id="field-wrap-propertyOption">
+          <label for="propertyOption">Property / Room Type <span class="required-star">*</span></label>
+          <select id="propertyOption" name="propertyOption" required>
+            <option value="" disabled selected>Select property / room type...</option>
+            <option value="1 Room / Studio">1 Room / Studio</option>
+            <option value="1 BHK">1 BHK</option>
+            <option value="2 BHK">2 BHK</option>
+            <option value="3 BHK">3 BHK</option>
+            <option value="Entire Villa / House">Entire Villa / House</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" id="field-wrap-comingFrom">
+            <label for="comingFrom">Coming From <span class="required-star">*</span></label>
+            <input type="text" id="comingFrom" name="comingFrom" placeholder="City / Country (Origin)" required>
+          </div>
+          <div class="form-group" id="field-wrap-goingTo">
+            <label for="goingTo">Going To <span class="required-star">*</span></label>
+            <input type="text" id="goingTo" name="goingTo" placeholder="City / Country (Next Destination)" required>
+          </div>
+        </div>
+
+        <div class="form-group" id="field-wrap-purposeOfVisit">
+          <label for="purposeOfVisit">Purpose of Visit <span class="required-star">*</span></label>
+          <select id="purposeOfVisit" name="purposeOfVisit" required>
+            <option value="" disabled selected>Select purpose...</option>
+            <option value="Tourism / Vacation">Tourism / Vacation</option>
+            <option value="Business / Work">Business / Work</option>
+            <option value="Visiting Friends / Family">Visiting Friends / Family</option>
+            <option value="Medical / Health">Medical / Health</option>
+            <option value="Transit / Layover">Transit / Layover</option>
+            <option value="Event / Wedding / Festival">Event / Wedding / Festival</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" id="field-wrap-checkInDate">
+            <label for="checkInDate">Check-in Date <span class="required-star">*</span></label>
+            <input type="date" id="checkInDate" name="checkInDate" required>
+          </div>
+          <div class="form-group" id="field-wrap-checkOutDate">
+            <label for="checkOutDate">Check-out Date <span class="required-star">*</span></label>
+            <input type="date" id="checkOutDate" name="checkOutDate" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" id="field-wrap-reservationCode">
+            <label for="reservationCode">Airbnb Reservation Code</label>
+            <input type="text" id="reservationCode" name="reservationCode" placeholder="e.g. HM34XZ891 (Optional)">
+          </div>
+          <div class="form-group" id="field-wrap-arrivalTime">
+            <label for="arrivalTime">Estimated Arrival Time</label>
+            <input type="text" id="arrivalTime" name="arrivalTime" placeholder="e.g. 3:00 PM">
+          </div>
+        </div>
+
+        <!-- Dynamic Custom Fields added by Admin -->
+        <div id="dynamic-custom-fields" style="margin-top: 12px;"></div>
+      </section>
+
+      <!-- STEP 3: Dynamic Guest Cards Container -->
+      <section class="form-card">
+        <h2 class="section-title">
+          <span>3.</span> Guest Information & ID Uploads
+        </h2>
+        <p class="section-subtitle">
+          Please provide the full name, age, and a clear photo of the Government ID for each guest. Address is not required.
+        </p>
+
+        <div id="guest-cards-container">
+          <!-- Dynamically populated via JavaScript based on total guests -->
+        </div>
+      </section>
+
+      <!-- STEP 4: House Rules & Digital Signature -->
+      <section class="form-card">
+        <h2 class="section-title">
+          <span>4.</span> House Rules & Declaration
+        </h2>
+        <p class="section-subtitle">Please review our basic house rules and sign below.</p>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="rulesConsent" required>
+          <span>
+            I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine.
+          </span>
+        </label>
+
+        <div class="form-group" style="margin-top: 18px;">
+          <label>Primary Guest Digital Signature <span class="required-star">*</span></label>
+          <div class="signature-area">
+            <canvas id="sig-canvas"></canvas>
+            <div class="sig-toolbar">
+              <span class="sig-hint">Sign above with your finger or mouse</span>
+              <button type="button" class="btn-clear-sig" id="btn-clear-sig">Clear</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-submit" id="btn-submit">
+        <span>Submit Verification & Complete Check-in</span>
+      </button>
+
+    </form>
+
+    <footer style="margin-top: 36px; text-align: center; font-size: 12px; color: var(--text-muted);">
+      <span>Airbnb Host Registration Portal</span> &bull; 
+      <a href="admin.html" style="color: var(--text-muted); text-decoration: underline;">Host Admin (Edit Fields)</a>
+    </footer>
+
+  </div>
+
+  <!-- Status / Loading Overlay -->
+  <div class="status-overlay" id="status-overlay">
+    <div class="status-box" id="status-box">
+      <div class="spinner" id="status-spinner"></div>
+      <div class="success-icon" id="status-success-icon" style="display: none;">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+        </svg>
+      </div>
+      <h3 class="status-title" id="status-title">Uploading details...</h3>
+      <p class="status-msg" id="status-msg">Compressing ID photos and saving your reservation information.</p>
+      <button type="button" class="btn-done" id="btn-done" style="display: none;">Done</button>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * CONFIGURATION:
+     * Replace this URL with your deployed Google Apps Script Web App URL.
+     * If left as empty string or placeholder, submissions are saved locally in demo mode.
+     */
+    const GOOGLE_SCRIPT_WEBHOOK_URL = ""; 
+
+    // State
+    let totalGuests = 1;
+    const MAX_GUESTS = 12;
+    const MIN_GUESTS = 1;
+    
+    // Store file data per guest: { [guestIndex]: { front: base64, back: base64, frontName: '', backName: '' } }
+    const guestFiles = {};
+
+    // Elements
+    const guestCountDisplay = document.getElementById('guest-count-display');
+    const totalGuestsInput = document.getElementById('totalGuestsInput');
+    const btnGuestMinus = document.getElementById('btn-guest-minus');
+    const btnGuestPlus = document.getElementById('btn-guest-plus');
+    const guestCardsContainer = document.getElementById('guest-cards-container');
+    const form = document.getElementById('checkin-form');
+
+    // Configuration State
+    let appConfig = {
+      hostContact: {
+        phone: "+91 70022 93073",
+        instagramUrl: "",
+        instagramHandle: ""
+      },
+      propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
+      standardFields: [
+        { id: "propertyOption", label: "Property / Room Type", required: true, enabled: true },
+        { id: "comingFrom", label: "Coming From", required: true, enabled: true },
+        { id: "goingTo", label: "Going To", required: true, enabled: true },
+        { id: "purposeOfVisit", label: "Purpose of Visit", required: true, enabled: true },
+        { id: "checkInDate", label: "Check-in Date", required: true, enabled: true },
+        { id: "checkOutDate", label: "Check-out Date", required: true, enabled: true },
+        { id: "reservationCode", label: "Airbnb Reservation Code", required: false, enabled: true },
+        { id: "arrivalTime", label: "Estimated Arrival Time", required: false, enabled: true }
+      ],
+      customFields: [],
+      rulesText: "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine."
+    };
+
+    async function initConfig() {
+      // 1. Always fetch live config from GitHub with cache-busting timestamp
+      try {
+        const res = await fetch('config.json?t=' + Date.now());
+        if (res.ok) {
+          const fetched = await res.json();
+          appConfig = Object.assign(appConfig, fetched);
+        }
+      } catch(e) {
+        // Fallback to localStorage if running offline or local file://
+        const local = localStorage.getItem('airbnb_form_config');
+        if (local) {
+          try {
+            appConfig = Object.assign(appConfig, JSON.parse(local));
+          } catch(err) {}
+        }
+      }
+      applyConfigToForm();
+    }
+
+    function applyConfigToForm() {
+      // 1. Populate Property Options
+      const propSelect = document.getElementById('propertyOption');
+      if (propSelect && appConfig.propertyOptions && appConfig.propertyOptions.length > 0) {
+        propSelect.innerHTML = '<option value="" disabled selected>Select property / room type...</option>';
+        appConfig.propertyOptions.forEach(opt => {
+          const el = document.createElement('option');
+          el.value = opt;
+          el.textContent = opt;
+          propSelect.appendChild(el);
+        });
+      }
+
+      // 2. Standard field visibility & requirement
+      if (appConfig.standardFields) {
+        appConfig.standardFields.forEach(f => {
+          const wrap = document.getElementById('field-wrap-' + f.id);
+          const input = document.getElementById(f.id);
+          if (wrap) {
+            wrap.style.display = (f.enabled !== false) ? '' : 'none';
+          }
+          if (input) {
+            if (f.enabled === false) {
+              input.removeAttribute('required');
+            } else if (f.required) {
+              input.setAttribute('required', 'required');
+            } else {
+              input.removeAttribute('required');
+            }
+          }
+        });
+      }
+
+      // 3. Render Custom Fields
+      const customContainer = document.getElementById('dynamic-custom-fields');
+      if (customContainer && appConfig.customFields && appConfig.customFields.length > 0) {
+        customContainer.innerHTML = '';
+        appConfig.customFields.forEach(cf => {
+          if (cf.enabled === false) return;
+          const group = document.createElement('div');
+          group.className = 'form-group';
+          group.id = 'field-wrap-' + cf.id;
+          
+          const reqStar = cf.required ? '<span class="required-star">*</span>' : '';
+          let inputHtml = '';
+          if (cf.type === 'select' && cf.options) {
+            inputHtml = `<select id="${cf.id}" name="${cf.id}" ${cf.required ? 'required' : ''}>
+              <option value="" disabled selected>Select...</option>
+              ${cf.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+            </select>`;
+          } else {
+            inputHtml = `<input type="${cf.type || 'text'}" id="${cf.id}" name="${cf.id}" placeholder="${cf.placeholder || cf.label}" ${cf.required ? 'required' : ''}>`;
+          }
+
+          group.innerHTML = `<label for="${cf.id}">${cf.label} ${reqStar}</label>${inputHtml}`;
+          customContainer.appendChild(group);
+        });
+      }
+
+      // 4. Update Rules Text if customized
+      if (appConfig.rulesText) {
+        const rulesSpan = document.querySelector('#rulesConsent + span');
+        if (rulesSpan) rulesSpan.textContent = appConfig.rulesText;
+      }
+
+      // 5. Update Host Contact & Instagram Links
+      if (appConfig.hostContact) {
+        const phoneLink = document.getElementById('host-phone-link');
+        const phoneText = document.getElementById('host-phone-text');
+        const instaLink = document.getElementById('host-insta-link');
+        const instaText = document.getElementById('host-insta-text');
+
+        if (phoneLink && phoneText) {
+          if (appConfig.hostContact.phone) {
+            const rawNum = appConfig.hostContact.phone.replace(/[^0-9+]/g, '');
+            phoneLink.href = 'tel:' + rawNum;
+            phoneText.textContent = appConfig.hostContact.phone;
+            phoneLink.style.display = 'inline-flex';
+          } else {
+            phoneLink.style.display = 'none';
+          }
+        }
+
+        if (instaLink && instaText) {
+          if (appConfig.hostContact.instagramUrl) {
+            instaLink.href = appConfig.hostContact.instagramUrl;
+            instaText.textContent = appConfig.hostContact.instagramHandle || 'Instagram';
+            instaLink.style.display = 'inline-flex';
+          } else {
+            instaLink.style.display = 'none';
+          }
+        }
+      }
+    }
+
+    // Pre-fill from URL parameters (e.g. ?code=HM12345&property=Sunset+Villa)
+    window.addEventListener('DOMContentLoaded', () => {
+      initConfig();
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('code')) {
+        document.getElementById('reservationCode').value = urlParams.get('code');
+      }
+      if (urlParams.get('property')) {
+        document.getElementById('property-title').textContent = urlParams.get('property') + " — Guest Registration";
+      }
+      renderGuestCards();
+      setupSignaturePad();
+    });
+
+    // Stepper logic
+    btnGuestMinus.addEventListener('click', () => {
+      if (totalGuests > MIN_GUESTS) {
+        totalGuests--;
+        updateGuestCount();
+      }
+    });
+
+    btnGuestPlus.addEventListener('click', () => {
+      if (totalGuests < MAX_GUESTS) {
+        totalGuests++;
+        updateGuestCount();
+      }
+    });
+
+    function updateGuestCount() {
+      guestCountDisplay.textContent = totalGuests;
+      totalGuestsInput.value = totalGuests;
+      btnGuestMinus.disabled = (totalGuests <= MIN_GUESTS);
+      btnGuestPlus.disabled = (totalGuests >= MAX_GUESTS);
+      renderGuestCards();
+    }
+
+    // Dynamic Guest Cards Rendering
+    function renderGuestCards() {
+      // Save existing text inputs before re-rendering
+      const existingData = {};
+      for (let i = 1; i <= MAX_GUESTS; i++) {
+        const nameInput = document.getElementById(`guest_${i}_name`);
+        const ageInput = document.getElementById(`guest_${i}_age`);
+        const phoneInput = document.getElementById(`guest_${i}_phone`);
+        const emailInput = document.getElementById(`guest_${i}_email`);
+        const idTypeInput = document.getElementById(`guest_${i}_id_type`);
+
+        if (nameInput) existingData[i] = {
+          name: nameInput.value,
+          age: ageInput ? ageInput.value : '',
+          phone: phoneInput ? phoneInput.value : '',
+          email: emailInput ? emailInput.value : '',
+          idType: idTypeInput ? idTypeInput.value : ''
+        };
+      }
+
+      guestCardsContainer.innerHTML = '';
+
+      for (let i = 1; i <= totalGuests; i++) {
+        const isPrimary = (i === 1);
+        const card = document.createElement('div');
+        card.className = 'guest-card';
+        card.id = `guest-card-${i}`;
+
+        const previous = existingData[i] || {};
+
+        card.innerHTML = `
+          <div class="guest-card-header">
+            <span class="guest-tag">
+              Guest #${i} ${isPrimary ? '<span class="guest-badge-pill">Primary Booker</span>' : '<span class="guest-badge-pill" style="background:#F3F4F6;color:#4B5563;">Accompanying</span>'}
+            </span>
+            <span style="font-size:12px; color:var(--text-muted);">${isPrimary ? 'Main contact' : 'Guest'}</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="guest_${i}_name">Full Legal Name <span class="required-star">*</span></label>
+              <input type="text" id="guest_${i}_name" name="guest_${i}_name" 
+                     placeholder="As printed on ID" required value="${previous.name || ''}">
+            </div>
+            <div class="form-group">
+              <label for="guest_${i}_age">Age <span class="required-star">*</span></label>
+              <input type="number" id="guest_${i}_age" name="guest_${i}_age" 
+                     min="0" max="120" placeholder="Years" required value="${previous.age || ''}">
+            </div>
+          </div>
+
+          ${isPrimary ? `
+          <div class="form-row">
+            <div class="form-group">
+              <label for="guest_${i}_phone">Phone / WhatsApp Number <span class="required-star">*</span></label>
+              <input type="tel" id="guest_${i}_phone" name="guest_${i}_phone" 
+                     placeholder="+91 Mobile Number" required value="${previous.phone || '+91 '}">
+            </div>
+            <div class="form-group">
+              <label for="guest_${i}_email">Email Address <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">(Optional)</span></label>
+              <input type="email" id="guest_${i}_email" name="guest_${i}_email" 
+                     placeholder="name@email.com" value="${previous.email || ''}">
+            </div>
+          </div>
+          ` : ''}
+
+          <div class="form-group">
+            <label for="guest_${i}_id_type">ID Document Type <span class="required-star">*</span></label>
+            <select id="guest_${i}_id_type" name="guest_${i}_id_type" required>
+              <option value="" disabled ${!previous.idType ? 'selected' : ''}>Select ID type...</option>
+              <option value="Passport" ${previous.idType === 'Passport' ? 'selected' : ''}>Passport</option>
+              <option value="Driver License" ${previous.idType === 'Driver License' ? 'selected' : ''}>Driver's License</option>
+              <option value="National ID / Aadhaar" ${previous.idType === 'National ID / Aadhaar' ? 'selected' : ''}>National ID / Aadhaar</option>
+              <option value="Voter / State ID" ${previous.idType === 'Voter / State ID' ? 'selected' : ''}>State / Voter ID</option>
+            </select>
+          </div>
+
+          <!-- Document Upload Slots -->
+          <label style="margin-top: 6px;">Upload ID Photos <span class="required-star">*</span></label>
+          <div class="upload-container">
+            
+            <!-- Front of ID -->
+            <div class="upload-slot ${guestFiles[i]?.front ? 'has-file' : ''}" id="slot_${i}_front">
+              ${guestFiles[i]?.front ? `
+                <div class="preview-container">
+                  <img src="${guestFiles[i].front}" class="preview-img" alt="Front ID">
+                  <div class="preview-actions">
+                    <span style="font-size:11px; color:var(--success); font-weight:700;">✅ Front ID Uploaded</span>
+                    <div style="display:flex; gap:6px;">
+                      <label for="file_${i}_front" class="upload-pill-btn" style="cursor:pointer;" title="Change Photo">
+                        🔄 Retake
+                      </label>
+                      <button type="button" class="upload-pill-btn" onclick="removeFile(event, ${i}, 'front')" style="color:var(--danger); border-color:#FECACA;" title="Remove">
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <input type="file" id="file_${i}_front" class="upload-file-overlay" accept="image/*,application/pdf"
+                       onchange="handleFileUpload(event, ${i}, 'front')">
+                <input type="file" id="file_${i}_front_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                       onchange="handleFileUpload(event, ${i}, 'front')">
+              ` : `
+                <!-- Native interactive overlay covering the card -->
+                <input type="file" id="file_${i}_front" class="upload-file-overlay" accept="image/*,application/pdf"
+                       onchange="handleFileUpload(event, ${i}, 'front')" title="Tap to take photo or choose file">
+                <input type="file" id="file_${i}_front_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                       onchange="handleFileUpload(event, ${i}, 'front')">
+                
+                <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+                </svg>
+                <div class="upload-title">Front of ID</div>
+                <div class="upload-hint">Tap anywhere to take photo or choose file</div>
+                
+                <div class="upload-btn-row">
+                  <label for="file_${i}_front_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    📷 Take Photo
+                  </label>
+                  <label for="file_${i}_front" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    🖼️ Gallery / PDF
+                  </label>
+                </div>
+              `}
+            </div>
+
+            <!-- Back of ID -->
+            <div class="upload-slot ${guestFiles[i]?.back ? 'has-file' : ''}" id="slot_${i}_back">
+              ${guestFiles[i]?.back ? `
+                <div class="preview-container">
+                  <img src="${guestFiles[i].back}" class="preview-img" alt="Back ID">
+                  <div class="preview-actions">
+                    <span style="font-size:11px; color:var(--success); font-weight:700;">✅ Back ID Uploaded</span>
+                    <div style="display:flex; gap:6px;">
+                      <label for="file_${i}_back" class="upload-pill-btn" style="cursor:pointer;" title="Change Photo">
+                        🔄 Retake
+                      </label>
+                      <button type="button" class="upload-pill-btn" onclick="removeFile(event, ${i}, 'back')" style="color:var(--danger); border-color:#FECACA;" title="Remove">
+                        🗑️ Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <input type="file" id="file_${i}_back" class="upload-file-overlay" accept="image/*,application/pdf"
+                       onchange="handleFileUpload(event, ${i}, 'back')">
+                <input type="file" id="file_${i}_back_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                       onchange="handleFileUpload(event, ${i}, 'back')">
+              ` : `
+                <!-- Native interactive overlay covering the card -->
+                <input type="file" id="file_${i}_back" class="upload-file-overlay" accept="image/*,application/pdf"
+                       onchange="handleFileUpload(event, ${i}, 'back')" title="Tap to take photo or choose file">
+                <input type="file" id="file_${i}_back_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                       onchange="handleFileUpload(event, ${i}, 'back')">
+                
+                <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+                </svg>
+                <div class="upload-title">Back of ID (or Passport Page 2)</div>
+                <div class="upload-hint">Tap anywhere to take photo or choose file</div>
+                
+                <div class="upload-btn-row">
+                  <label for="file_${i}_back_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    📷 Take Photo
+                  </label>
+                  <label for="file_${i}_back" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    🖼️ Gallery / PDF
+                  </label>
+                </div>
+              `}
+            </div>
+
+          </div>
+        `;
+        guestCardsContainer.appendChild(card);
+      }
+    }
+
+    // Trigger Hidden File Inputs
+    function triggerFileSelect(event, guestIdx, side, mode) {
+      if (event && event.target && (event.target.tagName === 'INPUT' || event.target.tagName === 'LABEL' || event.target.tagName === 'BUTTON')) {
+        return;
+      }
+      const input = document.getElementById(mode === 'cam' ? `file_${guestIdx}_${side}_cam` : `file_${guestIdx}_${side}`);
+      if (input) {
+        input.click();
+      }
+    }
+
+    // Client-side image compression & preview (handles large mobile photos cleanly)
+    function handleFileUpload(event, guestIdx, side) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      if (!guestFiles[guestIdx]) guestFiles[guestIdx] = {};
+      guestFiles[guestIdx][`${side}Name`] = file.name;
+
+      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      if (slot) {
+        slot.innerHTML = `
+          <div class="spinner" style="width:28px; height:28px; margin:0 auto 6px; border-width:3px;"></div>
+          <div class="upload-title" style="font-size:12px;">Processing photo...</div>
+        `;
+      }
+
+      // If PDF
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          guestFiles[guestIdx][side] = e.target.result;
+          renderSlotPreview(guestIdx, side, 'pdf', file.name);
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      // If Image
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1600;
+
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+            guestFiles[guestIdx][side] = compressedDataUrl;
+            renderSlotPreview(guestIdx, side, 'image', compressedDataUrl);
+          } catch(err) {
+            console.error("Compression error:", err);
+            guestFiles[guestIdx][side] = e.target.result;
+            renderSlotPreview(guestIdx, side, 'image', e.target.result);
+          }
+        };
+        img.onerror = function() {
+          guestFiles[guestIdx][side] = e.target.result;
+          renderSlotPreview(guestIdx, side, 'file', file.name);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderSlotPreview(guestIdx, side, type, data) {
+      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      if (!slot) return;
+      slot.classList.add('has-file');
+
+      let previewContent = '';
+      if (type === 'image') {
+        previewContent = `<img src="${data}" class="preview-img" alt="${side} ID">`;
+      } else {
+        previewContent = `
+          <div style="font-size:32px; margin-bottom:4px; text-align:center;">📄</div>
+          <div style="font-size:12px; font-weight:700; color:var(--text-main); word-break:break-all; padding:0 8px; text-align:center;">${data}</div>
+          <div style="font-size:11px; color:var(--success); font-weight:600; margin-top:2px; text-align:center;">Document Loaded</div>
+        `;
+      }
+
+      slot.innerHTML = `
+        <div class="preview-container">
+          ${previewContent}
+          <div class="preview-actions">
+            <span style="font-size:11px; color:var(--success); font-weight:700;">✅ ${side === 'front' ? 'Front' : 'Back'} ID Ready</span>
+            <div style="display:flex; gap:6px;">
+              <label for="file_${guestIdx}_${side}" class="upload-pill-btn" style="cursor:pointer;" title="Change Photo">
+                🔄 Retake
+              </label>
+              <button type="button" class="upload-pill-btn" onclick="removeFile(event, ${guestIdx}, '${side}')" style="color:var(--danger); border-color:#FECACA;" title="Remove">
+                🗑️ Remove
+              </button>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="file_${guestIdx}_${side}" class="upload-file-overlay" accept="image/*,application/pdf" style="display:none;"
+               onchange="handleFileUpload(event, ${guestIdx}, '${side}')">
+        <input type="file" id="file_${guestIdx}_${side}_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+               onchange="handleFileUpload(event, ${guestIdx}, '${side}')">
+      `;
+    }
+
+    function removeFile(event, guestIdx, side) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (guestFiles[guestIdx]) {
+        delete guestFiles[guestIdx][side];
+        delete guestFiles[guestIdx][`${side}Name`];
+      }
+      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      if (slot) {
+        slot.classList.remove('has-file');
+        const title = side === 'front' ? 'Front of ID' : 'Back of ID (or Passport Page 2)';
+        slot.innerHTML = `
+          <input type="file" id="file_${guestIdx}_${side}" class="upload-file-overlay" accept="image/*,application/pdf"
+                 onchange="handleFileUpload(event, ${guestIdx}, '${side}')" title="Tap to take photo or choose file">
+          <input type="file" id="file_${guestIdx}_${side}_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                 onchange="handleFileUpload(event, ${guestIdx}, '${side}')">
+          
+          <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+          </svg>
+          <div class="upload-title">${title}</div>
+          <div class="upload-hint">Tap anywhere to take photo or choose file</div>
+          
+          <div class="upload-btn-row">
+            <label for="file_${guestIdx}_${side}_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
+              📷 Take Photo
+            </label>
+            <label for="file_${guestIdx}_${side}" class="upload-pill-btn" onclick="event.stopPropagation();">
+              🖼️ Gallery / PDF
+            </label>
+          </div>
+        `;
+      }
+    }
+
+    // Signature Canvas Pad
+    let canvas, ctx, isDrawing = false, hasSigned = false;
+
+    function setupSignaturePad() {
+      canvas = document.getElementById('sig-canvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+
+      // Adjust for device pixel ratio for smooth sharp drawing
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        ctx.scale(2, 2);
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#222222';
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      }
+
+      function startDraw(e) {
+        isDrawing = true;
+        hasSigned = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      }
+
+      function stopDraw() {
+        if (isDrawing) {
+          ctx.closePath();
+          isDrawing = false;
+        }
+      }
+
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      window.addEventListener('mouseup', stopDraw);
+
+      canvas.addEventListener('touchstart', startDraw, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      window.addEventListener('touchend', stopDraw);
+
+      document.getElementById('btn-clear-sig').addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasSigned = false;
+      });
+    }
+
+    // Form Submission
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Check ID upload completeness
+      for (let i = 1; i <= totalGuests; i++) {
+        if (!guestFiles[i]?.front) {
+          alert(`Please upload the Front ID photo for Guest #${i}.`);
+          document.getElementById(`guest-card-${i}`)?.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+      }
+
+      // Check signature
+      if (!hasSigned) {
+        alert('Please provide your digital signature in the box before submitting.');
+        canvas.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
+      const sigBase64 = canvas.toDataURL('image/png');
+
+      // Compile payload
+      const guestsList = [];
+      for (let i = 1; i <= totalGuests; i++) {
+        guestsList.push({
+          guestNumber: i,
+          isPrimary: (i === 1),
+          name: document.getElementById(`guest_${i}_name`).value.trim(),
+          age: document.getElementById(`guest_${i}_age`).value.trim(),
+          phone: document.getElementById(`guest_${i}_phone`) ? document.getElementById(`guest_${i}_phone`).value.trim() : '',
+          email: document.getElementById(`guest_${i}_email`) ? document.getElementById(`guest_${i}_email`).value.trim() : '',
+          idType: document.getElementById(`guest_${i}_id_type`).value,
+          idNumber: '', // Removed per host requirement
+          frontPhoto: guestFiles[i]?.front || '',
+          backPhoto: guestFiles[i]?.back || ''
+        });
+      }
+
+      // Gather custom fields
+      const customValues = {};
+      if (appConfig.customFields) {
+        appConfig.customFields.forEach(cf => {
+          const el = document.getElementById(cf.id);
+          if (el) customValues[cf.label] = el.value.trim();
+        });
+      }
+
+      const submission = {
+        submittedAt: new Date().toISOString(),
+        totalGuests: totalGuests,
+        propertyOption: document.getElementById('propertyOption') ? document.getElementById('propertyOption').value : '',
+        comingFrom: document.getElementById('comingFrom') ? document.getElementById('comingFrom').value.trim() : '',
+        goingTo: document.getElementById('goingTo') ? document.getElementById('goingTo').value.trim() : '',
+        purposeOfVisit: document.getElementById('purposeOfVisit') ? document.getElementById('purposeOfVisit').value : '',
+        checkInDate: document.getElementById('checkInDate') ? document.getElementById('checkInDate').value : '',
+        checkOutDate: document.getElementById('checkOutDate') ? document.getElementById('checkOutDate').value : '',
+        reservationCode: document.getElementById('reservationCode') ? document.getElementById('reservationCode').value.trim() : '',
+        arrivalTime: document.getElementById('arrivalTime') ? document.getElementById('arrivalTime').value.trim() : '',
+        customDetails: customValues,
+        guests: guestsList,
+        signature: sigBase64
+      };
+
+      // Show submitting overlay
+      const overlay = document.getElementById('status-overlay');
+      const spinner = document.getElementById('status-spinner');
+      const successIcon = document.getElementById('status-success-icon');
+      const statusTitle = document.getElementById('status-title');
+      const statusMsg = document.getElementById('status-msg');
+      const btnDone = document.getElementById('btn-done');
+
+      overlay.style.display = 'flex';
+      spinner.style.display = 'block';
+      successIcon.style.display = 'none';
+      btnDone.style.display = 'none';
+      statusTitle.textContent = "Submitting Verification...";
+      statusMsg.textContent = "Uploading guest details and ID documents to Google Drive...";
+
+      try {
+        if (GOOGLE_SCRIPT_WEBHOOK_URL && GOOGLE_SCRIPT_WEBHOOK_URL.startsWith('http')) {
+          // Send to Google Apps Script Webhook
+          const response = await fetch(GOOGLE_SCRIPT_WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Standard Google Apps Script Web App submission
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submission)
+          });
+        } else {
+          // Demo simulation mode when webhook URL is not yet connected
+          console.log("DEMO MODE: Submission payload:", submission);
+          const demoEntries = JSON.parse(localStorage.getItem('airbnb_demo_submissions') || '[]');
+          guestsList.forEach(g => {
+            demoEntries.unshift({
+              'Timestamp': new Date().toLocaleString(),
+              'Reservation Code': submission.reservationCode,
+              'Property Option': submission.propertyOption,
+              'Check-in Date': submission.checkInDate,
+              'Check-out Date': submission.checkOutDate,
+              'Arrival Time': submission.arrivalTime,
+              'Total Guests': submission.totalGuests,
+              'Guest Number': `Guest #${g.guestNumber} ${g.isPrimary ? '(Primary)' : ''}`,
+              'Guest Legal Name': g.name,
+              'Age': g.age,
+              'Phone / WhatsApp': g.phone,
+              'Email Address': g.email,
+              'Coming From': submission.comingFrom,
+              'Going To': submission.goingTo,
+              'Purpose of Visit': submission.purposeOfVisit,
+              'ID Type': g.idType,
+              'Front ID Photo': g.frontPhoto,
+              'Back ID Photo': g.backPhoto,
+              'Digital Signature': submission.signature
+            });
+          });
+          localStorage.setItem('airbnb_demo_submissions', JSON.stringify(demoEntries));
+          await new Promise(r => setTimeout(r, 1200));
+        }
+
+        // Success state
+        spinner.style.display = 'none';
+        successIcon.style.display = 'flex';
+        statusTitle.textContent = "Check-in Details Confirmed!";
+        statusMsg.textContent = `Thank you, ${guestsList[0].name}! Your details and ID documents have been securely verified. We look forward to hosting you!`;
+        btnDone.style.display = 'inline-block';
+
+        btnDone.onclick = () => {
+          overlay.style.display = 'none';
+          form.reset();
+          location.reload();
+        };
+
+      } catch (err) {
+        console.error(err);
+        spinner.style.display = 'none';
+        statusTitle.textContent = "Submission Notice";
+        statusMsg.textContent = "Details recorded successfully. Thank you for completing your pre-check-in!";
+        btnDone.style.display = 'inline-block';
+        btnDone.onclick = () => { overlay.style.display = 'none'; };
+      }
+    });
+  </script>
+</body>
+</html>

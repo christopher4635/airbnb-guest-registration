@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "airbnb-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-10-22",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // 1. Cloudflare D1 Database Binding
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "airbnb-db",
+      "database_id": "00000000-0000-0000-0000-000000000000" // Replace with output from: npx wrangler d1 create airbnb-db
+    }
+  ],
+
+  // 2. Cloudflare R2 Storage Bucket Binding for ID images & signatures
+  "r2_buckets": [
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "airbnb-guest-images" // Created via: npx wrangler r2 bucket create airbnb-guest-images
+    }
+  ],
+
+  // 3. Environment Variables & Secrets
+  "vars": {
+    "ADMIN_PIN": "4635",
+    "ENVIRONMENT": "production"
+  },
+
+  // Observability
+  "observability": {
+    "enabled": true
+  }
+}
