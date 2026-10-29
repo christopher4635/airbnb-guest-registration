@@ -1181,6 +1181,7 @@
       flex-wrap: wrap;
     }
   </style>
+  <script src="js/api.js"></script>
 </head>
 <body>
 
@@ -2549,6 +2550,18 @@
 
     // Init Bookings
     async function initBookingsPortal() {
+      // 1. Try loading from Cloudflare D1 via Hono backend
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
+        try {
+          const d1Bookings = await window.AirbnbAPI.getBookings();
+          if (Array.isArray(d1Bookings) && d1Bookings.length > 0) {
+            currentBookings = d1Bookings;
+            renderBookingsPortal();
+          }
+        } catch(e) {
+          console.log("[Cloudflare D1] Using cached/local bookings fallback:", e);
+        }
+      }
       const CURRENT_DATA_VERSION = 'v3_real_bookings_active';
       const storedVersion = localStorage.getItem('airbnb_bookings_version');
       const stored = localStorage.getItem('airbnb_bookings');

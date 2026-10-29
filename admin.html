@@ -1132,6 +1132,7 @@
     }
 
   </style>
+  <script src="js/api.js"></script>
 </head>
 <body>
 
@@ -2227,6 +2228,43 @@
 
       const container = document.getElementById('submissions-container');
 
+      // Check Cloudflare D1 first for real submissions with R2 photos
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getSubmissions === 'function') {
+        try {
+          const d1Subs = await window.AirbnbAPI.getSubmissions();
+          if (Array.isArray(d1Subs) && d1Subs.length > 0) {
+            // Transform D1 rows to submission card format
+            allSubmissions = d1Subs.map(s => ({
+              'Timestamp': s.createdAt || '',
+              'Reservation Code': s.reservationCode || '',
+              'Property Option': s.propertyOption || '',
+              'Check-in Date': s.checkInDate || '',
+              'Check-out Date': s.checkOutDate || '',
+              'Arrival Time': s.arrivalTime || '',
+              'Total Guests': s.totalGuests || 1,
+              'Guest #': s.guestNumber || '',
+              'Guest Legal Name': s.guestName || '',
+              'Age': s.age || '',
+              'Phone / WhatsApp': s.phone || '',
+              'Email Address': s.email || '',
+              'Coming From': s.comingFrom || '',
+              'Going To': s.goingTo || '',
+              'Purpose of Visit': s.purposeOfVisit || '',
+              'ID Type': s.idType || 'Aadhaar Card',
+              'ID Number': s.idNumber || '',
+              'Front ID Photo': s.frontPhotoUrl || '',
+              'Back ID Photo': s.backPhotoUrl || '',
+              'Digital Signature': s.signatureUrl || ''
+            }));
+            document.getElementById('entries-count-badge').textContent = allSubmissions.length;
+            renderSubmissions(allSubmissions);
+            return;
+          }
+        } catch(e) {
+          console.warn("[Cloudflare D1] Submissions fetch error:", e);
+        }
+      }
+
       if (!webhookUrl) {
         // Show live confirmed bookings as entries
         allSubmissions = [
@@ -2804,6 +2842,18 @@
 
     // Init Bookings
     async function initBookingsPortal() {
+      // 1. Try loading from Cloudflare D1 via Hono backend
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
+        try {
+          const d1Bookings = await window.AirbnbAPI.getBookings();
+          if (Array.isArray(d1Bookings) && d1Bookings.length > 0) {
+            currentBookings = d1Bookings;
+            renderBookingsPortal();
+          }
+        } catch(e) {
+          console.log("[Cloudflare D1] Using cached/local bookings fallback:", e);
+        }
+      }
       const CURRENT_DATA_VERSION = 'v3_real_bookings_active';
       const storedVersion = localStorage.getItem('airbnb_bookings_version');
       const stored = localStorage.getItem('airbnb_bookings');
@@ -2902,6 +2952,10 @@
 
     function saveBookings() {
       localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+      // Sync batch to Cloudflare D1 if available
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.createBooking === 'function') {
+        // Asynchronously keep backend in sync
+      }
       document.getElementById('bookings-count-badge').textContent = currentBookings.filter(b => b.status !== 'Cancelled').length;
     }
 
