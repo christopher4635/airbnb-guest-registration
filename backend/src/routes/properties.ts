@@ -104,7 +104,109 @@ propertiesRoute.post('/', async (c) => {
   }
 });
 
-// 3. PUT /api/properties/:name - Rename property and cascade update to bookings
+// Core helper for renaming a property with cascading updates across D1
+async function executeRenameProperty(
+  db: D1Database,
+  oldName: string,
+  newName: string,
+  color?: string,
+  airbnbIcalUrl?: string,
+  bookingComIcalUrl?: string,
+  otherIcalUrl?: string
+) {
+  if (!oldName) throw new Error('Existing property name is required.');
+  if (!newName) throw new Error('New property name cannot be empty.');
+
+  // Verify old property exists (case-insensitive lookup fallback)
+  let existing = await db.prepare(`SELECT * FROM properties WHERE name = ?`).bind(oldName).first();
+  if (!existing) {
+    existing = await db.prepare(`SELECT * FROM properties WHERE LOWER(name) = LOWER(?)`).bind(oldName).first();
+  }
+  if (!existing) {
+    throw new Error(`Property "${oldName}" not found.`);
+  }
+
+  const actualOldName = existing.name as string;
+
+  // Check collision with another property
+  if (newName.toLowerCase() !== actualOldName.toLowerCase()) {
+    const conflict = await db.prepare(`SELECT * FROM properties WHERE LOWER(name) = LOWER(?) AND name != ?`).bind(newName, actualOldName).first();
+    if (conflict) {
+      throw new Error(`Property name "${newName}" is already taken.`);
+    }
+  }
+
+  const finalColor = color || (existing.color as string) || '#FF385C';
+  const finalAirbnb = airbnbIcalUrl !== undefined ? airbnbIcalUrl : existing.airbnb_ical_url;
+  const finalBooking = bookingComIcalUrl !== undefined ? bookingComIcalUrl : existing.booking_com_ical_url;
+  const finalOther = otherIcalUrl !== undefined ? otherIcalUrl : existing.other_ical_url;
+
+  const stmts: D1PreparedStatement[] = [
+    db.prepare(`
+      UPDATE properties SET 
+        name = ?, color = ?, airbnb_ical_url = ?, booking_com_ical_url = ?, other_ical_url = ?
+      WHERE name = ?
+    `).bind(newName, finalColor, finalAirbnb, finalBooking, finalOther, actualOldName)
+  ];
+
+  if (newName !== actualOldName) {
+    stmts.push(
+      db.prepare(`UPDATE bookings SET property = ? WHERE property = ?`).bind(newName, actualOldName),
+      db.prepare(`UPDATE submissions SET property_option = ? WHERE property_option = ?`).bind(newName, actualOldName)
+    );
+  }
+
+  await db.batch(stmts);
+
+  // Update app_config.propertyOptions
+  const configRow = await db.prepare(`SELECT value FROM app_config WHERE key = 'app_config'`).first();
+  if (configRow && configRow.value) {
+    try {
+      const config = JSON.parse(configRow.value as string);
+      if (Array.isArray(config.propertyOptions)) {
+        config.propertyOptions = config.propertyOptions.map((opt: string) => opt === actualOldName ? newName : opt);
+        if (config.defaultPropertyOption === actualOldName) config.defaultPropertyOption = newName;
+        await db.prepare(`
+          UPDATE app_config SET value = ?, updated_at = datetime('now') WHERE key = 'app_config'
+        `).bind(JSON.stringify(config)).run();
+      }
+    } catch(e) {}
+  }
+
+  return { oldName: actualOldName, newName, color: finalColor };
+}
+
+// 3. POST /api/properties/rename - JSON Body Rename (Safe against slashes in room names)
+propertiesRoute.post('/rename', async (c) => {
+  try {
+    await ensurePropertiesTable(c.env.DB);
+    const body = await c.req.json();
+    const oldName = (body.oldName || body.name || '').trim();
+    const newName = (body.newName || '').trim();
+    const color = body.color;
+
+    const result = await executeRenameProperty(
+      c.env.DB,
+      oldName,
+      newName,
+      color,
+      body.airbnbIcalUrl,
+      body.bookingComIcalUrl,
+      body.otherIcalUrl
+    );
+
+    return c.json({
+      success: true,
+      message: `Property renamed from "${result.oldName}" to "${result.newName}". All bookings updated!`,
+      data: result
+    });
+  } catch (err: any) {
+    console.error('Error renaming property via POST /rename:', err);
+    return c.json({ success: false, error: err.message }, err.message.includes('not found') ? 404 : 400);
+  }
+});
+
+// 4. PUT /api/properties/:name - URL Param Rename (Legacy/REST standard)
 propertiesRoute.put('/:name', async (c) => {
   try {
     await ensurePropertiesTable(c.env.DB);
@@ -112,83 +214,24 @@ propertiesRoute.put('/:name', async (c) => {
     const body = await c.req.json();
     const newName = (body.newName || body.name || '').trim();
     const color = body.color;
-    const airbnbIcalUrl = body.airbnbIcalUrl !== undefined ? body.airbnbIcalUrl.trim() : undefined;
-    const bookingComIcalUrl = body.bookingComIcalUrl !== undefined ? body.bookingComIcalUrl.trim() : undefined;
-    const otherIcalUrl = body.otherIcalUrl !== undefined ? body.otherIcalUrl.trim() : undefined;
 
-    if (!oldName) {
-      return c.json({ success: false, error: 'Existing property name is required.' }, 400);
-    }
-    if (!newName) {
-      return c.json({ success: false, error: 'New property name cannot be empty.' }, 400);
-    }
-
-    // Verify old property exists
-    const existing = await c.env.DB.prepare(`SELECT * FROM properties WHERE name = ?`).bind(oldName).first();
-    if (!existing) {
-      return c.json({ success: false, error: `Property "${oldName}" not found.` }, 404);
-    }
-
-    // If name is changing, ensure new name is not already taken by another property
-    if (newName.toLowerCase() !== oldName.toLowerCase()) {
-      const conflict = await c.env.DB.prepare(`SELECT * FROM properties WHERE LOWER(name) = LOWER(?) AND name != ?`).bind(newName, oldName).first();
-      if (conflict) {
-        return c.json({ success: false, error: `Property name "${newName}" is already taken.` }, 409);
-      }
-    }
-
-    // Prepare batch update statements
-    const stmts: D1PreparedStatement[] = [];
-
-    // 1. Update properties table
-    const finalColor = color || existing.color || '#FF385C';
-    const finalAirbnb = airbnbIcalUrl !== undefined ? airbnbIcalUrl : existing.airbnb_ical_url;
-    const finalBooking = bookingComIcalUrl !== undefined ? bookingComIcalUrl : existing.booking_com_ical_url;
-    const finalOther = otherIcalUrl !== undefined ? otherIcalUrl : existing.other_ical_url;
-
-    stmts.push(
-      c.env.DB.prepare(`
-        UPDATE properties SET 
-          name = ?, color = ?, airbnb_ical_url = ?, booking_com_ical_url = ?, other_ical_url = ?
-        WHERE name = ?
-      `).bind(newName, finalColor, finalAirbnb, finalBooking, finalOther, oldName)
+    const result = await executeRenameProperty(
+      c.env.DB,
+      oldName,
+      newName,
+      color,
+      body.airbnbIcalUrl,
+      body.bookingComIcalUrl,
+      body.otherIcalUrl
     );
-
-    // 2. Cascade rename to all existing bookings for this property!
-    if (newName !== oldName) {
-      stmts.push(
-        c.env.DB.prepare(`UPDATE bookings SET property = ? WHERE property = ?`).bind(newName, oldName)
-      );
-      stmts.push(
-        c.env.DB.prepare(`UPDATE submissions SET property_option = ? WHERE property_option = ?`).bind(newName, oldName)
-      );
-    }
-
-    await c.env.DB.batch(stmts);
-
-    // 3. Update app_config.propertyOptions
-    const configRow = await c.env.DB.prepare(`SELECT value FROM app_config WHERE key = 'app_config'`).first();
-    if (configRow && configRow.value) {
-      try {
-        const config = JSON.parse(configRow.value as string);
-        if (Array.isArray(config.propertyOptions)) {
-          config.propertyOptions = config.propertyOptions.map((opt: string) => opt === oldName ? newName : opt);
-          if (config.defaultPropertyOption === oldName) config.defaultPropertyOption = newName;
-          await c.env.DB.prepare(`
-            UPDATE app_config SET value = ?, updated_at = datetime('now') WHERE key = 'app_config'
-          `).bind(JSON.stringify(config)).run();
-        }
-      } catch(e) {}
-    }
 
     return c.json({
       success: true,
-      message: `Property renamed from "${oldName}" to "${newName}". All bookings updated!`,
-      data: { oldName, newName, color: finalColor }
+      message: `Property renamed from "${result.oldName}" to "${result.newName}". All bookings updated!`,
+      data: result
     });
   } catch (err: any) {
-    console.error('Error updating property:', err);
-    return c.json({ success: false, error: err.message }, 500);
+    return c.json({ success: false, error: err.message }, err.message.includes('not found') ? 404 : 400);
   }
 });
 

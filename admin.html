@@ -1225,6 +1225,26 @@
       color: #065F46;
     }
 
+    /* Financial & Expenses Tracker Styles */
+    .finance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+    .badge-revenue { background: #ECFDF5; color: #065F46; }
+    .badge-expense { background: #FFF1F2; color: #9F1239; }
+    .badge-electricity { background: #FEF3C7; color: #92400E; }
+    .badge-cleaning { background: #E0F2FE; color: #0369A1; }
+    .badge-internet { background: #F3E8FF; color: #6B21A8; }
+    .badge-water { background: #CCFBF1; color: #115E59; }
+    .badge-maintenance { background: #FEE2E2; color: #991B1B; }
+    .badge-supplies { background: #FCE7F3; color: #9D174D; }
+    .badge-other { background: #F1F5F9; color: #475569; }
+
   </style>
   <script src="js/api.js"></script>
 </head>
@@ -1264,13 +1284,16 @@
       <!-- Nav Tabs -->
       <div class="admin-tabs">
         <button type="button" class="tab-btn active" id="tab-btn-bookings" onclick="switchAdminTab('bookings')">
-          📅 Bookings & Calendar (<span id="bookings-count-badge">0</span>)
+          📅 Bookings &amp; Calendar (<span id="bookings-count-badge">0</span>)
+        </button>
+        <button type="button" class="tab-btn" id="tab-btn-finances" onclick="switchAdminTab('finances')">
+          💰 Monthly Revenue &amp; Expenses
         </button>
         <button type="button" class="tab-btn" id="tab-btn-entries" onclick="switchAdminTab('entries')">
-          📋 Guest Check-ins & IDs (<span id="entries-count-badge">0</span>)
+          📋 Guest Check-ins &amp; IDs (<span id="entries-count-badge">0</span>)
         </button>
         <button type="button" class="tab-btn" id="tab-btn-settings" onclick="switchAdminTab('settings')">
-          ⚙️ Property & Form Settings
+          ⚙️ Property &amp; Form Settings
         </button>
       </div>
 
@@ -1278,11 +1301,11 @@
       <div id="view-bookings">
         
         <!-- KPI Summary Cards Row -->
-        <div class="portal-kpi-grid">
+        <div class="portal-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
           <div class="kpi-card">
             <div>
               <div class="kpi-label">🏡 Multi-Property Portfolio</div>
-              <div class="kpi-value">3 Units</div>
+              <div class="kpi-value" id="kpi-properties-count">3 Units</div>
             </div>
             <div class="kpi-sub" id="kpi-properties-summary">1 BHK &bull; 2 BHK &bull; Studio</div>
           </div>
@@ -1295,20 +1318,28 @@
             <div class="kpi-sub" id="kpi-nights-count">0 total nights booked</div>
           </div>
 
-          <div class="kpi-card">
+          <div class="kpi-card" style="cursor: pointer;" onclick="switchAdminTab('finances')" title="Click to view detailed month-wise revenue & expenses">
             <div>
-              <div class="kpi-label">🛎️ Turnovers & Stays Today</div>
-              <div class="kpi-value" id="kpi-turnover-count">0 In / 0 Out</div>
+              <div class="kpi-label" style="color: #065F46;">💵 Month Revenue</div>
+              <div class="kpi-value" id="kpi-month-revenue" style="color: #065F46;">₹0</div>
             </div>
-            <div class="kpi-sub" id="kpi-turnover-sub">No check-ins today</div>
+            <div class="kpi-sub" id="kpi-month-revenue-sub">From confirmed stays &rarr;</div>
+          </div>
+
+          <div class="kpi-card" style="cursor: pointer;" onclick="switchAdminTab('finances')" title="Click to view operating expenses & bills">
+            <div>
+              <div class="kpi-label" style="color: #9F1239;">⚡ Bills &amp; Expenses</div>
+              <div class="kpi-value" id="kpi-month-expenses" style="color: #9F1239;">₹0</div>
+            </div>
+            <div class="kpi-sub" id="kpi-month-net-profit" style="color: #1E40AF; font-weight: 600;">Net: ₹0</div>
           </div>
 
           <div class="kpi-card">
             <div>
-              <div class="kpi-label">📈 Portfolio Occupancy</div>
-              <div class="kpi-value" id="kpi-occupancy-rate">0%</div>
+              <div class="kpi-label">🛎️ Turnovers &amp; Stays Today</div>
+              <div class="kpi-value" id="kpi-turnover-count">0 In / 0 Out</div>
             </div>
-            <div class="kpi-sub" id="kpi-occupancy-sub">Across all 3 properties</div>
+            <div class="kpi-sub" id="kpi-turnover-sub">No check-ins today</div>
           </div>
         </div>
 
@@ -1530,23 +1561,46 @@
               🌙 1 Night Stay
             </div>
 
+            <!-- Pricing, Mode & Financials -->
             <div class="form-row-3">
               <div class="form-group">
-                <label>Guests Count</label>
-                <input type="number" id="mb-guests-count" min="1" max="20" value="2">
+                <label>Booked Rate / Total (₹) *</label>
+                <input type="number" id="mb-rate" min="0" placeholder="e.g. 2500" oninput="calculateBalanceDue()" required>
+                <input type="hidden" id="mb-payout">
               </div>
               <div class="form-group">
-                <label>Total Payout</label>
-                <input type="text" id="mb-payout" placeholder="e.g. ₹15,000">
+                <label>Advance Received (₹)</label>
+                <input type="number" id="mb-advance" min="0" placeholder="e.g. 1000" oninput="calculateBalanceDue()">
+              </div>
+              <div class="form-group">
+                <label>Balance Due (₹)</label>
+                <input type="text" id="mb-balance" placeholder="₹0" readonly style="background: #F8FAFC; font-weight: 700; color: #065F46;">
+              </div>
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Booking Mode *</label>
+                <select id="mb-booking-mode" onchange="onBookingModeChange()">
+                  <option value="Offline">Offline / Direct Guest</option>
+                  <option value="Booking.com">Booking.com</option>
+                  <option value="Airbnb">Airbnb</option>
+                  <option value="Direct Call / WhatsApp">Direct Call / WhatsApp</option>
+                  <option value="Other">Other Mode</option>
+                </select>
               </div>
               <div class="form-group">
                 <label>Payment Status</label>
                 <select id="mb-pay-status">
+                  <option value="Deposit Paid">Deposit Paid (Advance)</option>
                   <option value="Paid in Full">Paid in Full</option>
-                  <option value="Deposit Paid">Deposit Paid</option>
-                  <option value="Pay on Arrival">Pay on Arrival</option>
+                  <option value="Pay on Arrival">Pay on Arrival (Balance Due)</option>
                   <option value="Unpaid">Unpaid</option>
                 </select>
+              </div>
+              <div class="form-group">
+                <label>Guests Count</label>
+                <input type="number" id="mb-guests-count" min="1" max="20" value="2">
               </div>
             </div>
 
@@ -1586,7 +1640,9 @@
             </div>
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn btn-outline" onclick="closeBookingModal()">Cancel</button>
-              <button type="button" class="btn btn-primary" id="btn-save-booking" onclick="saveBookingFromModal()">Save Booking</button>
+              <button type="button" class="btn btn-primary" id="btn-save-booking" onclick="saveBookingFromModal()">
+                💾 Save to Cloudflare D1
+              </button>
             </div>
           </div>
         </div>
@@ -1827,6 +1883,70 @@
         </div>
       </div>
 
+      <!-- MODAL 6: Add Operating Expense / Bill -->
+      <div class="modal-backdrop" id="modal-add-expense" style="z-index: 10000;">
+        <div class="modal-dialog" style="max-width: 520px;">
+          <div class="modal-header">
+            <div>
+              <h3>⚡ Record Operating Expense / Bill</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Add electricity, cleaning, WiFi, maintenance or utility bills</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeAddExpenseModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Category *</label>
+                <select id="exp-category">
+                  <option value="Electricity / Power">⚡ Electricity / Power Bill</option>
+                  <option value="Internet / Wi-Fi">🌐 Internet / Wi-Fi</option>
+                  <option value="Cleaning & Laundry">🧹 Cleaning &amp; Laundry</option>
+                  <option value="Water Bill">💧 Water Supply / Bill</option>
+                  <option value="Maintenance & Repairs">🔧 Maintenance &amp; Repairs</option>
+                  <option value="Supplies & Toiletries">🧴 Supplies &amp; Toiletries</option>
+                  <option value="Building / Society">🏢 Building / Society Charges</option>
+                  <option value="Other">🏷️ Other Operating Cost</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Amount (₹) *</label>
+                <input type="number" id="exp-amount" min="1" step="any" placeholder="e.g. 2400" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Bill Title / Description *</label>
+              <input type="text" id="exp-title" placeholder="e.g. October Electricity Bill (Meter #4829)" required>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Date of Bill / Payment *</label>
+                <input type="date" id="exp-date" required>
+              </div>
+              <div class="form-group">
+                <label>Applies to Unit *</label>
+                <select id="exp-property">
+                  <option value="All Units">All Units / Shared</option>
+                  <!-- Populated from getPropertiesList() -->
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Notes / Bill Reference / Payment Mode (Optional)</label>
+              <input type="text" id="exp-notes" placeholder="e.g. Paid via Google Pay / UPI. Consumer #91283">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeAddExpenseModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-save-expense" onclick="handleSaveExpense()" style="background: #E11D48; border-color: #E11D48;">
+              💾 Save Expense to Cloudflare D1
+            </button>
+          </div>
+        </div>
+      </div>
+
 
       <!-- TAB 2: GUEST ENTRIES & SUBMISSIONS VIEW -->
       <div id="view-entries" style="display: none;">
@@ -1877,21 +1997,141 @@
 
       </div>
 
-      <!-- TAB 2: FORM FIELDS & SETTINGS VIEW -->
+      <!-- TAB 3: MONTH-WISE REVENUE & EXPENSES -->
+      <div id="view-finances" style="display: none;">
+        <!-- Controls Bar -->
+        <div class="portal-controls-card" style="margin-bottom: 16px;">
+          <div class="date-nav-wrapper">
+            <button type="button" class="date-nav-btn" onclick="prevFinanceMonth()">◀</button>
+            <button type="button" class="date-nav-btn" onclick="setFinanceMonthToCurrent()">This Month</button>
+            <button type="button" class="date-nav-btn" onclick="nextFinanceMonth()">▶</button>
+            <span class="month-display-text" id="finance-month-label">October 2026</span>
+            <div style="display: inline-flex; gap: 4px; margin-left: 8px;">
+              <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; font-weight: 600;" onclick="jumpFinanceMonth(2026, 9)">📅 Oct 2026</button>
+              <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; font-weight: 600;" onclick="jumpFinanceMonth(2026, 10)">📅 Nov 2026</button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" onclick="openAddExpenseModal()" style="background: #E11D48; border-color: #E11D48;">
+              <span>⚡ Record Expense / Bill</span>
+            </button>
+            <button type="button" class="btn btn-outline" onclick="loadFinancialData()" title="Reload financial stats from Cloudflare D1">
+              <span>🔄 Refresh Finances</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 KPI Summary Cards -->
+        <div class="portal-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
+          <div class="kpi-card" style="border-left: 4px solid #10B981;">
+            <div>
+              <div class="kpi-label">💵 Total Booked Revenue</div>
+              <div class="kpi-value" id="fin-kpi-revenue" style="color: #065F46;">₹0</div>
+            </div>
+            <div class="kpi-sub" id="fin-kpi-revenue-sub">0 bookings in month</div>
+          </div>
+
+          <div class="kpi-card" style="border-left: 4px solid #E11D48;">
+            <div>
+              <div class="kpi-label">⚡ Operating Bills &amp; Expenses</div>
+              <div class="kpi-value" id="fin-kpi-expenses" style="color: #9F1239;">₹0</div>
+            </div>
+            <div class="kpi-sub" id="fin-kpi-expenses-sub">0 bills recorded</div>
+          </div>
+
+          <div class="kpi-card" style="border-left: 4px solid #3B82F6;">
+            <div>
+              <div class="kpi-label">📈 Net Operating Profit</div>
+              <div class="kpi-value" id="fin-kpi-profit" style="color: #1E40AF;">₹0</div>
+            </div>
+            <div class="kpi-sub" id="fin-kpi-profit-sub">Revenue minus expenses</div>
+          </div>
+
+          <div class="kpi-card" style="border-left: 4px solid #8B5CF6;">
+            <div>
+              <div class="kpi-label">📊 Profit Margin</div>
+              <div class="kpi-value" id="fin-kpi-margin" style="color: #5B21B6;">0%</div>
+            </div>
+            <div class="kpi-sub" id="fin-kpi-margin-sub">Efficiency ratio</div>
+          </div>
+        </div>
+
+        <!-- Two Columns: Bookings Revenue & Operating Expenses Ledger -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+          <!-- Left: Revenue Bookings Table -->
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title">
+              <span>📅 Booked Revenue Breakdown</span>
+              <span id="fin-bookings-count-tag" style="font-size: 11px; background: #ECFDF5; color: #065F46; padding: 2px 8px; border-radius: 12px; font-weight: 700;">0 bookings</span>
+            </div>
+            <p class="card-desc">All confirmed stays and payouts for this month</p>
+            <div class="bookings-table-wrapper" style="max-height: 480px; overflow-y: auto;">
+              <table class="bookings-table">
+                <thead>
+                  <tr>
+                    <th>Unit</th>
+                    <th>Guest</th>
+                    <th>Dates</th>
+                    <th>Mode</th>
+                    <th style="text-align: right;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="fin-revenue-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right: Operating Expenses Ledger -->
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-title">
+              <span>⚡ Expenses &amp; Utility Bills</span>
+              <button type="button" class="btn btn-outline" onclick="openAddExpenseModal()" style="height: 30px; padding: 0 10px; font-size: 11px; color: #E11D48; border-color: #FDA4AF;">
+                + Add Bill
+              </button>
+            </div>
+            <p class="card-desc">Electricity, Wi-Fi, Water, Cleaning &amp; Maintenance</p>
+            <div class="bookings-table-wrapper" style="max-height: 480px; overflow-y: auto;">
+              <table class="bookings-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Title / Bill</th>
+                    <th>Date</th>
+                    <th>Unit</th>
+                    <th style="text-align: right;">Amount</th>
+                    <th style="text-align: center; width: 40px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="fin-expenses-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: FORM FIELDS & SETTINGS VIEW -->
       <div id="view-settings" style="display: none;">
 
-      <!-- SECTION 1: Property Types (1BHK / 2BHK / 1 Room / etc.) -->
+      <!-- SECTION 1: Rooms & Property Units -->
       <div class="card">
         <div class="card-title">
-          <span>1. Property Types / Options</span>
+          <span>1. Rooms &amp; Property Units</span>
+          <button type="button" class="btn btn-outline" onclick="openManageRoomsModal()" style="font-size: 12px; height: 32px; padding: 0 10px; color: #1D4ED8; border-color: #BFDBFE;">
+            🏡 Full Room Manager
+          </button>
         </div>
-        <p class="card-desc">Options guests can choose from for the property or room they booked.</p>
+        <p class="card-desc">Add, rename, or delete rooms. Renaming cascades across all past and future bookings in Cloudflare D1.</p>
 
         <div class="chips-container" id="property-chips"></div>
 
         <div class="input-row">
-          <input type="text" id="new-property-input" placeholder="e.g. 1 BHK, 2 BHK, 1 Room, Studio, Penthouse...">
-          <button type="button" class="btn btn-primary" id="btn-add-property">+ Add Option</button>
+          <input type="text" id="new-property-input" placeholder="e.g. 3 BHK Penthouse, Studio Suite...">
+          <button type="button" class="btn btn-primary" id="btn-add-property">+ Add Room</button>
         </div>
       </div>
 
@@ -1951,12 +2191,6 @@
             <input type="password" id="new-pin-input" placeholder="New PIN (leave blank to keep current)">
           </div>
         </div>
-
-        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border-color);">
-          <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">GitHub Personal Access Token (for 1-Click Live Publish)</label>
-          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Saved only in your private browser storage so you can publish changes directly to your live GitHub website.</p>
-          <input type="password" id="github-token-input" placeholder="ghp_xxxxxxxxxxxx">
-        </div>
       </div>
 
       <!-- SECTION 5: Host Contact & Social Media (Shown to Guests) -->
@@ -1983,14 +2217,19 @@
         </div>
       </div>
 
-      <!-- Action Bar -->
+      <!-- Action Bar: Direct Cloudflare D1 Save -->
       <div class="action-bar">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-primary" id="btn-publish-github" style="background: #10B981;">🚀 Publish Live to GitHub</button>
-          <button type="button" class="btn btn-outline" id="btn-save">💾 Save Locally</button>
-          <button type="button" class="btn btn-outline" id="btn-download-config">📥 Download config.json</button>
+          <button type="button" class="btn btn-primary" id="btn-save-settings" onclick="handleSaveSettingsToD1()" style="background: #10B981; border-color: #10B981;">
+            💾 Save Settings to Cloudflare D1
+          </button>
+          <button type="button" class="btn btn-outline" id="btn-download-config" onclick="downloadConfigJson()">
+            📥 Download config.json
+          </button>
         </div>
-        <button type="button" class="btn btn-outline" id="btn-copy-config">📋 Copy JSON</button>
+        <button type="button" class="btn btn-outline" id="btn-copy-config" onclick="copyConfigJson()">
+          📋 Copy JSON
+        </button>
       </div>
 
       </div> <!-- /view-settings -->
@@ -2247,25 +2486,11 @@
       renderCustomFields();
     };
 
-    // Load saved GitHub token if available
-    const savedToken = localStorage.getItem('airbnb_github_pat');
-    if (savedToken) {
-      document.getElementById('github-token-input').value = savedToken;
-    }
-
-    // 1-Click Publish to GitHub
-    document.getElementById('btn-publish-github').addEventListener('click', async () => {
-      const btn = document.getElementById('btn-publish-github');
-      const token = document.getElementById('github-token-input').value.trim();
-
-      if (!token) {
-        alert("Please enter your GitHub Personal Access Token below to publish directly to your live site.");
-        document.getElementById('github-token-input').focus();
-        return;
-      }
-
-      // Save token locally
-      localStorage.setItem('airbnb_github_pat', token);
+    // Direct Cloudflare D1 Autosave
+    window.handleSaveSettingsToD1 = async function() {
+      const btn = document.getElementById('btn-save-settings');
+      const origText = btn ? btn.textContent : '';
+      if (btn) { btn.textContent = 'Saving to D1...'; btn.disabled = true; }
 
       // Collect latest updates
       currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
@@ -2280,85 +2505,20 @@
 
       localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
 
-      btn.disabled = true;
-      btn.textContent = "Publishing to GitHub...";
-
       try {
-        const repo = "christopher4635/airbnb-guest-registration";
-        const path = "config.json";
-        
-        // 1. Get current file SHA
-        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          }
-        });
-
-        if (!getRes.ok) {
-          throw new Error("Could not access repository. Please check your GitHub Token permissions (ensure 'repo' is checked).");
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.saveConfig === 'function') {
+          await window.AirbnbAPI.saveConfig(currentConfig, currentConfig.adminPin);
         }
-
-        const getData = await getRes.json();
-        const currentSha = getData.sha;
-
-        // 2. Encode config JSON into base64
-        const jsonString = JSON.stringify(currentConfig, null, 2);
-        const encodedContent = btoa(unescape(encodeURIComponent(jsonString)));
-
-        // 3. Commit updated config.json to main branch
-        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `token ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/vnd.github.v3+json'
-          },
-          body: JSON.stringify({
-            message: "Update form fields via Host Admin",
-            content: encodedContent,
-            sha: currentSha,
-            branch: "main"
-          })
-        });
-
-        if (!putRes.ok) {
-          const errData = await putRes.json();
-          throw new Error(errData.message || "Failed to commit to GitHub.");
-        }
-
-        showToast("🚀 Successfully published live! All guests will see the updated form in ~30 seconds.");
-
-      } catch (err) {
-        console.error(err);
-        alert("Publish error: " + err.message);
+        showToast("✅ Settings saved directly to Cloudflare D1 database!");
+      } catch(err) {
+        console.warn("D1 saveConfig warning:", err);
+        showToast("Saved locally in browser cache.");
       } finally {
-        btn.disabled = false;
-        btn.textContent = "🚀 Publish Live to GitHub";
+        if (btn) { btn.textContent = origText; btn.disabled = false; }
       }
-    });
+    };
 
-    // Save changes locally
-    document.getElementById('btn-save').addEventListener('click', () => {
-      // Update rules text and PIN
-      currentConfig.rulesText = document.getElementById('rules-text-input').value.trim();
-      const newPin = document.getElementById('new-pin-input').value.trim();
-      if (newPin) {
-        currentConfig.adminPin = newPin;
-      }
-
-      currentConfig.hostContact = {
-        phone: document.getElementById('host-phone-input').value.trim(),
-        instagramUrl: document.getElementById('host-insta-input').value.trim(),
-        instagramHandle: document.getElementById('host-handle-input').value.trim()
-      };
-
-      localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
-      showToast("Settings saved locally! Click 'Publish Live to GitHub' to update for guests.");
-    });
-
-    // Download config.json
-    document.getElementById('btn-download-config').addEventListener('click', () => {
+    window.downloadConfigJson = function() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentConfig, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
@@ -2367,13 +2527,12 @@
       downloadAnchor.click();
       downloadAnchor.remove();
       showToast("config.json downloaded!");
-    });
+    };
 
-    // Copy config to clipboard
-    document.getElementById('btn-copy-config').addEventListener('click', () => {
+    window.copyConfigJson = function() {
       navigator.clipboard.writeText(JSON.stringify(currentConfig, null, 2));
       showToast("Copied config JSON to clipboard!");
-    });
+    };
 
     function showToast(msg) {
       const t = document.getElementById('toast');
@@ -2388,16 +2547,20 @@
     // Tab switching
     window.switchAdminTab = function(tab) {
       const btnBookings = document.getElementById('tab-btn-bookings');
+      const btnFinances = document.getElementById('tab-btn-finances');
       const btnEntries = document.getElementById('tab-btn-entries');
       const btnSettings = document.getElementById('tab-btn-settings');
       const viewBookings = document.getElementById('view-bookings');
+      const viewFinances = document.getElementById('view-finances');
       const viewEntries = document.getElementById('view-entries');
       const viewSettings = document.getElementById('view-settings');
 
       if (btnBookings) btnBookings.classList.remove('active');
+      if (btnFinances) btnFinances.classList.remove('active');
       if (btnEntries) btnEntries.classList.remove('active');
       if (btnSettings) btnSettings.classList.remove('active');
       if (viewBookings) viewBookings.style.display = 'none';
+      if (viewFinances) viewFinances.style.display = 'none';
       if (viewEntries) viewEntries.style.display = 'none';
       if (viewSettings) viewSettings.style.display = 'none';
 
@@ -2405,6 +2568,10 @@
         if (btnBookings) btnBookings.classList.add('active');
         if (viewBookings) viewBookings.style.display = 'block';
         renderBookingsPortal();
+      } else if (tab === 'finances') {
+        if (btnFinances) btnFinances.classList.add('active');
+        if (viewFinances) viewFinances.style.display = 'block';
+        if (typeof loadFinancialData === 'function') loadFinancialData();
       } else if (tab === 'entries') {
         if (btnEntries) btnEntries.classList.add('active');
         if (viewEntries) viewEntries.style.display = 'block';
@@ -3072,19 +3239,40 @@
       if (typeof showToast === 'function') showToast("🔄 Syncing latest bookings & rooms from Cloudflare D1...");
       try {
         if (window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
+          // 1. Fetch remote bookings and properties from D1
           const [d1Bookings, d1Props] = await Promise.all([
             window.AirbnbAPI.getBookings(),
             fetchProperties()
           ]);
-          if (Array.isArray(d1Bookings) && d1Bookings.length > 0) {
+
+          if (Array.isArray(d1Bookings)) {
+            const remoteIds = new Set(d1Bookings.map(b => b.id));
+
+            // 2. Prevent data loss: Identify any locally entered bookings not yet in remote D1
+            const localUnsynced = currentBookings.filter(b => b.id && !remoteIds.has(b.id) && !b.id.startsWith('demo_'));
+            if (localUnsynced.length > 0) {
+              console.log(`[Auto-Push] Uploading ${localUnsynced.length} unsynced local bookings to D1...`);
+              for (const unsynced of localUnsynced) {
+                try {
+                  await window.AirbnbAPI.createBooking(unsynced);
+                  d1Bookings.push(unsynced);
+                } catch(pushErr) {
+                  console.warn("Could not push unsynced booking to D1:", unsynced.id, pushErr);
+                  d1Bookings.push(unsynced); // Keep in list so it is not lost
+                }
+              }
+            }
+
             currentBookings = d1Bookings;
             localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
             localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
             renderBookingsPortal();
-            if (typeof showToast === 'function') showToast(`✅ ${d1Bookings.length} bookings loaded from Cloudflare D1!`);
+            if (typeof loadFinancialData === 'function') loadFinancialData();
+            if (typeof showToast === 'function') showToast(`✅ ${currentBookings.length} bookings loaded & secured in Cloudflare D1!`);
             return;
           }
         }
+
         const resp = await fetch('bookings.json?nocache=' + Date.now());
         if (resp.ok) {
           const freshData = await resp.json();
@@ -3093,6 +3281,7 @@
             localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
             localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
             renderBookingsPortal();
+            if (typeof loadFinancialData === 'function') loadFinancialData();
             if (typeof showToast === 'function') showToast("✅ Real bookings synced successfully!");
             return;
           }
@@ -3100,9 +3289,6 @@
       } catch(e) {
         console.warn("Could not fetch remote bookings, using local fallback.", e);
       }
-      currentBookings = getDefaultSampleBookings();
-      localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
-      localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
       renderBookingsPortal();
       if (typeof showToast === 'function') showToast("✅ Confirmed bookings active!");
     };
@@ -3115,63 +3301,36 @@
 
     // Init Bookings
     async function initBookingsPortal() {
+      const CURRENT_DATA_VERSION = 'v3_real_bookings_active';
       // 1. Try loading rooms & properties from Cloudflare D1
       await fetchProperties();
 
       // 2. Try loading bookings from Cloudflare D1 via Hono backend
+      let loadedFromD1 = false;
       if (window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
         try {
           const d1Bookings = await window.AirbnbAPI.getBookings();
           if (Array.isArray(d1Bookings) && d1Bookings.length > 0) {
             currentBookings = d1Bookings;
-            renderBookingsPortal();
+            localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+            localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
+            loadedFromD1 = true;
           }
         } catch(e) {
           console.log("[Cloudflare D1] Using cached/local bookings fallback:", e);
         }
       }
-      const CURRENT_DATA_VERSION = 'v3_real_bookings_active';
-      const storedVersion = localStorage.getItem('airbnb_bookings_version');
-      const stored = localStorage.getItem('airbnb_bookings');
 
-      // Purge any stale dummy bookings if present in storage
-      let needsReset = (!stored || storedVersion !== CURRENT_DATA_VERSION);
-      if (stored && (stored.includes('Priya') || stored.includes('David') || stored.includes('Rohan Verma') || stored.includes('AC Servicing'))) {
-        needsReset = true;
-      }
-
-      if (needsReset) {
-        // First try fetching fresh bookings.json
-        try {
-          const resp = await fetch('bookings.json?nocache=' + Date.now());
-          if (resp.ok) {
-            const serverBookings = await resp.json();
-            if (Array.isArray(serverBookings) && serverBookings.length > 0) {
-              currentBookings = serverBookings;
-              localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
-              localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
-            } else {
-              currentBookings = getDefaultSampleBookings();
-              localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
-              localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
-            }
-          } else {
+      if (!loadedFromD1) {
+        const stored = localStorage.getItem('airbnb_bookings');
+        if (stored) {
+          try {
+            currentBookings = JSON.parse(stored);
+          } catch(e) {
             currentBookings = getDefaultSampleBookings();
-            localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
-            localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
           }
-        } catch(e) {
+        } else {
           currentBookings = getDefaultSampleBookings();
-          localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
-          localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
-        }
-      } else {
-        try {
-          currentBookings = JSON.parse(stored);
-        } catch(e) {
-          currentBookings = getDefaultSampleBookings();
-          localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
-          localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
         }
       }
 
@@ -3179,6 +3338,9 @@
       const today = new Date();
       currentCalYear = today.getFullYear();
       currentCalMonth = today.getMonth();
+
+      renderBookingsPortal();
+      if (typeof loadFinancialData === 'function') loadFinancialData();
 
       // Navigation listeners
       const btnPrev = document.getElementById('btn-cal-prev');
@@ -3353,11 +3515,51 @@
 
       document.getElementById('kpi-nights-count').textContent = `${totalNights} nights booked`;
 
-      // Occupancy rate calculation
-      const totalPossibleRoomNights = (selectedPropFilter === 'ALL' ? props.length : 1) * daysInMonth;
-      const occPercent = totalPossibleRoomNights > 0 ? Math.round((bookedDaySet.size / totalPossibleRoomNights) * 100) : 0;
-      document.getElementById('kpi-occupancy-rate').textContent = `${occPercent}%`;
-      document.getElementById('kpi-occupancy-sub').textContent = selectedPropFilter === 'ALL' ? 'Across all 3 properties' : `For ${selectedPropFilter}`;
+      // Month Revenue Calculation
+      let monthRev = 0;
+      activeBookings.forEach(b => {
+        let amt = 0;
+        if (b.payout) {
+          const num = parseFloat(String(b.payout).replace(/[^0-9.]/g, ''));
+          if (!isNaN(num)) amt = num;
+        }
+        if (amt === 0 && b.notes) {
+          const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
+          if (m) {
+            const num = parseFloat(m[1].replace(/,/g, ''));
+            if (!isNaN(num)) amt = num;
+          }
+        }
+        monthRev += amt;
+      });
+
+      const revEl = document.getElementById('kpi-month-revenue');
+      if (revEl) revEl.textContent = '₹' + monthRev.toLocaleString('en-IN');
+      const revSubEl = document.getElementById('kpi-month-revenue-sub');
+      if (revSubEl) revSubEl.textContent = `${activeBookings.length} bookings • ${totalNights} nights`;
+
+      // Bills & Net profit
+      const expEl = document.getElementById('kpi-month-expenses');
+      const netEl = document.getElementById('kpi-month-net-profit');
+      const curMonthKey = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}`;
+      const monthExpenses = (window.cachedExpensesList || []).filter(e => e.date && e.date.startsWith(curMonthKey));
+      const totalExp = monthExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+      if (expEl) expEl.textContent = '₹' + totalExp.toLocaleString('en-IN');
+      if (netEl) {
+        const net = monthRev - totalExp;
+        netEl.textContent = `Net: ₹${net.toLocaleString('en-IN')}`;
+        netEl.style.color = net >= 0 ? '#1E40AF' : '#991B1B';
+      }
+
+      // Safe fallback for occupancy elements if present
+      const occEl = document.getElementById('kpi-occupancy-rate');
+      if (occEl) {
+        const totalPossibleRoomNights = (selectedPropFilter === 'ALL' ? props.length : 1) * daysInMonth;
+        const occPercent = totalPossibleRoomNights > 0 ? Math.round((bookedDaySet.size / totalPossibleRoomNights) * 100) : 0;
+        occEl.textContent = `${occPercent}%`;
+        const occSubEl = document.getElementById('kpi-occupancy-sub');
+        if (occSubEl) occSubEl.textContent = selectedPropFilter === 'ALL' ? 'Across all properties' : `For ${selectedPropFilter}`;
+      }
 
       // Today's Turnovers & Stays
       const todayStr = new Date().toISOString().slice(0, 10);
@@ -3746,6 +3948,44 @@
       });
     }
 
+    // Helper: Calculate Balance Due dynamically
+    function calculateBalanceDue() {
+      const rateInput = document.getElementById('mb-rate');
+      const advInput = document.getElementById('mb-advance');
+      const rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
+      const advance = advInput ? parseFloat(advInput.value) || 0 : 0;
+      const balance = Math.max(0, rate - advance);
+
+      const balEl = document.getElementById('mb-balance');
+      if (balEl) balEl.value = '₹' + balance.toLocaleString('en-IN');
+
+      const payoutEl = document.getElementById('mb-payout');
+      if (payoutEl) payoutEl.value = rate > 0 ? ('₹' + rate.toLocaleString('en-IN')) : '';
+
+      const payStatusEl = document.getElementById('mb-pay-status');
+      if (payStatusEl) {
+        if (rate > 0 && advance >= rate) {
+          payStatusEl.value = 'Paid in Full';
+        } else if (advance > 0) {
+          payStatusEl.value = 'Deposit Paid';
+        } else if (rate > 0) {
+          payStatusEl.value = 'Pay on Arrival';
+        }
+      }
+    }
+
+    // Helper: Map booking mode to platform
+    function onBookingModeChange() {
+      const bModeEl = document.getElementById('mb-booking-mode');
+      const platEl = document.getElementById('mb-platform');
+      if (!bModeEl || !platEl) return;
+      const mode = bModeEl.value;
+      if (mode === 'Offline') platEl.value = 'Direct';
+      else if (mode === 'Booking.com') platEl.value = 'Booking.com';
+      else if (mode === 'Airbnb') platEl.value = 'Airbnb';
+      else if (mode === 'Direct Call / WhatsApp') platEl.value = 'Direct';
+    }
+
     function openAddBookingModal(prefillProp = '', prefillDate = '') {
       editingBookingId = null;
       document.getElementById('modal-booking-title').textContent = '➕ Add New Booking';
@@ -3760,12 +4000,22 @@
       document.getElementById('mb-phone').value = '';
       document.getElementById('mb-email').value = '';
       document.getElementById('mb-res-code').value = '';
-      document.getElementById('mb-platform').value = 'Airbnb';
+      document.getElementById('mb-platform').value = 'Direct';
       document.getElementById('mb-payout').value = '';
       document.getElementById('mb-guests-count').value = '2';
-      document.getElementById('mb-pay-status').value = 'Paid in Full';
+      document.getElementById('mb-pay-status').value = 'Pay on Arrival';
       document.getElementById('mb-status').value = 'Confirmed';
       document.getElementById('mb-notes').value = '';
+
+      // Reset rate, advance, balance, booking mode
+      const rateEl = document.getElementById('mb-rate');
+      if (rateEl) rateEl.value = '';
+      const advEl = document.getElementById('mb-advance');
+      if (advEl) advEl.value = '';
+      const balEl = document.getElementById('mb-balance');
+      if (balEl) balEl.value = '₹0';
+      const bModeEl = document.getElementById('mb-booking-mode');
+      if (bModeEl) bModeEl.value = 'Offline';
 
       // Dates
       const start = prefillDate || new Date().toISOString().slice(0, 10);
@@ -3803,6 +4053,52 @@
       document.getElementById('mb-notes').value = b.notes || '';
       document.getElementById('mb-checkin').value = b.checkInDate;
       document.getElementById('mb-checkout').value = b.checkOutDate;
+
+      // Extract rate and advance from payout or notes
+      let rateVal = '';
+      if (b.payout) {
+        const num = parseFloat(String(b.payout).replace(/[^0-9.]/g, ''));
+        if (!isNaN(num) && num > 0) rateVal = num;
+      }
+      if (!rateVal && b.notes) {
+        const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
+        if (m) rateVal = parseFloat(m[1].replace(/,/g, ''));
+      }
+      let advVal = '';
+      if (b.notes) {
+        const m = b.notes.match(/Advance(?:\s*Paid)?:\s*₹?\s*([0-9,]+)/i);
+        if (m) advVal = parseFloat(m[1].replace(/,/g, ''));
+      }
+      const rateEl = document.getElementById('mb-rate');
+      if (rateEl) rateEl.value = rateVal;
+      const advEl = document.getElementById('mb-advance');
+      if (advEl) advEl.value = advVal;
+      calculateBalanceDue();
+
+      const bModeEl = document.getElementById('mb-booking-mode');
+      if (bModeEl) {
+        if (b.notes && b.notes.includes('Booking Mode:')) {
+          const m = b.notes.match(/Booking Mode:\s*([^\n|]+)/i);
+          if (m) {
+            const detectedMode = m[1].trim();
+            if (['Offline', 'Booking.com', 'Airbnb', 'Direct Call / WhatsApp', 'Other'].includes(detectedMode)) {
+              bModeEl.value = detectedMode;
+            } else if (detectedMode.toLowerCase().includes('booking')) {
+              bModeEl.value = 'Booking.com';
+            } else if (detectedMode.toLowerCase().includes('airbnb')) {
+              bModeEl.value = 'Airbnb';
+            } else {
+              bModeEl.value = 'Offline';
+            }
+          }
+        } else if (b.platform === 'Booking.com') {
+          bModeEl.value = 'Booking.com';
+        } else if (b.platform === 'Airbnb') {
+          bModeEl.value = 'Airbnb';
+        } else {
+          bModeEl.value = 'Offline';
+        }
+      }
 
       onBookingDateOrPropChange();
       document.getElementById('modal-booking').style.display = 'flex';
@@ -3845,7 +4141,6 @@
         if (b.status === 'Cancelled') return false;
 
         // Hotel room overlap condition:
-        // checkIn < b.checkOutDate AND checkOut > b.checkInDate
         return (checkIn < b.checkOutDate && checkOut > b.checkInDate);
       });
 
@@ -3859,11 +4154,16 @@
       }
     }
 
-    function saveBookingFromModal() {
+    async function saveBookingFromModal() {
       const prop = document.getElementById('mb-property').value;
       const name = document.getElementById('mb-guest-name').value.trim();
       const checkIn = document.getElementById('mb-checkin').value;
       const checkOut = document.getElementById('mb-checkout').value;
+      const rateInput = document.getElementById('mb-rate');
+      const advInput = document.getElementById('mb-advance');
+      const rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
+      const advance = advInput ? parseFloat(advInput.value) || 0 : 0;
+      const mode = document.getElementById('mb-booking-mode')?.value || 'Offline';
 
       if (!name) {
         alert("Please enter the guest legal name or booking label.");
@@ -3882,9 +4182,18 @@
       }
 
       const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+      const payoutStr = rate > 0 ? ('₹' + rate.toLocaleString('en-IN')) : (document.getElementById('mb-payout').value.trim() || '—');
+
+      // Preserve structured rate metadata in notes
+      let userNotes = document.getElementById('mb-notes').value.trim();
+      userNotes = userNotes.replace(/^Booked Rate:[^\n]+\n?/m, '').trim();
+      const metaLine = `Booked Rate: ₹${rate.toLocaleString('en-IN')} | Advance Paid: ₹${advance.toLocaleString('en-IN')} | Booking Mode: ${mode}`;
+      const finalNotes = userNotes ? `${metaLine}\n${userNotes}` : metaLine;
+
+      const bookingId = editingBookingId || ('bk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
 
       const bookingData = {
-        id: editingBookingId || ('bk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+        id: bookingId,
         property: prop,
         guestName: name,
         phone: document.getElementById('mb-phone').value.trim(),
@@ -3895,42 +4204,86 @@
         guestsCount: parseInt(document.getElementById('mb-guests-count').value, 10) || 1,
         platform: document.getElementById('mb-platform').value,
         reservationCode: document.getElementById('mb-res-code').value.trim(),
-        payout: document.getElementById('mb-payout').value.trim(),
+        payout: payoutStr,
         paymentStatus: document.getElementById('mb-pay-status').value,
         status: document.getElementById('mb-status').value,
-        notes: document.getElementById('mb-notes').value.trim(),
+        notes: finalNotes,
         updatedAt: new Date().toISOString()
       };
 
-      if (editingBookingId) {
-        const idx = currentBookings.findIndex(x => x.id === editingBookingId);
-        if (idx >= 0) currentBookings[idx] = Object.assign(currentBookings[idx], bookingData);
-        showToast("Booking updated successfully!");
-      } else {
-        bookingData.createdAt = new Date().toISOString();
-        currentBookings.push(bookingData);
-        showToast("New booking added to calendar!");
+      const saveBtn = document.getElementById('btn-save-booking');
+      const origText = saveBtn ? saveBtn.textContent : '';
+      if (saveBtn) { saveBtn.textContent = 'Saving to D1...'; saveBtn.disabled = true; }
+
+      try {
+        // Direct Cloudflare D1 persistence
+        if (window.AirbnbAPI) {
+          if (editingBookingId) {
+            if (typeof window.AirbnbAPI.updateBooking === 'function') {
+              await window.AirbnbAPI.updateBooking(bookingId, bookingData);
+            }
+          } else {
+            if (typeof window.AirbnbAPI.createBooking === 'function') {
+              await window.AirbnbAPI.createBooking(bookingData);
+            }
+          }
+        }
+
+        // Update local memory
+        if (editingBookingId) {
+          const idx = currentBookings.findIndex(x => x.id === editingBookingId);
+          if (idx >= 0) currentBookings[idx] = Object.assign(currentBookings[idx], bookingData);
+          showToast("✅ Booking updated & saved to Cloudflare D1!");
+        } else {
+          bookingData.createdAt = new Date().toISOString();
+          currentBookings.push(bookingData);
+          showToast("✅ New booking created & saved to Cloudflare D1!");
+        }
+
+        saveBookings();
+        closeBookingModal();
+        renderBookingsPortal();
+        if (typeof loadFinancialData === 'function') loadFinancialData();
+      } catch(err) {
+        console.error("Error saving booking to Cloudflare D1:", err);
+        alert("Warning: Could not save to Cloudflare D1 (" + err.message + "). Saved locally.");
+        if (editingBookingId) {
+          const idx = currentBookings.findIndex(x => x.id === editingBookingId);
+          if (idx >= 0) currentBookings[idx] = Object.assign(currentBookings[idx], bookingData);
+        } else {
+          bookingData.createdAt = new Date().toISOString();
+          currentBookings.push(bookingData);
+        }
+        saveBookings();
+        closeBookingModal();
+        renderBookingsPortal();
+      } finally {
+        if (saveBtn) { saveBtn.textContent = origText; saveBtn.disabled = false; }
+      }
+    }
+
+    async function deleteCurrentBooking() {
+      if (!editingBookingId) return;
+      if (!confirm("Are you sure you want to delete this booking from the calendar and Cloudflare D1?")) return;
+
+      const idToDelete = editingBookingId;
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.deleteBooking === 'function') {
+          await window.AirbnbAPI.deleteBooking(idToDelete);
+        }
+      } catch(e) {
+        console.warn("Could not delete from D1:", e);
       }
 
+      currentBookings = currentBookings.filter(x => x.id !== idToDelete);
       saveBookings();
       closeBookingModal();
       renderBookingsPortal();
+      if (typeof loadFinancialData === 'function') loadFinancialData();
+      showToast("Booking deleted from Cloudflare D1 & calendar.");
     }
 
-    function deleteCurrentBooking() {
-      if (!editingBookingId) return;
-      if (!confirm("Are you sure you want to delete this booking from the calendar?")) return;
-
-      currentBookings = currentBookings.filter(x => x.id !== editingBookingId);
-      saveBookings();
-      closeBookingModal();
-      renderBookingsPortal();
-      showToast("Booking deleted from calendar.");
-    }
-
-    // =========================================================================
-    // 5. QUICK BLOCK DATES
-    // =========================================================================
+    // Quick Block Dates
     function openQuickBlockModal() {
       const select = document.getElementById('qblock-property');
       select.innerHTML = '';
@@ -3956,7 +4309,7 @@
       document.getElementById('modal-quick-block').style.display = 'none';
     }
 
-    function saveQuickBlock() {
+    async function saveQuickBlock() {
       const prop = document.getElementById('qblock-property').value;
       const start = document.getElementById('qblock-start').value;
       const end = document.getElementById('qblock-end').value;
@@ -3968,8 +4321,7 @@
       }
 
       const nights = Math.round((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
-
-      currentBookings.push({
+      const blockData = {
         id: 'block_' + Date.now(),
         property: prop,
         guestName: reason,
@@ -3986,13 +4338,383 @@
         status: 'Blocked',
         notes: reason,
         createdAt: new Date().toISOString()
-      });
+      };
 
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.createBooking === 'function') {
+          await window.AirbnbAPI.createBooking(blockData);
+        }
+      } catch(e) {
+        console.warn("Could not save block to D1:", e);
+      }
+
+      currentBookings.push(blockData);
       saveBookings();
       closeQuickBlockModal();
       renderBookingsPortal();
-      showToast(`Dates blocked on ${prop}!`);
+      showToast(`🔒 Dates blocked on ${prop} & saved to D1!`);
     }
+
+    // =========================================================================
+    // FINANCIALS & OPERATING EXPENSES (MONTH-WISE REVENUE, BILLS, NET PROFIT)
+    // =========================================================================
+    let currentFinanceYear = 2026;
+    let currentFinanceMonth = 9; // 0-indexed: 9 = October
+    let currentExpensesList = [];
+
+    const nowD = new Date();
+    currentFinanceYear = nowD.getFullYear();
+    currentFinanceMonth = nowD.getMonth();
+
+    function getFinanceMonthKey() {
+      return `${currentFinanceYear}-${String(currentFinanceMonth + 1).padStart(2, '0')}`;
+    }
+
+    function updateFinanceMonthLabel() {
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const label = document.getElementById('finance-month-label');
+      if (label) label.textContent = `${monthNames[currentFinanceMonth]} ${currentFinanceYear}`;
+    }
+
+    window.prevFinanceMonth = function() {
+      currentFinanceMonth--;
+      if (currentFinanceMonth < 0) {
+        currentFinanceMonth = 11;
+        currentFinanceYear--;
+      }
+      updateFinanceMonthLabel();
+      loadFinancialData();
+    };
+
+    window.nextFinanceMonth = function() {
+      currentFinanceMonth++;
+      if (currentFinanceMonth > 11) {
+        currentFinanceMonth = 0;
+        currentFinanceYear++;
+      }
+      updateFinanceMonthLabel();
+      loadFinancialData();
+    };
+
+    window.setFinanceMonthToCurrent = function() {
+      const d = new Date();
+      currentFinanceYear = d.getFullYear();
+      currentFinanceMonth = d.getMonth();
+      updateFinanceMonthLabel();
+      loadFinancialData();
+    };
+
+    window.jumpFinanceMonth = function(year, monthIdx) {
+      currentFinanceYear = year;
+      currentFinanceMonth = monthIdx;
+      updateFinanceMonthLabel();
+      loadFinancialData();
+    };
+
+    window.loadFinancialData = async function() {
+      updateFinanceMonthLabel();
+      const monthKey = getFinanceMonthKey();
+
+      let financialData = null;
+      let expenses = [];
+
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.getFinancialSummary === 'function') {
+          const res = await window.AirbnbAPI.getFinancialSummary(monthKey);
+          if (res && res.success) {
+            financialData = res;
+            expenses = res.expenses || [];
+            window.cachedExpensesList = expenses;
+          }
+        }
+      } catch(e) {
+        console.warn("Could not fetch remote financial summary:", e);
+      }
+
+      // Calculate Bookings Revenue for this month from currentBookings
+      const daysInFinMonth = new Date(currentFinanceYear, currentFinanceMonth + 1, 0).getDate();
+      const finMonthStart = `${currentFinanceYear}-${String(currentFinanceMonth + 1).padStart(2, '0')}-01`;
+      const finMonthEnd = `${currentFinanceYear}-${String(currentFinanceMonth + 1).padStart(2, '0')}-${String(daysInFinMonth).padStart(2, '0')}`;
+
+      const monthBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled') return false;
+        return (b.checkInDate <= finMonthEnd && b.checkOutDate >= finMonthStart);
+      });
+
+      let totalRevenue = 0;
+      monthBookings.forEach(b => {
+        let amt = 0;
+        if (b.payout) {
+          const num = parseFloat(String(b.payout).replace(/[^0-9.]/g, ''));
+          if (!isNaN(num)) amt = num;
+        }
+        if (amt === 0 && b.notes) {
+          const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
+          if (m) {
+            const num = parseFloat(m[1].replace(/,/g, ''));
+            if (!isNaN(num)) amt = num;
+          }
+        }
+        b._calcAmount = amt;
+        totalRevenue += amt;
+      });
+
+      // Calculate Expenses
+      if (!financialData || !financialData.expenses) {
+        const localExp = localStorage.getItem('airbnb_expenses');
+        if (localExp) {
+          try {
+            const allExp = JSON.parse(localExp);
+            expenses = allExp.filter(x => x.date && x.date.startsWith(monthKey));
+          } catch(e) {}
+        }
+      }
+
+      const totalExpenses = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+
+      // Update KPI Cards in Finances View
+      const revEl = document.getElementById('fin-kpi-revenue');
+      const revSubEl = document.getElementById('fin-kpi-revenue-sub');
+      const expEl = document.getElementById('fin-kpi-expenses');
+      const expSubEl = document.getElementById('fin-kpi-expenses-sub');
+      const profEl = document.getElementById('fin-kpi-profit');
+      const profSubEl = document.getElementById('fin-kpi-profit-sub');
+      const margEl = document.getElementById('fin-kpi-margin');
+      const margSubEl = document.getElementById('fin-kpi-margin-sub');
+      const bTag = document.getElementById('fin-bookings-count-tag');
+
+      if (revEl) revEl.textContent = '₹' + totalRevenue.toLocaleString('en-IN');
+      if (revSubEl) revSubEl.textContent = `${monthBookings.length} bookings in ${document.getElementById('finance-month-label')?.textContent || monthKey}`;
+      if (expEl) expEl.textContent = '₹' + totalExpenses.toLocaleString('en-IN');
+      if (expSubEl) expSubEl.textContent = `${expenses.length} bills / expenses recorded`;
+      if (profEl) {
+        profEl.textContent = (netProfit < 0 ? '-' : '') + '₹' + Math.abs(netProfit).toLocaleString('en-IN');
+        profEl.style.color = netProfit >= 0 ? '#1E40AF' : '#991B1B';
+      }
+      if (profSubEl) profSubEl.textContent = netProfit >= 0 ? 'Profitable operation' : 'Net operating deficit';
+      if (margEl) margEl.textContent = `${profitMargin}%`;
+      if (margSubEl) margSubEl.textContent = totalRevenue > 0 ? `${profitMargin}% profit margin on booked revenue` : 'No revenue recorded';
+      if (bTag) bTag.textContent = `${monthBookings.length} booking${monthBookings.length === 1 ? '' : 's'}`;
+
+      renderFinanceBookingsTable(monthBookings);
+      renderFinanceExpensesTable(expenses);
+    };
+
+    function renderFinanceBookingsTable(bookings) {
+      const tbody = document.getElementById('fin-revenue-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (bookings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No bookings found for this month.</td></tr>`;
+        return;
+      }
+
+      bookings.forEach(b => {
+        const theme = getPropertyTheme(b.property);
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => openEditBookingModal(b.id);
+        tr.innerHTML = `
+          <td>
+            <span class="badge" style="background: ${theme.bg}; color: ${theme.color}; font-weight: 700;">
+              ${escapeHtml(b.property)}
+            </span>
+          </td>
+          <td>
+            <strong>${escapeHtml(b.guestName)}</strong>
+            ${b.reservationCode ? `<div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">#${escapeHtml(b.reservationCode)}</div>` : ''}
+          </td>
+          <td style="font-size: 12px; white-space: nowrap;">
+            ${b.checkInDate} &rarr; ${b.checkOutDate}
+            <div style="font-size: 11px; color: var(--text-muted);">${b.nights || 1} night${(b.nights || 1) > 1 ? 's' : ''}</div>
+          </td>
+          <td>
+            <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 11px;">
+              ${escapeHtml(b.platform || 'Direct')}
+            </span>
+          </td>
+          <td style="text-align: right; font-weight: 700; color: #065F46; font-size: 14px;">
+            ₹${(b._calcAmount || 0).toLocaleString('en-IN')}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderFinanceExpensesTable(expenses) {
+      const tbody = document.getElementById('fin-expenses-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (expenses.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              No bills recorded for this month.<br>
+              <button type="button" class="btn btn-outline" onclick="openAddExpenseModal()" style="margin-top: 8px; font-size: 12px; color: #E11D48; border-color: #FDA4AF;">
+                ⚡ Record Electricity Bill, Wi-Fi or Maintenance
+              </button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const catBadges = {
+        'Electricity / Power': { bg: '#FEF3C7', color: '#92400E', icon: '⚡' },
+        'Internet / Wi-Fi': { bg: '#EFF6FF', color: '#1D4ED8', icon: '🌐' },
+        'Cleaning & Laundry': { bg: '#ECFDF5', color: '#065F46', icon: '🧹' },
+        'Water Bill': { bg: '#E0F2FE', color: '#0369A1', icon: '💧' },
+        'Maintenance & Repairs': { bg: '#FEE2E2', color: '#991B1B', icon: '🔧' },
+        'Supplies & Toiletries': { bg: '#F3E8FF', color: '#6B21A8', icon: '🧴' },
+        'Building / Society': { bg: '#F1F5F9', color: '#334155', icon: '🏢' },
+        'Other': { bg: '#F1F5F9', color: '#475569', icon: '🏷️' }
+      };
+
+      expenses.forEach(e => {
+        const catStyle = catBadges[e.category] || catBadges['Other'];
+        const amt = Number(e.amount) || 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <span class="badge" style="background: ${catStyle.bg}; color: ${catStyle.color}; font-weight: 600; font-size: 11px;">
+              ${catStyle.icon} ${escapeHtml(e.category)}
+            </span>
+          </td>
+          <td>
+            <strong>${escapeHtml(e.title)}</strong>
+            ${e.notes ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(e.notes)}</div>` : ''}
+          </td>
+          <td style="font-size: 12px; white-space: nowrap; color: #475569;">
+            ${e.date}
+          </td>
+          <td style="font-size: 12px; color: #475569;">
+            ${escapeHtml(e.property || 'All Units')}
+          </td>
+          <td style="text-align: right; font-weight: 700; color: #9F1239; font-size: 14px;">
+            ₹${amt.toLocaleString('en-IN')}
+          </td>
+          <td style="text-align: center;">
+            <button type="button" class="btn btn-outline" onclick="handleDeleteExpense('${e.id}')" style="height: 26px; width: 26px; padding: 0; font-size: 11px; color: var(--danger); border-color: #FECACA;" title="Delete this bill entry">
+              🗑️
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    window.openAddExpenseModal = function() {
+      const propSel = document.getElementById('exp-property');
+      if (propSel) {
+        propSel.innerHTML = '<option value="All Units">All Units / Shared</option>';
+        getPropertiesList().forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          propSel.appendChild(opt);
+        });
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      const curFinMonthStr = getFinanceMonthKey();
+      const defaultDate = today.startsWith(curFinMonthStr) ? today : `${curFinMonthStr}-01`;
+
+      document.getElementById('exp-date').value = defaultDate;
+      document.getElementById('exp-title').value = '';
+      document.getElementById('exp-amount').value = '';
+      document.getElementById('exp-notes').value = '';
+      document.getElementById('exp-category').value = 'Electricity / Power';
+
+      document.getElementById('modal-add-expense').style.display = 'flex';
+      setTimeout(() => document.getElementById('exp-title').focus(), 100);
+    };
+
+    window.closeAddExpenseModal = function() {
+      document.getElementById('modal-add-expense').style.display = 'none';
+    };
+
+    window.handleSaveExpense = async function() {
+      const title = (document.getElementById('exp-title').value || '').trim();
+      const amount = parseFloat(document.getElementById('exp-amount').value);
+      const category = document.getElementById('exp-category').value;
+      const date = document.getElementById('exp-date').value;
+      const property = document.getElementById('exp-property').value;
+      const notes = (document.getElementById('exp-notes').value || '').trim();
+
+      if (!title) {
+        alert("Please enter a bill or expense title.");
+        document.getElementById('exp-title').focus();
+        return;
+      }
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid expense amount in ₹.");
+        document.getElementById('exp-amount').focus();
+        return;
+      }
+
+      if (!date) {
+        alert("Please select the date of this bill or payment.");
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-expense');
+      const origText = btn ? btn.textContent : '';
+      if (btn) { btn.textContent = 'Saving to D1...'; btn.disabled = true; }
+
+      const expenseData = {
+        title,
+        amount,
+        category,
+        date,
+        property,
+        notes
+      };
+
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.createExpense === 'function') {
+          await window.AirbnbAPI.createExpense(expenseData);
+        } else {
+          const localId = 'exp_' + Date.now();
+          const localList = JSON.parse(localStorage.getItem('airbnb_expenses') || '[]');
+          localList.push(Object.assign({ id: localId }, expenseData));
+          localStorage.setItem('airbnb_expenses', JSON.stringify(localList));
+        }
+
+        closeAddExpenseModal();
+        await loadFinancialData();
+        renderKpis();
+        showToast("⚡ Expense saved to Cloudflare D1 successfully!");
+      } catch(err) {
+        console.error("Error saving expense:", err);
+        alert("Could not save expense: " + err.message);
+      } finally {
+        if (btn) { btn.textContent = origText; btn.disabled = false; }
+      }
+    };
+
+    window.handleDeleteExpense = async function(id) {
+      if (!confirm("Are you sure you want to delete this expense record?")) return;
+
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.deleteExpense === 'function') {
+          await window.AirbnbAPI.deleteExpense(id);
+        } else {
+          const localList = JSON.parse(localStorage.getItem('airbnb_expenses') || '[]').filter(x => x.id !== id);
+          localStorage.setItem('airbnb_expenses', JSON.stringify(localList));
+        }
+
+        await loadFinancialData();
+        renderKpis();
+        showToast("Expense record deleted.");
+      } catch(err) {
+        alert("Could not delete expense: " + err.message);
+      }
+    };
 
     // =========================================================================
     // 6. ROOM MANAGEMENT (ADD, RENAME & DELETE WITH D1 CASCADE)

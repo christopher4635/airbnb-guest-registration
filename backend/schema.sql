@@ -40,7 +40,23 @@ CREATE TABLE IF NOT EXISTS properties (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- 3. Guest Submissions & Check-ins Table
+-- 3. Operating Expenses Table (Electricity, Wi-Fi, Water, Cleaning, Maintenance)
+CREATE TABLE IF NOT EXISTS expenses (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,                      -- e.g. 'October Electricity Bill'
+    amount REAL NOT NULL,                     -- e.g. 2400.00
+    category TEXT NOT NULL,                   -- 'Electricity / Power', 'Water', 'Internet', 'Cleaning', 'Maintenance', 'Supplies', 'Other'
+    date TEXT NOT NULL,                       -- YYYY-MM-DD
+    property TEXT DEFAULT 'All Units',        -- '1 BHK', '2 BHK', 'Studio', 'All Units'
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
+CREATE INDEX IF NOT EXISTS idx_expenses_property ON expenses(property);
+
+-- 4. Guest Submissions & Check-ins Table
 CREATE TABLE IF NOT EXISTS submissions (
     id TEXT PRIMARY KEY,
     reservation_code TEXT,

@@ -222,14 +222,50 @@
     },
 
     updateProperty: async function(oldName, propertyData) {
-      return await this.request(`/api/properties/${encodeURIComponent(oldName)}`, {
-        method: 'PUT',
-        body: JSON.stringify(propertyData)
+      // Use POST /rename with JSON body to avoid URL-encoding issues with slashes (e.g. '1 Room / Studio')
+      return await this.request('/api/properties/rename', {
+        method: 'POST',
+        body: JSON.stringify(Object.assign({ oldName }, propertyData))
       });
     },
 
     deleteProperty: async function(name, force = false) {
       return await this.request(`/api/properties/${encodeURIComponent(name)}${force ? '?force=true' : ''}`, {
+        method: 'DELETE'
+      });
+    },
+
+    // --------------------------------------------------------------------------
+    // Month-wise Revenue & Expenses Tracker (D1 Database)
+    // --------------------------------------------------------------------------
+    getExpenses: async function(month = null, property = null) {
+      let url = '/api/expenses?';
+      if (month) url += `month=${encodeURIComponent(month)}&`;
+      if (property && property !== 'ALL') url += `property=${encodeURIComponent(property)}&`;
+      return await this.request(url.replace(/[?&]$/, ''));
+    },
+
+    getFinancialSummary: async function(month = null) {
+      const q = month ? `?month=${encodeURIComponent(month)}` : '';
+      return await this.request(`/api/finances/summary${q}`);
+    },
+
+    createExpense: async function(expenseData) {
+      return await this.request('/api/expenses', {
+        method: 'POST',
+        body: JSON.stringify(expenseData)
+      });
+    },
+
+    updateExpense: async function(id, expenseData) {
+      return await this.request(`/api/expenses/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(expenseData)
+      });
+    },
+
+    deleteExpense: async function(id) {
+      return await this.request(`/api/expenses/${encodeURIComponent(id)}`, {
         method: 'DELETE'
       });
     },

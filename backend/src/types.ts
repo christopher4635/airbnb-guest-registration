@@ -43,6 +43,28 @@ export interface Property {
   activeBookingsCount?: number;
 }
 
+export interface Expense {
+  id: string;
+  title: string;
+  amount: number;
+  category: string;
+  date: string;              // YYYY-MM-DD
+  property?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface FinancialSummary {
+  month: string;             // YYYY-MM
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  profitMargin: number;
+  bookingsCount: number;
+  expensesCount: number;
+}
+
 export interface Submission {
   id: string;
   reservationCode?: string;

@@ -8,6 +8,7 @@ import uploadsRoute from './routes/uploads';
 import configRoute from './routes/config';
 import propertiesRoute from './routes/properties';
 import icalRoute from './routes/ical';
+import expensesRoute from './routes/expenses';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -52,6 +53,8 @@ app.route('/api/config', configRoute);
 app.route('/api/properties', propertiesRoute);
 app.route('/api/ical', icalRoute);
 app.route('/ical', icalRoute);
+app.route('/api/expenses', expensesRoute);
+app.route('/api/finances', expensesRoute);
 
 // 5. 404 Handler
 app.notFound((c) => {
