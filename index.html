@@ -1114,33 +1114,33 @@
             
             <!-- Front of ID -->
             <div class="upload-slot ${guestFiles[i]?.front ? 'has-file' : ''}" id="slot_${i}_front" onclick="triggerFileSelect(${i}, 'front')">
-              <input type="file" id="file_${i}_front" accept="image/*" capture="environment" style="display:none;" 
+              <input type="file" id="file_${i}_front" accept="image/*,.pdf" style="display:none;" 
                      onchange="handleFileUpload(event, ${i}, 'front')">
               ${guestFiles[i]?.front ? `
                 <img src="${guestFiles[i].front}" class="preview-img" alt="Front ID">
-                <button type="button" class="remove-upload-btn" onclick="removeFile(event, ${i}, 'front')">×</button>
+                <button type="button" class="remove-upload-btn" onclick="removeFile(event, ${i}, 'front')" title="Remove">×</button>
               ` : `
                 <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                 </svg>
                 <div class="upload-title">Front of ID</div>
-                <div class="upload-hint">Tap to take photo or upload</div>
+                <div class="upload-hint">Tap to take photo or choose file</div>
               `}
             </div>
 
             <!-- Back of ID -->
             <div class="upload-slot ${guestFiles[i]?.back ? 'has-file' : ''}" id="slot_${i}_back" onclick="triggerFileSelect(${i}, 'back')">
-              <input type="file" id="file_${i}_back" accept="image/*" capture="environment" style="display:none;" 
+              <input type="file" id="file_${i}_back" accept="image/*,.pdf" style="display:none;" 
                      onchange="handleFileUpload(event, ${i}, 'back')">
               ${guestFiles[i]?.back ? `
                 <img src="${guestFiles[i].back}" class="preview-img" alt="Back ID">
-                <button type="button" class="remove-upload-btn" onclick="removeFile(event, ${i}, 'back')">×</button>
+                <button type="button" class="remove-upload-btn" onclick="removeFile(event, ${i}, 'back')" title="Remove">×</button>
               ` : `
                 <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
                 </svg>
                 <div class="upload-title">Back of ID (or Passport Page 2)</div>
-                <div class="upload-hint">Tap to take photo or upload</div>
+                <div class="upload-hint">Tap to take photo or choose file</div>
               `}
             </div>
 
@@ -1152,62 +1152,112 @@
 
     // Trigger Hidden File Inputs
     function triggerFileSelect(guestIdx, side) {
-      const input = document.getElementById(`file_${guestIdx}_side` || `file_${guestIdx}_${side}`);
-      if (input) input.click();
+      const input = document.getElementById(`file_${guestIdx}_${side}`);
+      if (input) {
+        input.click();
+      }
     }
 
     // Client-side image compression & preview (handles large mobile photos cleanly)
     function handleFileUpload(event, guestIdx, side) {
-      const file = event.target.files[0];
+      const file = event.target.files && event.target.files[0];
       if (!file) return;
 
+      if (!guestFiles[guestIdx]) guestFiles[guestIdx] = {};
+      guestFiles[guestIdx][`${side}Name`] = file.name;
+
+      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      if (slot) {
+        slot.innerHTML = `
+          <div class="spinner" style="width:28px; height:28px; margin:0 auto 6px; border-width:3px;"></div>
+          <div class="upload-title" style="font-size:12px;">Processing photo...</div>
+        `;
+      }
+
+      // If PDF
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          guestFiles[guestIdx][side] = e.target.result;
+          renderSlotPreview(guestIdx, side, 'pdf', file.name);
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      // If Image
       const reader = new FileReader();
       reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-          // Compress on canvas to max 1600px width/height and quality 0.8 JPEG
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const maxDim = 1600;
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1600;
 
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
             }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+            guestFiles[guestIdx][side] = compressedDataUrl;
+            renderSlotPreview(guestIdx, side, 'image', compressedDataUrl);
+          } catch(err) {
+            console.error("Compression error:", err);
+            guestFiles[guestIdx][side] = e.target.result;
+            renderSlotPreview(guestIdx, side, 'image', e.target.result);
           }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-
-          if (!guestFiles[guestIdx]) guestFiles[guestIdx] = {};
-          guestFiles[guestIdx][side] = compressedDataUrl;
-          guestFiles[guestIdx][`${side}Name`] = file.name;
-
-          // Re-render the slot with thumbnail
-          const slot = document.getElementById(`slot_${guestIdx}_${side}`);
-          if (slot) {
-            slot.classList.add('has-file');
-            slot.innerHTML = `
-              <img src="${compressedDataUrl}" class="preview-img" alt="${side} ID">
-              <button type="button" class="remove-upload-btn" onclick="removeFile(event, ${guestIdx}, '${side}')">×</button>
-            `;
-          }
+        };
+        img.onerror = function() {
+          guestFiles[guestIdx][side] = e.target.result;
+          renderSlotPreview(guestIdx, side, 'file', file.name);
         };
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
 
+    function renderSlotPreview(guestIdx, side, type, data) {
+      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      if (!slot) return;
+      slot.classList.add('has-file');
+
+      let previewContent = '';
+      if (type === 'image') {
+        previewContent = `<img src="${data}" class="preview-img" alt="${side} ID">`;
+      } else {
+        previewContent = `
+          <div style="font-size:32px; margin-bottom:4px;">📄</div>
+          <div style="font-size:12px; font-weight:700; color:var(--text-main); word-break:break-all; padding:0 8px;">${data}</div>
+          <div style="font-size:11px; color:var(--success); font-weight:600; margin-top:2px;">Document Loaded</div>
+        `;
+      }
+
+      slot.innerHTML = `
+        <input type="file" id="file_${guestIdx}_${side}" accept="image/*,.pdf" style="display:none;" 
+               onchange="handleFileUpload(event, ${guestIdx}, '${side}')">
+        ${previewContent}
+        <button type="button" class="remove-upload-btn" onclick="removeFile(event, ${guestIdx}, '${side}')" title="Remove">×</button>
+      `;
+    }
+
     function removeFile(event, guestIdx, side) {
-      event.stopPropagation();
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       if (guestFiles[guestIdx]) {
         delete guestFiles[guestIdx][side];
         delete guestFiles[guestIdx][`${side}Name`];
@@ -1216,13 +1266,13 @@
       if (slot) {
         slot.classList.remove('has-file');
         slot.innerHTML = `
-          <input type="file" id="file_${guestIdx}_${side}" accept="image/*" capture="environment" style="display:none;" 
+          <input type="file" id="file_${guestIdx}_${side}" accept="image/*,.pdf" style="display:none;" 
                  onchange="handleFileUpload(event, ${guestIdx}, '${side}')">
           <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
           </svg>
           <div class="upload-title">${side === 'front' ? 'Front of ID' : 'Back of ID (or Passport Page 2)'}</div>
-          <div class="upload-hint">Tap to take photo or upload</div>
+          <div class="upload-hint">Tap to take photo or choose file</div>
         `;
       }
     }
