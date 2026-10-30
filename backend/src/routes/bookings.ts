@@ -186,7 +186,7 @@ bookingsRoute.delete('/:id', async (c) => {
   }
 });
 
-// 6. POST /api/bookings/batch - Batch import / backup restore
+// 6. POST /api/bookings/batch - Batch import / backup restore with property normalization & chunking
 bookingsRoute.post('/batch', async (c) => {
   try {
     const { bookings } = await c.req.json();
@@ -194,8 +194,17 @@ bookingsRoute.post('/batch', async (c) => {
       return c.json({ success: false, error: 'Expected an array of bookings' }, 400);
     }
 
+    const normalizePropName = (name?: string): string => {
+      if (!name) return 'Ripple 1 BHK';
+      const trimmed = name.trim();
+      if (/^1\s*bhk$/i.test(trimmed)) return 'Ripple 1 BHK';
+      if (/^1\s*room(\s*\/\s*studio)?$/i.test(trimmed) || /^studio(\s*suite)?$/i.test(trimmed)) return 'Studio';
+      return trimmed;
+    };
+
     const statements = bookings.map((b: any) => {
       const now = new Date().toISOString();
+      const prop = normalizePropName(b.property);
       return c.env.DB.prepare(`
         INSERT OR REPLACE INTO bookings (
           id, property, guest_name, phone, email,
@@ -205,7 +214,7 @@ bookingsRoute.post('/batch', async (c) => {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
         b.id || `bk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        b.property || '1 BHK',
+        prop,
         b.guestName || 'Guest',
         b.phone || '',
         b.email || '',
@@ -224,7 +233,12 @@ bookingsRoute.post('/batch', async (c) => {
       );
     });
 
-    await c.env.DB.batch(statements);
+    // Execute in chunks of 50 to respect D1 limits
+    for (let i = 0; i < statements.length; i += 50) {
+      const chunk = statements.slice(i, i + 50);
+      await c.env.DB.batch(chunk);
+    }
+
     return c.json({ success: true, count: bookings.length });
   } catch (err: any) {
     return c.json({ success: false, error: err.message }, 500);

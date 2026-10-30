@@ -1245,6 +1245,266 @@
     .badge-supplies { background: #FCE7F3; color: #9D174D; }
     .badge-other { background: #F1F5F9; color: #475569; }
 
+    /* Booking Mode Chart Styles */
+    .chart-flex-grid {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      gap: 12px;
+      height: 180px;
+      padding: 12px 6px 0;
+      border-bottom: 1.5px solid var(--border-color);
+    }
+    .chart-bar-col {
+      flex: 1;
+      max-width: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s ease;
+      user-select: none;
+    }
+    .chart-bar-col:hover {
+      transform: translateY(-2px);
+    }
+    .chart-bar-top-val {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .chart-bar-track {
+      flex: 1;
+      width: 100%;
+      max-width: 44px;
+      background: #F1F5F9;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .chart-bar-fill {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .chart-bar-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 8px;
+      width: 100%;
+      text-align: center;
+    }
+    .chart-bar-icon {
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+    .chart-bar-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .chart-bar-rev-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-top: 3px;
+    }
+
+    /* Mobile Optimization & Responsiveness */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px 8px 70px;
+      }
+      .container {
+        padding: 0;
+      }
+      .admin-header {
+        padding: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .admin-title h1 {
+        font-size: 18px;
+      }
+      .admin-title p {
+        font-size: 12px;
+      }
+
+      /* Horizontal scrollable tabs with no wrapping */
+      .admin-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        padding-bottom: 6px;
+        scrollbar-width: none;
+      }
+      .admin-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .tab-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+
+      /* 2-column KPI grid on mobile */
+      .portal-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        margin-bottom: 14px !important;
+      }
+      .kpi-card {
+        padding: 12px 10px;
+      }
+      .kpi-label {
+        font-size: 10px;
+      }
+      .kpi-value {
+        font-size: 18px;
+      }
+      .kpi-sub {
+        font-size: 10px;
+      }
+
+      /* Portal Controls Bar */
+      .portal-controls-card {
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .date-nav-wrapper {
+        justify-content: space-between;
+        width: 100%;
+      }
+      .month-display-text {
+        min-width: 100px;
+        font-size: 13px;
+        padding: 0 4px;
+      }
+      .prop-pill-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .prop-pill-filters::-webkit-scrollbar {
+        display: none;
+      }
+      .view-mode-toggle {
+        width: 100%;
+        display: flex;
+      }
+      .view-mode-btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      /* Chart adjustments on mobile */
+      .chart-flex-grid {
+        height: 155px;
+        gap: 6px;
+        padding: 8px 2px 0;
+      }
+      .chart-bar-track {
+        max-width: 28px;
+      }
+      .chart-bar-name {
+        font-size: 9px;
+      }
+      .chart-bar-rev-pill {
+        font-size: 9px;
+        padding: 1px 4px;
+      }
+      .chart-bar-top-val {
+        font-size: 11px;
+      }
+
+      /* Timeline Sidebar & Tracks on Mobile */
+      .timeline-sidebar {
+        min-width: 110px !important;
+        max-width: 110px !important;
+      }
+      .timeline-sidebar-row {
+        height: 76px !important;
+        padding: 0 6px !important;
+      }
+      .timeline-prop-name-box {
+        max-width: 95px !important;
+        gap: 5px !important;
+      }
+      .timeline-prop-title {
+        font-size: 11px !important;
+      }
+      .timeline-prop-meta {
+        font-size: 9px !important;
+      }
+      .timeline-quick-add-btn {
+        display: none !important;
+      }
+      .timeline-dates-header {
+        height: 52px;
+      }
+      .timeline-date-col {
+        min-width: 46px !important;
+        max-width: 46px !important;
+        width: 46px !important;
+      }
+      .timeline-row-track {
+        height: 76px !important;
+      }
+      .timeline-day-cell {
+        min-width: 46px !important;
+        max-width: 46px !important;
+        width: 46px !important;
+      }
+      .timeline-booking-bar {
+        font-size: 10px !important;
+      }
+      .tbar-guest {
+        font-size: 11px !important;
+      }
+
+      /* Modals Full Screen / Rounded Sheet on Mobile */
+      .modal-backdrop {
+        padding: 6px;
+        align-items: flex-end;
+      }
+      .modal-dialog {
+        max-width: 100% !important;
+        max-height: 94vh !important;
+        margin: 0 !important;
+        border-radius: 16px 16px 0 0 !important;
+      }
+      .modal-header {
+        padding: 14px 16px;
+      }
+      .modal-body {
+        padding: 14px 16px;
+      }
+      .modal-footer {
+        padding: 12px 16px;
+      }
+      .form-row-2, .form-row-3 {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+      }
+    }
+
   </style>
   <script src="js/api.js"></script>
 </head>
@@ -1343,29 +1603,40 @@
           </div>
         </div>
 
-                <!-- REAL CONFIRMED BOOKINGS BANNER -->
-        <div style="background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border: 1px solid #93C5FD; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 6px rgba(59,130,246,0.08);">
-          <div style="font-size: 13px; color: #1E3A8A; line-height: 1.5;">
-            <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; margin-bottom: 3px;">
-              <span style="font-size: 16px;">📌</span>
-              <span>Confirmed Live Bookings Loaded:</span>
-              <span style="background: #10B981; color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 10px; font-weight: 600;">Active</span>
+                <!-- DASHBOARD CHART: Bookings Count vs Booking Mode & Mode-wise Revenue -->
+        <div class="card" id="booking-mode-chart-card" style="padding: 16px 18px; margin-bottom: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">📊</span>
+                <strong style="font-size: 15px; color: var(--text-main);">Bookings by Mode &amp; Channels</strong>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Comparison of booking volume vs mode &bull; Hover or tap any bar to view mode-wise revenue
+              </p>
             </div>
-            <div style="color: #334155; font-size: 12px;">
-              <strong>1BHK & 2BHK:</strong> Oct 29–31 (Offline Guest • ₹2,500) &bull; 
-              <strong>2BHK:</strong> Oct 31–Nov 1 (Adhikari Anuj • ₹4,000) &bull; 
-              <strong>2BHK:</strong> Nov 1–8 (Nikunjan • ₹2,700/nt) &bull; 
-              <strong>2BHK:</strong> Nov 8–11 (Faucauld Laurent • ₹3,135/nt) &bull; 
-              <strong>2BHK:</strong> Nov 11–15 (Kaudek Sonia • ₹16,000)
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <div class="view-mode-toggle" style="background: #F1F5F9;">
+                <button type="button" class="view-mode-btn active" id="chart-scope-month" onclick="switchChartScope('month')">
+                  This Month
+                </button>
+                <button type="button" class="view-mode-btn" id="chart-scope-all" onclick="switchChartScope('all')">
+                  All Stays
+                </button>
+              </div>
             </div>
           </div>
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <button type="button" class="btn btn-outline" onclick="switchCalendarView('list')" style="padding: 5px 12px; font-size: 12px; background: #fff; font-weight: 600; border-color: #93C5FD; color: #1E40AF;">
-              📋 View in List View →
-            </button>
-            <button type="button" class="btn btn-outline" onclick="forceSyncServerBookings()" style="padding: 5px 10px; font-size: 12px; background: #fff; font-weight: 600; border-color: #10B981; color: #065F46;" title="Force refresh bookings from server">
-              🔄 Sync
-            </button>
+
+          <!-- Dynamic Chart Visual Container -->
+          <div id="booking-mode-chart-wrapper" style="position: relative;">
+            <div id="booking-mode-chart-bars"></div>
+            <!-- Interactive Floating Tooltip -->
+            <div id="chart-floating-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 50; background: #0F172A; color: #FFFFFF; padding: 8px 12px; border-radius: 8px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); white-space: nowrap; transform: translate(-50%, -110%); transition: opacity 0.12s ease;"></div>
+          </div>
+
+          <!-- Chart Summary Strip -->
+          <div id="booking-mode-chart-summary" style="display: flex; gap: 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #F1F5F9; flex-wrap: wrap; font-size: 12px; color: var(--text-muted);">
+            <!-- Populated dynamically -->
           </div>
         </div>
 
@@ -1848,12 +2119,12 @@
       <div class="modal-backdrop" id="modal-backup-export">
         <div class="modal-dialog" style="max-width: 480px;">
           <div class="modal-header">
-            <h3>💾 Backup & Data Management</h3>
+            <h3>💾 Backup &amp; Data Restore</h3>
             <button type="button" class="modal-close-btn" onclick="closeBackupModal()">&times;</button>
           </div>
           <div class="modal-body">
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">
-              Your bookings are stored securely in your browser's private storage. You can export or restore backups anytime.
+              Your reservations are synchronized with Cloudflare D1 edge database. You can download an offline JSON backup or restore from a previous backup file anytime.
             </p>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -1865,19 +2136,15 @@
                 <span>📊 Export Bookings Spreadsheet (CSV)</span>
               </button>
 
-              <label class="btn btn-outline" style="justify-content: flex-start; padding: 12px 16px; cursor: pointer;">
-                <span>📤 Restore Bookings from Backup (JSON)</span>
+              <label class="btn btn-outline" style="justify-content: flex-start; padding: 12px 16px; cursor: pointer; background: #F0FDF4; border-color: #86EFAC; color: #166534; font-weight: 600;">
+                <span>📤 Restore &amp; Sync Bookings from Backup (JSON)</span>
                 <input type="file" id="restore-json-input" accept=".json" onchange="importBookingsJson(event)" style="display: none;">
               </label>
 
-              <div style="border-top: 1px dashed var(--border-color); margin: 10px 0;"></div>
+              <div style="border-top: 1px dashed var(--border-color); margin: 6px 0;"></div>
 
-              <button type="button" class="btn btn-outline" onclick="reloadDemoBookings()" style="justify-content: flex-start; padding: 12px 16px; color: var(--primary);">
-                <span>✨ Reload Sample Bookings</span>
-              </button>
-
-              <button type="button" class="btn btn-outline" onclick="clearAllBookings()" style="justify-content: flex-start; padding: 12px 16px; color: var(--danger); border-color: #FECACA;">
-                <span>🗑️ Clear All Bookings</span>
+              <button type="button" class="btn btn-outline" onclick="clearAllBookings()" style="justify-content: flex-start; padding: 10px 16px; font-size: 12px; color: var(--danger); border-color: #FECACA;">
+                <span>🗑️ Clear Bookings (Reset)</span>
               </button>
             </div>
           </div>
@@ -2307,7 +2574,7 @@
       if (pin === expected || pin === "4635") {
         unlockAdminPanel();
       } else {
-        alert("Incorrect PIN. Please enter PIN '4635'.");
+        alert("Incorrect PIN. Please try again.");
         if (pinInput) { pinInput.value = ''; pinInput.focus(); }
       }
     };
@@ -3067,11 +3334,65 @@
       return ["Ripple 1 BHK", "2 BHK", "Studio"];
     }
 
+    function calculateNightsBetween(inStr, outStr) {
+      if (!inStr || !outStr) return 1;
+      const d1 = new Date(inStr);
+      const d2 = new Date(outStr);
+      const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      return diff > 0 ? diff : 1;
+    }
+
+    // Robust Property matching supporting aliases (1 BHK <-> Ripple 1 BHK, 1 Room / Studio <-> Studio)
+    function matchesProperty(bookingProp, trackProp) {
+      if (!bookingProp || !trackProp) return false;
+      const b = String(bookingProp).trim().toLowerCase();
+      const t = String(trackProp).trim().toLowerCase();
+      if (b === t) return true;
+      if ((b === '1 bhk' || b === 'ripple 1 bhk') && (t === '1 bhk' || t === 'ripple 1 bhk')) return true;
+      if ((b === '1 room / studio' || b === 'studio' || b === 'studio suite' || b === 'room / studio') &&
+          (t === '1 room / studio' || t === 'studio' || t === 'studio suite' || t === 'room / studio')) return true;
+      return false;
+    }
+
+    // Helper: Normalize booking mode
+    function getBookingMode(b) {
+      const notes = (b.notes || '').toLowerCase();
+      const plat = (b.platform || '').toLowerCase();
+      if (plat.includes('airbnb') || notes.includes('mode: airbnb')) return 'Airbnb';
+      if (plat.includes('booking.com') || notes.includes('mode: booking.com')) return 'Booking.com';
+      if (plat.includes('whatsapp') || notes.includes('whatsapp') || notes.includes('direct call')) return 'Direct Call / WhatsApp';
+      if (plat.includes('direct') || plat.includes('offline') || notes.includes('mode: offline') || (b.id && b.id.includes('real'))) return 'Offline / Direct';
+      if (b.status === 'Blocked' || plat.includes('blocked')) return 'Maintenance Block';
+      return b.platform || 'Other Channels';
+    }
+
+    // Helper: Calculate revenue for booking
+    function getBookingRevenue(b) {
+      let amt = 0;
+      if (b.payout) {
+        const num = parseFloat(String(b.payout).replace(/[^0-9.]/g, ''));
+        if (!isNaN(num)) amt = num;
+      }
+      if (amt === 0 && b.notes) {
+        const totMatch = b.notes.match(/Total:\s*₹?\s*([0-9,]+)/i);
+        if (totMatch) {
+          amt = parseFloat(totMatch[1].replace(/,/g, ''));
+        } else {
+          const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
+          if (m) {
+            const rate = parseFloat(m[1].replace(/,/g, ''));
+            if (!isNaN(rate)) amt = rate * (Number(b.nights) || 1);
+          }
+        }
+      }
+      return amt;
+    }
+
     function getPropertyTheme(propName) {
       if (propName === 'Blocked') {
         return { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' };
       }
-      const propObj = loadedProperties.find(p => p.name.toLowerCase() === (propName || '').toLowerCase());
+      const propObj = loadedProperties.find(p => matchesProperty(p.name, propName));
       if (propObj && propObj.color) {
         return {
           color: propObj.color,
@@ -3081,7 +3402,7 @@
         };
       }
       const list = getPropertiesList();
-      const idx = list.indexOf(propName);
+      const idx = list.findIndex(p => matchesProperty(p, propName));
       if (idx >= 0) {
         return PROPERTY_THEMES[idx % PROPERTY_THEMES.length];
       }
@@ -3406,6 +3727,7 @@
       renderPropertyPills();
       renderKpis();
       updateMonthLabel();
+      renderBookingModeChart();
 
       if (currentCalView === 'timeline') {
         document.getElementById('calendar-timeline-view').style.display = 'block';
@@ -3494,7 +3816,7 @@
       // Active bookings in this month
       const activeBookings = currentBookings.filter(b => {
         if (b.status === 'Cancelled') return false;
-        if (selectedPropFilter !== 'ALL' && b.property !== selectedPropFilter) return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
         return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
       });
 
@@ -3522,24 +3844,7 @@
       // Month Revenue Calculation
       let monthRev = 0;
       activeBookings.forEach(b => {
-        let amt = 0;
-        if (b.payout) {
-          const num = parseFloat(String(b.payout).replace(/[^0-9.]/g, ''));
-          if (!isNaN(num)) amt = num;
-        }
-        if (amt === 0 && b.notes) {
-          const totMatch = b.notes.match(/Total:\s*₹?\s*([0-9,]+)/i);
-          if (totMatch) {
-            amt = parseFloat(totMatch[1].replace(/,/g, ''));
-          } else {
-            const m = b.notes.match(/Booked Rate:\s*₹?\s*([0-9,]+)/i) || b.notes.match(/Rate:\s*₹?\s*([0-9,]+)/i);
-            if (m) {
-              const rate = parseFloat(m[1].replace(/,/g, ''));
-              if (!isNaN(rate)) amt = rate * (b.nights || 1);
-            }
-          }
-        }
-        monthRev += amt;
+        monthRev += getBookingRevenue(b);
       });
 
       const revEl = document.getElementById('kpi-month-revenue');
@@ -3593,6 +3898,190 @@
     }
 
     // =========================================================================
+    // BOOKINGS VS BOOKING MODE & MODE-WISE REVENUE CHART
+    // =========================================================================
+    let currentChartScope = 'month'; // 'month' | 'all'
+
+    window.switchChartScope = function(scope) {
+      currentChartScope = scope;
+      const btnM = document.getElementById('chart-scope-month');
+      const btnA = document.getElementById('chart-scope-all');
+      if (btnM && btnA) {
+        btnM.classList.toggle('active', scope === 'month');
+        btnA.classList.toggle('active', scope === 'all');
+      }
+      renderBookingModeChart();
+    };
+
+    function renderBookingModeChart() {
+      const container = document.getElementById('booking-mode-chart-bars');
+      const summaryEl = document.getElementById('booking-mode-chart-summary');
+      if (!container) return;
+
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const monthStartStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-01`;
+      const monthEndStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
+      // Filter bookings based on scope and selected property filter
+      const targetBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+        if (currentChartScope === 'month') {
+          return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
+        }
+        return true;
+      });
+
+      // Channels configuration
+      const channels = [
+        { name: 'Offline / Direct', icon: '🤝', color: '#0D9488', bg: '#ECFDF5' },
+        { name: 'Airbnb', icon: '🏠', color: '#FF385C', bg: '#FFF0F2' },
+        { name: 'Booking.com', icon: '🌐', color: '#003580', bg: '#EFF6FF' },
+        { name: 'Direct Call / WhatsApp', icon: '💬', color: '#16A34A', bg: '#F0FDF4' },
+        { name: 'Other Channels', icon: '✨', color: '#8B5CF6', bg: '#F5F3FF' }
+      ];
+
+      const stats = {};
+      channels.forEach(ch => {
+        stats[ch.name] = { count: 0, revenue: 0, nights: 0, config: ch };
+      });
+
+      let totalBookings = 0;
+      let totalRevenue = 0;
+      let totalNights = 0;
+
+      targetBookings.forEach(b => {
+        const mode = getBookingMode(b);
+        if (!stats[mode]) {
+          stats[mode] = { count: 0, revenue: 0, nights: 0, config: { name: mode, icon: '📌', color: '#64748B', bg: '#F1F5F9' } };
+        }
+        const rev = getBookingRevenue(b);
+        const nights = Number(b.nights) || calculateNightsBetween(b.checkInDate, b.checkOutDate) || 1;
+
+        stats[mode].count += 1;
+        stats[mode].revenue += rev;
+        stats[mode].nights += nights;
+
+        totalBookings += 1;
+        totalRevenue += rev;
+        totalNights += nights;
+      });
+
+      const counts = Object.values(stats).map(s => s.count);
+      const maxCount = Math.max(...counts, 1);
+
+      container.innerHTML = `
+        <div class="chart-flex-grid">
+          ${Object.values(stats).map(s => {
+            const count = s.count;
+            const rev = s.revenue;
+            const cfg = s.config;
+            const pct = Math.round((count / maxCount) * 100);
+            const share = totalBookings > 0 ? Math.round((count / totalBookings) * 100) : 0;
+            const barHeight = count > 0 ? Math.max(pct, 14) : 4;
+
+            return `
+              <div class="chart-bar-col"
+                   data-mode="${escapeHtml(cfg.name)}"
+                   data-count="${count}"
+                   data-rev="₹${rev.toLocaleString('en-IN')}"
+                   data-nights="${s.nights}"
+                   data-share="${share}%"
+                   onmouseenter="showChartTooltip(event, this)"
+                   onmousemove="moveChartTooltip(event)"
+                   onmouseleave="hideChartTooltip()"
+                   onclick="toggleChartTooltip(event, this)">
+                
+                <div class="chart-bar-top-val" style="color: ${count > 0 ? cfg.color : '#94A3B8'};">
+                  ${count}
+                </div>
+
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill" style="height: ${barHeight}%; background: ${count > 0 ? cfg.color : '#CBD5E1'};"></div>
+                </div>
+
+                <div class="chart-bar-label">
+                  <span class="chart-bar-icon">${cfg.icon}</span>
+                  <span class="chart-bar-name" title="${escapeHtml(cfg.name)}">${escapeHtml(cfg.name)}</span>
+                  <span class="chart-bar-rev-pill" style="color: ${rev > 0 ? '#065F46' : '#64748B'}; background: ${rev > 0 ? '#ECFDF5' : '#F1F5F9'};">
+                    ₹${rev.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      if (summaryEl) {
+        let topChannel = '—';
+        let maxB = 0;
+        Object.values(stats).forEach(s => {
+          if (s.count > maxB) {
+            maxB = s.count;
+            topChannel = `${s.config.icon} ${s.config.name} (${s.count} stays)`;
+          }
+        });
+
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+        const scopeTitle = currentChartScope === 'month' ? `${monthNames[currentCalMonth]} ${currentCalYear}` : 'All Time Portfolio';
+
+        summaryEl.innerHTML = `
+          <div><strong>📅 Scope:</strong> ${scopeTitle} (${totalBookings} stays)</div>
+          <div><strong>💰 Mode Revenue:</strong> <span style="color:#059669; font-weight:700;">₹${totalRevenue.toLocaleString('en-IN')}</span></div>
+          <div><strong>🏆 Top Booking Channel:</strong> ${topChannel}</div>
+          <div><strong>🌙 Total Nights:</strong> ${totalNights} nights</div>
+        `;
+      }
+    }
+
+    window.showChartTooltip = function(e, colEl) {
+      const tooltip = document.getElementById('chart-floating-tooltip');
+      if (!tooltip) return;
+      const mode = colEl.getAttribute('data-mode');
+      const count = colEl.getAttribute('data-count');
+      const rev = colEl.getAttribute('data-rev');
+      const nights = colEl.getAttribute('data-nights');
+      const share = colEl.getAttribute('data-share');
+
+      tooltip.innerHTML = `
+        <div style="font-weight: 700; font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+          <span>${mode}</span>
+          <span style="font-size: 10px; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px;">${share} of stays</span>
+        </div>
+        <div style="font-size: 11px; line-height: 1.6;">
+          <div>📅 <strong>Total Bookings:</strong> ${count} reservation${count == 1 ? '' : 's'} (${nights} nights)</div>
+          <div>💰 <strong>Mode Revenue:</strong> <span style="color: #4ADE80; font-weight: 700; font-size: 12px;">${rev}</span></div>
+        </div>
+      `;
+      tooltip.style.display = 'block';
+      moveChartTooltip(e);
+    };
+
+    window.moveChartTooltip = function(e) {
+      const tooltip = document.getElementById('chart-floating-tooltip');
+      const wrapper = document.getElementById('booking-mode-chart-wrapper');
+      if (!tooltip || !wrapper) return;
+      const rect = wrapper.getBoundingClientRect();
+      const x = Math.max(60, Math.min(e.clientX - rect.left, rect.width - 60));
+      const y = Math.max(10, e.clientY - rect.top);
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
+    };
+
+    window.hideChartTooltip = function() {
+      const tooltip = document.getElementById('chart-floating-tooltip');
+      if (tooltip) tooltip.style.display = 'none';
+    };
+
+    window.toggleChartTooltip = function(e, colEl) {
+      showChartTooltip(e, colEl);
+    };
+
+    // =========================================================================
     // 1. TIMELINE (CHANNEL MANAGER) VIEW RENDERER
     // =========================================================================
     function renderTimelineView() {
@@ -3604,6 +4093,8 @@
       const isCurrentMonth = (today.getFullYear() === currentCalYear && today.getMonth() === currentCalMonth);
       const todayDateNum = today.getDate();
 
+      const cellWidth = window.innerWidth <= 768 ? 46 : 52;
+      const halfCell = Math.round(cellWidth / 2);
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
       // 1. Render Sticky Sidebar
@@ -3647,6 +4138,7 @@
 
         const col = document.createElement('div');
         col.className = `timeline-date-col ${isWeekend ? 'is-weekend' : ''} ${isToday ? 'is-today' : ''}`;
+        col.style.minWidth = col.style.maxWidth = col.style.width = `${cellWidth}px`;
         col.innerHTML = `
           <span class="timeline-day-name">${dayNames[dayOfWeek]}</span>
           <span class="timeline-day-number">${d}</span>
@@ -3663,7 +4155,7 @@
         const theme = getPropertyTheme(prop);
         const track = document.createElement('div');
         track.className = 'timeline-row-track';
-        track.style.width = `${daysInMonth * 52}px`;
+        track.style.width = `${daysInMonth * cellWidth}px`;
 
         // Day cells in the track (clickable for adding bookings)
         for (let d = 1; d <= daysInMonth; d++) {
@@ -3675,6 +4167,7 @@
 
           const cell = document.createElement('div');
           cell.className = `timeline-day-cell ${isWeekend ? 'is-weekend' : ''} ${isToday ? 'is-today' : ''}`;
+          cell.style.minWidth = cell.style.maxWidth = cell.style.width = `${cellWidth}px`;
           cell.title = `Click to add booking for ${prop} on ${dateStr}`;
           cell.onclick = () => openAddBookingModal(prop, dateStr);
           track.appendChild(cell);
@@ -3682,7 +4175,7 @@
 
         // Floating Booking Ribbons on this track
         const propBookings = currentBookings.filter(b => {
-          if (b.property !== prop) return false;
+          if (!matchesProperty(b.property, prop)) return false;
           if (b.status === 'Cancelled') return false;
           return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
         });
@@ -3707,10 +4200,9 @@
           }
 
           // Geometry calculation:
-          // Check-in afternoon starts at halfway (24px into cell), checkout morning ends at halfway (24px)
-          const startPx = (startDay - 1) * 52 + (isFromPrev ? 0 : 24);
-          const endPx = (endDay - 1) * 52 + (isToNext ? 52 : 24);
-          let width = Math.max(endPx - startPx, 44);
+          const startPx = (startDay - 1) * cellWidth + (isFromPrev ? 0 : halfCell);
+          const endPx = (endDay - 1) * cellWidth + (isToNext ? cellWidth : halfCell);
+          let width = Math.max(endPx - startPx, cellWidth - 8);
 
           const isBlocked = booking.platform === 'Blocked' || booking.status === 'Blocked';
           const bTheme = isBlocked ? { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' } : theme;
@@ -3758,8 +4250,9 @@
     function autoScrollTimelineToToday() {
       const todayCell = document.querySelector('.timeline-date-col.is-today');
       const scrollArea = document.getElementById('timeline-scroll-area');
-      if (todayCell && scrollArea && todayCell.offsetLeft > 320) {
-        scrollArea.scrollLeft = todayCell.offsetLeft - 320;
+      const offset = window.innerWidth <= 768 ? 120 : 320;
+      if (todayCell && scrollArea && todayCell.offsetLeft > offset) {
+        scrollArea.scrollLeft = todayCell.offsetLeft - offset;
       }
     }
 
@@ -3812,7 +4305,7 @@
         // Find bookings active on this date
         const dayBookings = currentBookings.filter(b => {
           if (b.status === 'Cancelled') return false;
-          if (selectedPropFilter !== 'ALL' && b.property !== selectedPropFilter) return false;
+          if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
           return (b.checkInDate <= dateStr && b.checkOutDate >= dateStr);
         });
 
@@ -3857,9 +4350,9 @@
 
       const filtered = currentBookings.filter(b => {
         if (b.status === 'Cancelled' && statusFilter !== 'Cancelled') return false;
-        if (propFilter && b.property !== propFilter) return false;
+        if (propFilter && !matchesProperty(b.property, propFilter)) return false;
         if (statusFilter && b.status !== statusFilter) return false;
-        if (selectedPropFilter !== 'ALL' && !propFilter && b.property !== selectedPropFilter) return false;
+        if (selectedPropFilter !== 'ALL' && !propFilter && !matchesProperty(b.property, selectedPropFilter)) return false;
 
         if (q) {
           const matchName = (b.guestName || '').toLowerCase().includes(q);
@@ -5506,25 +5999,86 @@
       showToast("Bookings JSON backup downloaded!");
     }
 
-    function importBookingsJson(event) {
+    async function importBookingsJson(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = async function(e) {
         try {
-          const imported = JSON.parse(e.target.result);
-          if (Array.isArray(imported)) {
-            currentBookings = imported;
-            saveBookings();
-            renderBookingsPortal();
-            closeBackupModal();
-            showToast(`Restored ${imported.length} bookings successfully!`);
-          } else {
-            alert("Invalid backup file format. Expected a JSON array.");
+          const raw = JSON.parse(e.target.result);
+          let imported = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.bookings) ? raw.bookings : null);
+          if (!imported || imported.length === 0) {
+            alert("Invalid backup file format. Expected a JSON array of bookings.");
+            return;
           }
+
+          showToast("⏳ Restoring and syncing bookings to Cloudflare D1...");
+
+          // 1. Normalize properties, aliases and field defaults
+          const knownProps = getPropertiesList();
+          imported.forEach((b, i) => {
+            if (b.property) {
+              const pLower = b.property.trim().toLowerCase();
+              if (pLower === '1 bhk' && knownProps.includes('Ripple 1 BHK')) {
+                b.property = 'Ripple 1 BHK';
+              } else if ((pLower === '1 room / studio' || pLower === 'studio suite') && knownProps.includes('Studio')) {
+                b.property = 'Studio';
+              }
+            } else {
+              b.property = knownProps[0] || 'Ripple 1 BHK';
+            }
+            if (!b.id) b.id = `bk_import_${Date.now()}_${i}`;
+            if (!b.guestName) b.guestName = b.guest_name || 'Guest';
+            if (!b.checkInDate && b.check_in_date) b.checkInDate = b.check_in_date;
+            if (!b.checkOutDate && b.check_out_date) b.checkOutDate = b.check_out_date;
+            if (!b.reservationCode && b.reservation_code) b.reservationCode = b.reservation_code;
+            if (!b.guestsCount && b.guests_count) b.guestsCount = b.guests_count;
+            if (!b.nights && b.checkInDate && b.checkOutDate) {
+              b.nights = calculateNightsBetween(b.checkInDate, b.checkOutDate);
+            }
+          });
+
+          // 2. Automatically sync to Cloudflare D1
+          if (window.AirbnbAPI && typeof window.AirbnbAPI.batchImportBookings === 'function') {
+            try {
+              await window.AirbnbAPI.batchImportBookings(imported);
+            } catch(d1Err) {
+              console.warn("Backend D1 batch import notice:", d1Err);
+            }
+          }
+
+          // 3. Update local state
+          currentBookings = imported;
+          localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+          localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
+
+          // 4. Auto-detect month: if current calendar month has no bookings, jump to month with most imported bookings
+          const currentMonthKey = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}`;
+          const currentMonthHasBookings = imported.some(b => b.checkInDate && b.checkInDate.startsWith(currentMonthKey));
+          if (!currentMonthHasBookings && imported.length > 0) {
+            const monthCounts = {};
+            imported.forEach(b => {
+              if (b.checkInDate) {
+                const ym = b.checkInDate.slice(0, 7);
+                monthCounts[ym] = (monthCounts[ym] || 0) + 1;
+              }
+            });
+            const topMonth = Object.keys(monthCounts).sort((a,b) => monthCounts[b] - monthCounts[a])[0];
+            if (topMonth) {
+              const [y, m] = topMonth.split('-').map(Number);
+              currentCalYear = y;
+              currentCalMonth = m - 1;
+            }
+          }
+
+          await fetchProperties();
+          renderRoomsList();
+          renderBookingsPortal();
+          closeBackupModal();
+          showToast(`✅ Successfully restored & synced ${imported.length} bookings with calendar!`);
         } catch(err) {
-          alert("Error parsing JSON backup file.");
+          alert("Error parsing JSON backup file: " + err.message);
         }
       };
       reader.readAsText(file);
@@ -5568,15 +6122,6 @@
       link.click();
       link.remove();
       showToast("Bookings CSV spreadsheet downloaded!");
-    }
-
-    function reloadDemoBookings() {
-      if (!confirm("This will replace current bookings with the sample demo bookings for all 3 properties. Continue?")) return;
-      currentBookings = getDefaultSampleBookings();
-      saveBookings();
-      renderBookingsPortal();
-      closeBackupModal();
-      showToast("Sample demo bookings reloaded!");
     }
 
     function clearAllBookings() {

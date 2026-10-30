@@ -138,6 +138,13 @@
       }
     },
 
+    batchImportBookings: async function(bookings) {
+      return await this.request('/api/bookings/batch', {
+        method: 'POST',
+        body: JSON.stringify({ bookings })
+      });
+    },
+
     // --------------------------------------------------------------------------
     // Submissions & Check-ins (D1 Database + Cloudflare R2 Image Storage)
     // --------------------------------------------------------------------------
