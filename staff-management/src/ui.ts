@@ -1093,6 +1093,7 @@ export function getDashboardHtml(): string {
     const AUTH_PIN_KEY = "staff_auth_pin";
     const AUTH_ROLE_KEY = "staff_auth_role";
     const AUTH_MANAGER_KEY = "staff_manager_info";
+    let currentSessionPin = localStorage.getItem(AUTH_PIN_KEY) || "";
     let currentUserRole = "admin"; // 'admin' or 'manager'
     let currentManagerInfo = null; // { staff_id, name, property_id, property_name }
     let enteredPin = "";
@@ -1159,14 +1160,14 @@ export function getDashboardHtml(): string {
           if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
             select.value = currentVal;
           }
-          onLoginRoleChange();
+          onLoginRoleChange(false);
         }
       } catch (e) {
         // Fallback to default options in HTML
       }
     }
 
-    function onLoginRoleChange() {
+    function onLoginRoleChange(clearInput = true) {
       const select = document.getElementById("loginRoleSelect");
       const hint = document.getElementById("loginRoleHintText");
       if (!select || !hint) return;
@@ -1179,12 +1180,14 @@ export function getDashboardHtml(): string {
         hint.innerText = "Manager: enter your 4-digit PIN for roll call & attendance";
       }
 
-      enteredPin = "";
-      const input = document.getElementById("pinInputField");
-      if (input) input.value = "";
-      updatePinDots();
-      document.getElementById("pinError").innerText = "";
-      if (input) input.focus();
+      if (clearInput) {
+        enteredPin = "";
+        const input = document.getElementById("pinInputField");
+        if (input) input.value = "";
+        updatePinDots();
+        document.getElementById("pinError").innerText = "";
+        if (input) input.focus();
+      }
     }
 
     function showLockScreen() {
@@ -1194,7 +1197,6 @@ export function getDashboardHtml(): string {
       updatePinDots();
       document.getElementById("lockScreen").classList.remove("hidden");
       document.getElementById("lockScreen").classList.add("flex");
-      fetchLoginRoles();
       setTimeout(() => {
         const pinInp = document.getElementById("pinInputField");
         if (pinInp) pinInp.focus();
@@ -1203,6 +1205,7 @@ export function getDashboardHtml(): string {
     }
 
     function lockApp() {
+      currentSessionPin = "";
       localStorage.removeItem(AUTH_PIN_KEY);
       localStorage.removeItem(AUTH_ROLE_KEY);
       localStorage.removeItem(AUTH_MANAGER_KEY);
@@ -1338,12 +1341,15 @@ export function getDashboardHtml(): string {
       const role = opt ? (opt.dataset.role || select.value) : "admin";
       const staffId = opt ? opt.dataset.staffId : null;
 
-      if (!enteredPin || enteredPin.length < 4) {
+      const input = document.getElementById("pinInputField");
+      const cleanPin = (enteredPin || (input ? input.value : "")).replace(/\D/g, '').slice(0, 4);
+
+      if (!cleanPin || cleanPin.length < 4) {
         document.getElementById("pinError").innerText = "Please enter 4 digits.";
         return;
       }
 
-      verifyPin(enteredPin, false, role, staffId);
+      verifyPin(cleanPin, false, role, staffId);
     }
 
     async function verifyPin(pin, isAuto = false, role = null, staffId = null) {
@@ -1372,15 +1378,15 @@ export function getDashboardHtml(): string {
             property_name: data.property_name
           } : null;
 
-          if (document.getElementById("rememberMe").checked || isAuto) {
-            localStorage.setItem(AUTH_PIN_KEY, pin);
-            localStorage.setItem(AUTH_ROLE_KEY, currentUserRole);
-            if (currentManagerInfo) {
-              localStorage.setItem(AUTH_MANAGER_KEY, JSON.stringify(currentManagerInfo));
-            } else {
-              localStorage.removeItem(AUTH_MANAGER_KEY);
-            }
+          currentSessionPin = pin;
+          localStorage.setItem(AUTH_PIN_KEY, pin);
+          localStorage.setItem(AUTH_ROLE_KEY, currentUserRole);
+          if (currentManagerInfo) {
+            localStorage.setItem(AUTH_MANAGER_KEY, JSON.stringify(currentManagerInfo));
+          } else {
+            localStorage.removeItem(AUTH_MANAGER_KEY);
           }
+
           document.getElementById("lockScreen").classList.add("hidden");
           document.getElementById("lockScreen").classList.remove("flex");
           applyRolePermissions();
@@ -1412,7 +1418,7 @@ export function getDashboardHtml(): string {
     }
 
     function getAuthHeaders() {
-      const pin = localStorage.getItem(AUTH_PIN_KEY) || enteredPin || "4635";
+      const pin = currentSessionPin || localStorage.getItem(AUTH_PIN_KEY) || enteredPin || "4635";
       return {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + pin,

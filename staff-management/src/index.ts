@@ -154,55 +154,7 @@ export default {
 					return jsonResponse({ success: false, error: "Please enter your 4-digit PIN." }, 400);
 				}
 
-				// If Admin is selected
-				if (selectedRole === "admin") {
-					if (pin === expectedPin) {
-						return jsonResponse({
-							success: true,
-							role: "admin",
-							name: "Administrator"
-						});
-					} else {
-						return jsonResponse({ success: false, error: "Incorrect Admin PIN. Please try again." }, 401);
-					}
-				}
-
-				// If Manager is selected
-				if (selectedRole === "manager") {
-					let manager = null;
-					if (selectedStaffId && selectedStaffId !== "manager") {
-						manager = await env.DB.prepare(`
-							SELECT s.id, s.name, s.property_id, p.name AS property_name
-							FROM staff s
-							JOIN properties p ON s.property_id = p.id
-							WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ? AND s.id = ?
-						`).bind(pin, selectedStaffId).first<{ id: string; name: string; property_id: string; property_name: string }>();
-					}
-					
-					if (!manager) {
-						manager = await env.DB.prepare(`
-							SELECT s.id, s.name, s.property_id, p.name AS property_name
-							FROM staff s
-							JOIN properties p ON s.property_id = p.id
-							WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
-						`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
-					}
-
-					if (manager) {
-						return jsonResponse({
-							success: true,
-							role: "manager",
-							staff_id: manager.id,
-							name: manager.name,
-							property_id: manager.property_id,
-							property_name: manager.property_name
-						});
-					} else {
-						return jsonResponse({ success: false, error: "Incorrect Manager PIN. Please try again." }, 401);
-					}
-				}
-
-				// Fallback when no role specified in body
+				// Check 1: Is this the Master Admin PIN? (Always grants Admin access)
 				if (pin === expectedPin) {
 					return jsonResponse({
 						success: true,
@@ -211,25 +163,39 @@ export default {
 					});
 				}
 
-				const fallbackManager = await env.DB.prepare(`
-					SELECT s.id, s.name, s.property_id, p.name AS property_name
-					FROM staff s
-					JOIN properties p ON s.property_id = p.id
-					WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
-				`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
+				// Check 2: Is this a Manager PIN?
+				let manager = null;
+				if (selectedStaffId && selectedStaffId !== "manager" && selectedStaffId !== "admin") {
+					manager = await env.DB.prepare(`
+						SELECT s.id, s.name, s.property_id, p.name AS property_name
+						FROM staff s
+						JOIN properties p ON s.property_id = p.id
+						WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ? AND s.id = ?
+					`).bind(pin, selectedStaffId).first<{ id: string; name: string; property_id: string; property_name: string }>();
+				}
 
-				if (fallbackManager) {
+				if (!manager) {
+					manager = await env.DB.prepare(`
+						SELECT s.id, s.name, s.property_id, p.name AS property_name
+						FROM staff s
+						JOIN properties p ON s.property_id = p.id
+						WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
+					`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
+				}
+
+				if (manager) {
 					return jsonResponse({
 						success: true,
 						role: "manager",
-						staff_id: fallbackManager.id,
-						name: fallbackManager.name,
-						property_id: fallbackManager.property_id,
-						property_name: fallbackManager.property_name
+						staff_id: manager.id,
+						name: manager.name,
+						property_id: manager.property_id,
+						property_name: manager.property_name
 					});
 				}
 
-				return jsonResponse({ success: false, error: "Invalid PIN. Please try again." }, 401);
+				// Neither Admin nor Manager PIN
+				return jsonResponse({ success: false, error: "Incorrect PIN. Please check and try again." }, 401);
 			} catch (err: any) {
 				return jsonResponse({ success: false, error: err.message }, 400);
 			}
