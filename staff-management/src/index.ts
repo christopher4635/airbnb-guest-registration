@@ -311,6 +311,12 @@ export default {
 
 			// GET /api/properties
 			if (path === "/api/properties" && method === "GET") {
+				if (auth.role === "manager" && auth.manager?.property_id) {
+					const { results } = await env.DB.prepare(
+						"SELECT * FROM properties WHERE id = ?"
+					).bind(auth.manager.property_id).all<Property>();
+					return jsonResponse(results);
+				}
 				const { results } = await env.DB.prepare(
 					"SELECT * FROM properties ORDER BY name ASC"
 				).all<Property>();
@@ -336,7 +342,12 @@ export default {
 
 			// GET /api/staff
 			if (path === "/api/staff" && method === "GET") {
-				const propertyId = url.searchParams.get("property_id");
+				let propertyId = url.searchParams.get("property_id");
+				// Manager access is strictly locked to their assigned property only
+				if (auth.role === "manager" && auth.manager?.property_id) {
+					propertyId = auth.manager.property_id;
+				}
+
 				let query = `
 					SELECT s.*, p.name AS property_name, p.monthly_leave_allowance AS property_allowance,
 						(SELECT COUNT(*) FROM staff_documents d WHERE d.staff_id = s.id) AS document_count
@@ -455,18 +466,44 @@ export default {
 				if (!month) {
 					return jsonResponse({ error: "Missing month query param" }, 400);
 				}
-				const { results: records } = await env.DB.prepare(
-					"SELECT * FROM attendance WHERE date LIKE ? ORDER BY date ASC"
-				).bind(`${month}-%`).all<AttendanceRecord>();
 
-				// Calculate leaves taken STRICTLY BEFORE the start of this month
+				let records: AttendanceRecord[] = [];
+				let priorLeaves: { staff_id: string; count: number }[] = [];
 				const startOfMonthDate = `${month}-01`;
-				const { results: priorLeaves } = await env.DB.prepare(`
-					SELECT staff_id, COUNT(*) as count
-					FROM attendance
-					WHERE date < ? AND status = 'leave'
-					GROUP BY staff_id
-				`).bind(startOfMonthDate).all<{ staff_id: string; count: number }>();
+
+				if (auth.role === "manager" && auth.manager?.property_id) {
+					// Manager only gets attendance for staff at their assigned property
+					const resRec = await env.DB.prepare(`
+						SELECT a.*
+						FROM attendance a
+						JOIN staff s ON a.staff_id = s.id
+						WHERE a.date LIKE ? AND s.property_id = ? AND s.active = 1
+						ORDER BY a.date ASC
+					`).bind(`${month}-%`, auth.manager.property_id).all<AttendanceRecord>();
+					records = resRec.results;
+
+					const resPrior = await env.DB.prepare(`
+						SELECT a.staff_id, COUNT(*) as count
+						FROM attendance a
+						JOIN staff s ON a.staff_id = s.id
+						WHERE a.date < ? AND a.status = 'leave' AND s.property_id = ? AND s.active = 1
+						GROUP BY a.staff_id
+					`).bind(startOfMonthDate, auth.manager.property_id).all<{ staff_id: string; count: number }>();
+					priorLeaves = resPrior.results;
+				} else {
+					const resRec = await env.DB.prepare(
+						"SELECT * FROM attendance WHERE date LIKE ? ORDER BY date ASC"
+					).bind(`${month}-%`).all<AttendanceRecord>();
+					records = resRec.results;
+
+					const resPrior = await env.DB.prepare(`
+						SELECT staff_id, COUNT(*) as count
+						FROM attendance
+						WHERE date < ? AND status = 'leave'
+						GROUP BY staff_id
+					`).bind(startOfMonthDate).all<{ staff_id: string; count: number }>();
+					priorLeaves = resPrior.results;
+				}
 
 				const priorMap: Record<string, number> = {};
 				priorLeaves.forEach((c) => {
@@ -490,6 +527,16 @@ export default {
 				if (!body.staff_id || !body.date || !body.status) {
 					return jsonResponse({ error: "Missing required fields" }, 400);
 				}
+
+				if (auth.role === "manager" && auth.manager?.property_id) {
+					const staffCheck = await env.DB.prepare(
+						"SELECT property_id FROM staff WHERE id = ?"
+					).bind(body.staff_id).first<{ property_id: string }>();
+					if (!staffCheck || staffCheck.property_id !== auth.manager.property_id) {
+						return jsonResponse({ error: "Forbidden: You can only mark attendance for staff at your assigned property." }, 403);
+					}
+				}
+
 				const recordId = `${body.staff_id}_${body.date}`;
 				await env.DB.prepare(`
 					INSERT INTO attendance (id, staff_id, date, status, notes, updated_at)
@@ -518,6 +565,19 @@ export default {
 				if (!Array.isArray(body.staff_ids) || !body.date || !body.status) {
 					return jsonResponse({ error: "Invalid bulk parameters" }, 400);
 				}
+
+				if (auth.role === "manager" && auth.manager?.property_id) {
+					const placeholders = body.staff_ids.map(() => "?").join(",");
+					const { results: staffRows } = await env.DB.prepare(
+						`SELECT id, property_id FROM staff WHERE id IN (${placeholders})`
+					).bind(...body.staff_ids).all<{ id: string; property_id: string }>();
+
+					const unauthorized = staffRows.some(s => s.property_id !== auth.manager!.property_id);
+					if (unauthorized || staffRows.length !== body.staff_ids.length) {
+						return jsonResponse({ error: "Forbidden: You can only mark attendance for staff at your assigned property." }, 403);
+					}
+				}
+
 				const statements = body.staff_ids.map((staffId) => {
 					const recordId = `${staffId}_${body.date}`;
 					return env.DB.prepare(`
@@ -532,7 +592,7 @@ export default {
 				if (statements.length > 0) {
 					await env.DB.batch(statements);
 				}
-				return jsonResponse({ success: true, count: statements.length });
+				return jsonResponse({ success: true, count: body.staff_ids.length });
 			}
 
 			// -----------------------------------------------------------------

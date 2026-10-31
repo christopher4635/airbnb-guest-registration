@@ -1252,9 +1252,7 @@ export function getDashboardHtml(): string {
           switchView("monthly");
         }
 
-        if (currentManagerInfo.property_id && (activePropertyId === "all" || !activePropertyId)) {
-          activePropertyId = currentManagerInfo.property_id;
-        }
+        activePropertyId = currentManagerInfo.property_id || "all";
       } else {
         badge.innerHTML = \`
           <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
@@ -1270,6 +1268,16 @@ export function getDashboardHtml(): string {
         if (tabDirectory) tabDirectory.classList.remove("hidden");
       }
       refreshIcons();
+    }
+
+    function getVisibleStaffList() {
+      if (currentUserRole === "manager" && currentManagerInfo && currentManagerInfo.property_id) {
+        return staffList.filter(s => s.property_id === currentManagerInfo.property_id);
+      }
+      if (activePropertyId === 'all') {
+        return staffList;
+      }
+      return staffList.filter(s => s.property_id === activePropertyId);
     }
 
     function toggleManagerPinField() {
@@ -1595,6 +1603,26 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     function renderPropertyTabs() {
       const container = document.getElementById("propertyTabs");
+
+      if (currentUserRole === "manager" && currentManagerInfo) {
+        const assignedProp = properties.find(p => p.id === currentManagerInfo.property_id) || {
+          id: currentManagerInfo.property_id,
+          name: currentManagerInfo.property_name || "Assigned Property"
+        };
+        const count = staffList.filter(s => s.property_id === assignedProp.id).length;
+        container.innerHTML = \`
+          <div class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs flex items-center gap-2 shrink-0">
+            <i data-lucide="building" class="w-4 h-4"></i>
+            <span>\${escapeHtml(assignedProp.name)}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-800 text-white font-semibold">\${count} Staff</span>
+          </div>
+        \`;
+        activePropertyId = assignedProp.id;
+        updatePropertyAllowanceBanner();
+        refreshIcons();
+        return;
+      }
+
       let html = \`
         <button onclick="selectProperty('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${activePropertyId === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
           <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
@@ -1619,7 +1647,11 @@ export function getDashboardHtml(): string {
     }
 
     function selectProperty(id) {
-      activePropertyId = id;
+      if (currentUserRole === "manager" && currentManagerInfo) {
+        activePropertyId = currentManagerInfo.property_id;
+      } else {
+        activePropertyId = id;
+      }
       renderPropertyTabs();
       renderActiveView();
     }
@@ -1725,9 +1757,7 @@ export function getDashboardHtml(): string {
       const daysCount = getDaysInMonth(currentYear, currentMonth);
       const todayStr = formatIsoDate(new Date());
 
-      const filteredStaff = activePropertyId === 'all'
-        ? staffList
-        : staffList.filter(s => s.property_id === activePropertyId);
+      const filteredStaff = getVisibleStaffList();
 
       if (filteredStaff.length === 0) {
         thead.innerHTML = "";
@@ -1923,9 +1953,7 @@ export function getDashboardHtml(): string {
 
     async function markAllTodayPresent() {
       const todayStr = formatIsoDate(new Date());
-      const filteredStaff = activePropertyId === 'all'
-        ? staffList
-        : staffList.filter(s => s.property_id === activePropertyId);
+      const filteredStaff = getVisibleStaffList();
 
       if (filteredStaff.length === 0) return;
 
@@ -1976,9 +2004,7 @@ export function getDashboardHtml(): string {
       const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
       title.innerText = dailyDate.toLocaleDateString('en-US', options);
 
-      const filteredStaff = activePropertyId === 'all'
-        ? staffList
-        : staffList.filter(s => s.property_id === activePropertyId);
+      const filteredStaff = getVisibleStaffList();
 
       if (filteredStaff.length === 0) {
         container.innerHTML = \`<div class="col-span-full p-8 text-center text-slate-400">No staff found for this property.</div>\`;
@@ -2053,9 +2079,7 @@ export function getDashboardHtml(): string {
       const tbody = document.getElementById("payrollTableBody");
       const daysCount = getDaysInMonth(currentYear, currentMonth);
 
-      const filteredStaff = activePropertyId === 'all'
-        ? staffList
-        : staffList.filter(s => s.property_id === activePropertyId);
+      const filteredStaff = getVisibleStaffList();
 
       let totalBase = 0;
       let totalDeductions = 0;
@@ -2253,9 +2277,7 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     function renderDirectoryView() {
       const grid = document.getElementById("directoryStaffGrid");
-      const filteredStaff = activePropertyId === 'all'
-        ? staffList
-        : staffList.filter(s => s.property_id === activePropertyId);
+      const filteredStaff = getVisibleStaffList();
 
       if (filteredStaff.length === 0) {
         grid.innerHTML = \`<div class="col-span-full p-12 text-center text-slate-400">No staff members found for this property.</div>\`;
@@ -2838,9 +2860,7 @@ export function getDashboardHtml(): string {
 
     function exportPayrollCSV() {
       const daysCount = getDaysInMonth(currentYear, currentMonth);
-      const filteredStaff = activePropertyId === 'all'
-        ? staffList
-        : staffList.filter(s => s.property_id === activePropertyId);
+      const filteredStaff = getVisibleStaffList();
 
       let csv = "Staff Name,Property,Role,Phone,Base Salary,Total Days,Daily Rate,Present,Day Off,Leaves,Absent,Total Leave Balance,Unpaid Deduction,Gross Earned,Advance Deducted,Net Payout,Bank Name,Account Number,IFSC,UPI ID,Payment Status,Paid Amount,Payment Date,Payment Mode,Reference No\\n";
 
@@ -2885,9 +2905,7 @@ export function getDashboardHtml(): string {
 
     function exportAttendanceCSV() {
       const daysCount = getDaysInMonth(currentYear, currentMonth);
-      const filteredStaff = activePropertyId === 'all'
-        ? staffList
-        : staffList.filter(s => s.property_id === activePropertyId);
+      const filteredStaff = getVisibleStaffList();
 
       let csv = "Staff Name,Property,Role,";
       for (let day = 1; day <= daysCount; day++) {
