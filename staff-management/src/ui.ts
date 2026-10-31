@@ -144,58 +144,60 @@ export function getDashboardHtml(): string {
         </div>
       </div>
 
-      <!-- 2. PIN INPUT FIELD (Keyboard & Mobile Friendly) -->
-      <div class="w-full mb-2">
-        <label for="pinInputField" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5 text-left">
+      <!-- 2. PIN INPUT FIELD WITH SHOW/HIDE TOGGLE -->
+      <div class="w-full mb-2 text-left">
+        <label for="pinInputField" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
           Enter 4-Digit PIN
         </label>
-        <input
-          id="pinInputField"
-          type="password"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          maxlength="4"
-          placeholder="••••"
-          autocomplete="off"
-          oninput="handlePinDirectInput(this.value)"
-          onkeydown="handlePinInputKeydown(event)"
-          class="w-full text-center tracking-[0.8em] text-2xl font-bold py-2 px-4 rounded-xl border-2 border-indigo-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none text-slate-800 bg-indigo-50/20 transition shadow-inner"
-        />
+        <div class="relative w-full">
+          <input
+            id="pinInputField"
+            type="password"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="4"
+            placeholder="••••"
+            autocomplete="off"
+            oninput="handlePinInput(this)"
+            onkeydown="handlePinKeydown(event)"
+            class="w-full text-center tracking-[0.6em] text-2xl font-bold py-2.5 pl-10 pr-10 rounded-xl border-2 border-indigo-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none text-slate-900 bg-slate-50/50 transition shadow-inner font-mono"
+          />
+          <button
+            type="button"
+            onclick="toggleLoginPinEye()"
+            title="Show / Hide PIN"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-lg focus:outline-none transition cursor-pointer"
+          >
+            <i data-lucide="eye" id="loginPinEyeIcon" class="w-4 h-4"></i>
+          </button>
+        </div>
       </div>
 
-      <!-- PIN Dots Feedback -->
-      <div id="pinDots" class="flex gap-3 justify-center mb-1">
-        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
-        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
-      </div>
-      
       <!-- Error Message -->
-      <div id="pinError" class="text-xs text-rose-500 font-medium min-h-[1.25rem] mb-2"></div>
+      <div id="pinError" class="text-xs text-rose-500 font-medium min-h-[1.25rem] mb-2 text-center w-full"></div>
 
       <!-- 3. NUMERIC KEYPAD -->
-      <div class="grid grid-cols-3 gap-2.5 w-full max-w-[260px] mb-3">
-        <button type="button" onclick="handleKeypad('1')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">1</button>
-        <button type="button" onclick="handleKeypad('2')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">2</button>
-        <button type="button" onclick="handleKeypad('3')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">3</button>
-        <button type="button" onclick="handleKeypad('4')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">4</button>
-        <button type="button" onclick="handleKeypad('5')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">5</button>
-        <button type="button" onclick="handleKeypad('6')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">6</button>
-        <button type="button" onclick="handleKeypad('7')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">7</button>
-        <button type="button" onclick="handleKeypad('8')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">8</button>
-        <button type="button" onclick="handleKeypad('9')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">9</button>
-        <button type="button" onclick="handleKeypad('clear')" class="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-xs font-semibold text-slate-600 transition">CLEAR</button>
-        <button type="button" onclick="handleKeypad('0')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">0</button>
-        <button type="button" onclick="handleKeypad('back')" class="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center transition">
+      <div class="grid grid-cols-3 gap-2 w-full max-w-[260px] mb-3">
+        <button type="button" onclick="handleKeypad('1')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">1</button>
+        <button type="button" onclick="handleKeypad('2')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">2</button>
+        <button type="button" onclick="handleKeypad('3')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">3</button>
+        <button type="button" onclick="handleKeypad('4')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">4</button>
+        <button type="button" onclick="handleKeypad('5')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">5</button>
+        <button type="button" onclick="handleKeypad('6')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">6</button>
+        <button type="button" onclick="handleKeypad('7')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">7</button>
+        <button type="button" onclick="handleKeypad('8')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">8</button>
+        <button type="button" onclick="handleKeypad('9')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">9</button>
+        <button type="button" onclick="handleKeypad('clear')" class="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-xs font-semibold text-slate-600 transition cursor-pointer">CLEAR</button>
+        <button type="button" onclick="handleKeypad('0')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200 cursor-pointer">0</button>
+        <button type="button" onclick="handleKeypad('back')" class="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center transition cursor-pointer">
           <i data-lucide="delete" class="w-4 h-4"></i>
         </button>
       </div>
 
       <!-- 4. SIGN IN / UNLOCK BUTTON -->
-      <button type="button" id="btnPinSubmit" onclick="submitPinLogin()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2 mb-3">
-        <span>Sign In</span>
-        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      <button type="button" id="btnPinSubmit" onclick="submitPinLogin()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2 mb-3 cursor-pointer">
+        <span id="btnPinSubmitText">Sign In</span>
+        <i data-lucide="arrow-right" id="btnPinSubmitIcon" class="w-4 h-4"></i>
       </button>
 
       <div class="flex items-center gap-2">
@@ -1096,7 +1098,7 @@ export function getDashboardHtml(): string {
     let currentSessionPin = localStorage.getItem(AUTH_PIN_KEY) || "";
     let currentUserRole = "admin"; // 'admin' or 'manager'
     let currentManagerInfo = null; // { staff_id, name, property_id, property_name }
-    let enteredPin = "";
+    let isSubmittingLogin = false;
     let activePropertyId = "all"; // 'all' or property.id
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth(); // 0-indexed
@@ -1167,7 +1169,7 @@ export function getDashboardHtml(): string {
       }
     }
 
-    function onLoginRoleChange(clearInput = true) {
+    function onLoginRoleChange(clearInput = false) {
       const select = document.getElementById("loginRoleSelect");
       const hint = document.getElementById("loginRoleHintText");
       if (!select || !hint) return;
@@ -1180,27 +1182,36 @@ export function getDashboardHtml(): string {
         hint.innerText = "Manager: enter your 4-digit PIN for roll call & attendance";
       }
 
+      const err = document.getElementById("pinError");
+      if (err) err.innerText = "";
+
       if (clearInput) {
-        enteredPin = "";
         const input = document.getElementById("pinInputField");
-        if (input) input.value = "";
-        updatePinDots();
-        document.getElementById("pinError").innerText = "";
-        if (input) input.focus();
+        if (input) {
+          input.value = "";
+          input.focus();
+        }
       }
     }
 
     function showLockScreen() {
-      enteredPin = "";
+      const lock = document.getElementById("lockScreen");
+      if (lock) {
+        lock.style.display = "flex";
+        lock.classList.remove("hidden");
+        lock.classList.add("flex");
+      }
+      isSubmittingLogin = false;
       const input = document.getElementById("pinInputField");
-      if (input) input.value = "";
-      updatePinDots();
-      document.getElementById("lockScreen").classList.remove("hidden");
-      document.getElementById("lockScreen").classList.add("flex");
-      setTimeout(() => {
-        const pinInp = document.getElementById("pinInputField");
-        if (pinInp) pinInp.focus();
-      }, 100);
+      if (input) {
+        input.value = "";
+        input.type = "password";
+        setTimeout(() => input.focus(), 150);
+      }
+      const eyeIcon = document.getElementById("loginPinEyeIcon");
+      if (eyeIcon) eyeIcon.setAttribute("data-lucide", "eye");
+      const err = document.getElementById("pinError");
+      if (err) err.innerText = "";
       refreshIcons();
     }
 
@@ -1271,36 +1282,52 @@ export function getDashboardHtml(): string {
       }
     }
 
-    function handlePinDirectInput(val) {
-      const clean = val.replace(/\D/g, '').slice(0, 4);
-      enteredPin = clean;
+    function toggleLoginPinEye() {
       const input = document.getElementById("pinInputField");
-      if (input && input.value !== clean) input.value = clean;
-      updatePinDots();
+      const icon = document.getElementById("loginPinEyeIcon");
+      if (!input) return;
+      if (input.type === "password") {
+        input.type = "text";
+        if (icon) icon.setAttribute("data-lucide", "eye-off");
+      } else {
+        input.type = "password";
+        if (icon) icon.setAttribute("data-lucide", "eye");
+      }
+      refreshIcons();
+    }
+
+    function handlePinInput(el) {
+      const clean = (el.value || "").replace(/\D/g, '').slice(0, 4);
+      if (el.value !== clean) el.value = clean;
+      const err = document.getElementById("pinError");
+      if (err) err.innerText = "";
       if (clean.length === 4) {
         submitPinLogin();
       }
     }
 
-    function handlePinInputKeydown(e) {
+    function handlePinKeydown(e) {
       if (e.key === "Enter") {
+        e.preventDefault();
         submitPinLogin();
       }
     }
 
     function handleKeypad(val) {
-      if (val === 'clear') {
-        enteredPin = "";
-      } else if (val === 'back') {
-        enteredPin = enteredPin.slice(0, -1);
-      } else if (enteredPin.length < 4) {
-        enteredPin += val;
-      }
       const input = document.getElementById("pinInputField");
-      if (input) input.value = enteredPin;
-      updatePinDots();
-
-      if (enteredPin.length === 4) {
+      if (!input) return;
+      const err = document.getElementById("pinError");
+      if (err) err.innerText = "";
+      let current = (input.value || "").replace(/\D/g, '').slice(0, 4);
+      if (val === 'clear') {
+        current = "";
+      } else if (val === 'back') {
+        current = current.slice(0, -1);
+      } else if (current.length < 4) {
+        current += val;
+      }
+      input.value = current;
+      if (current.length === 4) {
         submitPinLogin();
       }
     }
@@ -1308,51 +1335,58 @@ export function getDashboardHtml(): string {
     window.addEventListener("keydown", (e) => {
       const lockScreen = document.getElementById("lockScreen");
       const pinInput = document.getElementById("pinInputField");
-      if (lockScreen && !lockScreen.classList.contains("hidden") && document.activeElement !== pinInput) {
-        if (e.key >= "0" && e.key <= "9") {
-          handleKeypad(e.key);
-        } else if (e.key === "Backspace") {
-          handleKeypad("back");
-        } else if (e.key === "Escape") {
-          handleKeypad("clear");
-        } else if (e.key === "Enter") {
-          submitPinLogin();
+      if (lockScreen && lockScreen.style.display !== "none" && !lockScreen.classList.contains("hidden")) {
+        if (document.activeElement !== pinInput) {
+          if (e.key >= "0" && e.key <= "9") {
+            handleKeypad(e.key);
+          } else if (e.key === "Backspace") {
+            handleKeypad("back");
+          } else if (e.key === "Escape") {
+            handleKeypad("clear");
+          } else if (e.key === "Enter") {
+            submitPinLogin();
+          }
         }
       }
     });
 
-    function updatePinDots() {
-      const dots = document.querySelectorAll("#pinDots .pin-dot");
-      dots.forEach((dot, idx) => {
-        if (idx < enteredPin.length) {
-          dot.classList.add("bg-indigo-600", "border-indigo-600", "scale-110");
-          dot.classList.remove("border-slate-300");
-        } else {
-          dot.classList.remove("bg-indigo-600", "border-indigo-600", "scale-110");
-          dot.classList.add("border-slate-300");
-        }
-      });
-      document.getElementById("pinError").innerText = "";
-    }
+    async function submitPinLogin() {
+      if (isSubmittingLogin) return;
 
-    function submitPinLogin() {
+      const input = document.getElementById("pinInputField");
+      const cleanPin = (input ? input.value : "").replace(/\D/g, '').slice(0, 4);
+
+      if (!cleanPin || cleanPin.length < 4) {
+        const err = document.getElementById("pinError");
+        if (err) err.innerText = "Please enter your 4-digit PIN.";
+        if (input) input.focus();
+        return;
+      }
+
       const select = document.getElementById("loginRoleSelect");
       const opt = select ? select.options[select.selectedIndex] : null;
       const role = opt ? (opt.dataset.role || select.value) : "admin";
       const staffId = opt ? opt.dataset.staffId : null;
 
-      const input = document.getElementById("pinInputField");
-      const cleanPin = (enteredPin || (input ? input.value : "")).replace(/\D/g, '').slice(0, 4);
-
-      if (!cleanPin || cleanPin.length < 4) {
-        document.getElementById("pinError").innerText = "Please enter 4 digits.";
-        return;
-      }
-
-      verifyPin(cleanPin, false, role, staffId);
+      await verifyPin(cleanPin, false, role, staffId);
     }
 
     async function verifyPin(pin, isAuto = false, role = null, staffId = null) {
+      if (isSubmittingLogin) return;
+      isSubmittingLogin = true;
+
+      const btn = document.getElementById("btnPinSubmit");
+      const btnText = document.getElementById("btnPinSubmitText");
+      const btnIcon = document.getElementById("btnPinSubmitIcon");
+      const errorDiv = document.getElementById("pinError");
+      if (errorDiv) errorDiv.innerText = "";
+
+      if (btn && !isAuto) {
+        btn.disabled = true;
+        if (btnText) btnText.innerText = "Signing in...";
+        if (btnIcon) btnIcon.classList.add("hidden");
+      }
+
       const select = document.getElementById("loginRoleSelect");
       const opt = select ? select.options[select.selectedIndex] : null;
       const currentSelectedRole = role || (opt ? (opt.dataset.role || select.value) : "admin");
@@ -1379,21 +1413,30 @@ export function getDashboardHtml(): string {
           } : null;
 
           currentSessionPin = pin;
-          localStorage.setItem(AUTH_PIN_KEY, pin);
-          localStorage.setItem(AUTH_ROLE_KEY, currentUserRole);
-          if (currentManagerInfo) {
-            localStorage.setItem(AUTH_MANAGER_KEY, JSON.stringify(currentManagerInfo));
-          } else {
-            localStorage.removeItem(AUTH_MANAGER_KEY);
+          const remember = document.getElementById("rememberMe");
+          if (!remember || remember.checked) {
+            localStorage.setItem(AUTH_PIN_KEY, pin);
+            localStorage.setItem(AUTH_ROLE_KEY, currentUserRole);
+            if (currentManagerInfo) {
+              localStorage.setItem(AUTH_MANAGER_KEY, JSON.stringify(currentManagerInfo));
+            } else {
+              localStorage.removeItem(AUTH_MANAGER_KEY);
+            }
           }
 
-          document.getElementById("lockScreen").classList.add("hidden");
-          document.getElementById("lockScreen").classList.remove("flex");
+          // Unconditionally hide lock screen
+          const lockScreen = document.getElementById("lockScreen");
+          if (lockScreen) {
+            lockScreen.style.display = "none";
+            lockScreen.classList.add("hidden");
+            lockScreen.classList.remove("flex");
+          }
+
           applyRolePermissions();
-          loadDashboardData();
+          await loadDashboardData();
           showToast("Signed in as " + (currentUserRole === "admin" ? "Administrator" : data.name + " (Manager)"));
         } else {
-          throw new Error(data.error || "Invalid PIN");
+          throw new Error(data.error || "Incorrect PIN. Please check and try again.");
         }
       } catch (err) {
         if (isAuto) {
@@ -1402,23 +1445,31 @@ export function getDashboardHtml(): string {
           return;
         }
         const card = document.getElementById("lockCard");
-        card.classList.add("shake");
-        document.getElementById("pinError").innerText = err.message || "Incorrect PIN. Please try again.";
-        setTimeout(() => {
-          card.classList.remove("shake");
-          enteredPin = "";
-          const input = document.getElementById("pinInputField");
-          if (input) {
-            input.value = "";
-            input.focus();
-          }
-          updatePinDots();
-        }, 600);
+        if (card) {
+          card.classList.add("shake");
+          setTimeout(() => card.classList.remove("shake"), 500);
+        }
+        if (errorDiv) {
+          errorDiv.innerText = err.message || "Incorrect PIN. Please check and try again.";
+        }
+        const input = document.getElementById("pinInputField");
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      } finally {
+        isSubmittingLogin = false;
+        if (btn && !isAuto) {
+          btn.disabled = false;
+          if (btnText) btnText.innerText = "Sign In";
+          if (btnIcon) btnIcon.classList.remove("hidden");
+        }
+        refreshIcons();
       }
     }
 
     function getAuthHeaders() {
-      const pin = currentSessionPin || localStorage.getItem(AUTH_PIN_KEY) || enteredPin || "4635";
+      const pin = currentSessionPin || localStorage.getItem(AUTH_PIN_KEY) || "4635";
       return {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + pin,
@@ -3481,6 +3532,7 @@ export function getDashboardHtml(): string {
         });
         const data = await res.json();
         if (data.success) {
+          currentSessionPin = newPin;
           localStorage.setItem(AUTH_PIN_KEY, newPin);
           closeAdminSecurityModal();
           showToast("Admin Master PIN changed successfully!");
