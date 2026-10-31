@@ -30,6 +30,8 @@ export interface Staff {
 	bank_ifsc?: string | null;
 	bank_upi_id?: string | null;
 	bank_qr_code?: string | null;
+	is_manager?: number;
+	manager_pin?: string | null;
 	created_at?: string;
 }
 

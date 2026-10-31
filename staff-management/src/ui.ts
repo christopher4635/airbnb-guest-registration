@@ -118,7 +118,7 @@ export function getDashboardHtml(): string {
         <i data-lucide="shield-check" class="w-8 h-8"></i>
       </div>
       <h2 class="text-2xl font-bold text-slate-900 tracking-tight">StaffSync Hub</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6">Enter your 4-digit PIN to access</p>
+      <p class="text-xs text-slate-500 mt-1 mb-6">Enter 4-digit Admin or Manager PIN to access</p>
 
       <!-- PIN Dots -->
       <div id="pinDots" class="flex gap-3 justify-center mb-6">
@@ -178,18 +178,22 @@ export function getDashboardHtml(): string {
             </div>
           </div>
 
-          <!-- Quick Top Actions -->
+          <!-- Quick Top Actions & Role Badge -->
           <div class="flex items-center gap-2 sm:gap-3">
-            <button onclick="openLeavePolicyModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+            <div id="userRoleBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+              <span>Admin Access</span>
+            </div>
+            <button id="btnLeaveRules" onclick="openLeavePolicyModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
               <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-600"></i>
               <span class="hidden md:inline">Leave Rules</span>
             </button>
-            <button onclick="openStaffModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
+            <button id="btnHeaderAddStaff" onclick="openStaffModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Add Staff</span>
             </button>
-            <button onclick="lockApp()" title="Lock App" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition">
-              <i data-lucide="lock" class="w-4 h-4"></i>
+            <button onclick="lockApp()" title="Lock / Switch User" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
             </button>
           </div>
 
@@ -571,6 +575,32 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
+        <!-- Manager Login Access Section -->
+        <div class="border-t border-slate-200/80 pt-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-slate-800">Manager Login Access</div>
+                <div class="text-[11px] text-slate-500">Allow this employee to log in and mark attendance</div>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="staffIsManager" class="sr-only peer" onchange="toggleManagerPinField()">
+              <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+            </label>
+          </div>
+          <div id="managerPinContainer" class="hidden mt-2.5 p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-2">
+            <div>
+              <label class="block text-[11px] font-bold text-indigo-950 mb-1">Manager Login PIN (4 Digits) *</label>
+              <input type="password" maxlength="4" pattern="[0-9]*" inputmode="numeric" id="staffManagerPin" placeholder="e.g. 1234" class="w-full text-center tracking-widest font-mono font-bold text-base px-3 py-2 rounded-xl border border-indigo-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-slate-800">
+              <p class="text-[10px] text-indigo-700 mt-1">This manager can enter this PIN on the lock screen to access Monthly Sheet & Daily Roll Call only.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="pt-3 flex items-center justify-between border-t border-slate-100">
           <button type="button" id="btnDeleteStaff" onclick="handleDeleteStaff()" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-700 px-3 py-2 rounded-xl hover:bg-rose-50 transition">
             Delete Staff
@@ -917,6 +947,10 @@ export function getDashboardHtml(): string {
   <script>
     // State
     const AUTH_PIN_KEY = "staff_auth_pin";
+    const AUTH_ROLE_KEY = "staff_auth_role";
+    const AUTH_MANAGER_KEY = "staff_manager_info";
+    let currentUserRole = "admin"; // 'admin' or 'manager'
+    let currentManagerInfo = null; // { staff_id, name, property_id, property_name }
     let enteredPin = "";
     let activePropertyId = "all"; // 'all' or property.id
     let currentYear = new Date().getFullYear();
@@ -927,7 +961,7 @@ export function getDashboardHtml(): string {
     let properties = [];
     let staffList = [];
     let attendanceMap = {}; // { [staff_id_YYYY-MM-DD]: "present" | "absent" | "day_off" | "leave" }
-    let cumulativeLeavesMap = {}; // { [staff_id]: number } total leaves taken up to this month
+    let priorLeavesMap = {}; // { [staff_id]: number } leaves taken before current month
     let advancesList = []; // Array of advance records for current month
     let paymentsList = []; // Array of salary payment records for current month
     let currentDocStaffId = null;
@@ -942,11 +976,17 @@ export function getDashboardHtml(): string {
     }
 
     // -------------------------------------------------------------------------
-    // PIN & AUTHENTICATION
+    // PIN & AUTHENTICATION (ADMIN & MANAGER)
     // -------------------------------------------------------------------------
     function initAuth() {
       const saved = localStorage.getItem(AUTH_PIN_KEY);
+      const savedRole = localStorage.getItem(AUTH_ROLE_KEY);
+      const savedManager = localStorage.getItem(AUTH_MANAGER_KEY);
       if (saved) {
+        if (savedRole) currentUserRole = savedRole;
+        if (savedManager) {
+          try { currentManagerInfo = JSON.parse(savedManager); } catch (e) {}
+        }
         verifyPin(saved, true);
       } else {
         showLockScreen();
@@ -963,7 +1003,65 @@ export function getDashboardHtml(): string {
 
     function lockApp() {
       localStorage.removeItem(AUTH_PIN_KEY);
+      localStorage.removeItem(AUTH_ROLE_KEY);
+      localStorage.removeItem(AUTH_MANAGER_KEY);
+      currentUserRole = "admin";
+      currentManagerInfo = null;
+      applyRolePermissions();
       showLockScreen();
+    }
+
+    function applyRolePermissions() {
+      const badge = document.getElementById("userRoleBadge");
+      const btnLeaveRules = document.getElementById("btnLeaveRules");
+      const btnAddStaff = document.getElementById("btnHeaderAddStaff");
+      const tabPayroll = document.getElementById("viewTabPayroll");
+      const tabDirectory = document.getElementById("viewTabDirectory");
+
+      if (currentUserRole === "manager" && currentManagerInfo) {
+        badge.innerHTML = \`
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Manager: \${escapeHtml(currentManagerInfo.name)} (\${escapeHtml(currentManagerInfo.property_name || 'Property')})</span>
+        \`;
+        badge.classList.remove("hidden");
+        badge.classList.add("inline-flex");
+
+        if (btnLeaveRules) btnLeaveRules.classList.add("hidden");
+        if (btnAddStaff) btnAddStaff.classList.add("hidden");
+        if (tabPayroll) tabPayroll.classList.add("hidden");
+        if (tabDirectory) tabDirectory.classList.add("hidden");
+
+        if (currentView === "payroll" || currentView === "directory") {
+          switchView("monthly");
+        }
+
+        if (currentManagerInfo.property_id && (activePropertyId === "all" || !activePropertyId)) {
+          activePropertyId = currentManagerInfo.property_id;
+        }
+      } else {
+        badge.innerHTML = \`
+          <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+          <span>Admin Access</span>
+        \`;
+        badge.classList.remove("hidden");
+        badge.classList.add("inline-flex");
+
+        if (btnLeaveRules) btnLeaveRules.classList.remove("hidden");
+        if (btnAddStaff) btnAddStaff.classList.remove("hidden");
+        if (tabPayroll) tabPayroll.classList.remove("hidden");
+        if (tabDirectory) tabDirectory.classList.remove("hidden");
+      }
+      refreshIcons();
+    }
+
+    function toggleManagerPinField() {
+      const isManager = document.getElementById("staffIsManager").checked;
+      const container = document.getElementById("managerPinContainer");
+      if (isManager) {
+        container.classList.remove("hidden");
+      } else {
+        container.classList.add("hidden");
+      }
     }
 
     function handleKeypad(val) {
@@ -1017,11 +1115,26 @@ export function getDashboardHtml(): string {
         });
         const data = await res.json();
         if (data.success) {
+          currentUserRole = data.role || "admin";
+          currentManagerInfo = data.role === "manager" ? {
+            staff_id: data.staff_id,
+            name: data.name,
+            property_id: data.property_id,
+            property_name: data.property_name
+          } : null;
+
           if (document.getElementById("rememberMe").checked || isAuto) {
             localStorage.setItem(AUTH_PIN_KEY, pin);
+            localStorage.setItem(AUTH_ROLE_KEY, currentUserRole);
+            if (currentManagerInfo) {
+              localStorage.setItem(AUTH_MANAGER_KEY, JSON.stringify(currentManagerInfo));
+            } else {
+              localStorage.removeItem(AUTH_MANAGER_KEY);
+            }
           }
           document.getElementById("lockScreen").classList.add("hidden");
           document.getElementById("lockScreen").classList.remove("flex");
+          applyRolePermissions();
           loadDashboardData();
         } else {
           throw new Error("Invalid PIN");
@@ -1056,13 +1169,15 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     async function loadDashboardData() {
       try {
-        await Promise.all([
+        const promises = [
           fetchProperties(),
           fetchStaff(),
-          fetchAttendance(),
-          fetchAdvances(),
-          fetchPayments()
-        ]);
+          fetchAttendance()
+        ];
+        if (currentUserRole === "admin") {
+          promises.push(fetchAdvances(), fetchPayments());
+        }
+        await Promise.all(promises);
         renderPropertyTabs();
         renderActiveView();
         refreshIcons();
@@ -1095,13 +1210,13 @@ export function getDashboardHtml(): string {
       const data = await res.json();
       attendanceMap = {};
       const records = Array.isArray(data) ? data : (data.records || []);
-      cumulativeLeavesMap = (!Array.isArray(data) && data.cumulative_taken) ? data.cumulative_taken : {};
+      priorLeavesMap = (!Array.isArray(data) && data.prior_taken) ? data.prior_taken : {};
       records.forEach(item => {
         attendanceMap[\`\${item.staff_id}_\${item.date}\`] = item.status;
       });
     }
 
-    // Carry-forward leave balance calculator
+    // Carry-forward leave balance calculator (updates dynamically on every leave mark)
     function calculateStaffLeaveDetails(staff, year, month) {
       const prop = properties.find(p => p.id === staff.property_id) || { monthly_leave_allowance: 2 };
       const monthlyAllowance = (staff.custom_leave_allowance !== null && staff.custom_leave_allowance !== undefined)
@@ -1122,8 +1237,20 @@ export function getDashboardHtml(): string {
 
       const openingBalance = parseFloat(staff.opening_leave_balance) || 0;
       const totalAccrued = openingBalance + (monthsElapsed * monthlyAllowance);
-      const totalTaken = cumulativeLeavesMap[staff.id] || 0;
-      const leaveBalance = totalAccrued - totalTaken; // Cumulative carried balance
+
+      // Count leaves taken in the current month directly from real-time attendanceMap
+      const daysCount = getDaysInMonth(year, month);
+      let currentMonthLeaves = 0;
+      for (let day = 1; day <= daysCount; day++) {
+        const dStr = \`\${year}-\${String(month + 1).padStart(2, "0")}-\${String(day).padStart(2, "0")}\`;
+        if (attendanceMap[\`\${staff.id}_\${dStr}\`] === "leave") {
+          currentMonthLeaves++;
+        }
+      }
+
+      const priorTaken = priorLeavesMap[staff.id] || 0;
+      const totalTaken = priorTaken + currentMonthLeaves;
+      const leaveBalance = totalAccrued - totalTaken; // Deducted dynamically!
 
       return {
         monthlyAllowance,
@@ -1261,7 +1388,11 @@ export function getDashboardHtml(): string {
 
     async function onMonthUpdated() {
       document.getElementById("currentMonthLabel").innerText = \`\${MONTH_NAMES[currentMonth]} \${currentYear}\`;
-      await Promise.all([fetchAttendance(), fetchAdvances(), fetchPayments()]);
+      const promises = [fetchAttendance()];
+      if (currentUserRole === "admin") {
+        promises.push(fetchAdvances(), fetchPayments());
+      }
+      await Promise.all(promises);
       renderActiveView();
     }
 
@@ -1381,9 +1512,10 @@ export function getDashboardHtml(): string {
             <td class="sticky-col py-2.5 px-3.5 bg-white group-hover:bg-slate-50 border-r border-slate-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <div class="font-bold text-slate-800 hover:text-indigo-600 cursor-pointer flex items-center gap-1.5" onclick="openStaffModal('\${staff.id}')">
+                  <div class="font-bold text-slate-800 hover:text-indigo-600 cursor-pointer flex items-center gap-1.5" onclick="handleStaffNameClick('\${staff.id}')">
                     <span>\${escapeHtml(staff.name)}</span>
-                    <i data-lucide="edit-2" class="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition"></i>
+                    \${staff.is_manager ? '<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-violet-100 text-violet-800">Manager</span>' : ''}
+                    \${currentUserRole === 'admin' ? '<i data-lucide="edit-2" class="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition"></i>' : ''}
                   </div>
                   <div class="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
                     <span class="text-indigo-600 font-semibold">\${escapeHtml(prop.name)}</span>
@@ -1509,8 +1641,16 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     // VIEW 2: DAILY ROLL CALL
     // -------------------------------------------------------------------------
-    function changeDailyDate(delta) {
+    async function changeDailyDate(delta) {
+      const prevM = dailyDate.getMonth();
+      const prevY = dailyDate.getFullYear();
       dailyDate.setDate(dailyDate.getDate() + delta);
+      if (dailyDate.getMonth() !== prevM || dailyDate.getFullYear() !== prevY) {
+        currentMonth = dailyDate.getMonth();
+        currentYear = dailyDate.getFullYear();
+        document.getElementById("currentMonthLabel").innerText = \`\${MONTH_NAMES[currentMonth]} \${currentYear}\`;
+        await fetchAttendance();
+      }
       renderDailyView();
     }
 
@@ -1535,15 +1675,29 @@ export function getDashboardHtml(): string {
       filteredStaff.forEach(staff => {
         const prop = properties.find(p => p.id === staff.property_id) || { name: staff.property_name || '' };
         const status = attendanceMap[\`\${staff.id}_\${dateStr}\`] || "present";
+        
+        // Dynamic live leave balance calculation
+        const leaveDetails = calculateStaffLeaveDetails(staff, dailyDate.getFullYear(), dailyDate.getMonth());
+        const bal = leaveDetails.leaveBalance;
+        let balClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+        if (bal < 0) balClass = "bg-rose-50 text-rose-700 border-rose-200";
+        else if (bal === 0) balClass = "bg-amber-50 text-amber-700 border-amber-200";
 
         html += \`
           <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
             <div class="flex items-center justify-between">
               <div>
-                <h4 class="font-bold text-slate-900 text-sm">\${escapeHtml(staff.name)}</h4>
-                <div class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="font-bold text-slate-900 text-sm">\${escapeHtml(staff.name)}</h4>
+                  \${staff.is_manager ? '<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-violet-100 text-violet-800">Manager</span>' : ''}
+                </div>
+                <div class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
                   <span class="text-indigo-600 font-semibold">\${escapeHtml(prop.name)}</span>
                   \${staff.role ? \`<span>•</span><span>\${escapeHtml(staff.role)}</span>\` : ''}
+                  <span>•</span>
+                  <span class="px-1.5 py-0.2 rounded-md font-bold text-[10px] border \${balClass}" title="Total Carried Leave Balance: Accrued \${leaveDetails.totalAccrued} - Taken \${leaveDetails.totalTaken}">
+                    \${bal > 0 ? '+' : ''}\${bal.toFixed(1)} Bal
+                  </span>
                 </div>
               </div>
               <span class="text-[11px] font-bold px-2 py-0.5 rounded-full uppercase \${status === 'present' ? 'bg-emerald-100 text-emerald-800' : status === 'absent' ? 'bg-rose-100 text-rose-800' : status === 'day_off' ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'}">
@@ -1573,6 +1727,10 @@ export function getDashboardHtml(): string {
           </div>
         \`;
       });
+
+      container.innerHTML = html;
+      refreshIcons();
+    }
 
       container.innerHTML = html;
       refreshIcons();
@@ -1807,7 +1965,10 @@ export function getDashboardHtml(): string {
               <!-- Header -->
               <div class="flex items-start justify-between">
                 <div>
-                  <h4 class="font-bold text-slate-900 text-base">\${escapeHtml(staff.name)}</h4>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-slate-900 text-base">\${escapeHtml(staff.name)}</h4>
+                    \${staff.is_manager ? \`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200"><i data-lucide="shield-check" class="w-3 h-3 text-violet-600"></i> Manager (PIN: \${escapeHtml(staff.manager_pin || 'Set')})</span>\` : ''}
+                  </div>
                   <div class="text-xs text-indigo-600 font-semibold mt-0.5">\${escapeHtml(prop.name)}</div>
                   \${staff.role ? \`<div class="text-[11px] text-slate-400 font-medium">\${escapeHtml(staff.role)}</div>\` : ''}
                 </div>
@@ -2466,7 +2627,19 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     // MODAL: ADD / EDIT STAFF
     // -------------------------------------------------------------------------
+    function handleStaffNameClick(staffId) {
+      if (currentUserRole === "admin") {
+        openStaffModal(staffId);
+      } else {
+        showToast("Logged in as Manager: only Admin can edit staff profiles");
+      }
+    }
+
     function openStaffModal(staffId = null) {
+      if (currentUserRole !== "admin") {
+        showToast("Access restricted: Staff profiles are managed by Administrator");
+        return;
+      }
       const modal = document.getElementById("staffModal");
       const title = document.getElementById("staffModalTitle");
       const btnDelete = document.getElementById("btnDeleteStaff");
@@ -2498,6 +2671,11 @@ export function getDashboardHtml(): string {
         document.getElementById("staffBankIfsc").value = staff.bank_ifsc || "";
         document.getElementById("staffBankUpi").value = staff.bank_upi_id || "";
         document.getElementById("staffBankQrCode").value = staff.bank_qr_code || "";
+
+        // Manager Access
+        document.getElementById("staffIsManager").checked = staff.is_manager === 1;
+        document.getElementById("staffManagerPin").value = staff.manager_pin || "";
+        toggleManagerPinField();
 
         const qrImg = document.getElementById("qrPreviewImg");
         const qrIcon = document.getElementById("qrPlaceholderIcon");
@@ -2535,6 +2713,11 @@ export function getDashboardHtml(): string {
         document.getElementById("staffBankIfsc").value = "";
         document.getElementById("staffBankUpi").value = "";
         document.getElementById("staffBankQrCode").value = "";
+
+        // Manager Access
+        document.getElementById("staffIsManager").checked = false;
+        document.getElementById("staffManagerPin").value = "";
+        toggleManagerPinField();
 
         const qrImg = document.getElementById("qrPreviewImg");
         const qrIcon = document.getElementById("qrPlaceholderIcon");
@@ -2582,6 +2765,14 @@ export function getDashboardHtml(): string {
       const bank_upi_id = document.getElementById("staffBankUpi").value.trim() || null;
       const bank_qr_code = document.getElementById("staffBankQrCode").value || null;
 
+      // Manager Access
+      const is_manager = document.getElementById("staffIsManager").checked ? 1 : 0;
+      const manager_pin = document.getElementById("staffManagerPin").value.trim() || null;
+      if (is_manager && (!manager_pin || manager_pin.length !== 4)) {
+        showToast("Please enter a 4-digit PIN for manager access");
+        return;
+      }
+
       const payload = {
         property_id,
         name,
@@ -2597,7 +2788,9 @@ export function getDashboardHtml(): string {
         bank_account_number,
         bank_ifsc,
         bank_upi_id,
-        bank_qr_code
+        bank_qr_code,
+        is_manager,
+        manager_pin
       };
       const url = id ? \`/api/staff/\${id}\` : "/api/staff";
       const method = id ? "PUT" : "POST";

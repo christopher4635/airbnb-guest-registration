@@ -13,21 +13,56 @@ function jsonResponse(data: any, status = 200): Response {
 	});
 }
 
-function checkAuth(request: Request, env: Env): boolean {
+interface AuthContext {
+	authorized: boolean;
+	role?: "admin" | "manager";
+	manager?: {
+		id: string;
+		name: string;
+		property_id: string;
+		property_name?: string;
+	};
+}
+
+async function getAuthContext(request: Request, env: Env): Promise<AuthContext> {
 	const expectedPin = env.AUTH_PIN || "4635";
+	let token = "";
 	const authHeader = request.headers.get("Authorization");
 	if (authHeader) {
-		const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-		if (token === expectedPin) return true;
+		token = authHeader.replace(/^Bearer\s+/i, "").trim();
 	}
-	const customHeader = request.headers.get("X-PIN");
-	if (customHeader && customHeader.trim() === expectedPin) return true;
+	if (!token) {
+		const customHeader = request.headers.get("X-PIN");
+		if (customHeader) token = customHeader.trim();
+	}
+	if (!token) {
+		const url = new URL(request.url);
+		const queryPin = url.searchParams.get("pin");
+		if (queryPin) token = queryPin.trim();
+	}
 
-	const url = new URL(request.url);
-	const queryPin = url.searchParams.get("pin");
-	if (queryPin && queryPin.trim() === expectedPin) return true;
+	if (!token) return { authorized: false };
 
-	return false;
+	if (token === expectedPin) {
+		return { authorized: true, role: "admin" };
+	}
+
+	try {
+		const manager = await env.DB.prepare(`
+			SELECT s.id, s.name, s.property_id, p.name AS property_name
+			FROM staff s
+			JOIN properties p ON s.property_id = p.id
+			WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
+		`).bind(token).first<{ id: string; name: string; property_id: string; property_name: string }>();
+
+		if (manager) {
+			return { authorized: true, role: "manager", manager };
+		}
+	} catch (err) {
+		console.error("Auth context lookup error:", err);
+	}
+
+	return { authorized: false };
 }
 
 export default {
@@ -57,20 +92,61 @@ export default {
 		if (path === "/api/auth/verify" && method === "POST") {
 			try {
 				const body = (await request.json()) as { pin?: string };
+				const pin = body?.pin?.trim();
 				const expectedPin = env.AUTH_PIN || "4635";
-				if (body?.pin === expectedPin) {
-					return jsonResponse({ success: true });
+
+				if (pin === expectedPin) {
+					return jsonResponse({
+						success: true,
+						role: "admin",
+						name: "Administrator"
+					});
 				}
+
+				if (pin) {
+					const manager = await env.DB.prepare(`
+						SELECT s.id, s.name, s.property_id, p.name AS property_name
+						FROM staff s
+						JOIN properties p ON s.property_id = p.id
+						WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
+					`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
+
+					if (manager) {
+						return jsonResponse({
+							success: true,
+							role: "manager",
+							staff_id: manager.id,
+							name: manager.name,
+							property_id: manager.property_id,
+							property_name: manager.property_name
+						});
+					}
+				}
+
 				return jsonResponse({ success: false, error: "Invalid PIN" }, 401);
 			} catch (err: any) {
 				return jsonResponse({ success: false, error: err.message }, 400);
 			}
 		}
 
-		// 3. API Auth Guard
+		// 3. API Auth Guard & Role Permissions
+		let auth: AuthContext = { authorized: false };
 		if (path.startsWith("/api/")) {
-			if (!checkAuth(request, env)) {
-				return jsonResponse({ error: "Unauthorized. Enter PIN 4635." }, 401);
+			auth = await getAuthContext(request, env);
+			if (!auth.authorized) {
+				return jsonResponse({ error: "Unauthorized. Enter valid PIN." }, 401);
+			}
+
+			// Manager Restrictions: can ONLY view properties/staff and view/mark attendance!
+			if (auth.role === "manager") {
+				const isAllowedForManager =
+					(path === "/api/properties" && method === "GET") ||
+					(path === "/api/staff" && method === "GET") ||
+					path.startsWith("/api/attendance"); // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
+
+				if (!isAllowedForManager) {
+					return jsonResponse({ error: "Forbidden. Managers only have access to Attendance Sheet and Daily Roll Call." }, 403);
+				}
 			}
 		}
 
@@ -110,14 +186,31 @@ export default {
 					JOIN properties p ON s.property_id = p.id
 					WHERE s.active = 1
 				`;
+				let results: Staff[] = [];
 				if (propertyId && propertyId !== "all") {
 					query += " AND s.property_id = ?";
-					const { results } = await env.DB.prepare(query + " ORDER BY s.name ASC")
+					const res = await env.DB.prepare(query + " ORDER BY s.name ASC")
 						.bind(propertyId)
 						.all<Staff>();
-					return jsonResponse(results);
+					results = res.results;
+				} else {
+					const res = await env.DB.prepare(query + " ORDER BY s.name ASC").all<Staff>();
+					results = res.results;
 				}
-				const { results } = await env.DB.prepare(query + " ORDER BY s.name ASC").all<Staff>();
+
+				if (auth.role === "manager") {
+					results.forEach((s: any) => {
+						delete s.salary;
+						delete s.bank_account_name;
+						delete s.bank_name;
+						delete s.bank_account_number;
+						delete s.bank_ifsc;
+						delete s.bank_upi_id;
+						delete s.bank_qr_code;
+						delete s.manager_pin;
+					});
+				}
+
 				return jsonResponse(results);
 			}
 
@@ -129,9 +222,10 @@ export default {
 					INSERT INTO staff (
 						id, property_id, name, role, phone, address, salary, active,
 						custom_leave_allowance, joining_date, opening_leave_balance,
-						bank_account_name, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_qr_code
+						bank_account_name, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_qr_code,
+						is_manager, manager_pin
 					)
-					VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+					VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 				`).bind(
 					id,
 					body.property_id,
@@ -148,7 +242,9 @@ export default {
 					body.bank_account_number || null,
 					body.bank_ifsc || null,
 					body.bank_upi_id || null,
-					body.bank_qr_code || null
+					body.bank_qr_code || null,
+					body.is_manager ? 1 : 0,
+					body.manager_pin || null
 				).run();
 				return jsonResponse({ success: true, id });
 			}
@@ -162,7 +258,8 @@ export default {
 					SET property_id = ?, name = ?, role = ?, phone = ?, address = ?, salary = ?,
 					    custom_leave_allowance = ?, joining_date = ?, opening_leave_balance = ?,
 					    bank_account_name = ?, bank_name = ?, bank_account_number = ?, bank_ifsc = ?,
-					    bank_upi_id = ?, bank_qr_code = ?
+					    bank_upi_id = ?, bank_qr_code = ?,
+					    is_manager = ?, manager_pin = ?
 					WHERE id = ?
 				`).bind(
 					body.property_id,
@@ -180,6 +277,8 @@ export default {
 					body.bank_ifsc || null,
 					body.bank_upi_id || null,
 					body.bank_qr_code !== undefined ? body.bank_qr_code : null,
+					body.is_manager ? 1 : 0,
+					body.manager_pin || null,
 					id
 				).run();
 				return jsonResponse({ success: true });
@@ -202,23 +301,23 @@ export default {
 					"SELECT * FROM attendance WHERE date LIKE ? ORDER BY date ASC"
 				).bind(`${month}-%`).all<AttendanceRecord>();
 
-				// Calculate cumulative leaves and absences taken up to the end of this month
-				const endOfMonthDate = `${month}-31`;
-				const { results: cumulative } = await env.DB.prepare(`
+				// Calculate leaves taken STRICTLY BEFORE the start of this month
+				const startOfMonthDate = `${month}-01`;
+				const { results: priorLeaves } = await env.DB.prepare(`
 					SELECT staff_id, COUNT(*) as count
 					FROM attendance
-					WHERE date <= ? AND status IN ('leave', 'absent')
+					WHERE date < ? AND status = 'leave'
 					GROUP BY staff_id
-				`).bind(endOfMonthDate).all<{ staff_id: string; count: number }>();
+				`).bind(startOfMonthDate).all<{ staff_id: string; count: number }>();
 
-				const cumulativeMap: Record<string, number> = {};
-				cumulative.forEach((c) => {
-					cumulativeMap[c.staff_id] = c.count;
+				const priorMap: Record<string, number> = {};
+				priorLeaves.forEach((c) => {
+					priorMap[c.staff_id] = c.count;
 				});
 
 				return jsonResponse({
 					records,
-					cumulative_taken: cumulativeMap,
+					prior_taken: priorMap,
 				});
 			}
 
