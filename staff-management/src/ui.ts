@@ -113,41 +113,92 @@ export function getDashboardHtml(): string {
   <!-- PIN LOCK SCREEN OVERLAY                                                    -->
   <!-- ========================================================================= -->
   <div id="lockScreen" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 transition-opacity duration-300">
-    <div id="lockCard" class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center flex flex-col items-center">
-      <div class="w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-4 shadow-sm">
-        <i data-lucide="shield-check" class="w-8 h-8"></i>
+    <div id="lockCard" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center flex flex-col items-center">
+      
+      <!-- Hub Badge -->
+      <div class="w-14 h-14 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 mb-3 shadow-sm">
+        <i data-lucide="shield-check" class="w-7 h-7"></i>
       </div>
       <h2 class="text-2xl font-bold text-slate-900 tracking-tight">StaffSync Hub</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6">Enter 4-digit Admin or Manager PIN to access</p>
+      <p class="text-xs text-slate-500 mt-1 mb-5">Select user & enter 4-digit PIN</p>
 
-      <!-- PIN Dots -->
-      <div id="pinDots" class="flex gap-3 justify-center mb-6">
-        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
-        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
-        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
-        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
+      <!-- 1. USER SELECT DROPDOWN -->
+      <div class="w-full text-left mb-4">
+        <label for="loginRoleSelect" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+          Select User
+        </label>
+        <div class="relative">
+          <select id="loginRoleSelect" onchange="onLoginRoleChange()" class="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs appearance-none cursor-pointer transition">
+            <option value="admin" data-role="admin" data-pin="4635">Admin: enters 4635</option>
+            <option value="manager" data-role="manager" data-pin="1234">Manager: enters 1234</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500">
+            <i data-lucide="chevron-down" class="w-4 h-4"></i>
+          </div>
+        </div>
+        
+        <!-- Helpful Hint -->
+        <div id="loginRoleHint" class="text-[11px] text-indigo-600 font-medium mt-1.5 flex items-center gap-1.5">
+          <i data-lucide="key-round" class="w-3.5 h-3.5 shrink-0"></i>
+          <span id="loginRoleHintText">Admin logs in with PIN 4635 (Full Access)</span>
+        </div>
       </div>
-      <div id="pinError" class="text-xs text-rose-500 font-medium h-4 mb-2"></div>
 
-      <!-- Keypad -->
-      <div class="grid grid-cols-3 gap-3 w-full max-w-[260px] mb-4">
-        <button onclick="handleKeypad('1')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">1</button>
-        <button onclick="handleKeypad('2')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">2</button>
-        <button onclick="handleKeypad('3')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">3</button>
-        <button onclick="handleKeypad('4')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">4</button>
-        <button onclick="handleKeypad('5')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">5</button>
-        <button onclick="handleKeypad('6')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">6</button>
-        <button onclick="handleKeypad('7')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">7</button>
-        <button onclick="handleKeypad('8')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">8</button>
-        <button onclick="handleKeypad('9')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">9</button>
-        <button onclick="handleKeypad('clear')" class="h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-xs font-semibold text-slate-600 transition">CLEAR</button>
-        <button onclick="handleKeypad('0')" class="h-14 rounded-2xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-xl font-bold text-slate-800 transition shadow-sm border border-slate-200/80">0</button>
-        <button onclick="handleKeypad('back')" class="h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center transition">
-          <i data-lucide="delete" class="w-5 h-5"></i>
+      <!-- 2. PIN INPUT FIELD (Keyboard & Mobile Friendly) -->
+      <div class="w-full mb-2">
+        <label for="pinInputField" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5 text-left">
+          Enter 4-Digit PIN
+        </label>
+        <input
+          id="pinInputField"
+          type="password"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="4"
+          placeholder="••••"
+          autocomplete="off"
+          oninput="handlePinDirectInput(this.value)"
+          onkeydown="handlePinInputKeydown(event)"
+          class="w-full text-center tracking-[0.8em] text-2xl font-bold py-2 px-4 rounded-xl border-2 border-indigo-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none text-slate-800 bg-indigo-50/20 transition shadow-inner"
+        />
+      </div>
+
+      <!-- PIN Dots Feedback -->
+      <div id="pinDots" class="flex gap-3 justify-center mb-1">
+        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
+        <div class="pin-dot w-3 h-3 rounded-full border-2 border-slate-300 transition-all duration-200"></div>
+      </div>
+      
+      <!-- Error Message -->
+      <div id="pinError" class="text-xs text-rose-500 font-medium min-h-[1.25rem] mb-2"></div>
+
+      <!-- 3. NUMERIC KEYPAD -->
+      <div class="grid grid-cols-3 gap-2.5 w-full max-w-[260px] mb-3">
+        <button type="button" onclick="handleKeypad('1')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">1</button>
+        <button type="button" onclick="handleKeypad('2')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">2</button>
+        <button type="button" onclick="handleKeypad('3')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">3</button>
+        <button type="button" onclick="handleKeypad('4')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">4</button>
+        <button type="button" onclick="handleKeypad('5')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">5</button>
+        <button type="button" onclick="handleKeypad('6')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">6</button>
+        <button type="button" onclick="handleKeypad('7')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">7</button>
+        <button type="button" onclick="handleKeypad('8')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">8</button>
+        <button type="button" onclick="handleKeypad('9')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">9</button>
+        <button type="button" onclick="handleKeypad('clear')" class="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-xs font-semibold text-slate-600 transition">CLEAR</button>
+        <button type="button" onclick="handleKeypad('0')" class="h-11 rounded-xl bg-slate-50 hover:bg-indigo-50 active:scale-95 text-lg font-bold text-slate-800 transition shadow-xs border border-slate-200">0</button>
+        <button type="button" onclick="handleKeypad('back')" class="h-11 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center transition">
+          <i data-lucide="delete" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <div class="flex items-center gap-2 mt-2">
+      <!-- 4. SIGN IN / UNLOCK BUTTON -->
+      <button type="button" id="btnPinSubmit" onclick="submitPinLogin()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2 mb-3">
+        <span>Sign In</span>
+        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      </button>
+
+      <div class="flex items-center gap-2">
         <input type="checkbox" id="rememberMe" checked class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
         <label for="rememberMe" class="text-xs text-slate-500 select-none cursor-pointer">Stay signed in on this device</label>
       </div>
@@ -192,8 +243,9 @@ export function getDashboardHtml(): string {
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Add Staff</span>
             </button>
-            <button onclick="lockApp()" title="Lock / Switch User" class="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition">
-              <i data-lucide="log-out" class="w-4 h-4"></i>
+            <button onclick="lockApp()" title="Lock / Switch User" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-600 border border-slate-200 transition">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+              <span class="hidden sm:inline">Switch User</span>
             </button>
           </div>
 
@@ -976,9 +1028,10 @@ export function getDashboardHtml(): string {
     }
 
     // -------------------------------------------------------------------------
-    // PIN & AUTHENTICATION (ADMIN & MANAGER)
+    // PIN & AUTHENTICATION (ADMIN & MANAGER WITH DROPDOWN SELECTOR)
     // -------------------------------------------------------------------------
-    function initAuth() {
+    async function initAuth() {
+      await fetchLoginRoles();
       const saved = localStorage.getItem(AUTH_PIN_KEY);
       const savedRole = localStorage.getItem(AUTH_ROLE_KEY);
       const savedManager = localStorage.getItem(AUTH_MANAGER_KEY);
@@ -987,17 +1040,75 @@ export function getDashboardHtml(): string {
         if (savedManager) {
           try { currentManagerInfo = JSON.parse(savedManager); } catch (e) {}
         }
-        verifyPin(saved, true);
+        verifyPin(saved, true, currentUserRole, currentManagerInfo ? currentManagerInfo.staff_id : null);
       } else {
         showLockScreen();
       }
     }
 
+    async function fetchLoginRoles() {
+      try {
+        const res = await fetch("/api/auth/roles");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && Array.isArray(data.roles)) {
+          const select = document.getElementById("loginRoleSelect");
+          if (!select) return;
+          const currentVal = select.value;
+          select.innerHTML = "";
+          data.roles.forEach(r => {
+            const opt = document.createElement("option");
+            opt.value = r.staff_id || r.role;
+            opt.dataset.role = r.role;
+            if (r.staff_id) opt.dataset.staffId = r.staff_id;
+            opt.dataset.pin = r.pin_hint || (r.role === "admin" ? "4635" : "1234");
+            opt.textContent = r.name + ": enters " + opt.dataset.pin;
+            select.appendChild(opt);
+          });
+          if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+            select.value = currentVal;
+          }
+          onLoginRoleChange();
+        }
+      } catch (e) {
+        // Fallback to default options in HTML
+      }
+    }
+
+    function onLoginRoleChange() {
+      const select = document.getElementById("loginRoleSelect");
+      const hint = document.getElementById("loginRoleHintText");
+      if (!select || !hint) return;
+      const opt = select.options[select.selectedIndex];
+      const role = opt ? (opt.dataset.role || select.value) : "admin";
+      const pinHint = opt ? (opt.dataset.pin || (role === "admin" ? "4635" : "1234")) : "4635";
+
+      if (role === "admin") {
+        hint.innerText = "Admin enters PIN " + pinHint + " (Full Access)";
+      } else {
+        hint.innerText = "Manager enters PIN " + pinHint + " (Roll Call & Monthly View)";
+      }
+
+      enteredPin = "";
+      const input = document.getElementById("pinInputField");
+      if (input) input.value = "";
+      updatePinDots();
+      document.getElementById("pinError").innerText = "";
+      if (input) input.focus();
+    }
+
     function showLockScreen() {
       enteredPin = "";
+      const input = document.getElementById("pinInputField");
+      if (input) input.value = "";
       updatePinDots();
       document.getElementById("lockScreen").classList.remove("hidden");
       document.getElementById("lockScreen").classList.add("flex");
+      fetchLoginRoles();
+      setTimeout(() => {
+        const pinInp = document.getElementById("pinInputField");
+        if (pinInp) pinInp.focus();
+      }, 100);
       refreshIcons();
     }
 
@@ -1064,6 +1175,23 @@ export function getDashboardHtml(): string {
       }
     }
 
+    function handlePinDirectInput(val) {
+      const clean = val.replace(/\D/g, '').slice(0, 4);
+      enteredPin = clean;
+      const input = document.getElementById("pinInputField");
+      if (input && input.value !== clean) input.value = clean;
+      updatePinDots();
+      if (clean.length === 4) {
+        submitPinLogin();
+      }
+    }
+
+    function handlePinInputKeydown(e) {
+      if (e.key === "Enter") {
+        submitPinLogin();
+      }
+    }
+
     function handleKeypad(val) {
       if (val === 'clear') {
         enteredPin = "";
@@ -1072,22 +1200,27 @@ export function getDashboardHtml(): string {
       } else if (enteredPin.length < 4) {
         enteredPin += val;
       }
+      const input = document.getElementById("pinInputField");
+      if (input) input.value = enteredPin;
       updatePinDots();
 
       if (enteredPin.length === 4) {
-        verifyPin(enteredPin);
+        submitPinLogin();
       }
     }
 
     window.addEventListener("keydown", (e) => {
       const lockScreen = document.getElementById("lockScreen");
-      if (lockScreen && !lockScreen.classList.contains("hidden")) {
+      const pinInput = document.getElementById("pinInputField");
+      if (lockScreen && !lockScreen.classList.contains("hidden") && document.activeElement !== pinInput) {
         if (e.key >= "0" && e.key <= "9") {
           handleKeypad(e.key);
         } else if (e.key === "Backspace") {
           handleKeypad("back");
         } else if (e.key === "Escape") {
           handleKeypad("clear");
+        } else if (e.key === "Enter") {
+          submitPinLogin();
         }
       }
     });
@@ -1106,12 +1239,35 @@ export function getDashboardHtml(): string {
       document.getElementById("pinError").innerText = "";
     }
 
-    async function verifyPin(pin, isAuto = false) {
+    function submitPinLogin() {
+      const select = document.getElementById("loginRoleSelect");
+      const opt = select ? select.options[select.selectedIndex] : null;
+      const role = opt ? (opt.dataset.role || select.value) : "admin";
+      const staffId = opt ? opt.dataset.staffId : null;
+
+      if (!enteredPin || enteredPin.length < 4) {
+        document.getElementById("pinError").innerText = "Please enter 4 digits.";
+        return;
+      }
+
+      verifyPin(enteredPin, false, role, staffId);
+    }
+
+    async function verifyPin(pin, isAuto = false, role = null, staffId = null) {
+      const select = document.getElementById("loginRoleSelect");
+      const opt = select ? select.options[select.selectedIndex] : null;
+      const currentSelectedRole = role || (opt ? (opt.dataset.role || select.value) : "admin");
+      const currentStaffId = staffId || (opt ? opt.dataset.staffId : null);
+
       try {
         const res = await fetch("/api/auth/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pin })
+          body: JSON.stringify({
+            pin,
+            role: currentSelectedRole,
+            staff_id: currentStaffId
+          })
         });
         const data = await res.json();
         if (data.success) {
@@ -1136,8 +1292,9 @@ export function getDashboardHtml(): string {
           document.getElementById("lockScreen").classList.remove("flex");
           applyRolePermissions();
           loadDashboardData();
+          showToast("Signed in as " + (currentUserRole === "admin" ? "Administrator" : data.name + " (Manager)"));
         } else {
-          throw new Error("Invalid PIN");
+          throw new Error(data.error || "Invalid PIN");
         }
       } catch (err) {
         if (isAuto) {
@@ -1147,12 +1304,17 @@ export function getDashboardHtml(): string {
         }
         const card = document.getElementById("lockCard");
         card.classList.add("shake");
-        document.getElementById("pinError").innerText = "Incorrect PIN. Please try again.";
+        document.getElementById("pinError").innerText = err.message || "Incorrect PIN. Please try again.";
         setTimeout(() => {
           card.classList.remove("shake");
           enteredPin = "";
+          const input = document.getElementById("pinInputField");
+          if (input) {
+            input.value = "";
+            input.focus();
+          }
           updatePinDots();
-        }, 500);
+        }, 600);
       }
     }
 
@@ -1160,7 +1322,9 @@ export function getDashboardHtml(): string {
       const pin = localStorage.getItem(AUTH_PIN_KEY) || enteredPin || "4635";
       return {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + pin
+        "Authorization": "Bearer " + pin,
+        "X-PIN": pin,
+        "X-Auth-PIN": pin
       };
     }
 

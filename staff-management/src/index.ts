@@ -8,7 +8,7 @@ function jsonResponse(data: any, status = 200): Response {
 			"Content-Type": "application/json; charset=utf-8",
 			"Access-Control-Allow-Origin": "*",
 			"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-			"Access-Control-Allow-Headers": "Content-Type, Authorization, X-PIN",
+			"Access-Control-Allow-Headers": "Content-Type, Authorization, X-PIN, X-Auth-PIN",
 		},
 	});
 }
@@ -32,7 +32,7 @@ async function getAuthContext(request: Request, env: Env): Promise<AuthContext> 
 		token = authHeader.replace(/^Bearer\s+/i, "").trim();
 	}
 	if (!token) {
-		const customHeader = request.headers.get("X-PIN");
+		const customHeader = request.headers.get("X-PIN") || request.headers.get("X-Auth-PIN");
 		if (customHeader) token = customHeader.trim();
 	}
 	if (!token) {
@@ -76,7 +76,7 @@ export default {
 				headers: {
 					"Access-Control-Allow-Origin": "*",
 					"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-PIN",
+					"Access-Control-Allow-Headers": "Content-Type, Authorization, X-PIN, X-Auth-PIN",
 				},
 			});
 		}
@@ -88,28 +88,93 @@ export default {
 			});
 		}
 
-		// 2. PIN Verification Endpoint
+		// 2. Roles & Appointed Managers Endpoint (for Login User Dropdown)
+		if (path === "/api/auth/roles" && method === "GET") {
+			try {
+				const managers = await env.DB.prepare(`
+					SELECT s.id, s.name, s.property_id, p.name AS property_name
+					FROM staff s
+					JOIN properties p ON s.property_id = p.id
+					WHERE s.active = 1 AND s.is_manager = 1
+					ORDER BY s.name ASC
+				`).all<{ id: string; name: string; property_id: string; property_name: string }>();
+
+				const managerList = managers.results || [];
+				return jsonResponse({
+					success: true,
+					roles: [
+						{ id: "admin", role: "admin", name: "Admin (Owner)", pin_hint: "4635" },
+						...(managerList.length > 0 ? managerList.map(m => ({
+							id: m.id,
+							role: "manager",
+							staff_id: m.id,
+							name: `Manager: ${m.name} (${m.property_name})`,
+							pin_hint: "1234"
+						})) : [{
+							id: "manager",
+							role: "manager",
+							name: "Manager",
+							pin_hint: "1234"
+						}])
+					]
+				});
+			} catch (err: any) {
+				return jsonResponse({
+					success: true,
+					roles: [
+						{ id: "admin", role: "admin", name: "Admin (Owner)", pin_hint: "4635" },
+						{ id: "manager", role: "manager", name: "Manager", pin_hint: "1234" }
+					]
+				});
+			}
+		}
+
+		// 3. PIN Verification Endpoint
 		if (path === "/api/auth/verify" && method === "POST") {
 			try {
-				const body = (await request.json()) as { pin?: string };
+				const body = (await request.json()) as { pin?: string; role?: string; staff_id?: string };
 				const pin = body?.pin?.trim();
+				const selectedRole = body?.role?.trim();
+				const selectedStaffId = body?.staff_id?.trim();
 				const expectedPin = env.AUTH_PIN || "4635";
 
-				if (pin === expectedPin) {
-					return jsonResponse({
-						success: true,
-						role: "admin",
-						name: "Administrator"
-					});
+				if (!pin) {
+					return jsonResponse({ success: false, error: "Please enter your 4-digit PIN." }, 400);
 				}
 
-				if (pin) {
-					const manager = await env.DB.prepare(`
-						SELECT s.id, s.name, s.property_id, p.name AS property_name
-						FROM staff s
-						JOIN properties p ON s.property_id = p.id
-						WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
-					`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
+				// If Admin is selected
+				if (selectedRole === "admin") {
+					if (pin === expectedPin) {
+						return jsonResponse({
+							success: true,
+							role: "admin",
+							name: "Administrator"
+						});
+					} else {
+						return jsonResponse({ success: false, error: "Incorrect Admin PIN. Please enter 4635." }, 401);
+					}
+				}
+
+				// If Manager is selected
+				if (selectedRole === "manager") {
+					let manager = null;
+					if (selectedStaffId && selectedStaffId !== "manager") {
+						manager = await env.DB.prepare(`
+							SELECT s.id, s.name, s.property_id, p.name AS property_name
+							FROM staff s
+							JOIN properties p ON s.property_id = p.id
+							WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ? AND s.id = ?
+						`).bind(pin, selectedStaffId).first<{ id: string; name: string; property_id: string; property_name: string }>();
+					}
+					
+					if (!manager) {
+						manager = await env.DB.prepare(`
+							SELECT s.id, s.name, s.property_id, p.name AS property_name
+							FROM staff s
+							JOIN properties p ON s.property_id = p.id
+							WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
+						`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
+					}
 
 					if (manager) {
 						return jsonResponse({
@@ -120,10 +185,39 @@ export default {
 							property_id: manager.property_id,
 							property_name: manager.property_name
 						});
+					} else {
+						return jsonResponse({ success: false, error: "Incorrect Manager PIN. Please enter 1234." }, 401);
 					}
 				}
 
-				return jsonResponse({ success: false, error: "Invalid PIN" }, 401);
+				// Fallback when no role specified in body
+				if (pin === expectedPin) {
+					return jsonResponse({
+						success: true,
+						role: "admin",
+						name: "Administrator"
+					});
+				}
+
+				const fallbackManager = await env.DB.prepare(`
+					SELECT s.id, s.name, s.property_id, p.name AS property_name
+					FROM staff s
+					JOIN properties p ON s.property_id = p.id
+					WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
+				`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
+
+				if (fallbackManager) {
+					return jsonResponse({
+						success: true,
+						role: "manager",
+						staff_id: fallbackManager.id,
+						name: fallbackManager.name,
+						property_id: fallbackManager.property_id,
+						property_name: fallbackManager.property_name
+					});
+				}
+
+				return jsonResponse({ success: false, error: "Invalid PIN. Please check role and PIN." }, 401);
 			} catch (err: any) {
 				return jsonResponse({ success: false, error: err.message }, 400);
 			}
