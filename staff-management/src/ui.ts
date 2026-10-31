@@ -1297,7 +1297,7 @@ export function getDashboardHtml(): string {
     }
 
     function handlePinInput(el) {
-      const clean = (el.value || "").replace(/\D/g, '').slice(0, 4);
+      const clean = (el.value || "").replace(/\\D/g, '').slice(0, 4);
       if (el.value !== clean) el.value = clean;
       const err = document.getElementById("pinError");
       if (err) err.innerText = "";
@@ -1318,7 +1318,7 @@ export function getDashboardHtml(): string {
       if (!input) return;
       const err = document.getElementById("pinError");
       if (err) err.innerText = "";
-      let current = (input.value || "").replace(/\D/g, '').slice(0, 4);
+      let current = (input.value || "").replace(/\\D/g, '').slice(0, 4);
       if (val === 'clear') {
         current = "";
       } else if (val === 'back') {
@@ -1354,7 +1354,7 @@ export function getDashboardHtml(): string {
       if (isSubmittingLogin) return;
 
       const input = document.getElementById("pinInputField");
-      const cleanPin = (input ? input.value : "").replace(/\D/g, '').slice(0, 4);
+      const cleanPin = (input ? input.value : "").replace(/\\D/g, '').slice(0, 4);
 
       if (!cleanPin || cleanPin.length < 4) {
         const err = document.getElementById("pinError");
@@ -2041,10 +2041,6 @@ export function getDashboardHtml(): string {
           </div>
         \`;
       });
-
-      container.innerHTML = html;
-      refreshIcons();
-    }
 
       container.innerHTML = html;
       refreshIcons();
@@ -3566,11 +3562,11 @@ export function getDashboardHtml(): string {
             '<div class="flex items-center gap-2 shrink-0">' +
               '<div class="relative w-28">' +
                 '<input type="password" id="mgrPin_' + m.id + '" maxlength="4" pattern="[0-9]*" inputmode="numeric" value="' + escapeHtml(m.manager_pin || "") + '" class="w-full text-center font-mono font-bold text-sm py-1.5 px-2 pr-7 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">' +
-                '<button type="button" onclick="togglePinVisibility(\'mgrPin_' + m.id + '\', this)" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">' +
+                '<button type="button" onclick="togglePinVisibility(&apos;mgrPin_' + m.id + '&apos;, this)" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">' +
                   '<i data-lucide="eye" class="w-3.5 h-3.5"></i>' +
                 '</button>' +
               '</div>' +
-              '<button type="button" onclick="saveSecurityManagerPin(\'' + m.id + '\')" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-xs">' +
+              '<button type="button" onclick="saveSecurityManagerPin(&apos;' + m.id + '&apos;)" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-xs">' +
                 'Save' +
               '</button>' +
             '</div>' +
