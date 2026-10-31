@@ -24,8 +24,22 @@ interface AuthContext {
 	};
 }
 
+async function getAdminPin(env: Env): Promise<string> {
+	try {
+		const row = await env.DB.prepare(
+			"SELECT value FROM app_settings WHERE key = 'admin_pin'"
+		).first<{ value: string }>();
+		if (row && row.value && row.value.trim().length === 4) {
+			return row.value.trim();
+		}
+	} catch (err) {
+		// app_settings table might not exist yet
+	}
+	return env.AUTH_PIN || "4635";
+}
+
 async function getAuthContext(request: Request, env: Env): Promise<AuthContext> {
-	const expectedPin = env.AUTH_PIN || "4635";
+	const expectedPin = await getAdminPin(env);
 	let token = "";
 	const authHeader = request.headers.get("Authorization");
 	if (authHeader) {
@@ -88,7 +102,7 @@ export default {
 			});
 		}
 
-		// 2. Roles & Appointed Managers Endpoint (for Login User Dropdown)
+		// 2. Roles & Appointed Managers Endpoint (for Login User Dropdown - NO SECRETS EXPOSED!)
 		if (path === "/api/auth/roles" && method === "GET") {
 			try {
 				const managers = await env.DB.prepare(`
@@ -103,18 +117,16 @@ export default {
 				return jsonResponse({
 					success: true,
 					roles: [
-						{ id: "admin", role: "admin", name: "Admin (Owner)", pin_hint: "4635" },
+						{ id: "admin", role: "admin", name: "Admin (Owner / Full Access)" },
 						...(managerList.length > 0 ? managerList.map(m => ({
 							id: m.id,
 							role: "manager",
 							staff_id: m.id,
-							name: `Manager: ${m.name} (${m.property_name})`,
-							pin_hint: "1234"
+							name: `Manager: ${m.name} (${m.property_name})`
 						})) : [{
 							id: "manager",
 							role: "manager",
-							name: "Manager",
-							pin_hint: "1234"
+							name: "Manager (Roll Call & Attendance)"
 						}])
 					]
 				});
@@ -122,8 +134,8 @@ export default {
 				return jsonResponse({
 					success: true,
 					roles: [
-						{ id: "admin", role: "admin", name: "Admin (Owner)", pin_hint: "4635" },
-						{ id: "manager", role: "manager", name: "Manager", pin_hint: "1234" }
+						{ id: "admin", role: "admin", name: "Admin (Owner / Full Access)" },
+						{ id: "manager", role: "manager", name: "Manager (Roll Call & Attendance)" }
 					]
 				});
 			}
@@ -136,7 +148,7 @@ export default {
 				const pin = body?.pin?.trim();
 				const selectedRole = body?.role?.trim();
 				const selectedStaffId = body?.staff_id?.trim();
-				const expectedPin = env.AUTH_PIN || "4635";
+				const expectedPin = await getAdminPin(env);
 
 				if (!pin) {
 					return jsonResponse({ success: false, error: "Please enter your 4-digit PIN." }, 400);
@@ -151,7 +163,7 @@ export default {
 							name: "Administrator"
 						});
 					} else {
-						return jsonResponse({ success: false, error: "Incorrect Admin PIN. Please enter 4635." }, 401);
+						return jsonResponse({ success: false, error: "Incorrect Admin PIN. Please try again." }, 401);
 					}
 				}
 
@@ -186,7 +198,7 @@ export default {
 							property_name: manager.property_name
 						});
 					} else {
-						return jsonResponse({ success: false, error: "Incorrect Manager PIN. Please enter 1234." }, 401);
+						return jsonResponse({ success: false, error: "Incorrect Manager PIN. Please try again." }, 401);
 					}
 				}
 
@@ -217,7 +229,7 @@ export default {
 					});
 				}
 
-				return jsonResponse({ success: false, error: "Invalid PIN. Please check role and PIN." }, 401);
+				return jsonResponse({ success: false, error: "Invalid PIN. Please try again." }, 401);
 			} catch (err: any) {
 				return jsonResponse({ success: false, error: err.message }, 400);
 			}
@@ -245,6 +257,87 @@ export default {
 		}
 
 		try {
+			// POST /api/admin/change-pin (Admin changes their own 4-digit Master PIN)
+			if (path === "/api/admin/change-pin" && method === "POST") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only." }, 403);
+				}
+				try {
+					const currentAdminPin = await getAdminPin(env);
+					const body = (await request.json()) as { current_pin?: string; new_pin?: string };
+					const currentPin = body?.current_pin?.trim();
+					const newPin = body?.new_pin?.trim();
+
+					if (!currentPin || currentPin !== currentAdminPin) {
+						return jsonResponse({ success: false, error: "Current Admin PIN is incorrect." }, 400);
+					}
+
+					if (!newPin || !/^\d{4}$/.test(newPin)) {
+						return jsonResponse({ success: false, error: "New PIN must be exactly 4 numeric digits." }, 400);
+					}
+
+					await env.DB.prepare(`
+						INSERT INTO app_settings (key, value, updated_at)
+						VALUES ('admin_pin', ?, CURRENT_TIMESTAMP)
+						ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+					`).bind(newPin).run();
+
+					return jsonResponse({ success: true, message: "Admin PIN changed successfully." });
+				} catch (err: any) {
+					return jsonResponse({ success: false, error: err.message }, 500);
+				}
+			}
+
+			// POST /api/admin/change-manager-pin (Admin updates a manager's PIN)
+			if (path === "/api/admin/change-manager-pin" && method === "POST") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only." }, 403);
+				}
+				try {
+					const body = (await request.json()) as { staff_id?: string; new_pin?: string };
+					const staffId = body?.staff_id?.trim();
+					const newPin = body?.new_pin?.trim();
+
+					if (!staffId) {
+						return jsonResponse({ success: false, error: "Staff ID is required." }, 400);
+					}
+					if (!newPin || !/^\d{4}$/.test(newPin)) {
+						return jsonResponse({ success: false, error: "Manager PIN must be exactly 4 numeric digits." }, 400);
+					}
+
+					await env.DB.prepare(`
+						UPDATE staff SET is_manager = 1, manager_pin = ? WHERE id = ?
+					`).bind(newPin, staffId).run();
+
+					return jsonResponse({ success: true, message: "Manager PIN updated successfully." });
+				} catch (err: any) {
+					return jsonResponse({ success: false, error: err.message }, 500);
+				}
+			}
+
+			// GET /api/admin/security (Admin lists all appointed managers and their status)
+			if (path === "/api/admin/security" && method === "GET") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only." }, 403);
+				}
+				try {
+					const managers = await env.DB.prepare(`
+						SELECT s.id, s.name, s.role, s.manager_pin, s.property_id, p.name AS property_name
+						FROM staff s
+						JOIN properties p ON s.property_id = p.id
+						WHERE s.active = 1 AND s.is_manager = 1
+						ORDER BY s.name ASC
+					`).all();
+
+					return jsonResponse({
+						success: true,
+						managers: managers.results || []
+					});
+				} catch (err: any) {
+					return jsonResponse({ success: false, error: err.message }, 500);
+				}
+			}
+
 			// GET /api/properties
 			if (path === "/api/properties" && method === "GET") {
 				const { results } = await env.DB.prepare(

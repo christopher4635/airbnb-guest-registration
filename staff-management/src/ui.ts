@@ -129,8 +129,8 @@ export function getDashboardHtml(): string {
         </label>
         <div class="relative">
           <select id="loginRoleSelect" onchange="onLoginRoleChange()" class="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-xs appearance-none cursor-pointer transition">
-            <option value="admin" data-role="admin" data-pin="4635">Admin: enters 4635</option>
-            <option value="manager" data-role="manager" data-pin="1234">Manager: enters 1234</option>
+            <option value="admin" data-role="admin">Admin (Owner / Full Access)</option>
+            <option value="manager" data-role="manager">Manager (Roll Call & Attendance)</option>
           </select>
           <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500">
             <i data-lucide="chevron-down" class="w-4 h-4"></i>
@@ -140,7 +140,7 @@ export function getDashboardHtml(): string {
         <!-- Helpful Hint -->
         <div id="loginRoleHint" class="text-[11px] text-indigo-600 font-medium mt-1.5 flex items-center gap-1.5">
           <i data-lucide="key-round" class="w-3.5 h-3.5 shrink-0"></i>
-          <span id="loginRoleHintText">Admin logs in with PIN 4635 (Full Access)</span>
+          <span id="loginRoleHintText">Admin: enter your 4-digit PIN for full management</span>
         </div>
       </div>
 
@@ -235,6 +235,10 @@ export function getDashboardHtml(): string {
               <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
               <span>Admin Access</span>
             </div>
+            <button id="btnAdminSecurity" onclick="openAdminSecurityModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+              <i data-lucide="key-round" class="w-3.5 h-3.5 text-slate-600"></i>
+              <span class="hidden md:inline">Change PIN</span>
+            </button>
             <button id="btnLeaveRules" onclick="openLeavePolicyModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
               <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-600"></i>
               <span class="hidden md:inline">Leave Rules</span>
@@ -647,7 +651,12 @@ export function getDashboardHtml(): string {
           <div id="managerPinContainer" class="hidden mt-2.5 p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100 space-y-2">
             <div>
               <label class="block text-[11px] font-bold text-indigo-950 mb-1">Manager Login PIN (4 Digits) *</label>
-              <input type="password" maxlength="4" pattern="[0-9]*" inputmode="numeric" id="staffManagerPin" placeholder="e.g. 1234" class="w-full text-center tracking-widest font-mono font-bold text-base px-3 py-2 rounded-xl border border-indigo-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-slate-800">
+              <div class="relative">
+                <input type="password" maxlength="4" pattern="[0-9]*" inputmode="numeric" id="staffManagerPin" placeholder="4-digit PIN" class="w-full text-center tracking-widest font-mono font-bold text-base px-3 py-2 pr-10 rounded-xl border border-indigo-200 bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 text-slate-800">
+                <button type="button" onclick="togglePinVisibility('staffManagerPin', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition" title="Show/Hide PIN">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
               <p class="text-[10px] text-indigo-700 mt-1">This manager can enter this PIN on the lock screen to access Monthly Sheet & Daily Roll Call only.</p>
             </div>
           </div>
@@ -965,6 +974,89 @@ export function getDashboardHtml(): string {
   </div>
 
   <!-- ========================================================================= -->
+  <!-- ADMIN SECURITY & PIN MANAGEMENT MODAL                                    -->
+  <!-- ========================================================================= -->
+  <div id="adminSecurityModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 flex flex-col">
+      <div class="flex items-start justify-between pb-3 border-b border-slate-100 mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center shadow-xs">
+            <i data-lucide="key-round" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Security & PINs</h3>
+            <p class="text-xs text-slate-500">Change Admin Master PIN & Manager Keys</p>
+          </div>
+        </div>
+        <button onclick="closeAdminSecurityModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Security Tabs -->
+      <div class="flex border-b border-slate-200 mb-4 text-xs font-semibold">
+        <button type="button" id="secTabAdmin" onclick="switchSecurityTab('admin')" class="py-2 px-3 border-b-2 border-indigo-600 text-indigo-600 transition">Admin Master PIN</button>
+        <button type="button" id="secTabManagers" onclick="switchSecurityTab('managers')" class="py-2 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition">Manager Keys</button>
+      </div>
+
+      <!-- Tab 1: Admin Master PIN Form -->
+      <form id="adminPinChangeForm" onsubmit="handleChangeAdminPin(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Current Admin PIN *</label>
+          <div class="relative">
+            <input type="password" id="currentAdminPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" required placeholder="••••" class="w-full text-center tracking-widest font-mono font-bold text-base px-3 py-2 pr-10 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+            <button type="button" onclick="togglePinVisibility('currentAdminPin', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">New 4-Digit Admin PIN *</label>
+          <div class="relative">
+            <input type="password" id="newAdminPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" required placeholder="••••" class="w-full text-center tracking-widest font-mono font-bold text-base px-3 py-2 pr-10 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+            <button type="button" onclick="togglePinVisibility('newAdminPin', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Confirm New Admin PIN *</label>
+          <div class="relative">
+            <input type="password" id="confirmAdminPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" required placeholder="••••" class="w-full text-center tracking-widest font-mono font-bold text-base px-3 py-2 pr-10 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+            <button type="button" onclick="togglePinVisibility('confirmAdminPin', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="adminPinError" class="text-xs text-rose-500 font-medium min-h-[1rem]"></div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeAdminSecurityModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition">
+            Save Admin PIN
+          </button>
+        </div>
+      </form>
+
+      <!-- Tab 2: Manager PINs List -->
+      <div id="managerPinsContainer" class="hidden space-y-3">
+        <p class="text-xs text-slate-500">Managers can mark roll call and attendance. Update their 4-digit PIN below:</p>
+        <div id="managerPinsList" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+          <!-- Rendered dynamically -->
+        </div>
+        <div class="flex items-center justify-end pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeAdminSecurityModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- FLOATING QUICK CELL PICKER (POPOVER)                                       -->
   <!-- ========================================================================= -->
   <div id="statusPickerPopover" class="fixed z-40 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 hidden flex-col gap-1 w-44 animate-in fade-in zoom-in-95 duration-100">
@@ -1061,8 +1153,7 @@ export function getDashboardHtml(): string {
             opt.value = r.staff_id || r.role;
             opt.dataset.role = r.role;
             if (r.staff_id) opt.dataset.staffId = r.staff_id;
-            opt.dataset.pin = r.pin_hint || (r.role === "admin" ? "4635" : "1234");
-            opt.textContent = r.name + ": enters " + opt.dataset.pin;
+            opt.textContent = r.name;
             select.appendChild(opt);
           });
           if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
@@ -1081,12 +1172,11 @@ export function getDashboardHtml(): string {
       if (!select || !hint) return;
       const opt = select.options[select.selectedIndex];
       const role = opt ? (opt.dataset.role || select.value) : "admin";
-      const pinHint = opt ? (opt.dataset.pin || (role === "admin" ? "4635" : "1234")) : "4635";
 
       if (role === "admin") {
-        hint.innerText = "Admin enters PIN " + pinHint + " (Full Access)";
+        hint.innerText = "Admin: enter your 4-digit PIN for full management";
       } else {
-        hint.innerText = "Manager enters PIN " + pinHint + " (Roll Call & Monthly View)";
+        hint.innerText = "Manager: enter your 4-digit PIN for roll call & attendance";
       }
 
       enteredPin = "";
@@ -1126,6 +1216,7 @@ export function getDashboardHtml(): string {
       const badge = document.getElementById("userRoleBadge");
       const btnLeaveRules = document.getElementById("btnLeaveRules");
       const btnAddStaff = document.getElementById("btnHeaderAddStaff");
+      const btnAdminSecurity = document.getElementById("btnAdminSecurity");
       const tabPayroll = document.getElementById("viewTabPayroll");
       const tabDirectory = document.getElementById("viewTabDirectory");
 
@@ -1137,6 +1228,7 @@ export function getDashboardHtml(): string {
         badge.classList.remove("hidden");
         badge.classList.add("inline-flex");
 
+        if (btnAdminSecurity) btnAdminSecurity.classList.add("hidden");
         if (btnLeaveRules) btnLeaveRules.classList.add("hidden");
         if (btnAddStaff) btnAddStaff.classList.add("hidden");
         if (tabPayroll) tabPayroll.classList.add("hidden");
@@ -1157,6 +1249,7 @@ export function getDashboardHtml(): string {
         badge.classList.remove("hidden");
         badge.classList.add("inline-flex");
 
+        if (btnAdminSecurity) btnAdminSecurity.classList.remove("hidden");
         if (btnLeaveRules) btnLeaveRules.classList.remove("hidden");
         if (btnAddStaff) btnAddStaff.classList.remove("hidden");
         if (tabPayroll) tabPayroll.classList.remove("hidden");
@@ -2131,7 +2224,7 @@ export function getDashboardHtml(): string {
                 <div>
                   <div class="flex items-center gap-2">
                     <h4 class="font-bold text-slate-900 text-base">\${escapeHtml(staff.name)}</h4>
-                    \${staff.is_manager ? \`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200"><i data-lucide="shield-check" class="w-3 h-3 text-violet-600"></i> Manager (PIN: \${escapeHtml(staff.manager_pin || 'Set')})</span>\` : ''}
+                    \${staff.is_manager ? \`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200"><i data-lucide="shield-check" class="w-3 h-3 text-violet-600"></i> Manager</span>\` : ''}
                   </div>
                   <div class="text-xs text-indigo-600 font-semibold mt-0.5">\${escapeHtml(prop.name)}</div>
                   \${staff.role ? \`<div class="text-[11px] text-slate-400 font-medium">\${escapeHtml(staff.role)}</div>\` : ''}
@@ -3298,6 +3391,164 @@ export function getDashboardHtml(): string {
         showToast("Leave policies saved successfully!");
       } catch (err) {
         showToast("Error updating allowances: " + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // ADMIN SECURITY & PIN MANAGEMENT
+    // -------------------------------------------------------------------------
+    function togglePinVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      if (btn) {
+        btn.innerHTML = isPassword
+          ? '<i data-lucide="eye-off" class="w-4 h-4 text-indigo-600"></i>'
+          : '<i data-lucide="eye" class="w-4 h-4 text-slate-400"></i>';
+        refreshIcons();
+      }
+    }
+
+    function openAdminSecurityModal() {
+      document.getElementById("currentAdminPin").value = "";
+      document.getElementById("newAdminPin").value = "";
+      document.getElementById("confirmAdminPin").value = "";
+      document.getElementById("adminPinError").innerText = "";
+      switchSecurityTab('admin');
+      document.getElementById("adminSecurityModal").classList.remove("hidden");
+      document.getElementById("adminSecurityModal").classList.add("flex");
+      setTimeout(() => {
+        const inp = document.getElementById("currentAdminPin");
+        if (inp) inp.focus();
+      }, 100);
+      refreshIcons();
+    }
+
+    function closeAdminSecurityModal() {
+      document.getElementById("adminSecurityModal").classList.add("hidden");
+      document.getElementById("adminSecurityModal").classList.remove("flex");
+    }
+
+    function switchSecurityTab(tab) {
+      const tabAdmin = document.getElementById("secTabAdmin");
+      const tabManagers = document.getElementById("secTabManagers");
+      const formAdmin = document.getElementById("adminPinChangeForm");
+      const boxManagers = document.getElementById("managerPinsContainer");
+
+      if (tab === 'admin') {
+        tabAdmin.className = "py-2 px-3 border-b-2 border-indigo-600 text-indigo-600 font-bold transition";
+        tabManagers.className = "py-2 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold transition";
+        formAdmin.classList.remove("hidden");
+        boxManagers.classList.add("hidden");
+      } else {
+        tabManagers.className = "py-2 px-3 border-b-2 border-indigo-600 text-indigo-600 font-bold transition";
+        tabAdmin.className = "py-2 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold transition";
+        formAdmin.classList.add("hidden");
+        boxManagers.classList.remove("hidden");
+        loadSecurityManagers();
+      }
+      refreshIcons();
+    }
+
+    async function handleChangeAdminPin(e) {
+      e.preventDefault();
+      const currentPin = document.getElementById("currentAdminPin").value.trim();
+      const newPin = document.getElementById("newAdminPin").value.trim();
+      const confirmPin = document.getElementById("confirmAdminPin").value.trim();
+      const errorDiv = document.getElementById("adminPinError");
+
+      if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+        errorDiv.innerText = "New PIN must be exactly 4 numeric digits.";
+        return;
+      }
+      if (newPin !== confirmPin) {
+        errorDiv.innerText = "New PIN and confirmation do not match.";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/admin/change-pin", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ current_pin: currentPin, new_pin: newPin })
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem(AUTH_PIN_KEY, newPin);
+          closeAdminSecurityModal();
+          showToast("Admin Master PIN changed successfully!");
+        } else {
+          errorDiv.innerText = data.error || "Failed to update Admin PIN.";
+        }
+      } catch (err) {
+        errorDiv.innerText = "Network error: " + err.message;
+      }
+    }
+
+    async function loadSecurityManagers() {
+      const container = document.getElementById("managerPinsList");
+      container.innerHTML = '<div class="text-xs text-slate-400 p-2">Loading managers...</div>';
+
+      try {
+        const res = await fetch("/api/admin/security", { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.managers) || data.managers.length === 0) {
+          container.innerHTML = '<div class="text-xs text-slate-400 italic p-3 text-center bg-slate-50 rounded-xl">No staff members have been appointed as managers yet.<br>You can appoint a manager in the Staff Directory edit modal.</div>';
+          return;
+        }
+
+        let html = "";
+        data.managers.forEach(m => {
+          html += '<div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 gap-2">' +
+            '<div class="min-w-0 flex-1">' +
+              '<div class="font-bold text-slate-800 text-sm truncate">' + escapeHtml(m.name) + '</div>' +
+              '<div class="text-[11px] text-indigo-600 font-semibold truncate">' + escapeHtml(m.property_name || "Property") + '</div>' +
+            '</div>' +
+            '<div class="flex items-center gap-2 shrink-0">' +
+              '<div class="relative w-28">' +
+                '<input type="password" id="mgrPin_' + m.id + '" maxlength="4" pattern="[0-9]*" inputmode="numeric" value="' + escapeHtml(m.manager_pin || "") + '" class="w-full text-center font-mono font-bold text-sm py-1.5 px-2 pr-7 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">' +
+                '<button type="button" onclick="togglePinVisibility(\'mgrPin_' + m.id + '\', this)" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">' +
+                  '<i data-lucide="eye" class="w-3.5 h-3.5"></i>' +
+                '</button>' +
+              '</div>' +
+              '<button type="button" onclick="saveSecurityManagerPin(\'' + m.id + '\')" class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition shadow-xs">' +
+                'Save' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+        });
+        container.innerHTML = html;
+        refreshIcons();
+      } catch (err) {
+        container.innerHTML = '<div class="text-xs text-rose-500 p-2">Error loading managers: ' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    async function saveSecurityManagerPin(staffId) {
+      const input = document.getElementById("mgrPin_" + staffId);
+      if (!input) return;
+      const newPin = input.value.trim();
+      if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+        showToast("Manager PIN must be exactly 4 digits.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/admin/change-manager-pin", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ staff_id: staffId, new_pin: newPin })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Manager PIN updated successfully!");
+          fetchLoginRoles();
+        } else {
+          showToast("Error: " + (data.error || "Failed to update PIN"));
+        }
+      } catch (err) {
+        showToast("Network error: " + err.message);
       }
     }
 
