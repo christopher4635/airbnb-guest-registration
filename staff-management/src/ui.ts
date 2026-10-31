@@ -3,7 +3,7 @@ export function getDashboardHtml(): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Staff Attendance, Salary & Documents Hub</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -51,30 +51,47 @@ export function getDashboardHtml(): string {
     ::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
-    /* Sticky table column styling */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Sticky table column styling with mobile-solid background */
     .sticky-col {
       position: sticky;
       left: 0;
       z-index: 20;
-      background: inherit;
+      background-color: #ffffff;
+      box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
     }
     .sticky-col-header {
       position: sticky;
       left: 0;
       z-index: 30;
-      background: #f8fafc;
+      background-color: #f8fafc;
+      box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
     }
     .sticky-summary {
       position: sticky;
       right: 0;
       z-index: 20;
-      background: inherit;
+      background-color: #ffffff;
+      box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06);
     }
     .sticky-summary-header {
       position: sticky;
       right: 0;
       z-index: 30;
-      background: #f8fafc;
+      background-color: #f8fafc;
+      box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06);
+    }
+    /* Mobile-first improvements to prevent iOS auto-zoom on input focus */
+    @media screen and (max-width: 640px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
     }
     /* PIN dots animation */
     @keyframes shake {
@@ -214,42 +231,51 @@ export function getDashboardHtml(): string {
 
     <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
           
           <!-- Logo & Brand -->
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
-              <i data-lucide="building-2" class="w-5 h-5"></i>
+          <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100 shrink-0">
+              <i data-lucide="building-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-900 text-lg leading-tight tracking-tight">StaffSync</span>
-                <span class="px-2 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full">Cloud D1</span>
+              <div class="flex items-center gap-1.5 sm:gap-2">
+                <span class="font-bold text-slate-900 text-base sm:text-lg leading-tight tracking-tight">StaffSync</span>
+                <span class="px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Cloud D1</span>
+                </span>
               </div>
-              <p class="text-[11px] text-slate-500 font-medium">Hotel · Homes · Salon · House Help</p>
+              <p class="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate max-w-[130px] sm:max-w-none">Hotel · Homes · Salon · Help</p>
             </div>
           </div>
 
           <!-- Quick Top Actions & Role Badge -->
-          <div class="flex items-center gap-2 sm:gap-3">
-            <div id="userRoleBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Sync Cloud Button -->
+            <button id="btnSyncNow" onclick="syncAllDataNow()" title="Sync and refresh all records from Cloud D1" class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition shadow-2xs active:scale-95 cursor-pointer">
+              <i data-lucide="refresh-cw" id="syncNowIcon" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span class="hidden sm:inline">Sync Cloud</span>
+            </button>
+
+            <div id="userRoleBadge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
               <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
               <span>Admin Access</span>
             </div>
-            <button id="btnAdminSecurity" onclick="openAdminSecurityModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+            <button id="btnAdminSecurity" onclick="openAdminSecurityModal()" title="Change PIN" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
               <i data-lucide="key-round" class="w-3.5 h-3.5 text-slate-600"></i>
               <span class="hidden md:inline">Change PIN</span>
             </button>
-            <button id="btnLeaveRules" onclick="openLeavePolicyModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+            <button id="btnLeaveRules" onclick="openLeavePolicyModal()" title="Leave Policy" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
               <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-600"></i>
               <span class="hidden md:inline">Leave Rules</span>
             </button>
-            <button id="btnHeaderAddStaff" onclick="openStaffModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
+            <button id="btnHeaderAddStaff" onclick="openStaffModal()" title="Add Staff" class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Add Staff</span>
             </button>
-            <button onclick="lockApp()" title="Lock / Switch User" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-600 border border-slate-200 transition">
+            <button onclick="lockApp()" title="Lock / Switch User" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-600 border border-slate-200 transition">
               <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Switch User</span>
             </button>
@@ -258,30 +284,30 @@ export function getDashboardHtml(): string {
         </div>
       </div>
 
-      <!-- Properties & Primary View Tabs -->
-      <div class="bg-slate-50/90 border-t border-slate-200 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between py-2 gap-2">
+      <!-- Properties & Primary View Tabs (Touch friendly scroll on mobile) -->
+      <div class="bg-slate-50/90 border-t border-slate-200 px-3 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between py-1.5 gap-2">
           
           <!-- Properties Selector -->
-          <div id="propertyTabs" class="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
+          <div id="propertyTabs" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar scrollbar-none py-1 flex-nowrap">
             <!-- Rendered by JS -->
           </div>
           
           <!-- View Switcher Tabs -->
-          <div class="flex items-center bg-slate-200/80 p-1 rounded-xl shrink-0 overflow-x-auto scrollbar-none">
-            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5">
+          <div class="flex items-center bg-slate-200/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar scrollbar-none flex-nowrap">
+            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
               <span>Monthly Sheet</span>
             </button>
-            <button id="viewTabDaily" onclick="switchView('daily')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
               <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
               <span>Daily Roll Call</span>
             </button>
-            <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+            <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
               <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
               <span>Salary & Payroll</span>
             </button>
-            <button id="viewTabDirectory" onclick="switchView('directory')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+            <button id="viewTabDirectory" onclick="switchView('directory')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
               <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-600"></i>
               <span>Staff & Docs</span>
             </button>
@@ -360,6 +386,14 @@ export function getDashboardHtml(): string {
       <!-- VIEW 1: MONTHLY MATRIX TABLE                                          -->
       <!-- ===================================================================== -->
       <div id="monthlyViewSection" class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex-1 flex flex-col">
+        <!-- Mobile Swipe Helper -->
+        <div class="sm:hidden px-3 py-2 bg-indigo-50/60 border-b border-indigo-100 flex items-center justify-between text-[11px] text-indigo-900">
+          <span class="flex items-center gap-1 font-medium">
+            <i data-lucide="move-horizontal" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span>Swipe left / right to view dates</span>
+          </span>
+          <span class="font-bold text-indigo-700">Tap cell to mark</span>
+        </div>
         <div class="overflow-x-auto overflow-y-auto flex-1 relative max-h-[70vh]">
           <table class="w-full text-left border-collapse text-xs">
             <thead id="monthlyTableHead" class="text-slate-500 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200 select-none">
@@ -406,31 +440,39 @@ export function getDashboardHtml(): string {
       <!-- ===================================================================== -->
       <div id="payrollViewSection" class="hidden flex-1 flex flex-col gap-4">
         
-        <!-- Payroll Summary Stat Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Base Payroll</div>
-            <div id="statBaseSalary" class="text-lg font-bold text-slate-900 mt-1">₹0</div>
+        <!-- Payroll Summary Stat Cards (Includes Total Bonuses!) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Base Payroll</div>
+            <div id="statBaseSalary" class="text-base sm:text-lg font-bold text-slate-900 mt-1">₹0</div>
             <div class="text-[10px] text-slate-400 mt-0.5">Total monthly base</div>
           </div>
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Advances & Deduc</div>
-            <div id="statDeductions" class="text-lg font-bold text-slate-700 mt-1">₹0</div>
+          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
+            <div class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Advances & Deduc</div>
+            <div id="statDeductions" class="text-base sm:text-lg font-bold text-rose-600 mt-1">₹0</div>
             <div class="text-[10px] text-slate-400 mt-0.5">Advances + Unpaid</div>
           </div>
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="text-[11px] font-semibold text-indigo-700 uppercase tracking-wider">Total Net Due</div>
-            <div id="statNetPayout" class="text-lg font-bold text-indigo-700 mt-1">₹0</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Total month payout</div>
+          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/30 shadow-xs">
+            <div class="text-[10px] sm:text-[11px] font-semibold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+              <i data-lucide="gift" class="w-3 h-3 text-emerald-600"></i>
+              <span>Total Bonus</span>
+            </div>
+            <div id="statBonuses" class="text-base sm:text-lg font-bold text-emerald-700 mt-1">₹0</div>
+            <div class="text-[10px] text-emerald-600 mt-0.5">Bonuses added</div>
           </div>
-          <div class="bg-white p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/40 shadow-xs">
-            <div class="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Paid Amount</div>
-            <div id="statPaidAmount" class="text-lg font-bold text-emerald-700 mt-1">₹0</div>
+          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-indigo-200 bg-indigo-50/20 shadow-xs">
+            <div class="text-[10px] sm:text-[11px] font-semibold text-indigo-700 uppercase tracking-wider">Total Net Due</div>
+            <div id="statNetPayout" class="text-base sm:text-lg font-bold text-indigo-700 mt-1">₹0</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Net month payout</div>
+          </div>
+          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/40 shadow-xs">
+            <div class="text-[10px] sm:text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Paid Amount</div>
+            <div id="statPaidAmount" class="text-base sm:text-lg font-bold text-emerald-700 mt-1">₹0</div>
             <div id="statPaidCount" class="text-[10px] text-emerald-600 font-medium mt-0.5">0 staff paid</div>
           </div>
-          <div class="bg-white p-3.5 rounded-2xl border border-amber-200 bg-amber-50/40 shadow-xs">
-            <div class="text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Pending Payout</div>
-            <div id="statPendingAmount" class="text-lg font-bold text-amber-700 mt-1">₹0</div>
+          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-amber-200 bg-amber-50/40 shadow-xs">
+            <div class="text-[10px] sm:text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Pending Payout</div>
+            <div id="statPendingAmount" class="text-base sm:text-lg font-bold text-amber-700 mt-1">₹0</div>
             <div id="statPendingCount" class="text-[10px] text-amber-600 font-medium mt-0.5">0 staff unpaid</div>
           </div>
         </div>
@@ -439,31 +481,47 @@ export function getDashboardHtml(): string {
         <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-3.5 flex items-center justify-between flex-wrap gap-2 text-xs text-indigo-900">
           <div class="flex items-center gap-2">
             <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-            <span><strong>Leave Carry-Forward Protection:</strong> Salary is <strong>NEVER deducted</strong> as long as employee has carried-forward leave balance. Deductions apply only to unpaid excess days.</span>
+            <span><strong>Leave Protection & Bonus:</strong> Salary is protected by leave balance. Net Payout = <strong>Base − Unpaid Deduc + Bonus − Advance</strong>.</span>
           </div>
           <span class="text-[11px] font-semibold bg-white/80 px-2 py-0.5 rounded-md text-indigo-700 border border-indigo-200">Daily Rate = Base Salary ÷ Total Month Days</span>
         </div>
 
         <!-- Payroll Table -->
         <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex-1 flex flex-col">
+          <!-- Mobile Scroll Indicator -->
+          <div class="sm:hidden px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+            <span class="flex items-center gap-1">
+              <i data-lucide="move-horizontal" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span>Swipe left / right to view full payroll</span>
+            </span>
+            <span class="font-bold text-emerald-600">Name is locked</span>
+          </div>
           <div class="overflow-x-auto flex-1">
             <table class="w-full text-left border-collapse text-xs">
-              <thead class="text-slate-500 uppercase font-semibold text-[10px] tracking-wider bg-slate-50 border-b border-slate-200">
+              <thead class="text-slate-500 uppercase font-semibold text-[10px] tracking-wider bg-slate-50 border-b border-slate-200 select-none">
                 <tr>
-                  <th class="py-3 px-3.5">Staff & Property</th>
-                  <th class="py-3 px-3 text-right">Base Salary</th>
-                  <th class="py-3 px-2 text-center">Days</th>
-                  <th class="py-3 px-3 text-right">Daily Rate</th>
-                  <th class="py-3 px-3 text-center">Attendance (P/DO/L/A)</th>
-                  <th class="py-3 px-3 text-center" title="Accumulated leave balance carried forward">Total Leave Bal</th>
-                  <th class="py-3 px-3 text-right" title="Deductions for days exceeding available leave balance">Unpaid Deduction</th>
-                  <th class="py-3 px-3 text-right">Advance Paid</th>
-                  <th class="py-3 px-3.5 text-right font-bold text-emerald-800 bg-emerald-50/50">Net Payout</th>
-                  <th class="py-3 px-3 text-center">Bank / QR</th>
-                  <th class="py-3 px-3 text-center">Payment Status</th>
-                  <th class="py-3 px-2 text-center">Slip</th>
+                  <th class="sticky-col-header py-3 px-3.5 min-w-[190px] border-r border-slate-200">Staff & Property</th>
+                  <th class="py-3 px-3 text-right min-w-[90px]">Base Salary</th>
+                  <th class="py-3 px-2 text-center min-w-[50px]">Days</th>
+                  <th class="py-3 px-3 text-right min-w-[85px]">Daily Rate</th>
+                  <th class="py-3 px-3 text-center min-w-[110px]">Attendance</th>
+                  <th class="py-3 px-3 text-center min-w-[90px]" title="Accumulated leave balance carried forward">Leave Bal</th>
+                  <th class="py-3 px-3 text-right min-w-[100px]" title="Deductions for days exceeding available leave balance">Unpaid Deduc</th>
+                  <th class="py-3 px-3 text-right min-w-[95px]">Gross Earned</th>
+                  <th class="py-3 px-3 text-right min-w-[100px]">Advance (Deduc)</th>
+                  <th class="py-3 px-3 text-right min-w-[125px] bg-emerald-50/50 text-emerald-900 border-x border-emerald-100">Bonus (Add)</th>
+                  <th class="py-3 px-3.5 text-right font-bold text-emerald-800 bg-emerald-50/70 min-w-[100px]">Net Payout</th>
+                  <th class="py-3 px-3 text-center min-w-[95px]">Bank / QR</th>
+                  <th class="py-3 px-3 text-center min-w-[100px]">Payment Status</th>
+                  <th class="py-3 px-2 text-center min-w-[50px]">Slip</th>
                 </tr>
               </thead>
+              <tbody id="payrollTableBody" class="divide-y divide-slate-100">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
               <tbody id="payrollTableBody" class="divide-y divide-slate-100">
                 <!-- Rendered by JS -->
               </tbody>
@@ -791,6 +849,80 @@ export function getDashboardHtml(): string {
   </div>
 
   <!-- ========================================================================= -->
+  <!-- MODAL: SALARY BONUS & INCENTIVES MANAGER (WITH COMMENTS)                  -->
+  <!-- ========================================================================= -->
+  <div id="bonusModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+            <i data-lucide="gift" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 id="bonusModalStaffName" class="text-base font-bold text-slate-900">Salary Bonus</h3>
+            <p class="text-xs text-slate-500">Add bonus with comments for staff</p>
+          </div>
+        </div>
+        <button onclick="closeBonusModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="bonusForm" onsubmit="handleSaveBonus(event)" class="mt-4 space-y-3.5">
+        <input type="hidden" id="bonusStaffId">
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bonus Amount (₹) *</label>
+            <div class="relative">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+              <input type="text" inputmode="decimal" id="bonusAmount" required placeholder="e.g. 2500, 5000" class="w-full text-base sm:text-sm pl-8 pr-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 font-mono font-bold text-slate-800">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Date *</label>
+            <input type="date" id="bonusDate" required class="w-full text-base sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <!-- Quick Amount Presets -->
+        <div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold mb-1.5">Quick Select Amount:</div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" onclick="setBonusPreset(500)" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition cursor-pointer">₹500</button>
+            <button type="button" onclick="setBonusPreset(1000)" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition cursor-pointer">₹1,000</button>
+            <button type="button" onclick="setBonusPreset(2000)" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 transition cursor-pointer">₹2,000</button>
+            <button type="button" onclick="setBonusPreset(2500)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs cursor-pointer">₹2,500</button>
+            <button type="button" onclick="setBonusPreset(5000)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs cursor-pointer">₹5,000</button>
+            <button type="button" onclick="setBonusPreset(10000)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 transition shadow-2xs cursor-pointer">₹10,000</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Bonus Comments / Purpose *</label>
+          <input type="text" id="bonusComments" required placeholder="e.g. Diwali Bonus, Outstanding Performance, Guest Tips" class="w-full text-base sm:text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <button type="submit" class="w-full py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-98 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Add Bonus with Comments</span>
+        </button>
+      </form>
+
+      <!-- Existing Bonuses for this Month -->
+      <div class="mt-5 pt-3 border-t border-slate-100">
+        <div class="text-xs font-bold text-slate-700 uppercase mb-2 flex items-center justify-between">
+          <span>Bonuses for This Month</span>
+          <span id="bonusTotalBadge" class="text-emerald-700 font-mono font-bold text-xs"></span>
+        </div>
+        <div id="bonusList" class="space-y-2 max-h-48 overflow-y-auto">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
   <!-- MODAL: SALARY SLIP (PRINTABLE VOUCHER)                                    -->
   <!-- ========================================================================= -->
   <div id="salarySlipModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
@@ -1110,6 +1242,7 @@ export function getDashboardHtml(): string {
     let attendanceMap = {}; // { [staff_id_YYYY-MM-DD]: "present" | "absent" | "day_off" | "leave" }
     let priorLeavesMap = {}; // { [staff_id]: number } leaves taken before current month
     let advancesList = []; // Array of advance records for current month
+    let bonusesList = []; // Array of salary bonus records for current month
     let paymentsList = []; // Array of salary payment records for current month
     let currentDocStaffId = null;
     let currentPaymentStaffId = null;
@@ -1120,6 +1253,30 @@ export function getDashboardHtml(): string {
     // Init Lucide
     function refreshIcons() {
       if (window.lucide) lucide.createIcons();
+    }
+
+    // Manual / Auto-Sync with Cloudflare D1
+    async function syncAllDataNow() {
+      const syncIcon = document.getElementById("syncNowIcon");
+      if (syncIcon) syncIcon.classList.add("animate-spin");
+      try {
+        const promises = [
+          fetchProperties(),
+          fetchStaff(),
+          fetchAttendance()
+        ];
+        if (currentUserRole === "admin") {
+          promises.push(fetchAdvances(), fetchBonuses(), fetchPayments());
+        }
+        await Promise.all(promises);
+        renderPropertyTabs();
+        renderActiveView();
+        showToast("All records synced with Cloud D1");
+      } catch (err) {
+        showToast("Sync error: " + err.message);
+      } finally {
+        if (syncIcon) syncIcon.classList.remove("animate-spin");
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -1497,7 +1654,7 @@ export function getDashboardHtml(): string {
           fetchAttendance()
         ];
         if (currentUserRole === "admin") {
-          promises.push(fetchAdvances(), fetchPayments());
+          promises.push(fetchAdvances(), fetchBonuses(), fetchPayments());
         }
         await Promise.all(promises);
         renderPropertyTabs();
@@ -1589,6 +1746,13 @@ export function getDashboardHtml(): string {
       const res = await fetch(\`/api/advances?month=\${monthStr}\`, { headers: getAuthHeaders() });
       if (res.status === 401) return lockApp();
       advancesList = await res.json();
+    }
+
+    async function fetchBonuses() {
+      const monthStr = getMonthQueryString();
+      const res = await fetch(\`/api/bonuses?month=\${monthStr}\`, { headers: getAuthHeaders() });
+      if (res.status === 401) return lockApp();
+      bonusesList = await res.json();
     }
 
     async function fetchPayments() {
@@ -1736,7 +1900,7 @@ export function getDashboardHtml(): string {
       document.getElementById("currentMonthLabel").innerText = \`\${MONTH_NAMES[currentMonth]} \${currentYear}\`;
       const promises = [fetchAttendance()];
       if (currentUserRole === "admin") {
-        promises.push(fetchAdvances(), fetchPayments());
+        promises.push(fetchAdvances(), fetchBonuses(), fetchPayments());
       }
       await Promise.all(promises);
       renderActiveView();
@@ -2045,22 +2209,22 @@ export function getDashboardHtml(): string {
               </span>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-4 gap-2 pt-1">
-              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'present')" class="py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1 \${status === 'present' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-emerald-50 border-slate-200'}">
-                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <!-- Action Buttons (Mobile-friendly 2x2 grid on small screens, 4 across on desktop) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'present')" class="py-2.5 sm:py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1.5 \${status === 'present' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-emerald-50 border-slate-200'}">
+                <i data-lucide="check" class="w-4 h-4 sm:w-3.5 sm:h-3.5"></i>
                 <span>Present</span>
               </button>
-              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'absent')" class="py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1 \${status === 'absent' ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-rose-50 border-slate-200'}">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'absent')" class="py-2.5 sm:py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1.5 \${status === 'absent' ? 'bg-rose-600 text-white border-rose-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-rose-50 border-slate-200'}">
+                <i data-lucide="x" class="w-4 h-4 sm:w-3.5 sm:h-3.5"></i>
                 <span>Absent</span>
               </button>
-              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'day_off')" class="py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1 \${status === 'day_off' ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-sky-50 border-slate-200'}">
-                <i data-lucide="coffee" class="w-3.5 h-3.5"></i>
+              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'day_off')" class="py-2.5 sm:py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1.5 \${status === 'day_off' ? 'bg-sky-600 text-white border-sky-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-sky-50 border-slate-200'}">
+                <i data-lucide="coffee" class="w-4 h-4 sm:w-3.5 sm:h-3.5"></i>
                 <span>Day Off</span>
               </button>
-              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'leave')" class="py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1 \${status === 'leave' ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-amber-50 border-slate-200'}">
-                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+              <button onclick="updateAttendance('\${staff.id}', '\${dateStr}', 'leave')" class="py-2.5 sm:py-2 rounded-xl text-xs font-bold border transition active:scale-95 flex items-center justify-center gap-1.5 \${status === 'leave' ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-slate-50 text-slate-700 hover:bg-amber-50 border-slate-200'}">
+                <i data-lucide="calendar" class="w-4 h-4 sm:w-3.5 sm:h-3.5"></i>
                 <span>Leave</span>
               </button>
             </div>
@@ -2073,7 +2237,7 @@ export function getDashboardHtml(): string {
     }
 
     // -------------------------------------------------------------------------
-    // VIEW 3: SALARY & PAYROLL CALCULATION
+    // VIEW 3: SALARY & PAYROLL CALCULATION (WITH BONUS & COMMENTS)
     // -------------------------------------------------------------------------
     function renderPayrollView() {
       const tbody = document.getElementById("payrollTableBody");
@@ -2084,6 +2248,7 @@ export function getDashboardHtml(): string {
       let totalBase = 0;
       let totalDeductions = 0;
       let totalAdvances = 0;
+      let totalBonuses = 0;
       let totalNet = 0;
       let paidCount = 0;
       let paidAmount = 0;
@@ -2120,13 +2285,20 @@ export function getDashboardHtml(): string {
         const staffAdvances = advancesList.filter(a => a.staff_id === staff.id);
         const advanceAmount = staffAdvances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
 
+        // Sum of bonuses for this staff for this month (with comments)
+        const staffBonuses = bonusesList.filter(b => b.staff_id === staff.id);
+        const bonusAmount = staffBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+        const bonusComments = staffBonuses.map(b => b.comments || 'Bonus').filter(Boolean).join('; ');
+
         // Gross earned = Base Salary - Unpaid Deductions
         const grossEarned = Math.max(0, baseSalary - absentDeduction);
-        const netPayout = Math.max(0, grossEarned - advanceAmount);
+        // Net payout = Gross Earned + Bonus - Advance
+        const netPayout = Math.max(0, grossEarned + bonusAmount - advanceAmount);
 
         totalBase += baseSalary;
         totalDeductions += absentDeduction;
         totalAdvances += advanceAmount;
+        totalBonuses += bonusAmount;
         totalNet += netPayout;
 
         // Payment status for this staff
@@ -2185,7 +2357,7 @@ export function getDashboardHtml(): string {
 
         html += \`
           <tr class="hover:bg-slate-50/70 transition">
-            <td class="py-3 px-3.5">
+            <td class="sticky-col py-3 px-3.5 bg-white border-r border-slate-200">
               <div class="font-bold text-slate-900">\${escapeHtml(staff.name)}</div>
               <div class="text-[11px] text-slate-400">
                 <span class="text-indigo-600 font-semibold">\${escapeHtml(prop.name)}</span>
@@ -2229,11 +2401,24 @@ export function getDashboardHtml(): string {
               ₹\${grossEarned.toLocaleString('en-IN')}
             </td>
             <td class="py-3 px-3 text-right font-mono">
-              <button onclick="openAdvanceModal('\${staff.id}')" title="Click to record or view advances" class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-amber-50 transition border border-transparent hover:border-amber-200">
+              <button onclick="openAdvanceModal('\${staff.id}')" title="Click to record or view advances" class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-amber-50 transition border border-transparent hover:border-amber-200 cursor-pointer">
                 <span class="\${advanceAmount > 0 ? 'text-amber-600 font-bold' : 'text-slate-400'}">
                   ₹\${advanceAmount.toLocaleString('en-IN')}
                 </span>
                 <span class="w-5 h-5 rounded-md bg-slate-100 hover:bg-amber-100 text-slate-600 flex items-center justify-center">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                </span>
+              </button>
+            </td>
+            <td class="py-3 px-3 text-right font-mono bg-emerald-50/20 border-x border-emerald-100/60">
+              <button onclick="openBonusModal('\${staff.id}')" title="Click to add or view bonuses with comments" class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-emerald-50 transition border border-transparent hover:border-emerald-200 cursor-pointer">
+                <div class="text-right">
+                  <span class="\${bonusAmount > 0 ? 'text-emerald-700 font-bold' : 'text-slate-400'}">
+                    \${bonusAmount > 0 ? '+' : ''}₹\${bonusAmount.toLocaleString('en-IN')}
+                  </span>
+                  \${bonusAmount > 0 && bonusComments ? \`<span class="block text-[9px] text-emerald-600 font-semibold truncate max-w-[110px]" title="\${escapeHtml(bonusComments)}">\${escapeHtml(bonusComments)}</span>\` : ''}
+                </div>
+                <span class="w-5 h-5 rounded-md \${bonusAmount > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'} hover:bg-emerald-200 flex items-center justify-center">
                   <i data-lucide="plus" class="w-3 h-3"></i>
                 </span>
               </button>
@@ -2264,6 +2449,8 @@ export function getDashboardHtml(): string {
 
       document.getElementById("statBaseSalary").innerText = "₹" + totalBase.toLocaleString('en-IN');
       document.getElementById("statDeductions").innerText = "₹" + (totalDeductions + totalAdvances).toLocaleString('en-IN');
+      const statBonusesEl = document.getElementById("statBonuses");
+      if (statBonusesEl) statBonusesEl.innerText = "₹" + totalBonuses.toLocaleString('en-IN');
       document.getElementById("statNetPayout").innerText = "₹" + totalNet.toLocaleString('en-IN');
       document.getElementById("statPaidAmount").innerText = "₹" + paidAmount.toLocaleString('en-IN');
       document.getElementById("statPaidCount").innerText = paidCount + " staff paid";
@@ -2636,6 +2823,125 @@ export function getDashboardHtml(): string {
     }
 
     // -------------------------------------------------------------------------
+    // SALARY BONUS & INCENTIVES MODAL (WITH COMMENTS)
+    // -------------------------------------------------------------------------
+    function openBonusModal(staffId) {
+      const staff = staffList.find(s => s.id === staffId);
+      if (!staff) return;
+
+      document.getElementById("bonusStaffId").value = staff.id;
+      document.getElementById("bonusModalStaffName").innerText = \`Bonus for \${staff.name}\`;
+      document.getElementById("bonusAmount").value = "";
+      document.getElementById("bonusDate").value = formatIsoDate(new Date());
+      document.getElementById("bonusComments").value = "";
+
+      renderStaffBonusesList(staffId);
+
+      document.getElementById("bonusModal").classList.remove("hidden");
+      document.getElementById("bonusModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeBonusModal() {
+      document.getElementById("bonusModal").classList.add("hidden");
+      document.getElementById("bonusModal").classList.remove("flex");
+    }
+
+    function setBonusPreset(val) {
+      document.getElementById("bonusAmount").value = val;
+    }
+
+    function renderStaffBonusesList(staffId) {
+      const list = document.getElementById("bonusList");
+      const badge = document.getElementById("bonusTotalBadge");
+      const staffBonuses = bonusesList.filter(b => b.staff_id === staffId);
+
+      const totalBonus = staffBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+      if (badge) {
+        badge.innerText = totalBonus > 0 ? \`Total: +₹\${totalBonus.toLocaleString('en-IN')}\` : '';
+      }
+
+      if (staffBonuses.length === 0) {
+        list.innerHTML = '<div class="text-xs text-slate-400 p-3 text-center bg-slate-50 rounded-xl">No bonus recorded for this month.</div>';
+        return;
+      }
+
+      let html = "";
+      staffBonuses.forEach(b => {
+        html += \`
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-200 text-xs">
+            <div>
+              <div class="font-bold text-emerald-800 font-mono">+₹\${(parseFloat(b.amount) || 0).toLocaleString('en-IN')}</div>
+              <div class="text-[11px] text-slate-600 mt-0.5">
+                <span class="font-semibold text-emerald-700">\${escapeHtml(b.comments || 'Bonus')}</span>
+                <span class="text-slate-400 ml-1">· \${b.date}</span>
+              </div>
+            </div>
+            <button onclick="handleDeleteBonus('\${b.id}', '\${staffId}')" class="p-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-700 rounded-md transition cursor-pointer" title="Delete Bonus">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        \`;
+      });
+      list.innerHTML = html;
+      refreshIcons();
+    }
+
+    async function handleSaveBonus(e) {
+      e.preventDefault();
+      const staff_id = document.getElementById("bonusStaffId").value;
+      const rawVal = document.getElementById("bonusAmount").value || "";
+      const cleanVal = rawVal.replace(/[^0-9.]/g, '');
+      const amount = parseFloat(cleanVal);
+      
+      if (!amount || isNaN(amount) || amount <= 0) {
+        showToast("Please enter a bonus amount greater than 0");
+        return;
+      }
+
+      const date = document.getElementById("bonusDate").value || formatIsoDate(new Date());
+      const comments = document.getElementById("bonusComments").value.trim() || "Performance / Festival Bonus";
+      const month = date.slice(0, 7);
+
+      try {
+        const res = await fetch("/api/bonuses", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ staff_id, month, amount, date, comments })
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        showToast("Bonus of ₹" + amount.toLocaleString('en-IN') + " added with comments!");
+        document.getElementById("bonusAmount").value = "";
+        document.getElementById("bonusComments").value = "";
+        await fetchBonuses();
+        renderStaffBonusesList(staff_id);
+        if (currentView === "payroll") renderPayrollView();
+      } catch (err) {
+        showToast("Error saving bonus: " + err.message);
+      }
+    }
+
+    async function handleDeleteBonus(bonusId, staffId) {
+      if (!confirm("Are you sure you want to remove this bonus entry?")) return;
+      try {
+        const res = await fetch(\`/api/bonuses/\${bonusId}\`, {
+          method: "DELETE",
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        showToast("Bonus entry removed");
+        await fetchBonuses();
+        renderStaffBonusesList(staffId);
+        if (currentView === "payroll") renderPayrollView();
+      } catch (err) {
+        showToast("Error deleting bonus: " + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
     // SALARY SLIP MODAL (VOUCHER)
     // -------------------------------------------------------------------------
     function openSalarySlipModal(staffId) {
@@ -2665,8 +2971,11 @@ export function getDashboardHtml(): string {
 
       const staffAdvances = advancesList.filter(a => a.staff_id === staff.id);
       const advanceAmount = staffAdvances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
+      const staffBonuses = bonusesList.filter(b => b.staff_id === staff.id);
+      const bonusAmount = staffBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+      const bonusComments = staffBonuses.map(b => b.comments || 'Bonus').filter(Boolean).join('; ');
       const grossEarned = Math.max(0, baseSalary - absentDeduction);
-      const netPayout = Math.max(0, grossEarned - advanceAmount);
+      const netPayout = Math.max(0, grossEarned + bonusAmount - advanceAmount);
 
       const payment = paymentsList.find(p => p.staff_id === staff.id);
       const isPaid = payment && payment.status === "paid";
@@ -2761,6 +3070,16 @@ export function getDashboardHtml(): string {
                     <td class="p-2.5 font-medium">Unpaid Leave Deduction</td>
                     <td class="p-2.5 text-right text-slate-500">\${unpaidDays} Days exceeding leave balance × ₹\${Math.round(dailyRate)}</td>
                     <td class="p-2.5 text-right font-mono font-bold">-₹\${absentDeduction.toLocaleString('en-IN')}</td>
+                  </tr>
+                \` : ''}
+                \${bonusAmount > 0 ? \`
+                  <tr class="text-emerald-800 bg-emerald-50/60 font-medium">
+                    <td class="p-2.5 font-bold flex items-center gap-1.5 text-emerald-800">
+                      <i data-lucide="gift" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>Bonus / Incentive Added</span>
+                    </td>
+                    <td class="p-2.5 text-right text-emerald-700">\${escapeHtml(bonusComments || 'Special Bonus')}</td>
+                    <td class="p-2.5 text-right font-mono font-bold text-emerald-700">+₹\${bonusAmount.toLocaleString('en-IN')}</td>
                   </tr>
                 \` : ''}
                 \${advanceAmount > 0 ? \`
@@ -2862,7 +3181,7 @@ export function getDashboardHtml(): string {
       const daysCount = getDaysInMonth(currentYear, currentMonth);
       const filteredStaff = getVisibleStaffList();
 
-      let csv = "Staff Name,Property,Role,Phone,Base Salary,Total Days,Daily Rate,Present,Day Off,Leaves,Absent,Total Leave Balance,Unpaid Deduction,Gross Earned,Advance Deducted,Net Payout,Bank Name,Account Number,IFSC,UPI ID,Payment Status,Paid Amount,Payment Date,Payment Mode,Reference No\\n";
+      let csv = "Staff Name,Property,Role,Phone,Base Salary,Total Days,Daily Rate,Present,Day Off,Leaves,Absent,Total Leave Balance,Unpaid Deduction,Gross Earned,Advance Deducted,Bonus Amount,Bonus Comments,Net Payout,Bank Name,Account Number,IFSC,UPI ID,Payment Status,Paid Amount,Payment Date,Payment Mode,Reference No\\n";
 
       filteredStaff.forEach(staff => {
         const prop = properties.find(p => p.id === staff.property_id) || { name: staff.property_name || '' };
@@ -2888,7 +3207,10 @@ export function getDashboardHtml(): string {
         const gross = Math.max(0, base - absentDeduction);
         const staffAdvances = advancesList.filter(a => a.staff_id === staff.id);
         const adv = staffAdvances.reduce((sum, a) => sum + (parseFloat(a.amount) || 0), 0);
-        const net = Math.max(0, gross - adv);
+        const staffBonuses = bonusesList.filter(b => b.staff_id === staff.id);
+        const bonus = staffBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+        const bonusComments = staffBonuses.map(b => b.comments || '').filter(Boolean).join('; ');
+        const net = Math.max(0, gross + bonus - adv);
 
         const payment = paymentsList.find(p => p.staff_id === staff.id);
         const pStatus = (payment && payment.status === 'paid') ? 'Paid' : 'Unpaid';
@@ -2897,7 +3219,7 @@ export function getDashboardHtml(): string {
         const pMode = (payment && payment.payment_mode) || '';
         const pRef = (payment && payment.reference_no) || '';
 
-        csv += \`"\${staff.name}","\${prop.name}","\${staff.role || ''}","\${staff.phone || ''}",\${base},\${daysCount},\${dailyRate},\${countP},\${countDO},\${countL},\${countA},\${balance.toFixed(1)},\${absentDeduction},\${gross},\${adv},\${net},"\${staff.bank_name || ''}","\${staff.bank_account_number || ''}","\${staff.bank_ifsc || ''}","\${staff.bank_upi_id || ''}","\${pStatus}",\${pAmt},"\${pDate}","\${pMode}","\${pRef}"\\n\`;
+        csv += \`"\${staff.name}","\${prop.name}","\${staff.role || ''}","\${staff.phone || ''}",\${base},\${daysCount},\${dailyRate},\${countP},\${countDO},\${countL},\${countA},\${balance.toFixed(1)},\${absentDeduction},\${gross},\${adv},\${bonus},"\${bonusComments.replace(/"/g, '""')}",\${net},"\${staff.bank_name || ''}","\${staff.bank_account_number || ''}","\${staff.bank_ifsc || ''}","\${staff.bank_upi_id || ''}","\${pStatus}",\${pAmt},"\${pDate}","\${pMode}","\${pRef}"\\n\`;
       });
 
       downloadCsvFile(csv, \`Salary_Payroll_\${MONTH_NAMES[currentMonth]}_\${currentYear}.csv\`);

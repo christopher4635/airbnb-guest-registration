@@ -54,6 +54,16 @@ export interface SalaryAdvance {
 	created_at?: string;
 }
 
+export interface SalaryBonus {
+	id: string;
+	staff_id: string;
+	month: string;
+	amount: number;
+	comments: string | null;
+	date: string;
+	created_at?: string;
+}
+
 export interface SalaryPayment {
 	id: string;
 	staff_id: string;

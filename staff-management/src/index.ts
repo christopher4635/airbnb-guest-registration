@@ -1,5 +1,5 @@
 import { getDashboardHtml } from "./ui";
-import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, StaffDocument } from "./types";
+import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument } from "./types";
 
 function jsonResponse(data: any, status = 200): Response {
 	return new Response(JSON.stringify(data), {
@@ -650,6 +650,68 @@ export default {
 			if (path.startsWith("/api/advances/") && method === "DELETE") {
 				const id = path.split("/")[3];
 				await env.DB.prepare("DELETE FROM salary_advances WHERE id = ?").bind(id).run();
+				return jsonResponse({ success: true });
+			}
+
+			// -----------------------------------------------------------------
+			// SALARY BONUSES & INCENTIVES API (WITH COMMENTS)
+			// -----------------------------------------------------------------
+
+			// GET /api/bonuses?month=YYYY-MM&staff_id=...
+			if (path === "/api/bonuses" && method === "GET") {
+				const month = url.searchParams.get("month");
+				const staffId = url.searchParams.get("staff_id");
+				let query = "SELECT b.*, s.name as staff_name FROM salary_bonuses b JOIN staff s ON b.staff_id = s.id WHERE 1=1";
+				const params: any[] = [];
+				if (month) {
+					query += " AND b.month = ?";
+					params.push(month);
+				}
+				if (staffId) {
+					query += " AND b.staff_id = ?";
+					params.push(staffId);
+				}
+				query += " ORDER BY b.date DESC, b.created_at DESC";
+				const stmt = env.DB.prepare(query);
+				const { results } = params.length > 0 ? await stmt.bind(...params).all<SalaryBonus>() : await stmt.all<SalaryBonus>();
+				return jsonResponse(results);
+			}
+
+			// POST /api/bonuses
+			if (path === "/api/bonuses" && method === "POST") {
+				const body = (await request.json()) as {
+					staff_id: string;
+					month: string;
+					amount: number | string;
+					date: string;
+					comments?: string;
+				};
+				if (!body.staff_id || !body.month || !body.amount || !body.date) {
+					return jsonResponse({ error: "Missing required fields: staff_id, month, amount, date" }, 400);
+				}
+				const cleanAmount = parseFloat(String(body.amount).replace(/[^0-9.]/g, ''));
+				if (isNaN(cleanAmount) || cleanAmount <= 0) {
+					return jsonResponse({ error: "Invalid bonus amount. Enter a positive number." }, 400);
+				}
+				const id = "bon_" + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+				await env.DB.prepare(`
+					INSERT INTO salary_bonuses (id, staff_id, month, amount, comments, date)
+					VALUES (?, ?, ?, ?, ?, ?)
+				`).bind(
+					id,
+					body.staff_id,
+					body.month,
+					cleanAmount,
+					(body.comments || "").trim() || "Performance / Festival Bonus",
+					body.date
+				).run();
+				return jsonResponse({ success: true, id, amount: cleanAmount });
+			}
+
+			// DELETE /api/bonuses/:id
+			if (path.startsWith("/api/bonuses/") && method === "DELETE") {
+				const id = path.split("/")[3];
+				await env.DB.prepare("DELETE FROM salary_bonuses WHERE id = ?").bind(id).run();
 				return jsonResponse({ success: true });
 			}
 
