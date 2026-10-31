@@ -12,6 +12,7 @@
     "dev:backend": "npm --prefix backend run dev",
     "dev:frontend": "npm --prefix frontend run dev",
     "deploy": "wrangler deploy",
+    "deploy:dhaba": "wrangler pages deploy kachari-paradise-dhaba --project-name kachari-paradise-dhaba --branch main",
     "deploy:backend": "npm --prefix backend run deploy",
     "deploy:frontend": "npm --prefix frontend run deploy",
     "d1:create": "wrangler d1 create airbnb-db",

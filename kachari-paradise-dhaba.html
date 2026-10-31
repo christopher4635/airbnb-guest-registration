@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kachari Paradise Dhaba & Party Lawns | Authentic Highway Flavors</title>
+  <meta name="description" content="Experience authentic Indian Dhaba flavors at Kachari Paradise Dhaba. Roaring clay tandoor, 16-hour slow-cooked Dal Makhani, lush party lawns, AC banquet hall, and highway dining.">
+  <meta name="keywords" content="Kachari Paradise Dhaba, Indian Dhaba, Party Lawn, Banquet Hall, Highway Restaurant, Dal Makhani, Tandoori Chicken, Biryani, Birthday Party Booking">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dhaba: {
+              gold: '#F59E0B',
+              amber: '#D97706',
+              saffron: '#EA580C',
+              crimson: '#DC2626',
+              marigold: '#FBBF24',
+              clay: '#9A3412',
+              dark: '#0C0A09',
+              card: '#1C1917',
+              border: '#292524',
+              lawn: '#15803D',
+              cream: '#FEF3C7'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Marcellus"', '"Playfair Display"', 'serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          boxShadow: {
+            'glow-amber': '0 0 25px -5px rgba(217, 119, 6, 0.4)',
+            'glow-saffron': '0 0 35px -5px rgba(234, 88, 12, 0.45)',
+            'glow-gold': '0 0 20px -2px rgba(245, 158, 11, 0.3)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0c0a09;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #44403c;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #d97706;
+    }
+
+    /* Background noise and gradient accents */
+    .bg-dhaba-gradient {
+      background: radial-gradient(circle at 50% 10%, rgba(217, 119, 6, 0.15) 0%, rgba(12, 10, 9, 1) 75%);
+    }
+    
+    .dhaba-pattern {
+      background-image: radial-gradient(rgba(245, 158, 11, 0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Animated Tandoor Glow */
+    @keyframes flame-pulse {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    .flame-glow {
+      animation: flame-pulse 3s infinite ease-in-out;
+    }
+
+    /* Badge Shine */
+    .shine-effect {
+      position: relative;
+      overflow: hidden;
+    }
+    .shine-effect::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(60deg, transparent, rgba(255,255,255,0.15), transparent);
+      transform: rotate(30deg);
+      transition: all 0.7s ease;
+    }
+    .shine-effect:hover::after {
+      transform: rotate(30deg) translate(80%, 80%);
+    }
+
+    /* Veg/Non-Veg icons */
+    .icon-veg {
+      border: 2px solid #16a34a;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      background: rgba(22, 163, 74, 0.1);
+    }
+    .icon-veg::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #16a34a;
+    }
+
+    .icon-nonveg {
+      border: 2px solid #dc2626;
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      background: rgba(220, 38, 38, 0.1);
+    }
+    .icon-nonveg::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #dc2626;
+    }
+
+    /* Tab active state transition */
+    .tab-btn.active {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+      border-color: #f59e0b;
+    }
+  </style>
+</head>
+<body class="bg-dhaba-dark text-stone-200 font-sans antialiased dhaba-pattern selection:bg-amber-600 selection:text-white">
+
+  <!-- ================= TOP NOTICE TICKER ================= -->
+  <div class="bg-gradient-to-r from-dhaba-clay via-amber-900 to-dhaba-clay text-amber-100 text-xs sm:text-sm py-2 px-4 border-b border-amber-800/60">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40">
+          🔥 SPECIAL
+        </span>
+        <span class="font-medium truncate">Weekend Live Tandoori Night & Gazebo Dining • Book Your Party Lawn Early!</span>
+      </div>
+      <div class="flex items-center space-x-4 text-xs font-medium">
+        <span class="hidden md:inline-flex items-center text-amber-200">
+          <svg class="w-3.5 h-3.5 mr-1 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+          11:00 AM - 12:30 AM Daily
+        </span>
+        <a href="tel:+919876543210" class="hover:text-amber-300 flex items-center transition-colors font-bold text-amber-300">
+          <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 4V3z"></path></svg>
+          +91 98765 43210
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STICKY HEADER & NAVBAR ================= -->
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-stone-950/90 border-b border-stone-800/80 transition-all duration-300 shadow-xl" id="mainHeader">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo & Brand -->
+        <a href="#" class="flex items-center space-x-3 group">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-red-700 p-0.5 shadow-glow-amber group-hover:scale-105 transition-transform duration-300">
+            <div class="w-full h-full bg-stone-900 rounded-[10px] flex items-center justify-center border border-amber-500/30">
+              <!-- Clay Handi / Flame Logo Icon -->
+              <svg class="w-7 h-7 text-amber-400 group-hover:text-amber-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm0 18c-1.1 0-2 .9-2 2h4c0-1.1-.9-2-2-2zm-2-9c-.55 0-1-.45-1-1 0-1.66 1.34-3 3-3 .55 0 1 .45 1 1s-.45 1-1 1c-.55 0-1 .45-1 1 0 .55-.45 1-1 1z"/>
+              </svg>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="font-display text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200">
+                KACHARI PARADISE
+              </span>
+            </div>
+            <p class="text-[10px] uppercase tracking-widest text-amber-500 font-semibold">Dhaba & Party Lawns</p>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden lg:flex items-center space-x-7">
+          <a href="#about" class="text-stone-300 hover:text-amber-400 font-medium text-sm transition-colors">Our Story</a>
+          <a href="#menu" class="text-stone-300 hover:text-amber-400 font-medium text-sm transition-colors flex items-center">
+            <span>Dhaba Menu</span>
+            <span class="ml-1.5 px-1.5 py-0.5 text-[10px] bg-red-600/30 text-red-400 border border-red-500/40 rounded font-semibold">Tandoori</span>
+          </a>
+          <a href="#party-booking" class="text-amber-300 hover:text-amber-200 font-semibold text-sm transition-colors flex items-center group">
+            <span class="relative flex h-2 w-2 mr-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            Party & Lawn Booking
+          </a>
+          <a href="#ambience" class="text-stone-300 hover:text-amber-400 font-medium text-sm transition-colors">Lawn & Gazebos</a>
+          <a href="#location" class="text-stone-300 hover:text-amber-400 font-medium text-sm transition-colors">Location</a>
+          <a href="#contact" class="text-stone-300 hover:text-amber-400 font-medium text-sm transition-colors">Contact</a>
+        </nav>
+
+        <!-- CTA Buttons -->
+        <div class="hidden sm:flex items-center space-x-3">
+          <!-- WhatsApp Quick Action -->
+          <a href="https://wa.me/919876543210?text=Hi%20Kachari%20Paradise%20Dhaba,%20I%20would%20like%20to%20inquire%20about%20a%20table%20/%20party%20booking" 
+             target="_blank" 
+             class="px-3.5 py-2.5 rounded-xl border border-emerald-600/40 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60 hover:text-emerald-300 text-xs font-semibold flex items-center space-x-1.5 transition-all">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+            <span>WhatsApp</span>
+          </a>
+
+          <!-- Book Party Button -->
+          <a href="#party-booking" 
+             class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-stone-950 font-bold text-xs uppercase tracking-wider shadow-glow-amber hover:shadow-glow-saffron transition-all transform hover:-translate-y-0.5">
+            Book Party / Lawn
+          </a>
+        </div>
+
+        <!-- Mobile Menu Hamburger -->
+        <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+          </svg>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Mobile Drawer -->
+    <div id="mobileMenu" class="hidden lg:hidden border-b border-stone-800 bg-stone-950/95 backdrop-blur-xl px-4 pt-2 pb-6 space-y-3">
+      <a href="#about" class="block py-2 text-stone-200 hover:text-amber-400 font-medium">Our Story & Ambience</a>
+      <a href="#menu" class="block py-2 text-stone-200 hover:text-amber-400 font-medium">Dhaba Menu & Specials</a>
+      <a href="#party-booking" class="block py-2 text-amber-400 font-bold flex items-center justify-between">
+        <span>Party & Lawn Booking</span>
+        <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40">Packages</span>
+      </a>
+      <a href="#ambience" class="block py-2 text-stone-200 hover:text-amber-400 font-medium">Lawn, Gazebo & Hall Tour</a>
+      <a href="#location" class="block py-2 text-stone-200 hover:text-amber-400 font-medium">Location & Directions</a>
+      <a href="#contact" class="block py-2 text-stone-200 hover:text-amber-400 font-medium">Contact Numbers</a>
+      <div class="pt-3 border-t border-stone-800 flex flex-col gap-2">
+        <a href="tel:+919876543210" class="w-full py-2.5 rounded-lg bg-stone-800 text-center font-bold text-amber-400 text-sm">
+          📞 Call: +91 98765 43210
+        </a>
+        <a href="#party-booking" class="w-full py-2.5 rounded-lg bg-amber-500 text-stone-950 text-center font-bold text-sm shadow-glow-amber">
+          🎉 Reserve Party Lawn
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= HERO SECTION ================= -->
+  <section class="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-dhaba-gradient pt-8 pb-16">
+    <!-- Atmospheric Ambient Glows -->
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-600/15 rounded-full blur-[140px] pointer-events-none flame-glow"></div>
+    <div class="absolute -top-10 right-10 w-96 h-96 bg-red-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Hero Copy -->
+        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+          
+          <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-stone-900/90 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-medium shadow-md">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>⭐ Highway NH-27’s Most Loved Celebration Dhaba</span>
+          </div>
+
+          <h1 class="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-white leading-[1.15]">
+            Where Authentic <br class="hidden sm:inline">
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500">
+              Highway Dhaba Taste
+            </span><br>
+            Meets Royal Celebration.
+          </h1>
+
+          <p class="text-stone-300 text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 font-light leading-relaxed">
+            Relish slow-simmered 16-hour Dal Makhani, smoking charcoal tandoori kebabs, and pure desi ghee delicacies. Celebrate your special moments in our <strong class="text-amber-300 font-medium">fairy-lit party lawns, AC banquet hall, and private garden gazebos</strong>.
+          </p>
+
+          <!-- Key Highlights Badges -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 max-w-lg mx-auto lg:mx-0 text-left">
+            <div class="bg-stone-900/80 border border-stone-800 p-3 rounded-xl flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                🫓
+              </div>
+              <div>
+                <p class="text-xs text-stone-400">Clay Tandoor</p>
+                <p class="text-sm font-bold text-white">Live Smoked</p>
+              </div>
+            </div>
+
+            <div class="bg-stone-900/80 border border-stone-800 p-3 rounded-xl flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                🌿
+              </div>
+              <div>
+                <p class="text-xs text-stone-400">Open Party Lawn</p>
+                <p class="text-sm font-bold text-white">400+ Guests</p>
+              </div>
+            </div>
+
+            <div class="bg-stone-900/80 border border-stone-800 p-3 rounded-xl flex items-center space-x-3 col-span-2 sm:col-span-1">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                🚗
+              </div>
+              <div>
+                <p class="text-xs text-stone-400">Highway Parking</p>
+                <p class="text-sm font-bold text-white">120+ Cars Free</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+            <a href="#party-booking" 
+               class="w-full sm:w-auto px-7 py-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-stone-950 font-bold text-sm tracking-wide uppercase shadow-glow-saffron transition-all transform hover:-translate-y-0.5 text-center flex items-center justify-center space-x-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <span>Book Party / Event</span>
+            </a>
+
+            <a href="#menu" 
+               class="w-full sm:w-auto px-7 py-4 rounded-xl bg-stone-900/90 hover:bg-stone-800 text-amber-300 hover:text-white border border-stone-700 font-bold text-sm tracking-wide uppercase transition-all text-center flex items-center justify-center space-x-2">
+              <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+              <span>View Indian Menu</span>
+            </a>
+
+            <a href="tel:+919876543210" class="p-4 rounded-xl bg-stone-900/60 border border-stone-800 hover:border-amber-500/50 text-stone-300 hover:text-amber-400 transition" title="Direct Phone Call">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 4V3z"></path></svg>
+            </a>
+          </div>
+
+          <!-- Social Proof Rating -->
+          <div class="pt-4 flex items-center justify-center lg:justify-start space-x-4 border-t border-stone-800/80">
+            <div class="flex -space-x-2 overflow-hidden">
+              <img class="inline-block h-9 w-9 rounded-full ring-2 ring-stone-900 object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Customer">
+              <img class="inline-block h-9 w-9 rounded-full ring-2 ring-stone-900 object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80" alt="Customer">
+              <img class="inline-block h-9 w-9 rounded-full ring-2 ring-stone-900 object-cover" src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=120&q=80" alt="Customer">
+            </div>
+            <div>
+              <div class="flex items-center space-x-1 text-amber-400 text-sm">
+                <span>★★★★★</span>
+                <span class="text-white font-bold text-xs ml-1">4.8 / 5.0</span>
+              </div>
+              <p class="text-[11px] text-stone-400">Based on 1,420+ Google & Highway Traveler Reviews</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Hero Visual Showcase (Food & Party Lawn Montage) -->
+        <div class="lg:col-span-5 relative">
+          <div class="relative mx-auto max-w-md lg:max-w-none">
+            
+            <!-- Main Hero Image Card -->
+            <div class="relative rounded-3xl overflow-hidden border-2 border-amber-500/40 shadow-2xl shadow-amber-950/60 bg-stone-900 group">
+              <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=80" 
+                   alt="Authentic Indian Tandoor and Curries at Kachari Paradise Dhaba" 
+                   class="w-full h-[420px] object-cover group-hover:scale-105 transition-transform duration-700">
+              
+              <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/30 to-transparent"></div>
+
+              <!-- Floating Live Badge -->
+              <div class="absolute top-4 left-4 bg-stone-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-500/40 text-xs font-semibold text-amber-300 flex items-center space-x-1.5 shadow-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Tandoor Fired Daily • Desi Ghee Prep</span>
+              </div>
+
+              <!-- Bottom Image Card Content -->
+              <div class="absolute bottom-5 left-5 right-5 space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs uppercase tracking-wider text-amber-400 font-bold">Chef's Signature Feast</span>
+                  <span class="text-xs bg-red-600/80 text-white px-2 py-0.5 rounded font-bold">Must Try</span>
+                </div>
+                <h3 class="text-xl font-display font-bold text-white">Handi Butter Chicken & Slow Dal Makhani</h3>
+                <p class="text-xs text-stone-300 line-clamp-1">Served piping hot with crispy butter chur-chur naans in brassware.</p>
+              </div>
+            </div>
+
+            <!-- Floating Sub-Card 1: Party Lawn Celebration -->
+            <div class="absolute -bottom-8 -left-6 sm:-left-8 bg-stone-900/95 backdrop-blur-xl border border-amber-500/30 p-3.5 rounded-2xl shadow-xl flex items-center space-x-3 max-w-[260px] transform hover:scale-105 transition duration-300">
+              <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=150&q=80" 
+                   alt="Party Lawn Celebration" class="w-14 h-14 rounded-xl object-cover shrink-0 border border-amber-500/30">
+              <div>
+                <span class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Party Lawn</span>
+                <p class="text-xs font-bold text-white">Under the Stars</p>
+                <p class="text-[11px] text-stone-400">DJ, Bonfire & Buffet</p>
+              </div>
+            </div>
+
+            <!-- Floating Sub-Card 2: Highway Status -->
+            <div class="absolute -top-6 -right-4 sm:-right-6 bg-stone-900/95 backdrop-blur-xl border border-stone-700/80 p-3 rounded-2xl shadow-xl flex items-center space-x-2.5">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg">
+                📍
+              </div>
+              <div>
+                <p class="text-[10px] text-stone-400">NH-27 Highway Bypass</p>
+                <p class="text-xs font-bold text-white">15 Min from City</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT & AMBIENCE INTRO ================= -->
+  <section id="about" class="py-16 bg-stone-900/40 border-y border-stone-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-3 mb-12">
+        <span class="text-amber-500 font-semibold text-xs uppercase tracking-widest">Heritage & Hospitality</span>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">
+          The Authentic Highway Dhaba Experience, <br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">Reimagined with Luxury</span>
+        </h2>
+        <p class="text-stone-400 text-sm sm:text-base">
+          Rooted in rich North Indian and rustic local culinary traditions, Kachari Paradise Dhaba gives you the hearty roadside soul food you crave, paired with lush open green lawns, private bamboo gazebos, and a grand AC banquet hall for memorable celebrations.
+        </p>
+      </div>
+
+      <!-- Feature Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-6 hover:border-amber-500/40 transition group">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+            🔥
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Woodfire & Clay Tandoor</h3>
+          <p class="text-stone-400 text-xs sm:text-sm leading-relaxed">
+            Our traditional clay ovens burn fresh hardwood charcoal daily, lending that unmistakable smoky aroma to every naan, kulcha, and tandoori kebab we serve.
+          </p>
+        </div>
+
+        <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-6 hover:border-amber-500/40 transition group">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-700/20 border border-emerald-500/30 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+            🎪
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">The Grand Party Lawns</h3>
+          <p class="text-stone-400 text-xs sm:text-sm leading-relaxed">
+            Spanning over 25,000 sq.ft of lush landscaped grass decorated with fairy light canopies, bonfire pits, stage setups, and customized catering for up to 400 guests.
+          </p>
+        </div>
+
+        <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-6 hover:border-amber-500/40 transition group">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-red-700/20 border border-red-500/30 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+            🍲
+          </div>
+          <h3 class="text-lg font-bold text-white mb-2">Pure Desi Ghee & Quality</h3>
+          <p class="text-stone-400 text-xs sm:text-sm leading-relaxed">
+            We cook with pure clarified butter, freshly ground whole spices, 100% RO filtered water, and locally sourced ingredients. Hygiene and rich taste guaranteed.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= MENU SECTION ================= -->
+  <section id="menu" class="py-20 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+        <div>
+          <span class="text-amber-500 font-semibold text-xs uppercase tracking-widest">Aromatic Indian Delicacies</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mt-1">
+            Our Iconic <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">Dhaba Menu</span>
+          </h2>
+          <p class="text-stone-400 text-sm max-w-xl mt-2">
+            Every dish is prepared fresh upon order using age-old highway recipes, slow-simmered gravies, and aromatic whole spices.
+          </p>
+        </div>
+
+        <!-- Veg / Non-Veg Toggle & Search -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Search Input -->
+          <div class="relative">
+            <input type="text" id="menuSearchInput" placeholder="Search dish (e.g. Butter Chicken)..." 
+                   class="bg-stone-900 border border-stone-700 rounded-xl px-4 py-2.5 pl-10 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500 w-64 transition">
+            <svg class="w-4 h-4 text-stone-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+
+          <!-- Quick Veg/Non-Veg Filter Buttons -->
+          <div class="flex items-center bg-stone-900 p-1 rounded-xl border border-stone-800">
+            <button id="dietFilterAll" onclick="setDietFilter('all')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-stone-800 text-amber-300 transition">
+              All
+            </button>
+            <button id="dietFilterVeg" onclick="setDietFilter('veg')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-emerald-400 flex items-center space-x-1 transition">
+              <span class="icon-veg !w-3 !h-3"></span>
+              <span>Veg Only</span>
+            </button>
+            <button id="dietFilterNonVeg" onclick="setDietFilter('non-veg')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 hover:text-red-400 flex items-center space-x-1 transition">
+              <span class="icon-nonveg !w-3 !h-3"></span>
+              <span>Non-Veg</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="flex overflow-x-auto pb-4 gap-2.5 no-scrollbar border-b border-stone-800 mb-8" id="categoryTabs">
+        <button onclick="setCategory('all')" data-category="all" class="tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-stone-700 whitespace-nowrap transition-all">
+          🔥 All Delicacies
+        </button>
+        <button onclick="setCategory('starters')" data-category="starters" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900/60 border border-stone-800 whitespace-nowrap transition-all">
+          🍗 Tandoor & Kebabs
+        </button>
+        <button onclick="setCategory('mains')" data-category="mains" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900/60 border border-stone-800 whitespace-nowrap transition-all">
+          🥘 Handi & Kadhai Curries
+        </button>
+        <button onclick="setCategory('breads-rice')" data-category="breads-rice" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900/60 border border-stone-800 whitespace-nowrap transition-all">
+          🍚 Biryani & Fresh Breads
+        </button>
+        <button onclick="setCategory('thalis')" data-category="thalis" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900/60 border border-stone-800 whitespace-nowrap transition-all">
+          🍱 Highway Thalis
+        </button>
+        <button onclick="setCategory('desserts-drinks')" data-category="desserts-drinks" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900/60 border border-stone-800 whitespace-nowrap transition-all">
+          🍨 Sweets & Kulhad Chai
+        </button>
+      </div>
+
+      <!-- Menu Items Grid -->
+      <div id="menuGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+      <!-- Wishlist / Add to Party Menu Notification Pill -->
+      <div id="partyMenuBanner" class="hidden mt-10 p-5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-stone-900 to-amber-950/80 border border-amber-500/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-3 text-center sm:text-left">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+            📋
+          </div>
+          <div>
+            <p class="text-sm font-bold text-white"><span id="selectedWishlistCount">0</span> Dishes Selected for Party Planning</p>
+            <p class="text-xs text-stone-400">Include your favorite dishes into your party catering quote.</p>
+          </div>
+        </div>
+        <a href="#party-booking" onclick="switchPartyTab('packages')" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs uppercase tracking-wider transition shrink-0">
+          Customize Party Package →
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= PARTY & EVENT BOOKING SECTION (CORE HIGHLIGHT) ================= -->
+  <section id="party-booking" class="py-20 relative bg-gradient-to-b from-stone-900/80 via-stone-950 to-stone-900/80 border-t border-stone-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Title & Intro -->
+      <div class="text-center max-w-3xl mx-auto space-y-3 mb-12">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          🎉 HOST YOUR UNFORGETTABLE MOMENTS
+        </span>
+        <h2 class="font-display text-3xl sm:text-5xl font-bold text-white tracking-tight">
+          Party Lawn & Banquet Booking
+        </h2>
+        <p class="text-stone-300 text-sm sm:text-base">
+          From high-energy birthday bashes, anniversary galas, and pre-wedding Sangeet nights to corporate retreats. Customize your guest count, delicious dhaba packages, and get an instant cost estimate.
+        </p>
+      </div>
+
+      <!-- Party Navigation Tabs -->
+      <div class="flex justify-center mb-10">
+        <div class="bg-stone-900/90 p-1.5 rounded-2xl border border-stone-800 flex flex-wrap gap-1 max-w-2xl w-full justify-center">
+          <button onclick="switchPartyTab('calculator')" id="tabPartyCalc" 
+                  class="flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-md transition">
+            🧮 Cost Calculator & Form
+          </button>
+          <button onclick="switchPartyTab('packages')" id="tabPartyPkg" 
+                  class="flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-stone-300 hover:text-white transition">
+            👑 Buffet Packages
+          </button>
+          <button onclick="switchPartyTab('venues')" id="tabPartyVenue" 
+                  class="flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-stone-300 hover:text-white transition">
+            🏛️ Venues & Capacities
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: INTERACTIVE PARTY CALCULATOR & FORM -->
+      <div id="partyTabCalculator" class="space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          <!-- Left Column: Interactive Calculator Options -->
+          <div class="lg:col-span-7 bg-stone-900/90 border border-stone-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+            <h3 class="text-xl font-display font-bold text-white flex items-center justify-between border-b border-stone-800 pb-4">
+              <span>Step 1: Customize Your Celebration</span>
+              <span class="text-xs font-sans font-normal text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">Instant Estimate</span>
+            </h3>
+
+            <!-- 1. Event Type -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-stone-300 uppercase tracking-wider">Select Occasion</label>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="occasionSelector">
+                <button type="button" onclick="selectOccasion(this, 'Birthday Bash')" class="occasion-btn active p-3 rounded-xl border border-amber-500 bg-amber-500/10 text-amber-300 text-xs font-bold text-left transition flex items-center space-x-2">
+                  <span>🎂</span><span>Birthday Bash</span>
+                </button>
+                <button type="button" onclick="selectOccasion(this, 'Anniversary Gala')" class="occasion-btn p-3 rounded-xl border border-stone-800 bg-stone-950/60 text-stone-300 hover:border-stone-700 text-xs font-bold text-left transition flex items-center space-x-2">
+                  <span>💍</span><span>Anniversary</span>
+                </button>
+                <button type="button" onclick="selectOccasion(this, 'Corporate Outing')" class="occasion-btn p-3 rounded-xl border border-stone-800 bg-stone-950/60 text-stone-300 hover:border-stone-700 text-xs font-bold text-left transition flex items-center space-x-2">
+                  <span>💼</span><span>Corporate Outing</span>
+                </button>
+                <button type="button" onclick="selectOccasion(this, 'Family Reunion')" class="occasion-btn p-3 rounded-xl border border-stone-800 bg-stone-950/60 text-stone-300 hover:border-stone-700 text-xs font-bold text-left transition flex items-center space-x-2">
+                  <span>👨‍👩‍👧‍👦</span><span>Family Reunion</span>
+                </button>
+                <button type="button" onclick="selectOccasion(this, 'Pre-Wedding / Sangeet')" class="occasion-btn p-3 rounded-xl border border-stone-800 bg-stone-950/60 text-stone-300 hover:border-stone-700 text-xs font-bold text-left transition flex items-center space-x-2">
+                  <span>💃</span><span>Sangeet / Haldi</span>
+                </button>
+                <button type="button" onclick="selectOccasion(this, 'Kitty / Friends Night')" class="occasion-btn p-3 rounded-xl border border-stone-800 bg-stone-950/60 text-stone-300 hover:border-stone-700 text-xs font-bold text-left transition flex items-center space-x-2">
+                  <span>🥂</span><span>Friends Get-Together</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Guest Count Slider -->
+            <div class="space-y-3 bg-stone-950/60 p-4 rounded-2xl border border-stone-800/80">
+              <div class="flex justify-between items-center">
+                <label class="text-xs font-semibold text-stone-300 uppercase tracking-wider">Number of Guests</label>
+                <div class="flex items-center space-x-2">
+                  <span id="guestCountDisplay" class="text-2xl font-black text-amber-400">50</span>
+                  <span class="text-xs text-stone-400">People</span>
+                </div>
+              </div>
+              <input type="range" id="guestSlider" min="15" max="400" step="5" value="50" oninput="updateGuestCount(this.value)"
+                     class="w-full accent-amber-500 bg-stone-800 rounded-lg h-2 cursor-pointer">
+              <div class="flex justify-between text-[11px] text-stone-500">
+                <span>15 Guests (Min Gazebo)</span>
+                <span>100 (Banquet Hall)</span>
+                <span>400+ (Grand Lawn)</span>
+              </div>
+            </div>
+
+            <!-- 3. Venue Preference -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-stone-300 uppercase tracking-wider">Choose Preferred Zone</label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="venueSelector">
+                <label class="cursor-pointer border border-amber-500/60 bg-amber-500/10 rounded-xl p-3.5 flex flex-col space-y-1 transition" id="venueCardLawn">
+                  <input type="radio" name="partyVenue" value="Grand Lawn" checked onchange="updateVenue('Grand Lawn')" class="hidden">
+                  <span class="text-xs font-bold text-amber-300">🌿 Grand Lawn</span>
+                  <span class="text-[11px] text-stone-400">Open-air, fairy lights & bonfire</span>
+                </label>
+                <label class="cursor-pointer border border-stone-800 bg-stone-950/60 rounded-xl p-3.5 flex flex-col space-y-1 hover:border-stone-700 transition" id="venueCardBanquet">
+                  <input type="radio" name="partyVenue" value="AC Banquet Hall" onchange="updateVenue('AC Banquet Hall')" class="hidden">
+                  <span class="text-xs font-bold text-stone-200">🏛️ AC Banquet Hall</span>
+                  <span class="text-[11px] text-stone-400">Soundproof luxury indoor</span>
+                </label>
+                <label class="cursor-pointer border border-stone-800 bg-stone-950/60 rounded-xl p-3.5 flex flex-col space-y-1 hover:border-stone-700 transition" id="venueCardGazebo">
+                  <input type="radio" name="partyVenue" value="Private Bamboo Gazebo" onchange="updateVenue('Private Bamboo Gazebo')" class="hidden">
+                  <span class="text-xs font-bold text-stone-200">🎋 Garden Gazebos</span>
+                  <span class="text-[11px] text-stone-400">Cozy private dining cabana</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 4. Buffet Package Selection -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-stone-300 uppercase tracking-wider">Buffet Feast Tier</label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="packageSelector">
+                
+                <div onclick="selectPackage('silver', 599)" id="pkgCardSilver" 
+                     class="cursor-pointer p-4 rounded-xl border border-stone-800 bg-stone-950/60 hover:border-stone-700 transition space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-stone-300">Silver Treat</span>
+                    <span class="text-sm font-black text-amber-400">₹599<span class="text-[10px] text-stone-500 font-normal">/head</span></span>
+                  </div>
+                  <p class="text-[11px] text-stone-400">2 Starters, Dal Makhani, 2 Mains, Naan, Rice, 1 Dessert, Welcome Drink.</p>
+                </div>
+
+                <div onclick="selectPackage('gold', 799)" id="pkgCardGold" 
+                     class="cursor-pointer p-4 rounded-xl border-2 border-amber-500 bg-amber-500/10 transition space-y-2 relative shadow-glow-amber">
+                  <span class="absolute -top-2.5 right-3 bg-amber-500 text-stone-950 text-[10px] uppercase font-black px-2 py-0.5 rounded-full">Most Popular</span>
+                  <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-amber-300">Gold Carnival</span>
+                    <span class="text-sm font-black text-amber-400">₹799<span class="text-[10px] text-stone-500 font-normal">/head</span></span>
+                  </div>
+                  <p class="text-[11px] text-stone-400">4 Starters (Live Tandoor), 3 Mains, Biryani with Raita, 2 Desserts, Mocktails.</p>
+                </div>
+
+                <div onclick="selectPackage('royal', 1099)" id="pkgCardRoyal" 
+                     class="cursor-pointer p-4 rounded-xl border border-stone-800 bg-stone-950/60 hover:border-stone-700 transition space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-stone-300">Royal Grand Feast</span>
+                    <span class="text-sm font-black text-amber-400">₹1,099<span class="text-[10px] text-stone-500 font-normal">/head</span></span>
+                  </div>
+                  <p class="text-[11px] text-stone-400">Unlimited Tandoor, 5 Mains (Mutton, Prawns, Butter Chicken), Dum Biryani, Live Jalebi counter.</p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- 5. Experience Add-ons -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-stone-300 uppercase tracking-wider">Party Add-ons & Entertainment (Optional)</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                
+                <label class="flex items-center space-x-3 p-3 rounded-xl border border-stone-800 bg-stone-950/40 cursor-pointer hover:border-stone-700">
+                  <input type="checkbox" id="addonDJ" onchange="calculateTotal()" class="accent-amber-500 w-4 h-4 rounded">
+                  <div class="text-xs">
+                    <span class="font-bold text-stone-200">🎧 DJ Setup & Sound System</span>
+                    <p class="text-stone-400 text-[11px]">+₹5,000 (Flat)</p>
+                  </div>
+                </label>
+
+                <label class="flex items-center space-x-3 p-3 rounded-xl border border-stone-800 bg-stone-950/40 cursor-pointer hover:border-stone-700">
+                  <input type="checkbox" id="addonDecor" onchange="calculateTotal()" class="accent-amber-500 w-4 h-4 rounded">
+                  <div class="text-xs">
+                    <span class="font-bold text-stone-200">🎈 Thematic Floral & Balloon Décor</span>
+                    <p class="text-stone-400 text-[11px]">+₹4,500 (Flat)</p>
+                  </div>
+                </label>
+
+                <label class="flex items-center space-x-3 p-3 rounded-xl border border-stone-800 bg-stone-950/40 cursor-pointer hover:border-stone-700">
+                  <input type="checkbox" id="addonBonfire" onchange="calculateTotal()" class="accent-amber-500 w-4 h-4 rounded">
+                  <div class="text-xs">
+                    <span class="font-bold text-stone-200">🔥 Rustic Bonfire & Acoustic Setup</span>
+                    <p class="text-stone-400 text-[11px]">+₹3,500 (Flat)</p>
+                  </div>
+                </label>
+
+                <label class="flex items-center space-x-3 p-3 rounded-xl border border-stone-800 bg-stone-950/40 cursor-pointer hover:border-stone-700">
+                  <input type="checkbox" id="addonCake" onchange="calculateTotal()" class="accent-amber-500 w-4 h-4 rounded">
+                  <div class="text-xs">
+                    <span class="font-bold text-stone-200">🎂 Celebration Cake (1.5 kg)</span>
+                    <p class="text-stone-400 text-[11px]">+₹1,200 (Custom Flavor)</p>
+                  </div>
+                </label>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Booking Summary & Host Form -->
+          <div class="lg:col-span-5 bg-stone-900 border border-amber-500/30 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+            <div class="absolute -top-3 right-6 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-black text-[10px] uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+              Step 2: Reserve Your Date
+            </div>
+
+            <div>
+              <h3 class="text-lg font-display font-bold text-white">Party Cost Breakdown</h3>
+              <p class="text-xs text-stone-400">Transparent pricing. No hidden cover charges.</p>
+            </div>
+
+            <!-- Price Breakdown Box -->
+            <div class="bg-stone-950/80 rounded-2xl p-4 border border-stone-800 space-y-2.5 text-xs">
+              <div class="flex justify-between text-stone-300">
+                <span>Occasion & Zone:</span>
+                <span id="summaryOccasionZone" class="font-bold text-amber-300">Birthday Bash • Grand Lawn</span>
+              </div>
+              <div class="flex justify-between text-stone-300">
+                <span>Food Package (<span id="summaryGuests">50</span> × ₹<span id="summaryRate">799</span>):</span>
+                <span id="summaryFoodCost" class="font-bold text-white">₹39,950</span>
+              </div>
+              <div class="flex justify-between text-stone-300">
+                <span>Add-ons & Entertainment:</span>
+                <span id="summaryAddonsCost" class="font-bold text-white">₹0</span>
+              </div>
+              <div class="flex justify-between text-stone-300">
+                <span>Lawn Space & Housekeeping:</span>
+                <span class="font-bold text-emerald-400">Complimentary (₹0)</span>
+              </div>
+              <div class="pt-2 border-t border-stone-800 flex justify-between items-baseline">
+                <span class="text-sm font-bold text-white">Estimated Total:</span>
+                <div class="text-right">
+                  <span id="summaryTotalCost" class="text-2xl font-black text-amber-400">₹39,950</span>
+                  <p class="text-[10px] text-stone-400">Advance to lock date: 25% (₹<span id="summaryAdvance">9,987</span>)</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Host Registration Form -->
+            <form id="partyBookingForm" onsubmit="handlePartyBooking(event)" class="space-y-3.5">
+              
+              <div>
+                <label class="block text-xs font-semibold text-stone-300 mb-1">Host Full Name *</label>
+                <input type="text" id="hostName" required placeholder="e.g. Christopher Basumatary" 
+                       class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-stone-300 mb-1">Mobile / WhatsApp *</label>
+                  <input type="tel" id="hostPhone" required placeholder="e.g. 9876543210" 
+                         class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-stone-300 mb-1">Event Date *</label>
+                  <input type="date" id="eventDate" required 
+                         class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-stone-300 mb-1">Preferred Time Slot *</label>
+                <select id="timeSlot" class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+                  <option value="Dinner & Bonfire (07:00 PM - 11:30 PM)">Dinner & Bonfire Party (07:00 PM - 11:30 PM)</option>
+                  <option value="Afternoon Lunch (12:00 PM - 04:00 PM)">Afternoon Lunch Feast (12:00 PM - 04:00 PM)</option>
+                  <option value="Late Night Tandoor (09:00 PM - 01:00 AM)">Late Night Tandoor Session (09:00 PM - 01:00 AM)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-stone-300 mb-1">Special Wishes / Menu Notes (Optional)</label>
+                <textarea id="hostNotes" rows="2" placeholder="e.g., Extra spicy kebabs, kids corner, anniversary surprise cake..." 
+                          class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2 text-xs text-stone-200 focus:outline-none focus:border-amber-500"></textarea>
+              </div>
+
+              <button type="submit" 
+                      class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-stone-950 font-bold text-sm uppercase tracking-wider shadow-glow-amber transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+                <span>Confirm & Send Inquiry on WhatsApp 📲</span>
+              </button>
+
+              <div class="text-center">
+                <p class="text-[11px] text-stone-400">
+                  ⚡ Instant WhatsApp summary sent to Dhaba manager for immediate date confirmation.
+                </p>
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 2: PACKAGES COMPARISON TABLE -->
+      <div id="partyTabPackages" class="hidden space-y-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <!-- Silver Package Card -->
+          <div class="bg-stone-900/90 border border-stone-800 rounded-3xl p-6 space-y-5 flex flex-col justify-between">
+            <div class="space-y-3">
+              <span class="text-xs font-bold text-stone-400 uppercase tracking-widest">Highway Classic</span>
+              <h3 class="text-2xl font-bold text-white">Silver Feast</h3>
+              <div class="flex items-baseline space-x-1">
+                <span class="text-3xl font-black text-amber-400">₹599</span>
+                <span class="text-xs text-stone-400">/ per guest</span>
+              </div>
+              <p class="text-xs text-stone-400">Ideal for family reunions, birthdays, and highway group get-togethers.</p>
+              <ul class="space-y-2 text-xs text-stone-300 pt-3 border-t border-stone-800">
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>2 Appetizers (Paneer Tikka + Murgh Tikka)</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Paradise 16-Hour Dal Makhani</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Kadhai Paneer & Highway Chicken Curry</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Assorted Butter Naans & Laccha Paratha</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Jeera Rice & Burani Raita</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Warm Gulab Jamun with Rabdi</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Welcome Masala Shikanji</span></li>
+              </ul>
+            </div>
+            <button onclick="selectPackageAndGo('silver', 599)" class="w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-xs uppercase transition">
+              Select Silver Package
+            </button>
+          </div>
+
+          <!-- Gold Package Card -->
+          <div class="bg-stone-900 border-2 border-amber-500 rounded-3xl p-6 space-y-5 flex flex-col justify-between relative shadow-glow-amber">
+            <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-stone-950 font-black text-[10px] uppercase tracking-wider px-3 py-0.5 rounded-full">
+              Recommended for Parties
+            </span>
+            <div class="space-y-3">
+              <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Tandoori Carnival</span>
+              <h3 class="text-2xl font-bold text-white">Gold Carnival Feast</h3>
+              <div class="flex items-baseline space-x-1">
+                <span class="text-3xl font-black text-amber-400">₹799</span>
+                <span class="text-xs text-stone-400">/ per guest</span>
+              </div>
+              <p class="text-xs text-stone-400">Live charcoal tandoor counters with rich gravies and biryani.</p>
+              <ul class="space-y-2 text-xs text-stone-300 pt-3 border-t border-stone-800">
+                <li class="flex items-center space-x-2"><span class="text-amber-400 font-bold">✔</span> <span><strong>4 Appetizers:</strong> Bhatti Murgh, Mutton Seekh, Paneer Sufiyana, Kurkuri Bhindi</span></li>
+                <li class="flex items-center space-x-2"><span class="text-amber-400 font-bold">✔</span> <span>Highway Butter Chicken & Champaran Mutton Curry</span></li>
+                <li class="flex items-center space-x-2"><span class="text-amber-400 font-bold">✔</span> <span>Paneer Lababdar & 16-Hour Dal Makhani</span></li>
+                <li class="flex items-center space-x-2"><span class="text-amber-400 font-bold">✔</span> <span>Kachari Royal Dum Murgh Biryani & Subz Biryani</span></li>
+                <li class="flex items-center space-x-2"><span class="text-amber-400 font-bold">✔</span> <span>Garlic Naan, Missi Roti & Amritsari Chur-Chur</span></li>
+                <li class="flex items-center space-x-2"><span class="text-amber-400 font-bold">✔</span> <span>Matka Kulfi + Hot Gulab Jamun</span></li>
+                <li class="flex items-center space-x-2"><span class="text-amber-400 font-bold">✔</span> <span>Thick Amritsari Kulhad Lassi Welcome Drink</span></li>
+              </ul>
+            </div>
+            <button onclick="selectPackageAndGo('gold', 799)" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs uppercase shadow-md transition">
+              Select Gold Package
+            </button>
+          </div>
+
+          <!-- Royal Package Card -->
+          <div class="bg-stone-900/90 border border-stone-800 rounded-3xl p-6 space-y-5 flex flex-col justify-between">
+            <div class="space-y-3">
+              <span class="text-xs font-bold text-amber-500 uppercase tracking-widest">Royal Grand Feast</span>
+              <h3 class="text-2xl font-bold text-white">Maharaja Banquet</h3>
+              <div class="flex items-baseline space-x-1">
+                <span class="text-3xl font-black text-amber-400">₹1,099</span>
+                <span class="text-xs text-stone-400">/ per guest</span>
+              </div>
+              <p class="text-xs text-stone-400">Unlimited skewers, royal mutton rogan josh, live jalebi & chaat.</p>
+              <ul class="space-y-2 text-xs text-stone-300 pt-3 border-t border-stone-800">
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Unlimited Live Tandoori Counters (6 Starters incl. Fish Tikka)</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>5 Royal Mains (Mutton Handi, Prawns Sukha, Butter Chicken, Paneer Lababdar)</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Kachari Gosht Dum Biryani & Fragrant Ghee Pulao</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Live Hot Rabdi Jalebi + Gulab Jamun + Ice Cream</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Unlimited Mocktails, Fresh Lime Soda & Kulhad Chai</span></li>
+                <li class="flex items-center space-x-2"><span class="text-emerald-400">✔</span> <span>Complimentary Welcome Cake & Stage Setup</span></li>
+              </ul>
+            </div>
+            <button onclick="selectPackageAndGo('royal', 1099)" class="w-full py-3 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-xs uppercase transition">
+              Select Royal Package
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 3: VENUES & CAPACITIES -->
+      <div id="partyTabVenues" class="hidden space-y-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <div class="bg-stone-900 rounded-3xl overflow-hidden border border-stone-800 group">
+            <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=600&q=80" 
+                 alt="Grand Lawn" class="w-full h-48 object-cover group-hover:scale-105 transition duration-500">
+            <div class="p-6 space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-bold">Up to 400 Guests</span>
+                <span class="text-xs text-stone-400">Outdoor Lawn</span>
+              </div>
+              <h3 class="text-xl font-bold text-white">The Paradise Grand Lawn</h3>
+              <p class="text-xs text-stone-300 leading-relaxed">
+                Lush natural grass under open skies adorned with warm amber fairy canopies, open-fire bonfire pits, and live food counters.
+              </p>
+              <button onclick="selectVenueAndCalculate('Grand Lawn')" class="w-full py-2.5 rounded-xl bg-stone-800 hover:bg-amber-500 hover:text-stone-950 font-bold text-xs text-amber-300 transition">
+                Book This Lawn
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-stone-900 rounded-3xl overflow-hidden border border-stone-800 group">
+            <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=600&q=80" 
+                 alt="AC Banquet Hall" class="w-full h-48 object-cover group-hover:scale-105 transition duration-500">
+            <div class="p-6 space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-bold">Up to 150 Guests</span>
+                <span class="text-xs text-stone-400">Indoor AC</span>
+              </div>
+              <h3 class="text-xl font-bold text-white">Royal AC Banquet Hall</h3>
+              <p class="text-xs text-stone-300 leading-relaxed">
+                Fully air-conditioned luxury hall equipped with surround sound acoustics, stage lighting, and round-table family dining setup.
+              </p>
+              <button onclick="selectVenueAndCalculate('AC Banquet Hall')" class="w-full py-2.5 rounded-xl bg-stone-800 hover:bg-amber-500 hover:text-stone-950 font-bold text-xs text-amber-300 transition">
+                Book Banquet Hall
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-stone-900 rounded-3xl overflow-hidden border border-stone-800 group">
+            <img src="https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80" 
+                 alt="Bamboo Gazebo Cabana" class="w-full h-48 object-cover group-hover:scale-105 transition duration-500">
+            <div class="p-6 space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded font-bold">15 - 40 Guests</span>
+                <span class="text-xs text-stone-400">Private Cabana</span>
+              </div>
+              <h3 class="text-xl font-bold text-white">Private Bamboo Gazebos</h3>
+              <p class="text-xs text-stone-300 leading-relaxed">
+                Cozy, semi-private thatched cottages with traditional charpai and cushion seating. Ideal for private family celebrations & intimate dinners.
+              </p>
+              <button onclick="selectVenueAndCalculate('Private Bamboo Gazebo')" class="w-full py-2.5 rounded-xl bg-stone-800 hover:bg-amber-500 hover:text-stone-950 font-bold text-xs text-amber-300 transition">
+                Book Private Gazebo
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= AMBIENCE & GALLERY ================= -->
+  <section id="ambience" class="py-20 border-b border-stone-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-2xl mx-auto mb-12 space-y-2">
+        <span class="text-amber-500 font-semibold text-xs uppercase tracking-widest">Visual Tour</span>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Feel the Highway Oasis Vibe</h2>
+        <p class="text-stone-400 text-sm">Where the rustic charm of rural Punjab meets modern resort comfort.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <div class="relative rounded-2xl overflow-hidden group h-64 border border-stone-800">
+          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=600&q=80" 
+               alt="Tandoori Kebabs Sizzling" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-80"></div>
+          <span class="absolute bottom-3 left-3 text-xs font-bold text-amber-300">Live Charcoal Kebabs</span>
+        </div>
+
+        <div class="relative rounded-2xl overflow-hidden group h-64 border border-stone-800">
+          <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80" 
+               alt="Warm Indoor Dhaba Dining" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-80"></div>
+          <span class="absolute bottom-3 left-3 text-xs font-bold text-amber-300">Cozy Family Dining</span>
+        </div>
+
+        <div class="relative rounded-2xl overflow-hidden group h-64 border border-stone-800">
+          <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=600&q=80" 
+               alt="Night Lawn with Fairy Lights" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-80"></div>
+          <span class="absolute bottom-3 left-3 text-xs font-bold text-amber-300">Fairy-Lit Night Lawns</span>
+        </div>
+
+        <div class="relative rounded-2xl overflow-hidden group h-64 border border-stone-800">
+          <img src="https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=600&q=80" 
+               alt="Butter Chicken Handi" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+          <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-transparent to-transparent opacity-80"></div>
+          <span class="absolute bottom-3 left-3 text-xs font-bold text-amber-300">Handi Special Curries</span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= LOCATION & GETTING HERE ================= -->
+  <section id="location" class="py-20 bg-stone-900/60 border-b border-stone-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left: Location Details & Amenities -->
+        <div class="lg:col-span-6 space-y-6">
+          <div>
+            <span class="text-amber-500 font-semibold text-xs uppercase tracking-widest">Highway Junction</span>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-white mt-1">
+              Easy to Reach on <br>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">National Highway NH-27</span>
+            </h2>
+            <p class="text-stone-300 text-sm mt-3 leading-relaxed">
+              Conveniently located on the scenic Highway Bypass just 15 minutes drive from the main city. A peaceful green sanctuary far away from traffic jams, with massive dedicated parking for cars and tourist coaches.
+            </p>
+          </div>
+
+          <!-- Address Card -->
+          <div class="bg-stone-950 p-5 rounded-2xl border border-stone-800 space-y-3">
+            <div class="flex items-start space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                📍
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Kachari Paradise Dhaba & Resort</h4>
+                <p class="text-xs text-stone-300 mt-0.5" id="fullAddressText">
+                  NH-27 Highway Bypass (Near Green Valley Toll Plaza & Kachari Gaon Junction), Pin 781035
+                </p>
+                <div class="flex items-center space-x-3 mt-3">
+                  <button onclick="copyAddress()" class="text-[11px] font-semibold text-amber-400 hover:text-amber-300 flex items-center space-x-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span id="copyAddressBtnText">Copy Address</span>
+                  </button>
+                  <span class="text-stone-600">•</span>
+                  <a href="https://maps.google.com/?q=Kachari+Paradise+Dhaba" target="_blank" class="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 flex items-center space-x-1">
+                    <span>Open in Google Maps ↗</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Distance & Travel Milestones -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 flex items-center space-x-3">
+              <span class="text-xl">🏙️</span>
+              <div>
+                <p class="text-[10px] text-stone-400">From City Center</p>
+                <p class="text-xs font-bold text-white">15 Minutes Drive</p>
+              </div>
+            </div>
+            <div class="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 flex items-center space-x-3">
+              <span class="text-xl">✈️</span>
+              <div>
+                <p class="text-[10px] text-stone-400">From Airport Junction</p>
+                <p class="text-xs font-bold text-white">25 Minutes Smooth Highway</p>
+              </div>
+            </div>
+            <div class="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 flex items-center space-x-3">
+              <span class="text-xl">🅿️</span>
+              <div>
+                <p class="text-[10px] text-stone-400">Dedicated Parking</p>
+                <p class="text-xs font-bold text-white">120+ Cars • Valet Free</p>
+              </div>
+            </div>
+            <div class="bg-stone-950/80 p-3.5 rounded-xl border border-stone-800 flex items-center space-x-3">
+              <span class="text-xl">⚡</span>
+              <div>
+                <p class="text-[10px] text-stone-400">EV Fast Charging</p>
+                <p class="text-xs font-bold text-white">60kW DC Fast Charger</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex flex-wrap gap-3 pt-2">
+            <a href="https://maps.google.com/?q=Kachari+Paradise+Dhaba" target="_blank" 
+               class="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs uppercase tracking-wider flex items-center space-x-2 transition shadow-glow-amber">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+              <span>Get Driving Directions</span>
+            </a>
+
+            <a href="https://wa.me/?text=Check%20out%20Kachari%20Paradise%20Dhaba%20location:%20https://maps.google.com/?q=Kachari+Paradise+Dhaba" target="_blank" 
+               class="px-5 py-3 rounded-xl bg-stone-950 border border-stone-700 hover:border-emerald-500 text-stone-300 hover:text-emerald-400 font-bold text-xs uppercase tracking-wider flex items-center space-x-2 transition">
+              <span>Share Location on WhatsApp</span>
+            </a>
+          </div>
+
+        </div>
+
+        <!-- Right: Map Container with styled interactive iframe -->
+        <div class="lg:col-span-6">
+          <div class="rounded-3xl overflow-hidden border-2 border-stone-800 shadow-2xl relative bg-stone-900 group">
+            
+            <!-- Map Embed -->
+            <div class="w-full h-[400px] sm:h-[450px]">
+              <iframe 
+                title="Kachari Paradise Dhaba Location" 
+                class="w-full h-full border-0 filter contrast-125 saturate-125"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d114631.57467776517!2d91.7362365!3d26.1445169!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x375a5a287f9133ff%3A0x2fe7d1e878772a11!2sNational%20Highway%2027!5e0!3m2!1sen!2sin!4v1700000000000" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
+            </div>
+
+            <!-- Overlaid Quick Guide Card -->
+            <div class="absolute bottom-4 left-4 right-4 bg-stone-950/95 backdrop-blur-md p-4 rounded-2xl border border-amber-500/30 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-white">Look for the Glowing Tandoor Archway 🪔</p>
+                <p class="text-[11px] text-stone-400">Direct highway entrance on left before the toll plaza.</p>
+              </div>
+              <a href="tel:+919876543212" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold shrink-0 hover:bg-amber-500/30">
+                Call for Directions
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= CONTACT DETAILS & TIMINGS ================= -->
+  <section id="contact" class="py-20 relative bg-dhaba-gradient">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Header -->
+      <div class="text-center max-w-2xl mx-auto mb-14 space-y-2">
+        <span class="text-amber-500 font-semibold text-xs uppercase tracking-widest">Always at Your Service</span>
+        <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">Contact & Reservations</h2>
+        <p class="text-stone-400 text-sm">Need a table, party lawn walkthrough, or catering quote? We're just a phone call away.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Contact Information Cards -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <!-- Direct Phone Card -->
+          <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-5 hover:border-amber-500/40 transition">
+            <div class="flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 text-xl border border-amber-500/20">
+                📞
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs uppercase font-bold tracking-wider text-amber-500">Call Us Directly</span>
+                <h4 class="text-base font-bold text-white">Phone Reservations</h4>
+                <div class="space-y-0.5 pt-1">
+                  <a href="tel:+919876543210" class="block text-sm font-semibold text-stone-300 hover:text-amber-300">
+                    +91 98765 43210 <span class="text-xs text-stone-500 font-normal">(Table & Family Dining)</span>
+                  </a>
+                  <a href="tel:+919876543211" class="block text-sm font-semibold text-stone-300 hover:text-amber-300">
+                    +91 98765 43211 <span class="text-xs text-stone-500 font-normal">(Party & Banquet Manager)</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WhatsApp Chat Card -->
+          <div class="bg-stone-900/90 border border-emerald-900/40 rounded-2xl p-5 hover:border-emerald-500/40 transition">
+            <div class="flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 text-xl border border-emerald-500/20">
+                💬
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs uppercase font-bold tracking-wider text-emerald-500">Instant Chat</span>
+                <h4 class="text-base font-bold text-white">WhatsApp Desk</h4>
+                <p class="text-xs text-stone-400">Get menu PDFs, party video walkthroughs, and instant date confirmations.</p>
+                <a href="https://wa.me/919876543210?text=Hi%20Kachari%20Paradise%20Dhaba,%20I%20have%20an%20inquiry" 
+                   target="_blank" class="inline-flex items-center text-xs font-bold text-emerald-400 hover:text-emerald-300 pt-1">
+                  <span>Chat on WhatsApp →</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Operating Hours Card -->
+          <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-5">
+            <div class="flex items-start space-x-4">
+              <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 text-xl border border-amber-500/20">
+                🕒
+              </div>
+              <div class="space-y-1 w-full">
+                <span class="text-xs uppercase font-bold tracking-wider text-amber-500">Service Hours</span>
+                <h4 class="text-base font-bold text-white">Kitchen & Dhaba Timings</h4>
+                <div class="text-xs text-stone-300 space-y-1.5 pt-2">
+                  <div class="flex justify-between border-b border-stone-800/80 pb-1">
+                    <span>Monday - Thursday</span>
+                    <span class="font-semibold text-white">11:00 AM – 12:00 Midnight</span>
+                  </div>
+                  <div class="flex justify-between border-b border-stone-800/80 pb-1">
+                    <span>Friday - Sunday (Weekend)</span>
+                    <span class="font-semibold text-amber-300">11:00 AM – 01:00 AM</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Morning Highway Chai & Parathas</span>
+                    <span class="font-semibold text-stone-400">07:00 AM – 10:30 AM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email & Social -->
+          <div class="bg-stone-900/90 border border-stone-800 rounded-2xl p-5 flex items-center justify-between">
+            <div class="text-xs">
+              <span class="text-stone-400">Official Email:</span>
+              <p class="font-bold text-white">info@kachariparadise.com</p>
+            </div>
+            <div class="flex space-x-2">
+              <a href="#" class="w-8 h-8 rounded-lg bg-stone-800 text-stone-300 hover:text-amber-400 flex items-center justify-center text-xs">FB</a>
+              <a href="#" class="w-8 h-8 rounded-lg bg-stone-800 text-stone-300 hover:text-amber-400 flex items-center justify-center text-xs">IG</a>
+              <a href="#" class="w-8 h-8 rounded-lg bg-stone-800 text-stone-300 hover:text-amber-400 flex items-center justify-center text-xs">YT</a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right: Direct Message / General Inquiry Form -->
+        <div class="lg:col-span-7 bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 space-y-6">
+          <div>
+            <h3 class="text-xl font-display font-bold text-white">Send Us a Direct Message</h3>
+            <p class="text-xs text-stone-400">Have questions about corporate banquets, bulk packaging, or table reservation?</p>
+          </div>
+
+          <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-stone-300 mb-1">Your Name *</label>
+                <input type="text" id="contactName" required placeholder="John Doe" 
+                       class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-stone-300 mb-1">Phone Number *</label>
+                <input type="tel" id="contactPhone" required placeholder="+91 98765 00000" 
+                       class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-stone-300 mb-1">Email Address</label>
+                <input type="email" id="contactEmail" placeholder="john@example.com" 
+                       class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-stone-300 mb-1">Inquiry Type</label>
+                <select id="contactType" class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500">
+                  <option value="Table Reservation">Table Reservation (Tonight)</option>
+                  <option value="Party Lawn Inquiry">Party Lawn / Banquet Inquiry</option>
+                  <option value="Outdoor Catering">Bulk Highway Catering</option>
+                  <option value="Feedback & Suggestions">Feedback / Other Question</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-stone-300 mb-1">Your Message *</label>
+              <textarea id="contactMessage" rows="4" required placeholder="Tell us how we can make your dining or celebration extraordinary..." 
+                        class="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-xs sm:text-sm text-stone-200 focus:outline-none focus:border-amber-500"></textarea>
+            </div>
+
+            <button type="submit" 
+                    class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs uppercase tracking-wider transition shadow-glow-amber">
+              Send Message
+            </button>
+            <span id="contactStatusMsg" class="hidden text-xs text-emerald-400 font-semibold ml-3"></span>
+          </form>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-stone-950 border-t border-stone-800 text-stone-400 text-xs py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-stone-900">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg border border-amber-500/40">
+            🫓
+          </div>
+          <div>
+            <h3 class="font-display text-xl font-bold text-white tracking-wide">KACHARI PARADISE DHABA</h3>
+            <p class="text-[10px] text-amber-500 uppercase tracking-widest font-semibold">Authentic Highway Dining & Celebration Resort</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-6 text-xs">
+          <a href="#about" class="hover:text-amber-400 transition">About</a>
+          <a href="#menu" class="hover:text-amber-400 transition">Menu Items</a>
+          <a href="#party-booking" class="hover:text-amber-400 transition">Party Booking</a>
+          <a href="#location" class="hover:text-amber-400 transition">Location</a>
+          <a href="#contact" class="hover:text-amber-400 transition">Contact</a>
+          <a href="tel:+919876543210" class="text-amber-400 font-bold hover:underline">📞 +91 98765 43210</a>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
+        <p>© 2026 Kachari Paradise Dhaba & Party Lawns. All rights reserved. Prepared with 100% Desi Ghee & RO Water.</p>
+        <p class="flex items-center space-x-2">
+          <span>Highway NH-27, Kachari Gaon Bypass</span>
+          <span>•</span>
+          <span>Open Daily Till 12:30 AM</span>
+        </p>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ================= FLOATING STICKY ACTION BAR (MOBILE & DESKTOP) ================= -->
+  <div class="fixed bottom-0 left-0 right-0 z-40 bg-stone-950/95 backdrop-blur-xl border-t border-amber-500/30 p-2.5 sm:hidden shadow-2xl">
+    <div class="grid grid-cols-4 gap-1.5 text-center">
+      <a href="tel:+919876543210" class="flex flex-col items-center justify-center py-1 rounded-lg hover:bg-stone-900 text-stone-300">
+        <span class="text-base">📞</span>
+        <span class="text-[10px] font-bold text-stone-300">Call Now</span>
+      </a>
+      <a href="https://wa.me/919876543210?text=Hi%20Kachari%20Paradise%20Dhaba,%20I%20want%20to%20book%20a%20table%20/%20party" 
+         target="_blank" class="flex flex-col items-center justify-center py-1 rounded-lg hover:bg-stone-900 text-emerald-400">
+        <span class="text-base">💬</span>
+        <span class="text-[10px] font-bold">WhatsApp</span>
+      </a>
+      <a href="#location" class="flex flex-col items-center justify-center py-1 rounded-lg hover:bg-stone-900 text-stone-300">
+        <span class="text-base">📍</span>
+        <span class="text-[10px] font-bold text-stone-300">Directions</span>
+      </a>
+      <a href="#party-booking" class="flex flex-col items-center justify-center py-1 rounded-lg bg-amber-500 text-stone-950 font-bold shadow-md">
+        <span class="text-base">🎉</span>
+        <span class="text-[10px] font-extrabold uppercase">Book Party</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ================= PARTY INQUIRY SUCCESS MODAL ================= -->
+  <div id="bookingModal" class="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-stone-900 border border-amber-500/50 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl relative">
+      <button onclick="closeModal()" class="absolute top-5 right-5 text-stone-400 hover:text-white text-xl">✕</button>
+      
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 mx-auto flex items-center justify-center text-3xl border border-amber-500/40">
+          🎉
+        </div>
+        <h3 class="text-2xl font-display font-bold text-white">Party Reservation Summary</h3>
+        <p class="text-xs text-stone-300">Reference ID: <span id="modalRefId" class="font-mono text-amber-400 font-bold">KPD-8924</span></p>
+      </div>
+
+      <div class="bg-stone-950 rounded-2xl p-4 border border-stone-800 text-xs space-y-2" id="modalDetails">
+        <!-- Injected by script -->
+      </div>
+
+      <div class="space-y-2 pt-2">
+        <a id="modalWhatsAppBtn" href="#" target="_blank" 
+           class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 transition shadow-lg">
+          <span>Send Details to Manager on WhatsApp 📲</span>
+        </a>
+
+        <button onclick="window.print()" class="w-full py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 font-semibold text-xs transition">
+          Print / Save Receipt 📄
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification for Copy Address -->
+  <div id="toast" class="fixed bottom-20 sm:bottom-6 right-6 z-50 bg-amber-500 text-stone-950 px-4 py-2.5 rounded-xl font-bold text-xs shadow-xl hidden transition-opacity duration-300">
+    Address copied to clipboard!
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // --- 1. Authentic Dhaba Menu Dataset ---
+    const menuItems = [
+      // STARTERS & TANDOOR
+      {
+        id: 1,
+        title: "Tandoori Murgh Angara",
+        hindi: "तंदूरी मुर्ग अंगारा",
+        category: "starters",
+        diet: "non-veg",
+        price: 340,
+        portion: "Half / 4 Pcs",
+        spice: "🌶️🌶️🌶️",
+        isSpecial: true,
+        desc: "Whole farm chicken marinated overnight in roasted Kashmiri chilies, hung curd, mustard oil & charred to perfection in clay oven.",
+        image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 2,
+        title: "Paneer Tikka Sufiyana",
+        hindi: "पनीर टिक्का सूफियाना",
+        category: "starters",
+        diet: "veg",
+        price: 290,
+        portion: "6 Big Cubes",
+        spice: "🌶️",
+        isSpecial: false,
+        desc: "Creamy Malai paneer marinated with crushed fennel seeds, green cardamom, clotted cream and crisp bell peppers roasted on iron skewers.",
+        image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 3,
+        title: "Highway Mutton Seekh Kebab",
+        hindi: "मटन सीख कबाब",
+        category: "starters",
+        diet: "non-veg",
+        price: 390,
+        portion: "4 Skewers",
+        spice: "🌶️🌶️",
+        isSpecial: true,
+        desc: "Finely minced fresh goat meat blended with roasted garam masala, mint, ginger and grilled over smoking hardwood charcoal.",
+        image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 4,
+        title: "Bhatti Da Murgh Tikka",
+        hindi: "भट्टी दा मुर्ग टिक्का",
+        category: "starters",
+        diet: "non-veg",
+        price: 360,
+        portion: "6 Boneless Bites",
+        spice: "🌶️🌶️",
+        isSpecial: false,
+        desc: "Rustic Punjabi highway chicken tikka charred in the bhatti with crushed coriander, black pepper, and spiked with chatpata lemon butter.",
+        image: "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 5,
+        title: "Crispy Kurkuri Bhindi Chaat",
+        hindi: "कुरकुरी भिंडी चाट",
+        category: "starters",
+        diet: "veg",
+        price: 210,
+        portion: "Full Platter",
+        spice: "🌶️",
+        isSpecial: false,
+        desc: "Julienned tender okra dusted in spiced gram flour, flash fried till crackling, tossed with pomegranate pearls and amchur masala.",
+        image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 6,
+        title: "Dhaba River Fish Amritsari",
+        hindi: "अमृतसरी फिश फ्राई",
+        category: "starters",
+        diet: "non-veg",
+        price: 380,
+        portion: "5 Pcs",
+        spice: "🌶️🌶️",
+        isSpecial: false,
+        desc: "Crispy freshwater fish fillets steeped in ajwain (carom seed) and ginger batter, deep fried and served with spicy pickled onion rings.",
+        image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 7,
+        title: "Tandoori Soya Chaap Malai",
+        hindi: "मलाई सोया चाप",
+        category: "starters",
+        diet: "veg",
+        price: 260,
+        portion: "8 Pcs",
+        spice: "🌶️",
+        isSpecial: false,
+        desc: "Juicy soya chaap rolls bathed in rich cashew-cream marinade with toasted fenugreek, grilled to a smoky tender texture.",
+        image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80"
+      },
+
+      // MAINS (HANDI & KADHAI CURRIES)
+      {
+        id: 8,
+        title: "Paradise 16-Hour Dal Makhani",
+        hindi: "पैराडाइज़ दाल मखनी (16 घंटे धीमी पकी)",
+        category: "mains",
+        diet: "veg",
+        price: 280,
+        portion: "Handi (Serves 2-3)",
+        spice: "🌶️",
+        isSpecial: true,
+        desc: "Our legendary highway black urad lentils slow-simmered overnight over smoldering coals with fresh cream, vine tomatoes and country white butter.",
+        image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 9,
+        title: "Highway Butter Chicken (Murgh Makhani)",
+        hindi: "हाईवे बटर चिकन",
+        category: "mains",
+        diet: "non-veg",
+        price: 420,
+        portion: "Handi (Serves 2-3)",
+        spice: "🌶️",
+        isSpecial: true,
+        desc: "Smoked tandoori bone-in chicken steeped in a silky, rich cashew-tomato gravy, finished with a lavish dollop of fresh churned butter.",
+        image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 10,
+        title: "Champaran Handi Mutton (Ahuna)",
+        hindi: "चंपारण हांडी मटन",
+        category: "mains",
+        diet: "non-veg",
+        price: 490,
+        portion: "Clay Pot (Serves 2)",
+        spice: "🌶️🌶️🌶️",
+        isSpecial: true,
+        desc: "Tender mountain goat pieces slow-cooked inside an earthen clay pot sealed with dough, spiced with raw mustard oil and whole roasted garlic pods.",
+        image: "https://images.unsplash.com/photo-1545247181-516773ca838b?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 11,
+        title: "Dhaba Dal Tadka Double Chaunk",
+        hindi: "दाल तड़का डबल छौंक",
+        category: "mains",
+        diet: "veg",
+        price: 220,
+        portion: "Serves 2",
+        spice: "🌶️🌶️",
+        isSpecial: false,
+        desc: "Yellow arhar dal tempered twice in smoking pure desi ghee with roasted cumin seeds, crushed garlic, and dry whole Mathania red chilies.",
+        image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 12,
+        title: "Paneer Lababdar Dhaba Style",
+        hindi: "पनीर लबाबदार",
+        category: "mains",
+        diet: "veg",
+        price: 320,
+        portion: "Serves 2",
+        spice: "🌶️🌶️",
+        isSpecial: false,
+        desc: "Fresh cottage cheese cubes folded with grated paneer in an unctuous onion-tomato gravy with sweet bell peppers and kasoori methi.",
+        image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 13,
+        title: "Kadhai Murgh Highway Special",
+        hindi: "कढ़ाई चिकन",
+        category: "mains",
+        diet: "non-veg",
+        price: 390,
+        portion: "Serves 2-3",
+        spice: "🌶️🌶️",
+        isSpecial: false,
+        desc: "Chicken pieces tossed in heavy cast-iron wok with crushed coriander seeds, chunky onions, crunchy bell peppers and thick masala.",
+        image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 14,
+        title: "Prawns Masala Tawa Roast",
+        hindi: "झींगा तवा मसाला",
+        category: "mains",
+        diet: "non-veg",
+        price: 460,
+        portion: "Serves 2",
+        spice: "🌶️🌶️",
+        isSpecial: false,
+        desc: "Juicy jumbo prawns flash roasted on iron tawa with curry leaves, crushed shallots, black pepper and toasted coconut slivers.",
+        image: "https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=600&q=80"
+      },
+
+      // BREADS & BIRYANI
+      {
+        id: 15,
+        title: "Kachari Royal Dum Murgh Biryani",
+        hindi: "कचारी दम मुर्ग बिरयानी",
+        category: "breads-rice",
+        diet: "non-veg",
+        price: 360,
+        portion: "Clay Handi (Serves 2)",
+        spice: "🌶️🌶️",
+        isSpecial: true,
+        desc: "Aged long-grain Basmati rice layered with spiced chicken, caramelized onions, saffron milk and sealed with dough. Served with garlic Burani raita.",
+        image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 16,
+        title: "Kachari Gosht Dum Biryani",
+        hindi: "कचारी गोश्त दम बिरयानी",
+        category: "breads-rice",
+        diet: "non-veg",
+        price: 460,
+        portion: "Clay Handi (Serves 2)",
+        spice: "🌶️🌶️",
+        isSpecial: true,
+        desc: "Succulent bone-in mutton slow dum-cooked with fragrant spices and kewra water. Accompanied by mirchi ka salan and cold raita.",
+        image: "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 17,
+        title: "Amritsari Chur-Chur Naan Thali",
+        hindi: "अमृतसरी चूर-चूर नान थाली",
+        category: "breads-rice",
+        diet: "veg",
+        price: 190,
+        portion: "2 Breads with Dal & Chhole",
+        spice: "🌶️",
+        isSpecial: true,
+        desc: "Flaky, multi-layered tandoori bread stuffed with spiced potatoes and cottage cheese, crushed by hand with generous dollops of butter.",
+        image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 18,
+        title: "Garlic Butter Naan / Cheese Naan",
+        hindi: "गार्लिक बटर नान",
+        category: "breads-rice",
+        diet: "veg",
+        price: 85,
+        portion: "1 Large Piece",
+        spice: "None",
+        isSpecial: false,
+        desc: "Clay tandoor baked refined flour bread slapped with golden toasted garlic bits, chopped coriander and pure amul butter.",
+        image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 19,
+        title: "Missi Roti with Desi Makhan",
+        hindi: "मिस्सी रोटी देसी मक्खन",
+        category: "breads-rice",
+        diet: "veg",
+        price: 60,
+        portion: "1 Piece",
+        spice: "🌶️",
+        isSpecial: false,
+        desc: "Wholesome gram flour (besan) and whole wheat bread seasoned with carom seeds, onions, green chili and slathered with homemade butter.",
+        image: "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=600&q=80"
+      },
+
+      // HIGHWAY THALIS
+      {
+        id: 20,
+        title: "Maharaja Royal Non-Veg Thali",
+        hindi: "महाराजा नॉन-वेज थाली",
+        category: "thalis",
+        diet: "non-veg",
+        price: 499,
+        portion: "Full Grand Thali",
+        spice: "🌶️🌶️",
+        isSpecial: true,
+        desc: "Includes Butter Chicken, Champaran Mutton Curry, 16-Hour Dal Makhani, 2 Butter Naans, Chicken Biryani, Boondi Raita, Salad & Gulab Jamun.",
+        image: "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 21,
+        title: "Dhaba Shahi Veg Thali",
+        hindi: "ढाबा शाही वेज थाली",
+        category: "thalis",
+        diet: "veg",
+        price: 380,
+        portion: "Full Grand Thali",
+        spice: "🌶️",
+        isSpecial: false,
+        desc: "Paneer Lababdar, Dal Makhani, Pindi Chhole, Mixed Veg, 2 Missi Rotis, Jeera Rice, Cucumber Raita, Papad & Hot Gulab Jamun.",
+        image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80"
+      },
+
+      // DESSERTS & DRINKS
+      {
+        id: 22,
+        title: "Kulhad Wali Rabdi Jalebi",
+        hindi: "कुल्हड़ वाली रबड़ी जलेबी",
+        category: "desserts-drinks",
+        diet: "veg",
+        price: 160,
+        portion: "Terracotta Cup",
+        spice: "Sweet",
+        isSpecial: true,
+        desc: "Piping hot, spiral golden saffron jalebis served on a bed of rich chilled thick malai rabdi in an earthen kulhad with crushed pistachios.",
+        image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 23,
+        title: "Thick Amritsari Malai Lassi",
+        hindi: "गाढ़ी अमृतसरी मलाई लस्सी",
+        category: "desserts-drinks",
+        diet: "veg",
+        price: 120,
+        portion: "500ml Earthen Goblet",
+        spice: "Sweet",
+        isSpecial: true,
+        desc: "Thick churned sweet yogurt topped with a 1-inch layer of fresh clotted cream (malai), kewra water and silver almonds.",
+        image: "https://images.unsplash.com/photo-1571006687898-05188f58b02c?auto=format&fit=crop&w=600&q=80"
+      },
+      {
+        id: 24,
+        title: "Tandoori Smoked Kulhad Chai",
+        hindi: "तंदूरी कुल्हड़ चाय",
+        category: "desserts-drinks",
+        diet: "veg",
+        price: 50,
+        portion: "1 Kulhad",
+        spice: "Spiced Tea",
+        isSpecial: false,
+        desc: "Red-hot clay kulhad dunked into simmering masala tea made with crushed ginger, green cardamom and clove. Pure smoky highway joy.",
+        image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=600&q=80"
+      }
+    ];
+
+    // --- State Management ---
+    let currentCategory = 'all';
+    let currentDiet = 'all';
+    let searchQuery = '';
+    let selectedWishlist = new Set();
+
+    // Party Calculator State
+    let partyOccasion = 'Birthday Bash';
+    let partyGuests = 50;
+    let partyVenue = 'Grand Lawn';
+    let partyPkgKey = 'gold';
+    let partyPkgRate = 799;
+
+    // --- 2. Render Menu Grid ---
+    function renderMenu() {
+      const grid = document.getElementById('menuGrid');
+      grid.innerHTML = '';
+
+      const filtered = menuItems.filter(item => {
+        const matchesCategory = currentCategory === 'all' || item.category === currentCategory;
+        const matchesDiet = currentDiet === 'all' || item.diet === currentDiet;
+        const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                              item.desc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              item.hindi.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesDiet && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 bg-stone-900/60 rounded-3xl border border-stone-800">
+            <span class="text-4xl">🍲</span>
+            <h4 class="text-lg font-bold text-white mt-2">No Dhaba Delicacy Found</h4>
+            <p class="text-stone-400 text-xs mt-1">Try clearing filters or search for another delicious dish.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const isWishlisted = selectedWishlist.has(item.id);
+        const card = document.createElement('div');
+        card.className = "bg-stone-900 border border-stone-800 rounded-3xl overflow-hidden hover:border-amber-500/50 transition-all duration-300 flex flex-col justify-between group shadow-lg";
+        
+        card.innerHTML = `
+          <div>
+            <div class="relative h-48 overflow-hidden bg-stone-950">
+              <img src="${item.image}" alt="${item.title}" loading="lazy"
+                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+              <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent"></div>
+              
+              <!-- Badges -->
+              <div class="absolute top-3 left-3 flex items-center space-x-1.5">
+                <span class="${item.diet === 'veg' ? 'icon-veg' : 'icon-nonveg'} shadow-sm"></span>
+                ${item.isSpecial ? '<span class="text-[10px] bg-amber-500 text-stone-950 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow">Chef Special</span>' : ''}
+              </div>
+
+              <div class="absolute top-3 right-3 bg-stone-900/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-stone-700 text-[11px] font-semibold text-amber-300">
+                ${item.spice}
+              </div>
+
+              <div class="absolute bottom-3 left-3 right-3 flex justify-between items-end">
+                <span class="text-[10px] font-semibold text-stone-300 bg-stone-900/80 px-2 py-0.5 rounded backdrop-blur-sm">
+                  ${item.portion}
+                </span>
+                <span class="text-lg font-black text-amber-400">
+                  ₹${item.price}
+                </span>
+              </div>
+            </div>
+
+            <div class="p-5 space-y-2">
+              <div>
+                <h3 class="text-base font-bold text-white group-hover:text-amber-300 transition-colors">${item.title}</h3>
+                <p class="text-xs text-amber-500/90 font-medium">${item.hindi}</p>
+              </div>
+              <p class="text-xs text-stone-400 line-clamp-2 leading-relaxed">
+                ${item.desc}
+              </p>
+            </div>
+          </div>
+
+          <div class="px-5 pb-5 pt-2 border-t border-stone-800/80 flex items-center justify-between gap-2">
+            <button onclick="toggleWishlist(${item.id})" class="text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center space-x-1.5 w-full justify-center ${isWishlisted ? 'bg-amber-500 text-stone-950 font-bold' : 'bg-stone-950 text-stone-300 hover:text-white hover:bg-stone-800 border border-stone-800'}">
+              <span>${isWishlisted ? '✔ Added to Party Menu' : '➕ Add to Party Menu'}</span>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // --- Category and Filter Switchers ---
+    function setCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('#categoryTabs .tab-btn').forEach(btn => {
+        if (btn.getAttribute('data-category') === cat) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      renderMenu();
+    }
+
+    function setDietFilter(diet) {
+      currentDiet = diet;
+      const allBtn = document.getElementById('dietFilterAll');
+      const vegBtn = document.getElementById('dietFilterVeg');
+      const nonVegBtn = document.getElementById('dietFilterNonVeg');
+
+      [allBtn, vegBtn, nonVegBtn].forEach(b => {
+        b.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-400 transition";
+      });
+
+      if (diet === 'all') allBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-stone-800 text-amber-300 transition";
+      if (diet === 'veg') vegBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 transition";
+      if (diet === 'non-veg') nonVegBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-950/80 text-red-400 border border-red-500/40 transition";
+
+      renderMenu();
+    }
+
+    document.getElementById('menuSearchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderMenu();
+    });
+
+    // Toggle Dish for Party Wishlist
+    function toggleWishlist(id) {
+      if (selectedWishlist.has(id)) {
+        selectedWishlist.delete(id);
+      } else {
+        selectedWishlist.add(id);
+      }
+      renderMenu();
+
+      const banner = document.getElementById('partyMenuBanner');
+      const countEl = document.getElementById('selectedWishlistCount');
+      if (selectedWishlist.size > 0) {
+        banner.classList.remove('hidden');
+        countEl.textContent = selectedWishlist.size;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    // --- Party Tabs Switcher ---
+    function switchPartyTab(tab) {
+      const calcTab = document.getElementById('partyTabCalculator');
+      const pkgTab = document.getElementById('partyTabPackages');
+      const venueTab = document.getElementById('partyTabVenues');
+
+      const btnCalc = document.getElementById('tabPartyCalc');
+      const btnPkg = document.getElementById('tabPartyPkg');
+      const btnVenue = document.getElementById('tabPartyVenue');
+
+      [calcTab, pkgTab, venueTab].forEach(t => t.classList.add('hidden'));
+      [btnCalc, btnPkg, btnVenue].forEach(b => {
+        b.className = "flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-stone-300 hover:text-white transition";
+      });
+
+      if (tab === 'calculator') {
+        calcTab.classList.remove('hidden');
+        btnCalc.className = "flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-md transition";
+      } else if (tab === 'packages') {
+        pkgTab.classList.remove('hidden');
+        btnPkg.className = "flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-md transition";
+      } else if (tab === 'venues') {
+        venueTab.classList.remove('hidden');
+        btnVenue.className = "flex-1 min-w-[140px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 shadow-md transition";
+      }
+    }
+
+    // --- Party Calculator Logic ---
+    function selectOccasion(btn, occ) {
+      partyOccasion = occ;
+      document.querySelectorAll('#occasionSelector .occasion-btn').forEach(b => {
+        b.classList.remove('active', 'border-amber-500', 'bg-amber-500/10', 'text-amber-300');
+        b.classList.add('border-stone-800', 'bg-stone-950/60', 'text-stone-300');
+      });
+      if (btn) {
+        btn.classList.add('active', 'border-amber-500', 'bg-amber-500/10', 'text-amber-300');
+      }
+      calculateTotal();
+    }
+
+    function updateGuestCount(val) {
+      partyGuests = parseInt(val, 10);
+      document.getElementById('guestCountDisplay').textContent = partyGuests;
+      calculateTotal();
+    }
+
+    function updateVenue(v) {
+      partyVenue = v;
+      ['Lawn', 'Banquet', 'Gazebo'].forEach(key => {
+        const el = document.getElementById('venueCard' + key);
+        if (el) {
+          el.className = "cursor-pointer border border-stone-800 bg-stone-950/60 rounded-xl p-3.5 flex flex-col space-y-1 hover:border-stone-700 transition";
+        }
+      });
+      if (v === 'Grand Lawn') {
+        document.getElementById('venueCardLawn').className = "cursor-pointer border border-amber-500/60 bg-amber-500/10 rounded-xl p-3.5 flex flex-col space-y-1 transition";
+      } else if (v === 'AC Banquet Hall') {
+        document.getElementById('venueCardBanquet').className = "cursor-pointer border border-amber-500/60 bg-amber-500/10 rounded-xl p-3.5 flex flex-col space-y-1 transition";
+      } else if (v === 'Private Bamboo Gazebo') {
+        document.getElementById('venueCardGazebo').className = "cursor-pointer border border-amber-500/60 bg-amber-500/10 rounded-xl p-3.5 flex flex-col space-y-1 transition";
+      }
+      calculateTotal();
+    }
+
+    function selectPackage(key, rate) {
+      partyPkgKey = key;
+      partyPkgRate = rate;
+
+      ['Silver', 'Gold', 'Royal'].forEach(k => {
+        const card = document.getElementById('pkgCard' + k);
+        card.className = "cursor-pointer p-4 rounded-xl border border-stone-800 bg-stone-950/60 hover:border-stone-700 transition space-y-2";
+      });
+
+      if (key === 'silver') document.getElementById('pkgCardSilver').className = "cursor-pointer p-4 rounded-xl border-2 border-amber-500 bg-amber-500/10 transition space-y-2";
+      if (key === 'gold') document.getElementById('pkgCardGold').className = "cursor-pointer p-4 rounded-xl border-2 border-amber-500 bg-amber-500/10 transition space-y-2 relative shadow-glow-amber";
+      if (key === 'royal') document.getElementById('pkgCardRoyal').className = "cursor-pointer p-4 rounded-xl border-2 border-amber-500 bg-amber-500/10 transition space-y-2";
+
+      calculateTotal();
+    }
+
+    function selectPackageAndGo(key, rate) {
+      selectPackage(key, rate);
+      switchPartyTab('calculator');
+      document.getElementById('party-booking').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function selectVenueAndCalculate(venueName) {
+      updateVenue(venueName);
+      switchPartyTab('calculator');
+      document.getElementById('party-booking').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function calculateTotal() {
+      // Add-ons
+      let addonsCost = 0;
+      if (document.getElementById('addonDJ')?.checked) addonsCost += 5000;
+      if (document.getElementById('addonDecor')?.checked) addonsCost += 4500;
+      if (document.getElementById('addonBonfire')?.checked) addonsCost += 3500;
+      if (document.getElementById('addonCake')?.checked) addonsCost += 1200;
+
+      const foodCost = partyGuests * partyPkgRate;
+      const total = foodCost + addonsCost;
+      const advance = Math.round(total * 0.25);
+
+      document.getElementById('summaryOccasionZone').textContent = `${partyOccasion} • ${partyVenue}`;
+      document.getElementById('summaryGuests').textContent = partyGuests;
+      document.getElementById('summaryRate').textContent = partyPkgRate;
+      document.getElementById('summaryFoodCost').textContent = `₹${foodCost.toLocaleString('en-IN')}`;
+      document.getElementById('summaryAddonsCost').textContent = `₹${addonsCost.toLocaleString('en-IN')}`;
+      document.getElementById('summaryTotalCost').textContent = `₹${total.toLocaleString('en-IN')}`;
+      document.getElementById('summaryAdvance').textContent = advance.toLocaleString('en-IN');
+    }
+
+    // Party Form Submission
+    function handlePartyBooking(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('hostName').value;
+      const phone = document.getElementById('hostPhone').value;
+      const date = document.getElementById('eventDate').value;
+      const slot = document.getElementById('timeSlot').value;
+      const notes = document.getElementById('hostNotes').value;
+
+      const totalCostText = document.getElementById('summaryTotalCost').textContent;
+      const refId = 'KPD-' + Math.floor(1000 + Math.random() * 9000);
+
+      // Selected wishlist dishes
+      const wishlistDishes = [];
+      selectedWishlist.forEach(id => {
+        const d = menuItems.find(m => m.id === id);
+        if (d) wishlistDishes.push(d.title);
+      });
+
+      // Construct summary for modal
+      const modal = document.getElementById('bookingModal');
+      document.getElementById('modalRefId').textContent = refId;
+      document.getElementById('modalDetails').innerHTML = `
+        <div class="flex justify-between py-1 border-b border-stone-800">
+          <span class="text-stone-400">Host:</span>
+          <span class="font-bold text-white">${name} (${phone})</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-stone-800">
+          <span class="text-stone-400">Date & Slot:</span>
+          <span class="font-bold text-amber-300">${date} • ${slot}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-stone-800">
+          <span class="text-stone-400">Occasion & Venue:</span>
+          <span class="font-bold text-white">${partyOccasion} • ${partyVenue}</span>
+        </div>
+        <div class="flex justify-between py-1 border-b border-stone-800">
+          <span class="text-stone-400">Guests & Package:</span>
+          <span class="font-bold text-white">${partyGuests} Guests (${partyPkgKey.toUpperCase()} @ ₹${partyPkgRate}/head)</span>
+        </div>
+        ${wishlistDishes.length > 0 ? `
+          <div class="py-1 border-b border-stone-800">
+            <span class="text-stone-400">Selected Favorite Dishes:</span>
+            <p class="text-amber-300 font-medium">${wishlistDishes.join(', ')}</p>
+          </div>
+        ` : ''}
+        <div class="flex justify-between py-1">
+          <span class="text-stone-400">Estimated Total:</span>
+          <span class="font-bold text-base text-amber-400">${totalCostText}</span>
+        </div>
+      `;
+
+      // Construct WhatsApp URL
+      const waText = encodeURIComponent(
+        `*New Party Booking Inquiry - Kachari Paradise Dhaba*\n` +
+        `Ref ID: ${refId}\n` +
+        `Host Name: ${name}\n` +
+        `Phone: ${phone}\n` +
+        `Occasion: ${partyOccasion}\n` +
+        `Guests: ${partyGuests}\n` +
+        `Venue Zone: ${partyVenue}\n` +
+        `Package: ${partyPkgKey.toUpperCase()} (₹${partyPkgRate}/head)\n` +
+        `Date: ${date}\n` +
+        `Time Slot: ${slot}\n` +
+        `Total Est: ${totalCostText}\n` +
+        (wishlistDishes.length > 0 ? `Special Dishes: ${wishlistDishes.join(', ')}\n` : '') +
+        (notes ? `Notes: ${notes}\n` : '') +
+        `Please confirm availability.`
+      );
+
+      document.getElementById('modalWhatsAppBtn').href = `https://wa.me/919876543210?text=${waText}`;
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('bookingModal').classList.add('hidden');
+    }
+
+    // --- General Contact Form Submit ---
+    function handleContactSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('contactName').value;
+      const phone = document.getElementById('contactPhone').value;
+      const type = document.getElementById('contactType').value;
+      const msg = document.getElementById('contactMessage').value;
+
+      const status = document.getElementById('contactStatusMsg');
+      status.textContent = `Thank you ${name}! Your inquiry for ${type} has been received. Our manager will call you at ${phone} shortly.`;
+      status.classList.remove('hidden');
+
+      // Also trigger optional WhatsApp forwarding
+      setTimeout(() => {
+        const waText = encodeURIComponent(`Hi Kachari Paradise, inquiry from ${name} (${phone}) regarding: ${type}. Message: ${msg}`);
+        window.open(`https://wa.me/919876543210?text=${waText}`, '_blank');
+      }, 800);
+
+      document.getElementById('contactForm').reset();
+    }
+
+    // --- Copy Address Helper ---
+    function copyAddress() {
+      const addr = document.getElementById('fullAddressText').textContent.trim();
+      navigator.clipboard.writeText(addr).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2500);
+      });
+    }
+
+    // --- Mobile Menu Toggle ---
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Close mobile menu on link click
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    });
+
+    // Set minimum date to today for booking
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('eventDate').min = todayStr;
+    document.getElementById('eventDate').value = todayStr;
+
+    // Initial calculation and menu render on page load
+    renderMenu();
+    calculateTotal();
+  </script>
+</body>
+</html>
