@@ -6018,6 +6018,9 @@ export function getDashboardHtml(): string {
 
     function setAdminFinanceSubTab(subTab) {
       adminFinanceSubTab = subTab;
+      if (subTab === "calendar" && calendarSelectedProperty === "elite-homes") {
+        autoSyncEliteHomesCalendar();
+      }
       renderFinancesView();
     }
 
@@ -6903,6 +6906,9 @@ export function getDashboardHtml(): string {
     async function setCalendarProperty(propId) {
       calendarSelectedProperty = propId;
       await fetchRoomBookings({ property_id: propId });
+      if (propId === "elite-homes") {
+        autoSyncEliteHomesCalendar();
+      }
       renderFinancesView();
     }
 
@@ -7890,6 +7896,29 @@ export function getDashboardHtml(): string {
         icons.forEach(i => i.classList.remove("animate-spin"));
         texts.forEach(t => t.innerText = "Sync Airbnb");
         refreshIcons();
+      }
+    }
+
+    let lastAutoSyncAt = 0;
+    async function autoSyncEliteHomesCalendar() {
+      const now = Date.now();
+      // Throttle automatic background synchronization to once every 60 seconds
+      if (now - lastAutoSyncAt < 60000) return;
+      lastAutoSyncAt = now;
+      try {
+        const res = await fetch("/api/sync/airbnb", {
+          method: "POST",
+          headers: getAuthHeaders()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.datesAffected > 0) {
+            await Promise.all([fetchRoomBookings(), fetchFinances()]);
+            renderFinancesView();
+          }
+        }
+      } catch (e) {
+        console.warn("Auto-sync error:", e);
       }
     }
 

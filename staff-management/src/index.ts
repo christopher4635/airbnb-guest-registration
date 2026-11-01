@@ -1515,4 +1515,13 @@ export default {
 			return jsonResponse({ error: err.message || "Internal server error" }, 500);
 		}
 	},
+
+	// Background scheduled sync handler (Runs periodically via Cloudflare cron triggers)
+	async scheduled(event: any, env: Env, ctx: any): Promise<void> {
+		try {
+			await syncAirbnbBookingsToStaffSync(env, syncDailyFinanceLodging);
+		} catch (e) {
+			console.error("Scheduled sync error:", e);
+		}
+	},
 };

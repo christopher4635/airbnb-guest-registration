@@ -354,6 +354,25 @@ icalRoute.post('/sync', async (c) => {
       `).bind(prop.id).run();
     }
 
+    // If new bookings were imported or updated via iCal, automatically notify StaffSync Hub
+    if (totalImported > 0 || totalUpdated > 0) {
+      try {
+        const p = fetch('https://staff-management.elitehomes-portal.workers.dev/api/sync/airbnb', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Auth-PIN': c.env.ADMIN_PIN || '4635'
+          }
+        }).catch(e => console.error('StaffSync notification error:', e));
+
+        if (c.executionCtx && typeof c.executionCtx.waitUntil === 'function') {
+          c.executionCtx.waitUntil(p);
+        }
+      } catch (e) {
+        console.error('Failed to notify StaffSync on iCal update:', e);
+      }
+    }
+
     return c.json({
       success: true,
       message: `iCal sync completed: ${totalImported} imported, ${totalUpdated} updated, ${totalSkipped} skipped.`,

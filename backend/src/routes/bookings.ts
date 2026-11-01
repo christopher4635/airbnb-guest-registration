@@ -27,6 +27,25 @@ function mapDbRowToBooking(row: any): Booking {
   };
 }
 
+// Automatically notify StaffSync Hub to synchronize Elite Homes room calendar & daily finances
+function notifyStaffSync(c: any) {
+  try {
+    const p = fetch('https://staff-management.elitehomes-portal.workers.dev/api/sync/airbnb', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Auth-PIN': c.env.ADMIN_PIN || '4635'
+      }
+    }).catch(e => console.error('StaffSync notification error:', e));
+
+    if (c.executionCtx && typeof c.executionCtx.waitUntil === 'function') {
+      c.executionCtx.waitUntil(p);
+    }
+  } catch (e) {
+    console.error('Failed to notify StaffSync:', e);
+  }
+}
+
 // 1. GET /api/bookings - Fetch all bookings
 bookingsRoute.get('/', async (c) => {
   try {
@@ -119,6 +138,7 @@ bookingsRoute.post('/', async (c) => {
       status, notes, now, now
     ).run();
 
+    notifyStaffSync(c);
     const created = await c.env.DB.prepare(`SELECT * FROM bookings WHERE id = ?`).bind(id).first();
     return c.json({ success: true, data: mapDbRowToBooking(created) }, 201);
   } catch (err: any) {
@@ -168,6 +188,7 @@ bookingsRoute.put('/:id', async (c) => {
       status, notes, now, id
     ).run();
 
+    notifyStaffSync(c);
     const updated = await c.env.DB.prepare(`SELECT * FROM bookings WHERE id = ?`).bind(id).first();
     return c.json({ success: true, data: mapDbRowToBooking(updated) });
   } catch (err: any) {
@@ -180,6 +201,7 @@ bookingsRoute.delete('/:id', async (c) => {
   try {
     const id = c.req.param('id');
     const res = await c.env.DB.prepare(`DELETE FROM bookings WHERE id = ?`).bind(id).run();
+    notifyStaffSync(c);
     return c.json({ success: true, message: `Booking ${id} deleted` });
   } catch (err: any) {
     return c.json({ success: false, error: err.message }, 500);
@@ -239,6 +261,7 @@ bookingsRoute.post('/batch', async (c) => {
       await c.env.DB.batch(chunk);
     }
 
+    notifyStaffSync(c);
     return c.json({ success: true, count: bookings.length });
   } catch (err: any) {
     return c.json({ success: false, error: err.message }, 500);
