@@ -874,7 +874,14 @@ export default {
 				params.push(limit);
 
 				const { results } = await env.DB.prepare(query).bind(...params).all<DailyFinance>();
-				return jsonResponse(results || []);
+				const mapped = (results || []).map((r: any) => ({
+					...r,
+					lodging_cash: r.lodging_cash ?? r.lodging_offline ?? 0,
+					fooding_cash: r.fooding_cash ?? r.fooding_offline ?? 0,
+					lodging_offline: r.lodging_cash ?? r.lodging_offline ?? 0,
+					fooding_offline: r.fooding_cash ?? r.fooding_offline ?? 0,
+				}));
+				return jsonResponse(mapped);
 			}
 
 			// POST /api/finances (Add or update daily sales and expenses record)
@@ -900,11 +907,11 @@ export default {
 				}
 
 				const lodgingOnline = Math.max(0, Math.round(Number(body.lodging_online) || 0));
-				const lodgingOffline = Math.max(0, Math.round(Number(body.lodging_offline) || 0));
+				const lodgingCash = Math.max(0, Math.round(Number(body.lodging_cash ?? body.lodging_offline) || 0));
 				const foodingOnline = Math.max(0, Math.round(Number(body.fooding_online) || 0));
-				const foodingOffline = Math.max(0, Math.round(Number(body.fooding_offline) || 0));
+				const foodingCash = Math.max(0, Math.round(Number(body.fooding_cash ?? body.fooding_offline) || 0));
 				const otherSales = Math.max(0, Math.round(Number(body.other_sales) || 0));
-				const totalSales = lodgingOnline + lodgingOffline + foodingOnline + foodingOffline + otherSales;
+				const totalSales = lodgingOnline + lodgingCash + foodingOnline + foodingCash + otherSales;
 				const expensesTotal = Math.max(0, Math.round(Number(body.expenses_total) || 0));
 				const expenseNotes = body.expense_notes?.trim() || null;
 				const netRevenue = totalSales - expensesTotal;
@@ -914,16 +921,16 @@ export default {
 
 				await env.DB.prepare(`
 					INSERT INTO daily_finances (
-						id, property_id, date, lodging_online, lodging_offline,
-						fooding_online, fooding_offline, other_sales, total_sales,
+						id, property_id, date, lodging_online, lodging_cash,
+						fooding_online, fooding_cash, other_sales, total_sales,
 						expenses_total, expense_notes, net_revenue, notes, submitted_by,
 						created_at, updated_at
 					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					ON CONFLICT(property_id, date) DO UPDATE SET
 						lodging_online = excluded.lodging_online,
-						lodging_offline = excluded.lodging_offline,
+						lodging_cash = excluded.lodging_cash,
 						fooding_online = excluded.fooding_online,
-						fooding_offline = excluded.fooding_offline,
+						fooding_cash = excluded.fooding_cash,
 						other_sales = excluded.other_sales,
 						total_sales = excluded.total_sales,
 						expenses_total = excluded.expenses_total,
@@ -933,8 +940,8 @@ export default {
 						submitted_by = excluded.submitted_by,
 						updated_at = datetime('now')
 				`).bind(
-					id, propertyId, date, lodgingOnline, lodgingOffline,
-					foodingOnline, foodingOffline, otherSales, totalSales,
+					id, propertyId, date, lodgingOnline, lodgingCash,
+					foodingOnline, foodingCash, otherSales, totalSales,
 					expensesTotal, expenseNotes, netRevenue, notes, submittedBy
 				).run();
 

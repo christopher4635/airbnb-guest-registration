@@ -93,9 +93,11 @@ export interface DailyFinance {
 	property_name?: string;
 	date: string;
 	lodging_online: number;
-	lodging_offline: number;
+	lodging_cash: number;
 	fooding_online: number;
-	fooding_offline: number;
+	fooding_cash: number;
+	lodging_offline?: number;
+	fooding_offline?: number;
 	other_sales?: number;
 	total_sales: number;
 	expenses_total: number;

@@ -1322,18 +1322,18 @@ export function getDashboardHtml(): string {
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
               <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
-              Lodging Sales (Rooms)
+              Lodging Revenue (Room Bookings)
             </span>
             <span class="text-[11px] font-bold text-indigo-700">Subtotal: ₹<span id="modalLodgingSubtotal">0</span></span>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Online (OTA/UPI)</label>
+              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Online Payment (UPI/Card)</label>
               <input type="number" id="modalLodgingOnline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-indigo-200 bg-white font-mono focus:ring-2 focus:ring-indigo-500" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Offline (Counter/Cash)</label>
-              <input type="number" id="modalLodgingOffline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-indigo-200 bg-white font-mono focus:ring-2 focus:ring-indigo-500" />
+              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Cash Payment (Cash)</label>
+              <input type="number" id="modalLodgingCash" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-indigo-200 bg-white font-mono focus:ring-2 focus:ring-indigo-500" />
             </div>
           </div>
         </div>
@@ -1343,18 +1343,18 @@ export function getDashboardHtml(): string {
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-amber-950 flex items-center gap-1.5">
               <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-600"></i>
-              Fooding Sales (F&B)
+              Fooding Revenue (Restaurant / F&B)
             </span>
             <span class="text-[11px] font-bold text-amber-800">Subtotal: ₹<span id="modalFoodingSubtotal">0</span></span>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">Online (Delivery/UPI)</label>
+              <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">Online Payment (UPI/QR)</label>
               <input type="number" id="modalFoodingOnline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-amber-200 bg-white font-mono focus:ring-2 focus:ring-amber-500" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">Offline (Dine-in/Cash)</label>
-              <input type="number" id="modalFoodingOffline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-amber-200 bg-white font-mono focus:ring-2 focus:ring-amber-500" />
+              <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">Cash Payment (Cash)</label>
+              <input type="number" id="modalFoodingCash" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-amber-200 bg-white font-mono focus:ring-2 focus:ring-amber-500" />
             </div>
           </div>
         </div>
@@ -4341,15 +4341,15 @@ export function getDashboardHtml(): string {
       
       const currentRecord = financesList.find(f => f.property_id === propId && f.date === managerFinanceDate);
       const lo = currentRecord ? (currentRecord.lodging_online || 0) : 0;
-      const lf = currentRecord ? (currentRecord.lodging_offline || 0) : 0;
+      const lc = currentRecord ? (currentRecord.lodging_cash ?? currentRecord.lodging_offline ?? 0) : 0;
       const fo = currentRecord ? (currentRecord.fooding_online || 0) : 0;
-      const ff = currentRecord ? (currentRecord.fooding_offline || 0) : 0;
+      const fc = currentRecord ? (currentRecord.fooding_cash ?? currentRecord.fooding_offline ?? 0) : 0;
       const os = currentRecord ? (currentRecord.other_sales || 0) : 0;
       const exp = currentRecord ? (currentRecord.expenses_total || 0) : 0;
       const expNotes = currentRecord ? (currentRecord.expense_notes || "") : "";
       const notes = currentRecord ? (currentRecord.notes || "") : "";
-      const lodgingSub = lo + lf;
-      const foodingSub = fo + ff;
+      const lodgingSub = lo + lc;
+      const foodingSub = fo + fc;
       const totSales = lodgingSub + foodingSub + os;
       const netProf = totSales - exp;
 
@@ -4403,7 +4403,7 @@ export function getDashboardHtml(): string {
                 <i data-lucide="receipt" class="w-5 h-5 text-indigo-600"></i>
                 Daily Sales & Expenses Entry
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Enter lodging (online & offline), fooding (online & offline), and total expenses for this date.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Enter lodging (online & cash payments), fooding (online & cash payments), and total expenses for this date.</p>
             </div>
             \${isSaved ? \`<span class="text-[11px] text-slate-400">Last updated: \${currentRecord.updated_at || 'Recently'}</span>\` : ''}
           </div>
@@ -4417,7 +4417,7 @@ export function getDashboardHtml(): string {
                 </div>
                 <div>
                   <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Lodging Revenue (Room Bookings)</h4>
-                  <p class="text-[11px] text-indigo-700/80">Online portals (OTA/UPI) vs Counter cash/offline</p>
+                  <p class="text-[11px] text-indigo-700/80">Online payment revenue vs Cash payment revenue</p>
                 </div>
               </div>
               <div class="text-right">
@@ -4429,7 +4429,7 @@ export function getDashboardHtml(): string {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
                 <label class="block text-xs font-semibold text-indigo-900 mb-1">
-                  Online Lodging (OTA / MMT / Agoda / UPI) ₹
+                  Online Payment (UPI / Card / OTA) ₹
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
@@ -4447,13 +4447,13 @@ export function getDashboardHtml(): string {
               </div>
               <div>
                 <label class="block text-xs font-semibold text-indigo-900 mb-1">
-                  Offline Lodging (Counter / Cash / Direct) ₹
+                  Cash Payment (Cash at Counter) ₹
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
                   <input
                     type="number"
-                    id="mgrLodgingOffline"
+                    id="mgrLodgingCash"
                     min="0"
                     step="1"
                     placeholder="0"
@@ -4475,7 +4475,7 @@ export function getDashboardHtml(): string {
                 </div>
                 <div>
                   <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Fooding Revenue (Restaurant / Room Service)</h4>
-                  <p class="text-[11px] text-amber-700/80">Online orders / QR UPI vs Counter cash</p>
+                  <p class="text-[11px] text-amber-700/80">Online payment revenue vs Cash payment revenue</p>
                 </div>
               </div>
               <div class="text-right">
@@ -4487,7 +4487,7 @@ export function getDashboardHtml(): string {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
                 <label class="block text-xs font-semibold text-amber-950 mb-1">
-                  Online Fooding (Zomato / Swiggy / UPI) ₹
+                  Online Payment (UPI / QR / Delivery) ₹
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
@@ -4505,13 +4505,13 @@ export function getDashboardHtml(): string {
               </div>
               <div>
                 <label class="block text-xs font-semibold text-amber-950 mb-1">
-                  Offline Fooding (Dine-in / Cash Counter) ₹
+                  Cash Payment (Cash at Counter / Dine-in) ₹
                 </label>
                 <div class="relative">
                   <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
                   <input
                     type="number"
-                    id="mgrFoodingOffline"
+                    id="mgrFoodingCash"
                     min="0"
                     step="1"
                     placeholder="0"
@@ -4661,8 +4661,10 @@ export function getDashboardHtml(): string {
           \` : \`
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               \${recentRecords.map(r => {
-                const rLodging = (r.lodging_online || 0) + (r.lodging_offline || 0);
-                const rFooding = (r.fooding_online || 0) + (r.fooding_offline || 0);
+                const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+                const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+                const rLodging = (r.lodging_online || 0) + rLodgingCash;
+                const rFooding = (r.fooding_online || 0) + rFoodingCash;
                 const isSelected = r.date === managerFinanceDate;
                 return \`
                   <div class="p-3.5 rounded-2xl border \${isSelected ? 'border-indigo-400 bg-indigo-50/40 ring-2 ring-indigo-200' : 'border-slate-200 bg-slate-50/50 hover:bg-white'} transition flex flex-col justify-between gap-2 shadow-2xs">
@@ -4677,6 +4679,9 @@ export function getDashboardHtml(): string {
                       <div>Fooding: <strong class="text-amber-900">₹\${formatCurrency(rFooding)}</strong></div>
                       <div>Expenses: <strong class="text-rose-700">₹\${formatCurrency(r.expenses_total)}</strong></div>
                       <div>Net: <strong class="\${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(r.net_revenue)}</strong></div>
+                    <div class="text-[10px] text-slate-400 col-span-2 pt-0.5 border-t border-slate-100">
+                      Lodging (On: ₹\${formatCurrency(r.lodging_online)} · Cash: ₹\${formatCurrency(rLodgingCash)}) · Fooding (On: ₹\${formatCurrency(r.fooding_online)} · Cash: ₹\${formatCurrency(rFoodingCash)})
+                    </div>
                     </div>
                     \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic truncate" title="\${escapeHtml(r.expense_notes)}">Notes: \${escapeHtml(r.expense_notes)}</div>\` : ''}
                   </div>
@@ -4690,14 +4695,14 @@ export function getDashboardHtml(): string {
 
     function calculateMgrFinanceLiveTotals() {
       const lo = Math.max(0, parseFloat(document.getElementById("mgrLodgingOnline")?.value || "0") || 0);
-      const lf = Math.max(0, parseFloat(document.getElementById("mgrLodgingOffline")?.value || "0") || 0);
+      const lc = Math.max(0, parseFloat(document.getElementById("mgrLodgingCash")?.value || "0") || 0);
       const fo = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
-      const ff = Math.max(0, parseFloat(document.getElementById("mgrFoodingOffline")?.value || "0") || 0);
+      const fc = Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0);
       const os = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
       const exp = Math.max(0, parseFloat(document.getElementById("mgrExpensesTotal")?.value || "0") || 0);
 
-      const lodgingSub = lo + lf;
-      const foodingSub = fo + ff;
+      const lodgingSub = lo + lc;
+      const foodingSub = fo + fc;
       const totalSales = lodgingSub + foodingSub + os;
       const netProfit = totalSales - exp;
 
@@ -4728,9 +4733,9 @@ export function getDashboardHtml(): string {
       const propId = currentManagerInfo.property_id;
       const date = managerFinanceDate;
       const lodgingOnline = Math.max(0, parseFloat(document.getElementById("mgrLodgingOnline")?.value || "0") || 0);
-      const lodgingOffline = Math.max(0, parseFloat(document.getElementById("mgrLodgingOffline")?.value || "0") || 0);
+      const lodgingCash = Math.max(0, parseFloat(document.getElementById("mgrLodgingCash")?.value || "0") || 0);
       const foodingOnline = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
-      const foodingOffline = Math.max(0, parseFloat(document.getElementById("mgrFoodingOffline")?.value || "0") || 0);
+      const foodingCash = Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0);
       const otherSales = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
       const expensesTotal = Math.max(0, parseFloat(document.getElementById("mgrExpensesTotal")?.value || "0") || 0);
       const expenseNotes = document.getElementById("mgrExpenseNotes")?.value?.trim() || "";
@@ -4744,9 +4749,11 @@ export function getDashboardHtml(): string {
             property_id: propId,
             date,
             lodging_online: lodgingOnline,
-            lodging_offline: lodgingOffline,
+            lodging_cash: lodgingCash,
+            lodging_offline: lodgingCash,
             fooding_online: foodingOnline,
-            fooding_offline: foodingOffline,
+            fooding_cash: foodingCash,
+            fooding_offline: foodingCash,
             other_sales: otherSales,
             expenses_total: expensesTotal,
             expense_notes: expenseNotes,
@@ -4813,23 +4820,25 @@ export function getDashboardHtml(): string {
         : financesList.filter(f => f.property_id === financeFilterProperty);
 
       let totalLodgingOnline = 0;
-      let totalLodgingOffline = 0;
+      let totalLodgingCash = 0;
       let totalFoodingOnline = 0;
-      let totalFoodingOffline = 0;
+      let totalFoodingCash = 0;
       let totalOtherSales = 0;
       let totalExpenses = 0;
 
       records.forEach(r => {
         totalLodgingOnline += (r.lodging_online || 0);
-        totalLodgingOffline += (r.lodging_offline || 0);
+        const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+        const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+        totalLodgingCash += rLodgingCash;
         totalFoodingOnline += (r.fooding_online || 0);
-        totalFoodingOffline += (r.fooding_offline || 0);
+        totalFoodingCash += rFoodingCash;
         totalOtherSales += (r.other_sales || 0);
         totalExpenses += (r.expenses_total || 0);
       });
 
-      const totalLodging = totalLodgingOnline + totalLodgingOffline;
-      const totalFooding = totalFoodingOnline + totalFoodingOffline;
+      const totalLodging = totalLodgingOnline + totalLodgingCash;
+      const totalFooding = totalFoodingOnline + totalFoodingCash;
       const grossRevenue = totalLodging + totalFooding + totalOtherSales;
       const netOperatingProfit = grossRevenue - totalExpenses;
       const profitMarginPct = grossRevenue > 0 ? Math.round((netOperatingProfit / grossRevenue) * 100) : 0;
@@ -4916,7 +4925,7 @@ export function getDashboardHtml(): string {
               <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">₹\${formatCurrency(totalLodging)}</div>
             </div>
             <div class="text-[10px] text-indigo-800 mt-2 pt-2 border-t border-indigo-50 font-medium truncate">
-              Online: ₹\${formatCurrency(totalLodgingOnline)} · Offline: ₹\${formatCurrency(totalLodgingOffline)}
+              Online: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}
             </div>
           </div>
 
@@ -4930,7 +4939,7 @@ export function getDashboardHtml(): string {
               <div class="text-lg sm:text-xl font-black text-amber-950 font-mono mt-1">₹\${formatCurrency(totalFooding)}</div>
             </div>
             <div class="text-[10px] text-amber-800 mt-2 pt-2 border-t border-amber-50 font-medium truncate">
-              Online: ₹\${formatCurrency(totalFoodingOnline)} · Offline: ₹\${formatCurrency(totalFoodingOffline)}
+              Online: ₹\${formatCurrency(totalFoodingOnline)} · Cash: ₹\${formatCurrency(totalFoodingCash)}
             </div>
           </div>
 
@@ -4976,13 +4985,20 @@ export function getDashboardHtml(): string {
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               \${properties.map(p => {
                 const propRecords = records.filter(r => r.property_id === p.id);
-                let pSales = 0, pExp = 0, pLodging = 0, pFooding = 0;
+                let pSales = 0, pExp = 0;
+                let pLodgingOn = 0, pLodgingCash = 0, pFoodingOn = 0, pFoodingCash = 0;
                 propRecords.forEach(r => {
                   pSales += (r.total_sales || 0);
                   pExp += (r.expenses_total || 0);
-                  pLodging += ((r.lodging_online || 0) + (r.lodging_offline || 0));
-                  pFooding += ((r.fooding_online || 0) + (r.fooding_offline || 0));
+                  const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+                  const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+                  pLodgingOn += (r.lodging_online || 0);
+                  pLodgingCash += rLodgingCash;
+                  pFoodingOn += (r.fooding_online || 0);
+                  pFoodingCash += rFoodingCash;
                 });
+                const pLodging = pLodgingOn + pLodgingCash;
+                const pFooding = pFoodingOn + pFoodingCash;
                 const pNet = pSales - pExp;
                 return \`
                   <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white transition flex flex-col gap-2 shadow-2xs">
@@ -5005,7 +5021,10 @@ export function getDashboardHtml(): string {
                       <span class="font-bold font-mono \${pNet < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(pNet)}</span>
                     </div>
                     <div class="text-[10px] text-slate-400 truncate">
-                      Lodging ₹\${formatCurrency(pLodging)} · Fooding ₹\${formatCurrency(pFooding)}
+                    <div class="text-[10px] text-slate-500 space-y-0.5 pt-1 border-t border-slate-100">
+                      <div>Lodging: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(pLodging)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pLodgingOn)} · Cash ₹\${formatCurrency(pLodgingCash)})</span></div>
+                      <div>Fooding: <strong class="text-amber-900 font-mono">₹\${formatCurrency(pFooding)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pFoodingOn)} · Cash ₹\${formatCurrency(pFoodingCash)})</span></div>
+                    </div>
                     </div>
                   </div>
                 \`;
@@ -5048,8 +5067,8 @@ export function getDashboardHtml(): string {
                   <tr>
                     <th class="py-3 px-3.5">Date</th>
                     <th class="py-3 px-3.5">Property</th>
-                    <th class="py-3 px-3.5">Lodging (On/Off)</th>
-                    <th class="py-3 px-3.5">Fooding (On/Off)</th>
+                    <th class="py-3 px-3.5">Lodging (Online / Cash)</th>
+                    <th class="py-3 px-3.5">Fooding (Online / Cash)</th>
                     <th class="py-3 px-3.5">Other</th>
                     <th class="py-3 px-3.5 font-bold text-slate-900">Total Sales</th>
                     <th class="py-3 px-3.5 font-bold text-rose-700">Expenses</th>
@@ -5060,8 +5079,10 @@ export function getDashboardHtml(): string {
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   \${records.map(r => {
-                    const rLodging = (r.lodging_online || 0) + (r.lodging_offline || 0);
-                    const rFooding = (r.fooding_online || 0) + (r.fooding_offline || 0);
+                    const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+                    const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+                    const rLodging = (r.lodging_online || 0) + rLodgingCash;
+                    const rFooding = (r.fooding_online || 0) + rFoodingCash;
                     return \`
                       <tr class="hover:bg-slate-50/80 transition">
                         <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">\${r.date}</td>
@@ -5072,11 +5093,11 @@ export function getDashboardHtml(): string {
                         </td>
                         <td class="py-3 px-3.5 whitespace-nowrap">
                           <div class="font-bold text-indigo-900 font-mono">₹\${formatCurrency(rLodging)}</div>
-                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.lodging_online)} · Off: ₹\${formatCurrency(r.lodging_offline)}</div>
+                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.lodging_online)} · Cash: ₹\${formatCurrency(rLodgingCash)}</div>
                         </td>
                         <td class="py-3 px-3.5 whitespace-nowrap">
                           <div class="font-bold text-amber-900 font-mono">₹\${formatCurrency(rFooding)}</div>
-                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.fooding_online)} · Off: ₹\${formatCurrency(r.fooding_offline)}</div>
+                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.fooding_online)} · Cash: ₹\${formatCurrency(rFoodingCash)}</div>
                         </td>
                         <td class="py-3 px-3.5 font-mono text-slate-600 whitespace-nowrap">₹\${formatCurrency(r.other_sales)}</td>
                         <td class="py-3 px-3.5 font-black text-emerald-700 font-mono whitespace-nowrap">₹\${formatCurrency(r.total_sales)}</td>
@@ -5118,8 +5139,10 @@ export function getDashboardHtml(): string {
             <!-- Mobile Cards View (< md) -->
             <div class="md:hidden divide-y divide-slate-100 p-3 space-y-3">
               \${records.map(r => {
-                const rLodging = (r.lodging_online || 0) + (r.lodging_offline || 0);
-                const rFooding = (r.fooding_online || 0) + (r.fooding_offline || 0);
+                const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+                const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+                const rLodging = (r.lodging_online || 0) + rLodgingCash;
+                const rFooding = (r.fooding_online || 0) + rFoodingCash;
                 return \`
                   <div class="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/80 flex flex-col gap-2.5 shadow-2xs">
                     <div class="flex items-center justify-between">
@@ -5143,12 +5166,12 @@ export function getDashboardHtml(): string {
                       <div>
                         <span class="text-[10px] font-bold text-indigo-700 uppercase">Lodging</span>
                         <div class="font-mono font-bold text-indigo-950">₹\${formatCurrency(rLodging)}</div>
-                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Off ₹\${formatCurrency(r.lodging_offline)}</div>
+                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Cash ₹\${formatCurrency(rLodgingCash)}</div>
                       </div>
                       <div>
                         <span class="text-[10px] font-bold text-amber-700 uppercase">Fooding</span>
                         <div class="font-mono font-bold text-amber-950">₹\${formatCurrency(rFooding)}</div>
-                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Off ₹\${formatCurrency(r.fooding_offline)}</div>
+                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Cash ₹\${formatCurrency(rFoodingCash)}</div>
                       </div>
                     </div>
 
@@ -5226,9 +5249,9 @@ export function getDashboardHtml(): string {
       const idInput = document.getElementById("modalFinanceId");
       const dateInput = document.getElementById("modalFinanceDate");
       const loInput = document.getElementById("modalLodgingOnline");
-      const lfInput = document.getElementById("modalLodgingOffline");
+      const lcInput = document.getElementById("modalLodgingCash");
       const foInput = document.getElementById("modalFoodingOnline");
-      const ffInput = document.getElementById("modalFoodingOffline");
+      const fcInput = document.getElementById("modalFoodingCash");
       const osInput = document.getElementById("modalOtherSales");
       const expInput = document.getElementById("modalExpensesTotal");
       const expNotesInput = document.getElementById("modalExpenseNotes");
@@ -5242,9 +5265,9 @@ export function getDashboardHtml(): string {
           if (select) select.value = record.property_id;
           if (dateInput) dateInput.value = record.date;
           if (loInput) loInput.value = record.lodging_online || 0;
-          if (lfInput) lfInput.value = record.lodging_offline || 0;
+          if (lcInput) lcInput.value = record.lodging_cash ?? record.lodging_offline ?? 0;
           if (foInput) foInput.value = record.fooding_online || 0;
-          if (ffInput) ffInput.value = record.fooding_offline || 0;
+          if (fcInput) fcInput.value = record.fooding_cash ?? record.fooding_offline ?? 0;
           if (osInput) osInput.value = record.other_sales || 0;
           if (expInput) expInput.value = record.expenses_total || 0;
           if (expNotesInput) expNotesInput.value = record.expense_notes || "";
@@ -5268,9 +5291,9 @@ export function getDashboardHtml(): string {
           dateInput.value = \`\${year}-\${month}-\${day}\`;
         }
         if (loInput) loInput.value = "";
-        if (lfInput) lfInput.value = "";
+        if (lcInput) lcInput.value = "";
         if (foInput) foInput.value = "";
-        if (ffInput) ffInput.value = "";
+        if (fcInput) fcInput.value = "";
         if (osInput) osInput.value = "";
         if (expInput) expInput.value = "";
         if (expNotesInput) expNotesInput.value = "";
@@ -5290,14 +5313,14 @@ export function getDashboardHtml(): string {
 
     function calculateModalFinanceLiveTotals() {
       const lo = Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0);
-      const lf = Math.max(0, parseFloat(document.getElementById("modalLodgingOffline")?.value || "0") || 0);
+      const lc = Math.max(0, parseFloat(document.getElementById("modalLodgingCash")?.value || "0") || 0);
       const fo = Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0);
-      const ff = Math.max(0, parseFloat(document.getElementById("modalFoodingOffline")?.value || "0") || 0);
+      const fc = Math.max(0, parseFloat(document.getElementById("modalFoodingCash")?.value || "0") || 0);
       const os = Math.max(0, parseFloat(document.getElementById("modalOtherSales")?.value || "0") || 0);
       const exp = Math.max(0, parseFloat(document.getElementById("modalExpensesTotal")?.value || "0") || 0);
 
-      const lodgingSub = lo + lf;
-      const foodingSub = fo + ff;
+      const lodgingSub = lo + lc;
+      const foodingSub = fo + fc;
       const totalSales = lodgingSub + foodingSub + os;
       const netProfit = totalSales - exp;
 
@@ -5327,9 +5350,9 @@ export function getDashboardHtml(): string {
       const property_id = document.getElementById("modalFinanceProperty")?.value;
       const date = document.getElementById("modalFinanceDate")?.value;
       const lodging_online = Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0);
-      const lodging_offline = Math.max(0, parseFloat(document.getElementById("modalLodgingOffline")?.value || "0") || 0);
+      const lodging_cash = Math.max(0, parseFloat(document.getElementById("modalLodgingCash")?.value || "0") || 0);
       const fooding_online = Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0);
-      const fooding_offline = Math.max(0, parseFloat(document.getElementById("modalFoodingOffline")?.value || "0") || 0);
+      const fooding_cash = Math.max(0, parseFloat(document.getElementById("modalFoodingCash")?.value || "0") || 0);
       const other_sales = Math.max(0, parseFloat(document.getElementById("modalOtherSales")?.value || "0") || 0);
       const expenses_total = Math.max(0, parseFloat(document.getElementById("modalExpensesTotal")?.value || "0") || 0);
       const expense_notes = document.getElementById("modalExpenseNotes")?.value?.trim() || "";
@@ -5345,9 +5368,11 @@ export function getDashboardHtml(): string {
           property_id,
           date,
           lodging_online,
-          lodging_offline,
+          lodging_cash,
+          lodging_offline: lodging_cash,
           fooding_online,
-          fooding_offline,
+          fooding_cash,
+          fooding_offline: fooding_cash,
           other_sales,
           expenses_total,
           expense_notes,
@@ -5414,19 +5439,21 @@ export function getDashboardHtml(): string {
         return;
       }
 
-      let csv = "Date,Property,Lodging Online,Lodging Offline,Lodging Total,Fooding Online,Fooding Offline,Fooding Total,Other Sales,Gross Total Sales,Total Expenses,Expense Breakdown,Net Profit,Shift Notes,Submitted By\\n";
+      let csv = "Date,Property,Lodging Online Payment,Lodging Cash Payment,Lodging Total,Fooding Online Payment,Fooding Cash Payment,Fooding Total,Other Sales,Gross Total Sales,Total Expenses,Expense Breakdown,Net Operating Profit,Shift Notes,Submitted By\\n";
 
       records.forEach(r => {
-        const lodgingTot = (r.lodging_online || 0) + (r.lodging_offline || 0);
-        const foodingTot = (r.fooding_online || 0) + (r.fooding_offline || 0);
+        const lodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+        const foodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+        const lodgingTot = (r.lodging_online || 0) + lodgingCash;
+        const foodingTot = (r.fooding_online || 0) + foodingCash;
         const row = [
           r.date,
           r.property_name || "",
           r.lodging_online || 0,
-          r.lodging_offline || 0,
+          lodgingCash,
           lodgingTot,
           r.fooding_online || 0,
-          r.fooding_offline || 0,
+          foodingCash,
           foodingTot,
           r.other_sales || 0,
           r.total_sales || 0,
