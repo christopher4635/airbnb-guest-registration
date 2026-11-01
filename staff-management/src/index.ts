@@ -1,5 +1,6 @@
 import { getDashboardHtml } from "./ui";
 import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance, Room, RoomBooking } from "./types";
+import { syncAirbnbBookingsToStaffSync, pushBookingToAirbnbPortal } from "./airbnbSync";
 
 function jsonResponse(data: any, status = 200): Response {
 	return new Response(JSON.stringify(data), {
@@ -269,6 +270,7 @@ export default {
 					(path === "/api/staff" && method === "GET") ||
 					(path === "/api/rooms" && method === "GET") ||
 					path.startsWith("/api/room-bookings") ||
+					path.startsWith("/api/sync/airbnb") ||
 					path.startsWith("/api/attendance") || // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
 					(path === "/api/finances" && (method === "GET" || method === "POST")); // GET & POST for their property only
 
@@ -1346,11 +1348,11 @@ export default {
 					await env.DB.prepare(`
 						INSERT INTO room_bookings (
 							id, property_id, room_id, date, amount, payment_mode, guest_name, notes, slot_number,
-							group_booking_id, check_in_date, check_out_date, total_stay_amount, created_by, created_at, updated_at
-						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+							group_booking_id, check_in_date, check_out_date, total_stay_amount, platform, created_by, created_at, updated_at
+						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					`).bind(
 						id, propertyId, roomId, stayDate, dayAmount, paymentMode, guestName, notes, slotNumber,
-						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, submittedBy
+						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, body.platform || "Direct", submittedBy
 					).run();
 
 					// Sync lodging revenue in daily_finances for each date
@@ -1365,6 +1367,27 @@ export default {
 					`).bind(id).first<RoomBooking>();
 
 					if (created) createdBookings.push(created);
+				}
+
+				// If Elite Homes booking, push directly to Airbnb Host Portal to prevent double bookings
+				if (propertyId === "elite-homes" && createdBookings.length > 0) {
+					const firstBk = createdBookings[0];
+					const roomName = (firstBk as any).room_number || (firstBk as any).room_type || room.room_number || room.room_type || "";
+					try {
+						await pushBookingToAirbnbPortal(env, {
+							roomName,
+							guestName: guestName || "Guest",
+							phone: "",
+							checkInDate,
+							checkOutDate: actualCheckOut,
+							nights: dates.length,
+							totalAmount: totalStayAmount,
+							paymentMode,
+							notes: notes || undefined
+						});
+					} catch (e) {
+						console.error("pushBookingToAirbnbPortal error:", e);
+					}
 				}
 
 				return jsonResponse({
@@ -1461,6 +1484,29 @@ export default {
 				const totals = await syncDailyFinanceLodging(env, existing.property_id, existing.date);
 
 				return jsonResponse({ success: true, lodgingTotals: totals });
+			}
+
+			// GET /api/sync/airbnb (Check sync status & last sync timestamp)
+			if (path === "/api/sync/airbnb" && method === "GET") {
+				const lastSyncRow = await env.DB.prepare(
+					"SELECT value FROM app_settings WHERE key = 'last_airbnb_sync_at'"
+				).first<{ value: string }>();
+
+				const bookingCountRow = await env.DB.prepare(
+					"SELECT COUNT(*) as count FROM room_bookings WHERE property_id = 'elite-homes' AND external_booking_id IS NOT NULL"
+				).first<{ count: number }>();
+
+				return jsonResponse({
+					success: true,
+					lastSyncedAt: lastSyncRow?.value || null,
+					externalBookingsCount: bookingCountRow?.count || 0
+				});
+			}
+
+			// POST /api/sync/airbnb (Trigger synchronization from Airbnb Host Portal)
+			if (path === "/api/sync/airbnb" && method === "POST") {
+				const syncResult = await syncAirbnbBookingsToStaffSync(env, syncDailyFinanceLodging);
+				return jsonResponse(syncResult, syncResult.success ? 200 : 500);
 			}
 
 			return jsonResponse({ error: "Not Found" }, 404);

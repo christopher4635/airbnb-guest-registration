@@ -1,5 +1,6 @@
 export interface Env {
 	DB: D1Database;
+	AIRBNB_DB?: D1Database;
 	AUTH_PIN?: string;
 }
 
@@ -143,6 +144,8 @@ export interface RoomBooking {
 	check_in_date?: string | null;
 	check_out_date?: string | null;
 	total_stay_amount?: number | null;
+	external_booking_id?: string | null;
+	platform?: string | null;
 	created_by?: string | null;
 	created_at?: string;
 	updated_at?: string;

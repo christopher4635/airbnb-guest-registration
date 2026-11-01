@@ -4925,10 +4925,23 @@ export function getDashboardHtml(): string {
           <div class="bg-white p-4 sm:p-6 rounded-3xl border border-indigo-100/90 shadow-sm flex flex-col gap-5">
             <div class="flex items-center justify-between border-b border-indigo-50 pb-3 flex-wrap gap-2">
               <div>
-                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <i data-lucide="door-closed" class="w-5 h-5 text-indigo-600"></i>
-                  Room Bookings & Lodging Revenue
-                </h3>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="door-closed" class="w-5 h-5 text-indigo-600"></i>
+                    <span>Room Bookings & Lodging Revenue</span>
+                  </h3>
+                  \${propId === 'elite-homes' ? \`
+                    <button
+                      type="button"
+                      onclick="syncAirbnbCalendar()"
+                      title="Fetch latest bookings from Airbnb Host Portal"
+                      class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-2xs transition cursor-pointer"
+                    >
+                      <i data-lucide="refresh-cw" class="w-3.5 h-3.5 airbnb-sync-icon"></i>
+                      <span class="airbnb-sync-text">Sync Airbnb</span>
+                    </button>
+                  \` : ''}
+                </div>
                 <p class="text-xs text-slate-500 mt-0.5">Select a room and record the booking. Lodging online & cash amounts are calculated automatically.</p>
               </div>
               <div class="text-right">
@@ -5175,9 +5188,18 @@ export function getDashboardHtml(): string {
                     return \`
                       <div class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition shadow-2xs flex flex-col justify-between gap-2">
                         <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-1.5">
+                          <div class="flex items-center gap-1.5 flex-wrap">
                             <span class="text-xs font-black text-slate-900">Room \${escapeHtml(b.room_number)}</span>
                             <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700">Slot #\${b.slot_number || 1}</span>
+                            \${b.platform ? \`
+                              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${
+                                (b.platform || '').toLowerCase().includes('airbnb') ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                                (b.platform || '').toLowerCase().includes('booking') ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              }">
+                                \${escapeHtml(b.platform)}
+                              </span>
+                            \` : ''}
                             <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
                               \${isOnline ? 'Online' : 'Cash'}
                             </span>
@@ -6619,6 +6641,18 @@ export function getDashboardHtml(): string {
                 </button>
               </div>
 
+              \${propId === 'elite-homes' ? \`
+                <button
+                  type="button"
+                  onclick="syncAirbnbCalendar()"
+                  title="Synchronize confirmed bookings from Airbnb Host Portal"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-xs transition cursor-pointer"
+                >
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5 airbnb-sync-icon"></i>
+                  <span class="airbnb-sync-text">Sync Airbnb Portal</span>
+                </button>
+              \` : ''}
+
               <button
                 type="button"
                 onclick="openRoomBookingModal(null, null, null)"
@@ -6656,7 +6690,14 @@ export function getDashboardHtml(): string {
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
+            \${propId === 'elite-homes' ? \`
+              <span class="ml-auto text-[11px] text-rose-700 font-semibold flex items-center gap-1">
+                <i data-lucide="cloud-sync" class="w-3.5 h-3.5 text-rose-600"></i>
+                <span>Connected: Airbnb Host Portal</span>
+              </span>
+            \` : ''}
           </div>
 
           <!-- RENDER MATRIX OR MONTHLY VIEW -->
@@ -6742,15 +6783,24 @@ export function getDashboardHtml(): string {
                           const isMultiDay = !!bk.group_booking_id;
                           const kAmt = Math.round(bk.amount / 1000 * 10) / 10;
                           const stayInfo = isMultiDay ? \` (Multi-day stay: \${bk.check_in_date || ''} to \${bk.check_out_date || ''})\` : '';
+                          const isAirbnb = (bk.platform || '').toLowerCase().includes('airbnb');
+                          const isBookingCom = (bk.platform || '').toLowerCase().includes('booking');
+                          const platformTag = isAirbnb ? 'Airbnb' : (isBookingCom ? 'OTA' : (isOnline ? 'On' : 'Cs') + (isMultiDay ? '·Stay' : ''));
+                          const cellStyle = isAirbnb
+                            ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                            : (isBookingCom
+                              ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                              : (isOnline ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-amber-100 text-amber-900 border border-amber-200'));
+
                           return \`
                             <td
                               onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
-                              title="Booked: ₹\${formatCurrency(bk.amount)} (\${isOnline ? 'Online' : 'Cash'}) - \${bk.guest_name || 'Guest'}\${stayInfo}"
+                              title="Booked: ₹\${formatCurrency(bk.amount)} [\${bk.platform || (isOnline ? 'Online' : 'Cash')}] - \${bk.guest_name || 'Guest'}\${stayInfo}"
                               class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
                             >
-                              <span class="inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${isOnline ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-amber-100 text-amber-900 border border-amber-200'}">
+                              <span class="inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${cellStyle}">
                                 <span>₹\${kAmt}k</span>
-                                <span class="text-[8px] uppercase tracking-tighter opacity-80">\${isOnline ? 'On' : 'Cs'}\${isMultiDay ? '·Stay' : ''}</span>
+                                <span class="text-[8px] uppercase tracking-tighter opacity-90">\${platformTag}</span>
                               </span>
                             </td>
                           \`;
@@ -6823,9 +6873,11 @@ export function getDashboardHtml(): string {
                   <div class="space-y-1 my-1 overflow-hidden">
                     \${dateBookings.slice(0, 2).map(b => {
                       const isOnline = b.payment_mode === "online";
+                      const pTag = b.platform ? (b.platform.toLowerCase().includes('airbnb') ? 'Ab·' : (b.platform.toLowerCase().includes('booking') ? 'OTA·' : '')) : '';
+                      const itemBg = (b.platform || '').toLowerCase().includes('airbnb') ? 'bg-rose-100/90 text-rose-950 border border-rose-200' : (isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900');
                       return \`
-                        <div class="text-[9px] truncate font-medium px-1.5 py-0.5 rounded-md \${isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900'}">
-                          Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k
+                        <div class="text-[9px] truncate font-medium px-1.5 py-0.5 rounded-md \${itemBg}">
+                          \${pTag}Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k
                         </div>
                       \`;
                     }).join("")}
@@ -7735,9 +7787,24 @@ export function getDashboardHtml(): string {
                 <div>
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-xs font-bold text-slate-900">Booking Slot #\${b.slot_number || 1}</span>
+                    \${b.platform ? \`
+                      <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${
+                        (b.platform || '').toLowerCase().includes('airbnb') ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                        (b.platform || '').toLowerCase().includes('booking') ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                        'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }">
+                        \${escapeHtml(b.platform)}
+                      </span>
+                    \` : ''}
                     <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
                       \${isOnline ? 'Online' : 'Cash'}
                     </span>
+                    \${b.external_booking_id ? \`
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1" title="External Booking Synced from Airbnb Host Portal">
+                        <i data-lucide="cloud-check" class="w-2.5 h-2.5"></i>
+                        <span>Airbnb Portal</span>
+                      </span>
+                    \` : ''}
                     \${isMultiDay ? \`
                       <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-purple-100 text-purple-800 flex items-center gap-1" title="Stay: \${b.check_in_date || ''} to \${b.check_out_date || ''}">
                         <i data-lucide="layers" class="w-2.5 h-2.5"></i>
@@ -7749,7 +7816,10 @@ export function getDashboardHtml(): string {
                     Guest: \${escapeHtml(b.guest_name || 'Walk-in')}
                     \${b.notes ? \` · \${escapeHtml(b.notes)}\` : ''}
                   </div>
-                  <div class="text-[10px] text-slate-400 mt-0.5">Created: \${escapeHtml(b.created_by || 'Staff')}</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">
+                    Created: \${escapeHtml(b.created_by || 'Staff')}
+                    \${b.external_booking_id ? \` · External ID: \${escapeHtml(b.external_booking_id)}\` : ''}
+                  </div>
                 </div>
 
                 <div class="text-right flex items-center gap-2">
@@ -7787,6 +7857,40 @@ export function getDashboardHtml(): string {
     function closeRoomDayDetailModal() {
       document.getElementById("roomDayDetailModal").classList.add("hidden");
       document.getElementById("roomDayDetailModal").classList.remove("flex");
+    }
+
+    let isSyncingAirbnb = false;
+    async function syncAirbnbCalendar() {
+      if (isSyncingAirbnb) return;
+      isSyncingAirbnb = true;
+      const icons = document.querySelectorAll(".airbnb-sync-icon");
+      const texts = document.querySelectorAll(".airbnb-sync-text");
+      icons.forEach(i => i.classList.add("animate-spin"));
+      texts.forEach(t => t.innerText = "Syncing...");
+
+      try {
+        showToast("Connecting to Airbnb Host Portal...");
+        const res = await fetch("/api/sync/airbnb", {
+          method: "POST",
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          showToast(data.error || "Failed to sync Airbnb bookings");
+        } else {
+          showToast(\`Synced \${data.syncedCount} bookings across \${data.datesAffected} dates from Airbnb Portal!\`);
+          await Promise.all([fetchRoomBookings(), fetchFinances()]);
+          renderFinancesView();
+        }
+      } catch (err) {
+        showToast("Sync error: " + err.message);
+      } finally {
+        isSyncingAirbnb = false;
+        icons.forEach(i => i.classList.remove("animate-spin"));
+        texts.forEach(t => t.innerText = "Sync Airbnb");
+        refreshIcons();
+      }
     }
 
     function openAddBookingForCurrentDetail() {
