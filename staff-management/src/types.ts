@@ -109,3 +109,32 @@ export interface DailyFinance {
 	updated_at?: string;
 }
 
+export interface Room {
+	id: string;
+	property_id: string;
+	room_number: string;
+	room_type?: string;
+	base_price?: number;
+	active: number;
+	created_at?: string;
+	updated_at?: string;
+}
+
+export interface RoomBooking {
+	id: string;
+	property_id: string;
+	room_id: string;
+	room_number?: string;
+	room_type?: string;
+	date: string;
+	amount: number;
+	payment_mode: "online" | "cash";
+	guest_name?: string | null;
+	notes?: string | null;
+	slot_number?: number;
+	created_by?: string | null;
+	created_at?: string;
+	updated_at?: string;
+}
+
+

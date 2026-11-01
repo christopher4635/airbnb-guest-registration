@@ -1317,25 +1317,23 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
-        <!-- Lodging Group -->
+        <!-- Lodging Group (Derived from Room Bookings) -->
         <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
               <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
               Lodging Revenue (Room Bookings)
             </span>
-            <span class="text-[11px] font-bold text-indigo-700">Subtotal: ₹<span id="modalLodgingSubtotal">0</span></span>
+            <span class="text-xs font-black text-indigo-900 font-mono">₹<span id="modalLodgingSubtotal">0</span></span>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Online Payment (UPI/Card)</label>
-              <input type="number" id="modalLodgingOnline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-indigo-200 bg-white font-mono focus:ring-2 focus:ring-indigo-500" />
-            </div>
-            <div>
-              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Cash Payment (Cash)</label>
-              <input type="number" id="modalLodgingCash" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-indigo-200 bg-white font-mono focus:ring-2 focus:ring-indigo-500" />
-            </div>
+          <div class="flex items-center justify-between text-[11px] text-indigo-800 bg-white/80 px-2.5 py-1.5 rounded-xl border border-indigo-100">
+            <span>Online: ₹<strong id="modalLodgingOnlineDisplay" class="font-mono">0</strong> · Cash: ₹<strong id="modalLodgingCashDisplay" class="font-mono">0</strong></span>
+            <button type="button" onclick="openRoomBookingsFromModal()" class="text-indigo-600 hover:text-indigo-800 font-bold underline cursor-pointer text-[10px]">
+              Manage Rooms & Bookings →
+            </button>
           </div>
+          <input type="hidden" id="modalLodgingOnline" value="0" />
+          <input type="hidden" id="modalLodgingCash" value="0" />
         </div>
 
         <!-- Fooding Group -->
@@ -1415,6 +1413,179 @@ export function getDashboardHtml(): string {
     </div>
   </div>
 
+  <!-- Room Booking Modal (Add / Edit individual booking) -->
+  <div id="roomBookingModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="roomBookingModalTitle" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+          Record Room Booking
+        </h3>
+        <button type="button" onclick="closeRoomBookingModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="roomBookingForm" onsubmit="handleSaveRoomBookingModal(event)" class="space-y-3.5">
+        <input type="hidden" id="modalBookingId" />
+        <input type="hidden" id="modalBookingProperty" />
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Select Room *</label>
+            <select id="modalBookingRoomSelect" required class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500">
+              <!-- Rendered options -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+            <input type="date" id="modalBookingDate" required class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Booking Amount (₹) *</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+            <input type="number" id="modalBookingAmount" required min="0" step="1" placeholder="2000" class="w-full pl-7 pr-3 py-2 text-sm font-black font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Payment Method *</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60 cursor-pointer hover:bg-indigo-50 transition">
+              <input type="radio" name="modalBookingPaymentMode" value="online" id="modalBookingModeOnline" checked class="text-indigo-600 focus:ring-indigo-500" />
+              <div>
+                <div class="text-xs font-bold text-indigo-950">Online Payment</div>
+                <div class="text-[10px] text-indigo-700/80">UPI / Card / OTA</div>
+              </div>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-amber-200 bg-amber-50/60 cursor-pointer hover:bg-amber-50 transition">
+              <input type="radio" name="modalBookingPaymentMode" value="cash" id="modalBookingModeCash" class="text-amber-600 focus:ring-amber-500" />
+              <div>
+                <div class="text-xs font-bold text-amber-950">Cash Payment</div>
+                <div class="text-[10px] text-amber-700/80">Cash at Counter</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Guest Name / Reference (Optional)</label>
+          <input type="text" id="modalBookingGuestName" placeholder="e.g. Guest Name, Slot 1, MMT, Walk-in" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Notes / Remarks (Optional)</label>
+          <input type="text" id="modalBookingNotes" placeholder="e.g. Day use, Checked out early, Extra bed" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <p class="text-[11px] text-slate-400 italic">
+          <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+          Multiple bookings for the same room on the same day are recorded automatically (Booking #1, #2, etc.) and added to lodging revenue.
+        </p>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeRoomBookingModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save Booking</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Room Day Detail Modal (View / Add multiple bookings for a room on a date) -->
+  <div id="roomDayDetailModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h3 id="roomDayDetailTitle" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+            Room Bookings
+          </h3>
+          <p id="roomDayDetailSubtitle" class="text-xs text-slate-500 mt-0.5">Date & Room info</p>
+        </div>
+        <button type="button" onclick="closeRoomDayDetailModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="roomDayDetailList" class="space-y-2.5 max-h-72 overflow-y-auto">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100 flex-wrap gap-2">
+        <button type="button" id="btnBookAgainRoomDay" onclick="openAddBookingForCurrentDetail()" class="px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer flex items-center gap-1.5">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>Book This Room Again</span>
+        </button>
+        <button type="button" onclick="closeRoomDayDetailModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manage Rooms Modal (Admin Add/Edit Room) -->
+  <div id="manageRoomModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 id="manageRoomModalTitle" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+          Configure Room
+        </h3>
+        <button type="button" onclick="closeManageRoomModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="manageRoomForm" onsubmit="handleSaveRoomModal(event)" class="space-y-3.5">
+        <input type="hidden" id="modalRoomId" />
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Property *</label>
+          <select id="modalRoomProperty" required class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500">
+            <!-- Rendered by JS -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Room Number *</label>
+            <input type="text" id="modalRoomNumber" required placeholder="e.g. 101, 102" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Room Type</label>
+            <input type="text" id="modalRoomType" placeholder="Standard, Deluxe, etc." value="Standard" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Base Price / Default Rate (₹)</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+            <input type="number" id="modalRoomBasePrice" min="0" step="1" placeholder="2000" class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeManageRoomModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save Room</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform translate-y-16 opacity-0 transition-all duration-200">
     <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
@@ -1453,6 +1624,14 @@ export function getDashboardHtml(): string {
     let financeYear = new Date().getFullYear();
     let financeMonth = new Date().getMonth(); // 0-indexed
     let financeFilterProperty = "all";
+    let roomsList = []; // Array of room records
+    let roomBookingsList = []; // Array of room_bookings records
+    let adminFinanceSubTab = "dashboard"; // 'dashboard' | 'calendar' | 'rooms'
+    let calendarSelectedProperty = "xsquare-hotel";
+    let calendarViewMode = "matrix"; // 'matrix' | 'calendar'
+    let quickBookPaymentMode = "online";
+    let currentDetailRoomId = null;
+    let currentDetailDate = null;
     let currentDocStaffId = null;
     let currentPaymentStaffId = null;
     let currentPaymentAmount = 0;
@@ -1473,7 +1652,9 @@ export function getDashboardHtml(): string {
           fetchProperties(),
           fetchStaff(),
           fetchAttendance(),
-          fetchFinances()
+          fetchFinances(),
+          fetchRooms(),
+          fetchRoomBookings()
         ];
         if (currentUserRole === "admin") {
           promises.push(fetchAdvances(), fetchBonuses(), fetchPayments());
@@ -1862,7 +2043,9 @@ export function getDashboardHtml(): string {
           fetchProperties(),
           fetchStaff(),
           fetchAttendance(),
-          fetchFinances()
+          fetchFinances(),
+          fetchRooms(),
+          fetchRoomBookings()
         ];
         if (currentUserRole === "admin") {
           promises.push(fetchAdvances(), fetchBonuses(), fetchPayments());
@@ -4324,6 +4507,59 @@ export function getDashboardHtml(): string {
       }
     }
 
+    async function fetchRooms(propertyId = null) {
+      try {
+        let url = "/api/rooms";
+        if (propertyId && propertyId !== "all") {
+          url += \`?property_id=\${encodeURIComponent(propertyId)}\`;
+        } else if (currentUserRole === "manager" && currentManagerInfo?.property_id) {
+          url += \`?property_id=\${encodeURIComponent(currentManagerInfo.property_id)}\`;
+        }
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        if (res.ok) {
+          roomsList = await res.json();
+        }
+      } catch (e) {
+        console.error("fetchRooms error:", e);
+      }
+    }
+
+    async function fetchRoomBookings(filter = {}) {
+      try {
+        let url = "/api/room-bookings";
+        const params = new URLSearchParams();
+        if (currentUserRole === "manager") {
+          if (currentManagerInfo?.property_id) {
+            params.append("property_id", currentManagerInfo.property_id);
+          }
+          if (filter.date) {
+            params.append("date", filter.date);
+          } else if (managerFinanceDate) {
+            const m = managerFinanceDate.substring(0, 7);
+            params.append("month", m);
+          }
+        } else {
+          const prop = filter.property_id || calendarSelectedProperty || financeFilterProperty;
+          if (prop && prop !== "all") {
+            params.append("property_id", prop);
+          }
+          const m = String(financeMonth + 1).padStart(2, "0");
+          const monthStr = filter.month || \`\${financeYear}-\${m}\`;
+          params.append("month", monthStr);
+        }
+        const qs = params.toString();
+        if (qs) url += \`?\${qs}\`;
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        if (res.ok) {
+          roomBookingsList = await res.json();
+        }
+      } catch (e) {
+        console.error("fetchRoomBookings error:", e);
+      }
+    }
+
     function renderFinancesView() {
       const container = document.getElementById("financesViewContent");
       if (!container) return;
@@ -4335,20 +4571,30 @@ export function getDashboardHtml(): string {
       refreshIcons();
     }
 
+    // -------------------------------------------------------------------------
+    // MANAGER VIEW (NO MANUAL LODGING ENTRY - AUTOMATED FROM ROOM BOOKINGS)
+    // -------------------------------------------------------------------------
     function renderManagerFinancesView(container) {
       const propId = currentManagerInfo?.property_id || "";
       const propName = currentManagerInfo?.property_name || properties.find(p => p.id === propId)?.name || "Assigned Property";
       
       const currentRecord = financesList.find(f => f.property_id === propId && f.date === managerFinanceDate);
-      const lo = currentRecord ? (currentRecord.lodging_online || 0) : 0;
-      const lc = currentRecord ? (currentRecord.lodging_cash ?? currentRecord.lodging_offline ?? 0) : 0;
+      
+      // Filter rooms and bookings for this property & date
+      const propRooms = roomsList.filter(r => r.property_id === propId);
+      const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate);
+
+      // Automated lodging calculations from bookings
+      const lo = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
+      const lc = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+      const lodgingSub = lo + lc;
+
       const fo = currentRecord ? (currentRecord.fooding_online || 0) : 0;
       const fc = currentRecord ? (currentRecord.fooding_cash ?? currentRecord.fooding_offline ?? 0) : 0;
       const os = currentRecord ? (currentRecord.other_sales || 0) : 0;
       const exp = currentRecord ? (currentRecord.expenses_total || 0) : 0;
       const expNotes = currentRecord ? (currentRecord.expense_notes || "") : "";
       const notes = currentRecord ? (currentRecord.notes || "") : "";
-      const lodgingSub = lo + lc;
       const foodingSub = fo + fc;
       const totSales = lodgingSub + foodingSub + os;
       const netProf = totSales - exp;
@@ -4384,7 +4630,7 @@ export function getDashboardHtml(): string {
               id="mgrFinanceDate"
               value="\${managerFinanceDate}"
               onchange="onManagerFinanceDateChange(this.value)"
-              class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800"
+              class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
             />
             <button type="button" onclick="changeFinanceDate(1)" title="Next Day" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer">
               <i data-lucide="chevron-right" class="w-4 h-4"></i>
@@ -4395,253 +4641,417 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
-        <!-- Manager Entry Form -->
-        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col gap-5">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+        <!-- SECTION 1: ROOM BOOKINGS & AUTOMATED LODGING -->
+        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-indigo-100/90 shadow-sm flex flex-col gap-5">
+          <div class="flex items-center justify-between border-b border-indigo-50 pb-3 flex-wrap gap-2">
             <div>
               <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                <i data-lucide="receipt" class="w-5 h-5 text-indigo-600"></i>
-                Daily Sales & Expenses Entry
+                <i data-lucide="door-closed" class="w-5 h-5 text-indigo-600"></i>
+                Room Bookings & Lodging Revenue
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Enter lodging (online & cash payments), fooding (online & cash payments), and total expenses for this date.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Select a room and record the booking. Lodging online & cash amounts are calculated automatically.</p>
             </div>
-            \${isSaved ? \`<span class="text-[11px] text-slate-400">Last updated: \${currentRecord.updated_at || 'Recently'}</span>\` : ''}
+            <div class="text-right">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">Lodging Total</span>
+              <span class="text-xl sm:text-2xl font-black font-mono text-indigo-950">₹<span id="mgrLodgingSubtotal">\${formatCurrency(lodgingSub)}</span></span>
+            </div>
           </div>
 
-          <!-- Section 1: Lodging Sales -->
-          <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 rounded-2xl border border-indigo-100 space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
-                  <i data-lucide="hotel" class="w-4 h-4"></i>
-                </div>
+          <!-- Room Status Chips -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
+                Rooms Status for \${managerFinanceDate}
+              </label>
+              <span class="text-[11px] text-slate-400">\${propRooms.length} Active Rooms</span>
+            </div>
+
+            \${propRooms.length === 0 ? \`
+              <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-amber-600"></i>
+                <span>No rooms configured for this property yet. Admin can add rooms (101, 102, 103, 104) in Manage Rooms.</span>
+              </div>
+            \` : \`
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                \${propRooms.map(rm => {
+                  const rmBookings = todayBookings.filter(b => b.room_id === rm.id);
+                  const count = rmBookings.length;
+                  const totalRm = rmBookings.reduce((s, b) => s + (b.amount || 0), 0);
+                  const isBooked = count > 0;
+                  return \`
+                    <div
+                      onclick="quickBookSelectRoom('\${rm.id}')"
+                      class="p-3 rounded-2xl border transition cursor-pointer select-none \${isBooked ? 'bg-indigo-50/70 border-indigo-300 ring-1 ring-indigo-200' : 'bg-slate-50/70 hover:bg-white border-slate-200'}"
+                    >
+                      <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-black text-slate-900 flex items-center gap-1">
+                          <i data-lucide="door-closed" class="w-3.5 h-3.5 \${isBooked ? 'text-indigo-600' : 'text-slate-400'}"></i>
+                          Room \${escapeHtml(rm.room_number)}
+                        </span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold \${isBooked ? (count > 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800') : 'bg-emerald-100 text-emerald-800'}">
+                          \${isBooked ? (count > 1 ? \`\${count}x Booked\` : 'Booked') : 'Vacant'}
+                        </span>
+                      </div>
+                      <div class="text-[11px] text-slate-500 flex items-center justify-between">
+                        <span>\${escapeHtml(rm.room_type || 'Standard')}</span>
+                        <span class="font-mono font-bold \${isBooked ? 'text-indigo-900' : 'text-slate-600'}">
+                          \${isBooked ? \`₹\${formatCurrency(totalRm)}\` : \`₹\${formatCurrency(rm.base_price || 0)}\`}
+                        </span>
+                      </div>
+                    </div>
+                  \`;
+                }).join("")}
+              </div>
+            \`}
+          </div>
+
+          <!-- Quick Booking Input Card -->
+          <div class="bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-3.5">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
+                Quick Room Booking (Supports Multiple Bookings per Room / Day)
+              </h4>
+              <span class="text-[11px] text-indigo-600 font-medium">Click room above or select below</span>
+            </div>
+
+            <form id="mgrQuickBookForm" onsubmit="submitManagerRoomBooking(event)" class="space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Room Select -->
                 <div>
-                  <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Lodging Revenue (Room Bookings)</h4>
-                  <p class="text-[11px] text-indigo-700/80">Online payment revenue vs Cash payment revenue</p>
+                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Room *</label>
+                  <select
+                    id="mgrBookRoomSelect"
+                    required
+                    onchange="onMgrBookRoomSelectChange(this.value)"
+                    class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  >
+                    <option value="">-- Choose Room --</option>
+                    \${propRooms.map(rm => \`
+                      <option value="\${rm.id}" data-price="\${rm.base_price || 0}">Room \${escapeHtml(rm.room_number)} (\${escapeHtml(rm.room_type)}) - ₹\${formatCurrency(rm.base_price || 0)}</option>
+                    \`).join("")}
+                  </select>
                 </div>
-              </div>
-              <div class="text-right">
-                <div class="text-[10px] font-bold text-indigo-600 uppercase">Lodging Subtotal</div>
-                <div class="text-base font-black text-indigo-900 font-mono">₹<span id="mgrLodgingSubtotal">\${formatCurrency(lodgingSub)}</span></div>
-              </div>
-            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <label class="block text-xs font-semibold text-indigo-900 mb-1">
-                  Online Payment (UPI / Card / OTA) ₹
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                  <input
-                    type="number"
-                    id="mgrLodgingOnline"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value="\${lo || ''}"
-                    oninput="calculateMgrFinanceLiveTotals()"
-                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
-                </div>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-indigo-900 mb-1">
-                  Cash Payment (Cash at Counter) ₹
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                  <input
-                    type="number"
-                    id="mgrLodgingCash"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value="\${lf || ''}"
-                    oninput="calculateMgrFinanceLiveTotals()"
-                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 2: Fooding Sales -->
-          <div class="bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 rounded-2xl border border-amber-100 space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-2xs">
-                  <i data-lucide="utensils" class="w-4 h-4"></i>
-                </div>
+                <!-- Amount -->
                 <div>
-                  <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Fooding Revenue (Restaurant / Room Service)</h4>
-                  <p class="text-[11px] text-amber-700/80">Online payment revenue vs Cash payment revenue</p>
+                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Booking Amount (₹) *</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                    <input
+                      type="number"
+                      id="mgrBookAmount"
+                      min="0"
+                      step="1"
+                      required
+                      placeholder="2000"
+                      class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    />
+                  </div>
+                </div>
+
+                <!-- Payment Method Toggle -->
+                <div>
+                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Payment Method *</label>
+                  <div class="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-indigo-200 shadow-2xs">
+                    <button
+                      type="button"
+                      id="btnModeOnline"
+                      onclick="setQuickBookPaymentMode('online')"
+                      class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-indigo-600 text-white shadow-xs"
+                    >
+                      <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                      <span>Online</span>
+                    </button>
+                    <button
+                      type="button"
+                      id="btnModeCash"
+                      onclick="setQuickBookPaymentMode('cash')"
+                      class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100"
+                    >
+                      <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
+                      <span>Cash</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div class="text-right">
-                <div class="text-[10px] font-bold text-amber-700 uppercase">Fooding Subtotal</div>
-                <div class="text-base font-black text-amber-950 font-mono">₹<span id="mgrFoodingSubtotal">\${formatCurrency(foodingSub)}</span></div>
+
+              <!-- Guest / Notes Row -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                <div class="sm:col-span-1">
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Guest Name / Ref (Optional)</label>
+                  <input
+                    type="text"
+                    id="mgrBookGuest"
+                    placeholder="e.g. Rahul Sharma, Walk-in"
+                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+                <div class="sm:col-span-1">
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Remarks / Slot (Optional)</label>
+                  <input
+                    type="text"
+                    id="mgrBookNotes"
+                    placeholder="e.g. Day use, Slot 2, Extra bed"
+                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+                <div class="sm:col-span-1">
+                  <button
+                    type="submit"
+                    class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>+ Book Room</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Itemized Today's Bookings List -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="list" class="w-3.5 h-3.5 text-indigo-600"></i>
+                Today's Bookings (\${todayBookings.length})
+              </h4>
+              <div class="text-[11px] text-slate-500 flex items-center gap-3">
+                <span>Online: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(lo)}</strong></span>
+                <span>Cash: <strong class="text-amber-900 font-mono">₹\${formatCurrency(lc)}</strong></span>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <label class="block text-xs font-semibold text-amber-950 mb-1">
-                  Online Payment (UPI / QR / Delivery) ₹
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                  <input
-                    type="number"
-                    id="mgrFoodingOnline"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value="\${fo || ''}"
-                    oninput="calculateMgrFinanceLiveTotals()"
-                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
-                  />
-                </div>
+            \${todayBookings.length === 0 ? \`
+              <div class="text-center py-6 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400">
+                No room bookings recorded yet for \${managerFinanceDate}. Select a room above to record lodging.
+              </div>
+            \` : \`
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                \${todayBookings.map(b => {
+                  const isOnline = b.payment_mode === "online";
+                  return \`
+                    <div class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition shadow-2xs flex flex-col justify-between gap-2">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-xs font-black text-slate-900">Room \${escapeHtml(b.room_number)}</span>
+                          <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700">Slot #\${b.slot_number || 1}</span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
+                            \${isOnline ? 'Online' : 'Cash'}
+                          </span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onclick="openEditBookingModal('\${b.id}')"
+                            title="Edit Booking"
+                            class="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition cursor-pointer"
+                          >
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                          </button>
+                          <button
+                            type="button"
+                            onclick="deleteRoomBooking('\${b.id}')"
+                            title="Delete Booking"
+                            class="p-1 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                          >
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-500 truncate max-w-[150px]">\${escapeHtml(b.guest_name || 'Guest')}</span>
+                        <span class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
+                          ₹\${formatCurrency(b.amount)}
+                        </span>
+                      </div>
+
+                      \${b.notes ? \`<div class="text-[10px] text-slate-400 italic truncate">\${escapeHtml(b.notes)}</div>\` : ''}
+                    </div>
+                  \`;
+                }).join("")}
+              </div>
+            \`}
+          </div>
+        </div>
+
+        <!-- SECTION 2: FOODING REVENUE -->
+        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-amber-100 shadow-sm flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-amber-50 pb-3 flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-2xs">
+                <i data-lucide="utensils" class="w-4 h-4"></i>
               </div>
               <div>
-                <label class="block text-xs font-semibold text-amber-950 mb-1">
-                  Cash Payment (Cash at Counter / Dine-in) ₹
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                  <input
-                    type="number"
-                    id="mgrFoodingCash"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value="\${ff || ''}"
-                    oninput="calculateMgrFinanceLiveTotals()"
-                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
-                  />
-                </div>
+                <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Fooding Revenue (Restaurant / Dining)</h4>
+                <p class="text-[11px] text-amber-700/80">Online payment revenue vs Cash payment revenue</p>
               </div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] font-bold text-amber-700 uppercase">Fooding Subtotal</div>
+              <div class="text-base font-black text-amber-950 font-mono">₹<span id="mgrFoodingSubtotal">\${formatCurrency(foodingSub)}</span></div>
             </div>
           </div>
 
-          <!-- Section 3: Other Sales & Gross Total -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="md:col-span-1 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 flex flex-col justify-center">
-              <label class="block text-xs font-semibold text-slate-700 mb-1">
-                Other / Misc Sales (₹)
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="block text-xs font-semibold text-amber-950 mb-1">
+                Online Payment (UPI / QR / Delivery) ₹
               </label>
               <div class="relative">
                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
                 <input
                   type="number"
-                  id="mgrOtherSales"
+                  id="mgrFoodingOnline"
                   min="0"
                   step="1"
                   placeholder="0"
-                  value="\${os || ''}"
+                  value="\${fo || ''}"
                   oninput="calculateMgrFinanceLiveTotals()"
-                  class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
                 />
               </div>
-              <p class="text-[10px] text-slate-400 mt-1">Laundry, transport, extra bed, etc.</p>
             </div>
-
-            <!-- Gross Sales Live Banner -->
-            <div class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
-              <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-100 block">Total Gross Sales</span>
-                <span class="text-xs text-emerald-200">Lodging + Fooding + Other</span>
-              </div>
-              <div class="text-right">
-                <span class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-                  ₹<span id="mgrTotalSalesDisplay">\${formatCurrency(totSales)}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 4: Operating Expenses -->
-          <div class="bg-gradient-to-br from-rose-50/70 to-red-50/40 p-4 rounded-2xl border border-rose-100 space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-2xs">
-                  <i data-lucide="receipt" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <h4 class="text-xs font-bold text-rose-950 uppercase tracking-wider">Total Daily Expenses (₹)</h4>
-                  <p class="text-[11px] text-rose-700/80">Supplies, vegetables, diesel, local purchases, maintenance</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div class="sm:col-span-1">
-                <label class="block text-xs font-semibold text-rose-950 mb-1">
-                  Expenses Total (₹) *
-                </label>
-                <div class="relative">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-rose-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                  <input
-                    type="number"
-                    id="mgrExpensesTotal"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    value="\${exp || ''}"
-                    oninput="calculateMgrFinanceLiveTotals()"
-                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-rose-700 rounded-xl border border-rose-300 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
-                  />
-                </div>
-              </div>
-              <div class="sm:col-span-2">
-                <label class="block text-xs font-semibold text-rose-950 mb-1">
-                  Expense Itemization / Notes
-                </label>
-                <textarea
-                  id="mgrExpenseNotes"
-                  rows="2"
-                  placeholder="e.g. Vegetables ₹1200, Grocery ₹1800, Diesel ₹1000"
-                  class="w-full px-3 py-1.5 text-xs text-slate-800 rounded-xl border border-rose-200 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
-                >\${escapeHtml(expNotes)}</textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 5: Net Operating Profit Live Banner -->
-          <div class="p-4 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
             <div>
-              <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Estimated Net Profit for the Day</div>
-              <div class="text-xs text-slate-300">Gross Sales minus Total Expenses</div>
+              <label class="block text-xs font-semibold text-amber-950 mb-1">
+                Cash Payment (Cash at Counter / Dine-in) ₹
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                <input
+                  type="number"
+                  id="mgrFoodingCash"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value="\${fc || ''}"
+                  oninput="calculateMgrFinanceLiveTotals()"
+                  class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: OTHER SALES & GROSS TOTAL -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="md:col-span-1 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-center">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Other / Misc Sales (₹)
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+              <input
+                type="number"
+                id="mgrOtherSales"
+                min="0"
+                step="1"
+                placeholder="0"
+                value="\${os || ''}"
+                oninput="calculateMgrFinanceLiveTotals()"
+                class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+              />
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">Laundry, transport, extra bed, etc.</p>
+          </div>
+
+          <!-- Gross Sales Live Banner -->
+          <div class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 sm:p-5 rounded-3xl shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-100 block">Total Gross Sales</span>
+              <span class="text-xs text-emerald-200">Lodging (\${todayBookings.length} bookings) + Fooding + Other</span>
             </div>
             <div class="text-right">
-              <span class="text-2xl sm:text-3xl font-black font-mono \${netProf < 0 ? 'text-rose-400' : 'text-emerald-400'}">
-                ₹<span id="mgrNetRevenueDisplay">\${formatCurrency(netProf)}</span>
+              <span class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                ₹<span id="mgrTotalSalesDisplay">\${formatCurrency(totSales)}</span>
               </span>
             </div>
           </div>
+        </div>
 
-          <!-- Section 6: Remarks & Submit -->
-          <div class="space-y-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">General Notes / Remarks (Optional)</label>
-              <input
-                type="text"
-                id="mgrNotes"
-                value="\${escapeHtml(notes)}"
-                placeholder="Shift comments, occupancy highlights, weather impact, etc."
-                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+        <!-- SECTION 4: OPERATING EXPENSES -->
+        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-rose-100 shadow-sm flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-rose-50 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-2xs">
+                <i data-lucide="receipt" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-bold text-rose-950 uppercase tracking-wider">Total Daily Expenses (₹)</h4>
+                <p class="text-[11px] text-rose-700/80">Supplies, vegetables, diesel, local purchases, maintenance</p>
+              </div>
             </div>
-
-            <button
-              type="button"
-              onclick="saveManagerDailyFinance()"
-              class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <i data-lucide="save" class="w-4 h-4"></i>
-              <span>Save Today's Sales & Expenses</span>
-            </button>
           </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+            <div class="sm:col-span-1">
+              <label class="block text-xs font-semibold text-rose-950 mb-1">
+                Expenses Total (₹) *
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-rose-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                <input
+                  type="number"
+                  id="mgrExpensesTotal"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value="\${exp || ''}"
+                  oninput="calculateMgrFinanceLiveTotals()"
+                  class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-rose-700 rounded-xl border border-rose-300 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                />
+              </div>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-rose-950 mb-1">
+                Expense Itemization / Notes
+              </label>
+              <textarea
+                id="mgrExpenseNotes"
+                rows="2"
+                placeholder="e.g. Vegetables ₹1200, Grocery ₹1800, Diesel ₹1000"
+                class="w-full px-3 py-1.5 text-xs text-slate-800 rounded-xl border border-rose-200 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+              >\${escapeHtml(expNotes)}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5: NET OPERATING PROFIT BANNER -->
+        <div class="p-4 sm:p-5 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Estimated Net Profit for the Day</div>
+            <div class="text-xs text-slate-300">Gross Sales minus Total Expenses</div>
+          </div>
+          <div class="text-right">
+            <span class="text-2xl sm:text-3xl font-black font-mono \${netProf < 0 ? 'text-rose-400' : 'text-emerald-400'}">
+              ₹<span id="mgrNetRevenueDisplay">\${formatCurrency(netProf)}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- SECTION 6: REMARKS & SAVE FORM -->
+        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">General Notes / Remarks (Optional)</label>
+            <input
+              type="text"
+              id="mgrNotes"
+              value="\${escapeHtml(notes)}"
+              placeholder="Shift comments, occupancy highlights, weather impact, etc."
+              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <button
+            type="button"
+            onclick="saveManagerDailyFinance()"
+            class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Save Today's Sales & Expenses</span>
+          </button>
         </div>
 
         <!-- Recent Records for this Property -->
@@ -4693,15 +5103,133 @@ export function getDashboardHtml(): string {
       \`;
     }
 
+    // Quick Book Room Chip Selection
+    function quickBookSelectRoom(roomId) {
+      const select = document.getElementById("mgrBookRoomSelect");
+      if (select) {
+        select.value = roomId;
+        onMgrBookRoomSelectChange(roomId);
+      }
+    }
+
+    function onMgrBookRoomSelectChange(roomId) {
+      const select = document.getElementById("mgrBookRoomSelect");
+      const opt = select?.selectedOptions[0];
+      const amountInput = document.getElementById("mgrBookAmount");
+      if (opt && amountInput) {
+        const price = opt.getAttribute("data-price");
+        if (price && !amountInput.value) {
+          amountInput.value = price;
+        }
+      }
+    }
+
+    function setQuickBookPaymentMode(mode) {
+      quickBookPaymentMode = mode;
+      const btnOnline = document.getElementById("btnModeOnline");
+      const btnCash = document.getElementById("btnModeCash");
+      if (mode === "online") {
+        if (btnOnline) {
+          btnOnline.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-indigo-600 text-white shadow-xs";
+        }
+        if (btnCash) {
+          btnCash.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100";
+        }
+      } else {
+        if (btnOnline) {
+          btnOnline.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100";
+        }
+        if (btnCash) {
+          btnCash.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-amber-600 text-white shadow-xs";
+        }
+      }
+    }
+
+    async function submitManagerRoomBooking(e) {
+      if (e) e.preventDefault();
+      const propId = currentManagerInfo?.property_id || "";
+      const roomId = document.getElementById("mgrBookRoomSelect")?.value;
+      const amount = Math.max(0, parseFloat(document.getElementById("mgrBookAmount")?.value || "0") || 0);
+      const guestName = document.getElementById("mgrBookGuest")?.value?.trim() || "";
+      const notes = document.getElementById("mgrBookNotes")?.value?.trim() || "";
+
+      if (!propId) return showToast("Error: No property assigned");
+      if (!roomId) return showToast("Please select a room");
+      if (amount <= 0) return showToast("Please enter a valid booking amount");
+
+      try {
+        const res = await fetch("/api/room-bookings", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            property_id: propId,
+            room_id: roomId,
+            date: managerFinanceDate,
+            amount,
+            payment_mode: quickBookPaymentMode,
+            guest_name: guestName,
+            notes
+          })
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to record booking");
+        }
+
+        showToast("Room booked successfully! Lodging total updated.");
+        // Reset quick booking inputs
+        const amountInput = document.getElementById("mgrBookAmount");
+        const guestInput = document.getElementById("mgrBookGuest");
+        const notesInput = document.getElementById("mgrBookNotes");
+        if (amountInput) amountInput.value = "";
+        if (guestInput) guestInput.value = "";
+        if (notesInput) notesInput.value = "";
+
+        await Promise.all([fetchRoomBookings(), fetchFinances()]);
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error saving booking: " + err.message);
+      }
+    }
+
+    async function deleteRoomBooking(bookingId) {
+      if (!bookingId) return;
+      if (!confirm("Are you sure you want to remove this room booking? Lodging revenue will adjust automatically.")) {
+        return;
+      }
+      try {
+        const res = await fetch("/api/room-bookings/" + bookingId, {
+          method: "DELETE",
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to delete booking");
+        }
+        showToast("Booking deleted. Lodging revenue re-calculated.");
+        await Promise.all([fetchRoomBookings(), fetchFinances()]);
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error deleting booking: " + err.message);
+      }
+    }
+
     function calculateMgrFinanceLiveTotals() {
-      const lo = Math.max(0, parseFloat(document.getElementById("mgrLodgingOnline")?.value || "0") || 0);
-      const lc = Math.max(0, parseFloat(document.getElementById("mgrLodgingCash")?.value || "0") || 0);
+      // Lodging is derived from today's bookings
+      const propId = currentManagerInfo?.property_id || "";
+      const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate);
+      const lo = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
+      const lc = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+      const lodgingSub = lo + lc;
+
       const fo = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
       const fc = Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0);
       const os = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
       const exp = Math.max(0, parseFloat(document.getElementById("mgrExpensesTotal")?.value || "0") || 0);
 
-      const lodgingSub = lo + lc;
       const foodingSub = fo + fc;
       const totalSales = lodgingSub + foodingSub + os;
       const netProfit = totalSales - exp;
@@ -4732,8 +5260,12 @@ export function getDashboardHtml(): string {
       }
       const propId = currentManagerInfo.property_id;
       const date = managerFinanceDate;
-      const lodgingOnline = Math.max(0, parseFloat(document.getElementById("mgrLodgingOnline")?.value || "0") || 0);
-      const lodgingCash = Math.max(0, parseFloat(document.getElementById("mgrLodgingCash")?.value || "0") || 0);
+
+      // Lodging is automatically computed from room bookings
+      const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === date);
+      const lodgingOnline = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
+      const lodgingCash = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+
       const foodingOnline = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
       const foodingCash = Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0);
       const otherSales = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
@@ -4776,7 +5308,7 @@ export function getDashboardHtml(): string {
       }
     }
 
-    function changeFinanceDate(delta) {
+    async function changeFinanceDate(delta) {
       const parts = managerFinanceDate.split("-");
       const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
       d.setDate(d.getDate() + delta);
@@ -4784,37 +5316,98 @@ export function getDashboardHtml(): string {
       const month = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
       managerFinanceDate = \`\${year}-\${month}-\${day}\`;
+      await fetchRoomBookings({ month: managerFinanceDate.substring(0, 7) });
       renderFinancesView();
     }
 
-    function goToFinanceToday() {
+    async function goToFinanceToday() {
       const d = new Date();
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
       managerFinanceDate = \`\${year}-\${month}-\${day}\`;
+      await fetchRoomBookings({ month: managerFinanceDate.substring(0, 7) });
       renderFinancesView();
     }
 
-    function onManagerFinanceDateChange(val) {
+    async function onManagerFinanceDateChange(val) {
       if (val) {
         managerFinanceDate = val;
+        await fetchRoomBookings({ month: managerFinanceDate.substring(0, 7) });
         renderFinancesView();
       }
     }
 
-    function setManagerFinanceDate(dateStr) {
+    async function setManagerFinanceDate(dateStr) {
       if (dateStr) {
         managerFinanceDate = dateStr;
+        await fetchRoomBookings({ month: managerFinanceDate.substring(0, 7) });
         renderFinancesView();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
 
     // -------------------------------------------------------------------------
-    // ADMIN REVENUE & EXPENSES DASHBOARD
+    // ADMIN FINANCES, ROOM BOOKINGS CALENDAR & ROOM MANAGEMENT
     // -------------------------------------------------------------------------
     function renderAdminFinancesView(container) {
+      // Admin Subtabs: Dashboard | Calendar | Rooms
+      container.innerHTML = \`
+        <div class="space-y-4">
+          <!-- Admin Subnavigation Tabs -->
+          <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/80 w-full sm:w-auto self-start overflow-x-auto">
+            <button
+              type="button"
+              onclick="setAdminFinanceSubTab('dashboard')"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
+            >
+              <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+              <span>Financial Performance</span>
+            </button>
+            <button
+              type="button"
+              onclick="setAdminFinanceSubTab('calendar')"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'calendar' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
+            >
+              <i data-lucide="calendar" class="w-4 h-4"></i>
+              <span>Room Bookings Calendar</span>
+            </button>
+            <button
+              type="button"
+              onclick="setAdminFinanceSubTab('rooms')"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'rooms' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
+            >
+              <i data-lucide="door-closed" class="w-4 h-4"></i>
+              <span>Manage Rooms</span>
+            </button>
+          </div>
+
+          <!-- Subtab Content Container -->
+          <div id="adminFinanceSubTabContent"></div>
+        </div>
+      \`;
+
+      const subContainer = document.getElementById("adminFinanceSubTabContent");
+      if (!subContainer) return;
+
+      if (adminFinanceSubTab === "dashboard") {
+        renderAdminFinancialDashboard(subContainer);
+      } else if (adminFinanceSubTab === "calendar") {
+        renderAdminRoomCalendarView(subContainer);
+      } else if (adminFinanceSubTab === "rooms") {
+        renderAdminRoomsManagement(subContainer);
+      }
+    }
+
+    function setAdminFinanceSubTab(subTab) {
+      adminFinanceSubTab = subTab;
+      renderFinancesView();
+    }
+
+    // -------------------------------------------------------------------------
+    // SUBTAB 1: ADMIN FINANCIAL DASHBOARD
+    // -------------------------------------------------------------------------
+    function renderAdminFinancialDashboard(container) {
       const records = financeFilterProperty === "all"
         ? financesList
         : financesList.filter(f => f.property_id === financeFilterProperty);
@@ -4844,285 +5437,880 @@ export function getDashboardHtml(): string {
       const profitMarginPct = grossRevenue > 0 ? Math.round((netOperatingProfit / grossRevenue) * 100) : 0;
 
       container.innerHTML = \`
-        <!-- Admin Filter & Action Bar -->
-        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <!-- Property Filter -->
-            <div class="flex items-center gap-1.5">
-              <label for="adminFinancePropertySelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
-              <select
-                id="adminFinancePropertySelect"
-                onchange="onAdminFinanceFilterChange(this.value)"
-                class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
+        <div class="space-y-4">
+          <!-- Admin Filter & Action Bar -->
+          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <!-- Property Filter -->
+              <div class="flex items-center gap-1.5">
+                <label for="adminFinancePropertySelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
+                <select
+                  id="adminFinancePropertySelect"
+                  onchange="onAdminFinanceFilterChange(this.value)"
+                  class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
+                >
+                  <option value="all" \${financeFilterProperty === 'all' ? 'selected' : ''}>All Properties (\${properties.length})</option>
+                  \${properties.map(p => \`
+                    <option value="\${p.id}" \${financeFilterProperty === p.id ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
+                  \`).join("")}
+                </select>
+              </div>
+
+              <!-- Month Selector -->
+              <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
+                <button onclick="changeFinanceMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                  <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                </button>
+                <span id="adminFinanceMonthLabel" class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
+                  \${MONTH_NAMES[financeMonth]} \${financeYear}
+                </span>
+                <button onclick="changeFinanceMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+              <button onclick="goToFinanceCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                Current
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onclick="openFinanceModal()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
               >
-                <option value="all" \${financeFilterProperty === 'all' ? 'selected' : ''}>All Properties (\${properties.length})</option>
-                \${properties.map(p => \`
-                  <option value="\${p.id}" \${financeFilterProperty === p.id ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
-                \`).join("")}
-              </select>
-            </div>
-
-            <!-- Month Selector -->
-            <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
-              <button onclick="changeFinanceMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
-                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Record</span>
               </button>
-              <span id="adminFinanceMonthLabel" class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
-                \${MONTH_NAMES[financeMonth]} \${financeYear}
-              </span>
-              <button onclick="changeFinanceMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
-                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+              <button
+                type="button"
+                onclick="exportFinancesCSV()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer"
+              >
+                <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>Export CSV</span>
               </button>
             </div>
-            <button onclick="goToFinanceCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
-              Current
-            </button>
           </div>
 
-          <div class="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              type="button"
-              onclick="openFinanceModal()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
-            >
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>Add Record</span>
-            </button>
-            <button
-              type="button"
-              onclick="exportFinancesCSV()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer"
-            >
-              <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
-              <span>Export CSV</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- 5 Executive Summary Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          <!-- Card 1: Gross Revenue -->
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                <span>Gross Revenue</span>
-                <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-indigo-500"></i>
+          <!-- 5 Executive Summary Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <!-- Card 1: Gross Revenue -->
+            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>Gross Revenue</span>
+                  <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-indigo-500"></i>
+                </div>
+                <div class="text-lg sm:text-xl font-black text-slate-900 font-mono mt-1">₹\${formatCurrency(grossRevenue)}</div>
               </div>
-              <div class="text-lg sm:text-xl font-black text-slate-900 font-mono mt-1">₹\${formatCurrency(grossRevenue)}</div>
-            </div>
-            <div class="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 font-medium">
-              \${records.length} daily entries recorded
-            </div>
-          </div>
-
-          <!-- Card 2: Lodging Sales -->
-          <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center justify-between">
-                <span>Lodging Sales</span>
-                <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-500"></i>
-              </div>
-              <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">₹\${formatCurrency(totalLodging)}</div>
-            </div>
-            <div class="text-[10px] text-indigo-800 mt-2 pt-2 border-t border-indigo-50 font-medium truncate">
-              Online: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}
-            </div>
-          </div>
-
-          <!-- Card 3: Fooding Sales -->
-          <div class="bg-white p-3.5 rounded-2xl border border-amber-100 shadow-xs flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center justify-between">
-                <span>Fooding Sales</span>
-                <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-500"></i>
-              </div>
-              <div class="text-lg sm:text-xl font-black text-amber-950 font-mono mt-1">₹\${formatCurrency(totalFooding)}</div>
-            </div>
-            <div class="text-[10px] text-amber-800 mt-2 pt-2 border-t border-amber-50 font-medium truncate">
-              Online: ₹\${formatCurrency(totalFoodingOnline)} · Cash: ₹\${formatCurrency(totalFoodingCash)}
-            </div>
-          </div>
-
-          <!-- Card 4: Operating Expenses -->
-          <div class="bg-white p-3.5 rounded-2xl border border-rose-100 shadow-xs flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center justify-between">
-                <span>Total Expenses</span>
-                <i data-lucide="receipt" class="w-3.5 h-3.5 text-rose-500"></i>
-              </div>
-              <div class="text-lg sm:text-xl font-black text-rose-700 font-mono mt-1">₹\${formatCurrency(totalExpenses)}</div>
-            </div>
-            <div class="text-[11px] text-rose-700 mt-2 pt-2 border-t border-rose-50 font-medium">
-              \${grossRevenue > 0 ? Math.round((totalExpenses / grossRevenue) * 100) : 0}% expense ratio
-            </div>
-          </div>
-
-          <!-- Card 5: Net Operating Profit -->
-          <div class="col-span-2 sm:col-span-1 bg-white p-3.5 rounded-2xl border \${netOperatingProfit < 0 ? 'border-rose-200' : 'border-emerald-200'} shadow-xs flex flex-col justify-between">
-            <div>
-              <div class="text-[10px] font-bold \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'} uppercase tracking-wider flex items-center justify-between">
-                <span>Net Profit</span>
-                <i data-lucide="trending-up" class="w-3.5 h-3.5 \${netOperatingProfit < 0 ? 'text-rose-500' : 'text-emerald-600'}"></i>
-              </div>
-              <div class="text-lg sm:text-xl font-black font-mono mt-1 \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'}">
-                ₹\${formatCurrency(netOperatingProfit)}
+              <div class="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 font-medium">
+                \${records.length} daily entries recorded
               </div>
             </div>
-            <div class="text-[11px] mt-2 pt-2 border-t \${netOperatingProfit < 0 ? 'border-rose-50 text-rose-600' : 'border-emerald-50 text-emerald-800'} font-medium">
-              Margin: \${profitMarginPct}%
+
+            <!-- Card 2: Lodging Sales -->
+            <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center justify-between">
+                  <span>Lodging Sales</span>
+                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-500"></i>
+                </div>
+                <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">₹\${formatCurrency(totalLodging)}</div>
+              </div>
+              <div class="text-[10px] text-indigo-800 mt-2 pt-2 border-t border-indigo-50 font-medium truncate">
+                Online: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}
+              </div>
+            </div>
+
+            <!-- Card 3: Fooding Sales -->
+            <div class="bg-white p-3.5 rounded-2xl border border-amber-100 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center justify-between">
+                  <span>Fooding Sales</span>
+                  <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-500"></i>
+                </div>
+                <div class="text-lg sm:text-xl font-black text-amber-950 font-mono mt-1">₹\${formatCurrency(totalFooding)}</div>
+              </div>
+              <div class="text-[10px] text-amber-800 mt-2 pt-2 border-t border-amber-50 font-medium truncate">
+                Online: ₹\${formatCurrency(totalFoodingOnline)} · Cash: ₹\${formatCurrency(totalFoodingCash)}
+              </div>
+            </div>
+
+            <!-- Card 4: Operating Expenses -->
+            <div class="bg-white p-3.5 rounded-2xl border border-rose-100 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center justify-between">
+                  <span>Total Expenses</span>
+                  <i data-lucide="receipt" class="w-3.5 h-3.5 text-rose-500"></i>
+                </div>
+                <div class="text-lg sm:text-xl font-black text-rose-700 font-mono mt-1">₹\${formatCurrency(totalExpenses)}</div>
+              </div>
+              <div class="text-[11px] text-rose-700 mt-2 pt-2 border-t border-rose-50 font-medium">
+                \${grossRevenue > 0 ? Math.round((totalExpenses / grossRevenue) * 100) : 0}% expense ratio
+              </div>
+            </div>
+
+            <!-- Card 5: Net Operating Profit -->
+            <div class="col-span-2 sm:col-span-1 bg-white p-3.5 rounded-2xl border \${netOperatingProfit < 0 ? 'border-rose-200' : 'border-emerald-200'} shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="text-[10px] font-bold \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'} uppercase tracking-wider flex items-center justify-between">
+                  <span>Net Profit</span>
+                  <i data-lucide="trending-up" class="w-3.5 h-3.5 \${netOperatingProfit < 0 ? 'text-rose-500' : 'text-emerald-600'}"></i>
+                </div>
+                <div class="text-lg sm:text-xl font-black font-mono mt-1 \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                  ₹\${formatCurrency(netOperatingProfit)}
+                </div>
+              </div>
+              <div class="text-[11px] mt-2 pt-2 border-t \${netOperatingProfit < 0 ? 'border-rose-50 text-rose-600' : 'border-emerald-50 text-emerald-800'} font-medium">
+                Margin: \${profitMarginPct}%
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Property Performance Comparison (when All Properties selected) -->
-        \${financeFilterProperty === 'all' && properties.length > 0 ? \`
-          <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-              <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
-              Property Performance Comparison (\${MONTH_NAMES[financeMonth]} \${financeYear})
-            </h4>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              \${properties.map(p => {
-                const propRecords = records.filter(r => r.property_id === p.id);
-                let pSales = 0, pExp = 0;
-                let pLodgingOn = 0, pLodgingCash = 0, pFoodingOn = 0, pFoodingCash = 0;
-                propRecords.forEach(r => {
-                  pSales += (r.total_sales || 0);
-                  pExp += (r.expenses_total || 0);
-                  const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
-                  const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
-                  pLodgingOn += (r.lodging_online || 0);
-                  pLodgingCash += rLodgingCash;
-                  pFoodingOn += (r.fooding_online || 0);
-                  pFoodingCash += rFoodingCash;
-                });
-                const pLodging = pLodgingOn + pLodgingCash;
-                const pFooding = pFoodingOn + pFoodingCash;
-                const pNet = pSales - pExp;
-                return \`
-                  <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white transition flex flex-col gap-2 shadow-2xs">
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs font-bold text-slate-900">\${escapeHtml(p.name)}</span>
-                      <span class="text-[10px] text-slate-500 font-medium">\${propRecords.length} entries</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-1.5 text-xs">
-                      <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Gross Sales</span>
-                        <div class="font-bold font-mono text-emerald-700">₹\${formatCurrency(pSales)}</div>
-                      </div>
-                      <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
-                        <div class="font-bold font-mono text-rose-700">₹\${formatCurrency(pExp)}</div>
-                      </div>
-                    </div>
-                    <div class="pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
-                      <span class="text-slate-500">Net Profit:</span>
-                      <span class="font-bold font-mono \${pNet < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(pNet)}</span>
-                    </div>
-                    <div class="text-[10px] text-slate-400 truncate">
-                    <div class="text-[10px] text-slate-500 space-y-0.5 pt-1 border-t border-slate-100">
-                      <div>Lodging: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(pLodging)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pLodgingOn)} · Cash ₹\${formatCurrency(pLodgingCash)})</span></div>
-                      <div>Fooding: <strong class="text-amber-900 font-mono">₹\${formatCurrency(pFooding)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pFoodingOn)} · Cash ₹\${formatCurrency(pFoodingCash)})</span></div>
-                    </div>
-                    </div>
-                  </div>
-                \`;
-              }).join("")}
-            </div>
-          </div>
-        \` : ''}
-
-        <!-- Itemized Daily Records Table (Desktop) & Cards (Mobile) -->
-        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
-          <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <i data-lucide="table" class="w-4 h-4 text-slate-500"></i>
-                Daily Breakdown Records
+          <!-- Property Performance Comparison (when All Properties selected) -->
+          \${financeFilterProperty === 'all' && properties.length > 0 ? \`
+            <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
+                Property Performance Comparison (\${MONTH_NAMES[financeMonth]} \${financeYear})
               </h4>
-              <p class="text-[11px] text-slate-400">Detailed logs submitted by property managers and admin</p>
-            </div>
-            <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
-              \${records.length} Records
-            </span>
-          </div>
 
-          \${records.length === 0 ? \`
-            <div class="text-center py-12 px-4 flex flex-col items-center justify-center">
-              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-2">
-                <i data-lucide="receipt" class="w-6 h-6"></i>
-              </div>
-              <h5 class="text-sm font-bold text-slate-700">No Financial Records Found</h5>
-              <p class="text-xs text-slate-400 mt-1 max-w-sm">No daily sales or expenses entered for this month / property yet.</p>
-              <button type="button" onclick="openFinanceModal()" class="mt-4 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer">
-                + Record Daily Sales
-              </button>
-            </div>
-          \` : \`
-            <!-- Desktop Table View (md and above) -->
-            <div class="hidden md:block overflow-x-auto">
-              <table class="w-full text-left text-xs text-slate-700">
-                <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  <tr>
-                    <th class="py-3 px-3.5">Date</th>
-                    <th class="py-3 px-3.5">Property</th>
-                    <th class="py-3 px-3.5">Lodging (Online / Cash)</th>
-                    <th class="py-3 px-3.5">Fooding (Online / Cash)</th>
-                    <th class="py-3 px-3.5">Other</th>
-                    <th class="py-3 px-3.5 font-bold text-slate-900">Total Sales</th>
-                    <th class="py-3 px-3.5 font-bold text-rose-700">Expenses</th>
-                    <th class="py-3 px-3.5 font-bold text-slate-900">Net Profit</th>
-                    <th class="py-3 px-3.5">Submitted By</th>
-                    <th class="py-3 px-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  \${records.map(r => {
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                \${properties.map(p => {
+                  const propRecords = records.filter(r => r.property_id === p.id);
+                  let pSales = 0, pExp = 0;
+                  let pLodgingOn = 0, pLodgingCash = 0, pFoodingOn = 0, pFoodingCash = 0;
+                  propRecords.forEach(r => {
+                    pSales += (r.total_sales || 0);
+                    pExp += (r.expenses_total || 0);
                     const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
                     const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
-                    const rLodging = (r.lodging_online || 0) + rLodgingCash;
-                    const rFooding = (r.fooding_online || 0) + rFoodingCash;
-                    return \`
-                      <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">\${r.date}</td>
-                        <td class="py-3 px-3.5 whitespace-nowrap">
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700">
+                    pLodgingOn += (r.lodging_online || 0);
+                    pLodgingCash += rLodgingCash;
+                    pFoodingOn += (r.fooding_online || 0);
+                    pFoodingCash += rFoodingCash;
+                  });
+                  const pLodging = pLodgingOn + pLodgingCash;
+                  const pFooding = pFoodingOn + pFoodingCash;
+                  const pNet = pSales - pExp;
+                  return \`
+                    <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white transition flex flex-col gap-2 shadow-2xs">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-900">\${escapeHtml(p.name)}</span>
+                        <span class="text-[10px] text-slate-500 font-medium">\${propRecords.length} entries</span>
+                      </div>
+                      <div class="grid grid-cols-2 gap-1.5 text-xs">
+                        <div>
+                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Gross Sales</span>
+                          <div class="font-bold font-mono text-emerald-700">₹\${formatCurrency(pSales)}</div>
+                        </div>
+                        <div>
+                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
+                          <div class="font-bold font-mono text-rose-700">₹\${formatCurrency(pExp)}</div>
+                        </div>
+                      </div>
+                      <div class="pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
+                        <span class="text-slate-500">Net Profit:</span>
+                        <span class="font-bold font-mono \${pNet < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(pNet)}</span>
+                      </div>
+                      <div class="text-[10px] text-slate-500 space-y-0.5 pt-1 border-t border-slate-100">
+                        <div>Lodging: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(pLodging)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pLodgingOn)} · Cash ₹\${formatCurrency(pLodgingCash)})</span></div>
+                        <div>Fooding: <strong class="text-amber-900 font-mono">₹\${formatCurrency(pFooding)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pFoodingOn)} · Cash ₹\${formatCurrency(pFoodingCash)})</span></div>
+                      </div>
+                    </div>
+                  \`;
+                }).join("")}
+              </div>
+            </div>
+          \` : ''}
+
+          <!-- Itemized Daily Records Table (Desktop) & Cards (Mobile) -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <i data-lucide="table" class="w-4 h-4 text-slate-500"></i>
+                  Daily Breakdown Records
+                </h4>
+                <p class="text-[11px] text-slate-400">Detailed logs submitted by property managers and admin</p>
+              </div>
+              <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
+                \${records.length} Records
+              </span>
+            </div>
+
+            \${records.length === 0 ? \`
+              <div class="text-center py-12 px-4 flex flex-col items-center justify-center">
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-2">
+                  <i data-lucide="receipt" class="w-6 h-6"></i>
+                </div>
+                <h5 class="text-sm font-bold text-slate-700">No Financial Records Found</h5>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm">No daily sales or expenses entered for this month / property yet.</p>
+                <button type="button" onclick="openFinanceModal()" class="mt-4 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer">
+                  + Record Daily Sales
+                </button>
+              </div>
+            \` : \`
+              <!-- Desktop Table View (md and above) -->
+              <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th class="py-3 px-3.5">Date</th>
+                      <th class="py-3 px-3.5">Property</th>
+                      <th class="py-3 px-3.5">Lodging (Online / Cash)</th>
+                      <th class="py-3 px-3.5">Fooding (Online / Cash)</th>
+                      <th class="py-3 px-3.5">Other</th>
+                      <th class="py-3 px-3.5 font-bold text-slate-900">Total Sales</th>
+                      <th class="py-3 px-3.5 font-bold text-rose-700">Expenses</th>
+                      <th class="py-3 px-3.5 font-bold text-slate-900">Net Profit</th>
+                      <th class="py-3 px-3.5">Submitted By</th>
+                      <th class="py-3 px-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    \${records.map(r => {
+                      const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+                      const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+                      const rLodging = (r.lodging_online || 0) + rLodgingCash;
+                      const rFooding = (r.fooding_online || 0) + rFoodingCash;
+                      return \`
+                        <tr class="hover:bg-slate-50/80 transition">
+                          <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">\${r.date}</td>
+                          <td class="py-3 px-3.5 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700">
+                              \${escapeHtml(r.property_name || 'Property')}
+                            </span>
+                          </td>
+                          <td class="py-3 px-3.5 whitespace-nowrap">
+                            <div class="font-bold text-indigo-900 font-mono">₹\${formatCurrency(rLodging)}</div>
+                            <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.lodging_online)} · Cash: ₹\${formatCurrency(rLodgingCash)}</div>
+                          </td>
+                          <td class="py-3 px-3.5 whitespace-nowrap">
+                            <div class="font-bold text-amber-900 font-mono">₹\${formatCurrency(rFooding)}</div>
+                            <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.fooding_online)} · Cash: ₹\${formatCurrency(rFoodingCash)}</div>
+                          </td>
+                          <td class="py-3 px-3.5 font-mono text-slate-600 whitespace-nowrap">₹\${formatCurrency(r.other_sales)}</td>
+                          <td class="py-3 px-3.5 font-black text-emerald-700 font-mono whitespace-nowrap">₹\${formatCurrency(r.total_sales)}</td>
+                          <td class="py-3 px-3.5 whitespace-nowrap">
+                            <div class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</div>
+                            \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic max-w-[150px] truncate" title="\${escapeHtml(r.expense_notes)}">\${escapeHtml(r.expense_notes)}</div>\` : ''}
+                          </td>
+                          <td class="py-3 px-3.5 font-black font-mono whitespace-nowrap \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                            ₹\${formatCurrency(r.net_revenue)}
+                          </td>
+                          <td class="py-3 px-3.5 text-[11px] text-slate-500 whitespace-nowrap">\${escapeHtml(r.submitted_by || 'Staff')}</td>
+                          <td class="py-3 px-3.5 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onclick="openFinanceModal('\${r.id}')"
+                                title="Edit Record"
+                                class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
+                              >
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                              </button>
+                              <button
+                                type="button"
+                                onclick="handleDeleteFinance('\${r.id}')"
+                                title="Delete Record"
+                                class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              >
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      \`;
+                    }).join("")}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Mobile Cards View (< md) -->
+              <div class="md:hidden divide-y divide-slate-100 p-3 space-y-3">
+                \${records.map(r => {
+                  const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
+                  const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
+                  const rLodging = (r.lodging_online || 0) + rLodgingCash;
+                  const rFooding = (r.fooding_online || 0) + rFoodingCash;
+                  return \`
+                    <div class="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/80 flex flex-col gap-2.5 shadow-2xs">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-xs font-bold text-slate-900">\${r.date}</span>
+                          <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white border border-slate-200 text-slate-700">
                             \${escapeHtml(r.property_name || 'Property')}
                           </span>
-                        </td>
-                        <td class="py-3 px-3.5 whitespace-nowrap">
-                          <div class="font-bold text-indigo-900 font-mono">₹\${formatCurrency(rLodging)}</div>
-                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.lodging_online)} · Cash: ₹\${formatCurrency(rLodgingCash)}</div>
-                        </td>
-                        <td class="py-3 px-3.5 whitespace-nowrap">
-                          <div class="font-bold text-amber-900 font-mono">₹\${formatCurrency(rFooding)}</div>
-                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.fooding_online)} · Cash: ₹\${formatCurrency(rFoodingCash)}</div>
-                        </td>
-                        <td class="py-3 px-3.5 font-mono text-slate-600 whitespace-nowrap">₹\${formatCurrency(r.other_sales)}</td>
-                        <td class="py-3 px-3.5 font-black text-emerald-700 font-mono whitespace-nowrap">₹\${formatCurrency(r.total_sales)}</td>
-                        <td class="py-3 px-3.5 whitespace-nowrap">
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <button type="button" onclick="openFinanceModal('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 cursor-pointer">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                          </button>
+                          <button type="button" onclick="handleDeleteFinance('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 cursor-pointer">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-xl border border-slate-100">
+                        <div>
+                          <span class="text-[10px] font-bold text-indigo-700 uppercase">Lodging</span>
+                          <div class="font-mono font-bold text-indigo-950">₹\${formatCurrency(rLodging)}</div>
+                          <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Cash ₹\${formatCurrency(rLodgingCash)}</div>
+                        </div>
+                        <div>
+                          <span class="text-[10px] font-bold text-amber-700 uppercase">Fooding</span>
+                          <div class="font-mono font-bold text-amber-950">₹\${formatCurrency(rFooding)}</div>
+                          <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Cash ₹\${formatCurrency(rFoodingCash)}</div>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center justify-between text-xs pt-1">
+                        <div>
+                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Sales</span>
+                          <div class="font-black text-emerald-700 font-mono">₹\${formatCurrency(r.total_sales)}</div>
+                        </div>
+                        <div class="text-center">
+                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
                           <div class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</div>
-                          \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic max-w-[150px] truncate" title="\${escapeHtml(r.expense_notes)}">\${escapeHtml(r.expense_notes)}</div>\` : ''}
+                        </div>
+                        <div class="text-right">
+                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Net Profit</span>
+                          <div class="font-black font-mono \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                            ₹\${formatCurrency(r.net_revenue)}
+                          </div>
+                        </div>
+                      </div>
+
+                      \${r.expense_notes ? \`
+                        <div class="text-[10px] text-slate-600 bg-rose-50/60 p-2 rounded-lg border border-rose-100">
+                          <strong class="text-rose-800">Expense Notes:</strong> \${escapeHtml(r.expense_notes)}
+                        </div>
+                      \` : ''}
+                      \${r.notes ? \`
+                        <div class="text-[10px] text-slate-500 italic">
+                          Shift Notes: \${escapeHtml(r.notes)}
+                        </div>
+                      \` : ''}
+                    </div>
+                  \`;
+                }).join("")}
+              </div>
+            \`}
+          </div>
+        </div>
+      \`;
+    }
+
+    // -------------------------------------------------------------------------
+    // SUBTAB 2: ADMIN ROOM BOOKINGS CALENDAR (MATRIX & MONTHLY VIEWS)
+    // -------------------------------------------------------------------------
+    function renderAdminRoomCalendarView(container) {
+      if (!calendarSelectedProperty && properties.length > 0) {
+        calendarSelectedProperty = properties[0].id;
+      }
+      const prop = properties.find(p => p.id === calendarSelectedProperty) || properties[0];
+      const propId = prop ? prop.id : "";
+      const propName = prop ? prop.name : "Selected Property";
+
+      // Rooms for this property
+      const propRooms = roomsList.filter(r => r.property_id === propId);
+
+      // Month info
+      const mStr = String(financeMonth + 1).padStart(2, "0");
+      const currentMonthPrefix = \`\${financeYear}-\${mStr}\`;
+      const daysInMonth = new Date(financeYear, financeMonth + 1, 0).getDate();
+
+      // Filter bookings for this property & month
+      const monthBookings = roomBookingsList.filter(b => b.property_id === propId && b.date && b.date.startsWith(currentMonthPrefix));
+
+      const totalBookingsCount = monthBookings.length;
+      const monthLodgingOnline = monthBookings.filter(b => b.payment_mode === "online").reduce((s, b) => s + (b.amount || 0), 0);
+      const monthLodgingCash = monthBookings.filter(b => b.payment_mode === "cash").reduce((s, b) => s + (b.amount || 0), 0);
+      const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
+
+      container.innerHTML = \`
+        <div class="space-y-4">
+          <!-- Calendar Controls Bar -->
+          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <!-- Property Selector -->
+              <div class="flex items-center gap-1.5">
+                <label for="adminCalPropSelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
+                <select
+                  id="adminCalPropSelect"
+                  onchange="setCalendarProperty(this.value)"
+                  class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
+                >
+                  \${properties.map(p => \`
+                    <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
+                  \`).join("")}
+                </select>
+              </div>
+
+              <!-- Month Navigation -->
+              <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
+                <button onclick="changeCalendarMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                  <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                </button>
+                <span class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
+                  \${MONTH_NAMES[financeMonth]} \${financeYear}
+                </span>
+                <button onclick="changeCalendarMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+
+              <button onclick="goToCalendarCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                Today
+              </button>
+            </div>
+
+            <!-- View Switcher & Actions -->
+            <div class="flex items-center gap-2 self-start md:self-auto flex-wrap">
+              <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                <button
+                  type="button"
+                  onclick="setCalendarViewMode('matrix')"
+                  class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'matrix' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+                >
+                  <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                  <span>Matrix (Rooms × Days)</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="setCalendarViewMode('calendar')"
+                  class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'calendar' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+                >
+                  <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                  <span>Monthly Grid</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onclick="openRoomBookingModal(null, null, null)"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
+              >
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>+ Book Room</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Calendar Summary Stats Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Configured Rooms</span>
+              <span class="text-base sm:text-lg font-black text-slate-900">\${propRooms.length} Rooms</span>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month Bookings</span>
+              <span class="text-base sm:text-lg font-black text-indigo-600">\${totalBookingsCount} Bookings</span>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-indigo-100 shadow-2xs">
+              <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Lodging Total</span>
+              <span class="text-base sm:text-lg font-black font-mono text-indigo-950">₹\${formatCurrency(monthLodgingTotal)}</span>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs text-[11px] text-slate-600 flex flex-col justify-center">
+              <div>Online: <strong class="text-indigo-700 font-mono">₹\${formatCurrency(monthLodgingOnline)}</strong></div>
+              <div>Cash: <strong class="text-amber-700 font-mono">₹\${formatCurrency(monthLodgingCash)}</strong></div>
+            </div>
+          </div>
+
+          <!-- Legend Bar -->
+          <div class="flex items-center gap-4 text-[11px] text-slate-600 flex-wrap px-2">
+            <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Legend:</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
+          </div>
+
+          <!-- RENDER MATRIX OR MONTHLY VIEW -->
+          \${propRooms.length === 0 ? \`
+            <div class="bg-white p-8 rounded-3xl border border-slate-200 text-center flex flex-col items-center justify-center">
+              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                <i data-lucide="door-closed" class="w-6 h-6"></i>
+              </div>
+              <h5 class="text-sm font-bold text-slate-900">No Rooms Found for \${escapeHtml(propName)}</h5>
+              <p class="text-xs text-slate-500 mt-1 max-w-sm">Add rooms (e.g. 101, 102, 103, 104) to enable the room booking calendar.</p>
+              <button
+                type="button"
+                onclick="setAdminFinanceSubTab('rooms')"
+                class="mt-4 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer"
+              >
+                Configure Rooms Now
+              </button>
+            </div>
+          \` : (calendarViewMode === 'matrix' ? renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) : renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings))}
+        </div>
+      \`;
+    }
+
+    // Helper: Matrix Grid (Rooms x Days)
+    function renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) {
+      const todayIso = new Date().toISOString().split("T")[0];
+      const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+      return \`
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
+                  <th class="py-3 px-3.5 sticky left-0 z-20 bg-slate-100 min-w-[130px] shadow-xs">Room</th>
+                  \${days.map(d => {
+                    const dayStr = String(d).padStart(2, "0");
+                    const dateStr = \`\${currentMonthPrefix}-\${dayStr}\`;
+                    const isToday = dateStr === todayIso;
+                    const dateObj = new Date(financeYear, financeMonth, d);
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' });
+                    return \`
+                      <th class="py-2.5 px-2 text-center min-w-[48px] border-l border-slate-200/60 \${isToday ? 'bg-indigo-100/70 text-indigo-900 font-black' : ''}">
+                        <div>\${d}</div>
+                        <div class="text-[9px] font-normal text-slate-400">\${dayName}</div>
+                      </th>
+                    \`;
+                  }).join("")}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                \${propRooms.map(rm => {
+                  return \`
+                    <tr class="hover:bg-slate-50/70 transition">
+                      <!-- Sticky Room Col -->
+                      <td class="py-2.5 px-3.5 sticky left-0 z-10 bg-white shadow-xs font-bold text-slate-900 whitespace-nowrap">
+                        <div class="flex items-center gap-1.5">
+                          <i data-lucide="door-closed" class="w-3.5 h-3.5 text-indigo-600"></i>
+                          <span>Room \${escapeHtml(rm.room_number)}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 font-normal">\${escapeHtml(rm.room_type || 'Standard')} · ₹\${formatCurrency(rm.base_price || 0)}</div>
+                      </td>
+
+                      <!-- Days Cells -->
+                      \${days.map(d => {
+                        const dayStr = String(d).padStart(2, "0");
+                        const dateStr = \`\${currentMonthPrefix}-\${dayStr}\`;
+                        const isToday = dateStr === todayIso;
+                        const cellBookings = monthBookings.filter(b => b.room_id === rm.id && b.date === dateStr);
+                        const count = cellBookings.length;
+
+                        if (count === 0) {
+                          // Vacant
+                          return \`
+                            <td
+                              onclick="openRoomBookingModal('\${rm.id}', '\${dateStr}', null)"
+                              title="Vacant - Click to book"
+                              class="py-2 px-1 text-center border-l border-slate-100 hover:bg-indigo-50/50 cursor-pointer transition select-none \${isToday ? 'bg-indigo-50/20' : ''}"
+                            >
+                              <span class="inline-block w-2 h-2 rounded-full bg-slate-200 hover:bg-indigo-400 transition"></span>
+                            </td>
+                          \`;
+                        } else if (count === 1) {
+                          const bk = cellBookings[0];
+                          const isOnline = bk.payment_mode === "online";
+                          const kAmt = Math.round(bk.amount / 1000 * 10) / 10;
+                          return \`
+                            <td
+                              onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
+                              title="Booked: ₹\${formatCurrency(bk.amount)} (\${isOnline ? 'Online' : 'Cash'}) - \${bk.guest_name || 'Guest'}"
+                              class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
+                            >
+                              <span class="inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${isOnline ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-amber-100 text-amber-900 border border-amber-200'}">
+                                <span>₹\${kAmt}k</span>
+                                <span class="text-[8px] uppercase tracking-tighter opacity-80">\${isOnline ? 'On' : 'Cs'}</span>
+                              </span>
+                            </td>
+                          \`;
+                        } else {
+                          // Multiple Bookings in 1 Day! (2x or 3x)
+                          const totalAmt = cellBookings.reduce((s, b) => s + (b.amount || 0), 0);
+                          const kAmt = Math.round(totalAmt / 1000 * 10) / 10;
+                          return \`
+                            <td
+                              onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
+                              title="\${count} Bookings: ₹\${formatCurrency(totalAmt)} - Click to view details"
+                              class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
+                            >
+                              <span class="inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs hover:scale-105 transition">
+                                <span>\${count}x</span>
+                                <span class="text-[8px]">₹\${kAmt}k</span>
+                              </span>
+                            </td>
+                          \`;
+                        }
+                      }).join("")}
+                    </tr>
+                  \`;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      \`;
+    }
+
+    // Helper: Monthly 7-Day Grid Calendar View
+    function renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) {
+      const todayIso = new Date().toISOString().split("T")[0];
+      const firstDayOfWeek = new Date(financeYear, financeMonth, 1).getDay(); // 0 = Sun
+      const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+      return \`
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col gap-3">
+          <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 uppercase py-1 border-b border-slate-100">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+          </div>
+
+          <div class="grid grid-cols-7 gap-1.5">
+            \${Array.from({ length: firstDayOfWeek }).map(() => \`
+              <div class="min-h-[85px] bg-slate-50/40 rounded-xl border border-dashed border-slate-100"></div>
+            \`).join("")}
+
+            \${days.map(d => {
+              const dayStr = String(d).padStart(2, "0");
+              const dateStr = \`\${currentMonthPrefix}-\${dayStr}\`;
+              const isToday = dateStr === todayIso;
+              const dateBookings = monthBookings.filter(b => b.date === dateStr);
+              const totalDay = dateBookings.reduce((s, b) => s + (b.amount || 0), 0);
+              const bookedRoomsCount = new Set(dateBookings.map(b => b.room_id)).size;
+
+              return \`
+                <div
+                  onclick="setManagerFinanceDate('\${dateStr}'); setAdminFinanceSubTab('dashboard');"
+                  class="min-h-[90px] p-2 rounded-2xl border transition flex flex-col justify-between cursor-pointer \${isToday ? 'bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200' : 'bg-slate-50/50 hover:bg-white border-slate-200'}"
+                >
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold \${isToday ? 'text-indigo-600 font-black' : 'text-slate-800'}">\${d}</span>
+                    \${dateBookings.length > 0 ? \`
+                      <span class="text-[9px] px-1.5 py-0.2 rounded-md font-bold bg-indigo-100 text-indigo-800">
+                        \${bookedRoomsCount}/\${propRooms.length}
+                      </span>
+                    \` : ''}
+                  </div>
+
+                  <div class="space-y-1 my-1 overflow-hidden">
+                    \${dateBookings.slice(0, 2).map(b => {
+                      const isOnline = b.payment_mode === "online";
+                      return \`
+                        <div class="text-[9px] truncate font-medium px-1.5 py-0.5 rounded-md \${isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900'}">
+                          Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k
+                        </div>
+                      \`;
+                    }).join("")}
+                    \${dateBookings.length > 2 ? \`
+                      <div class="text-[8px] text-slate-400 font-bold text-center">+\${dateBookings.length - 2} more</div>
+                    \` : ''}
+                  </div>
+
+                  <div class="pt-1 border-t border-slate-100/80 flex items-center justify-between text-[10px]">
+                    <span class="text-slate-400 font-medium">\${dateBookings.length ? 'Total:' : 'Vacant'}</span>
+                    <span class="font-mono font-bold \${totalDay > 0 ? 'text-indigo-950' : 'text-slate-400'}">
+                      \${totalDay > 0 ? \`₹\${formatCurrency(totalDay)}\` : '—'}
+                    </span>
+                  </div>
+                </div>
+              \`;
+            }).join("")}
+          </div>
+        </div>
+      \`;
+    }
+
+    async function setCalendarProperty(propId) {
+      calendarSelectedProperty = propId;
+      await fetchRoomBookings({ property_id: propId });
+      renderFinancesView();
+    }
+
+    function setCalendarViewMode(mode) {
+      calendarViewMode = mode;
+      renderFinancesView();
+    }
+
+    async function changeCalendarMonth(delta) {
+      financeMonth += delta;
+      if (financeMonth < 0) {
+        financeMonth = 11;
+        financeYear--;
+      } else if (financeMonth > 11) {
+        financeMonth = 0;
+        financeYear++;
+      }
+      await fetchRoomBookings();
+      renderFinancesView();
+    }
+
+    async function goToCalendarCurrentMonth() {
+      financeMonth = new Date().getMonth();
+      financeYear = new Date().getFullYear();
+      await fetchRoomBookings();
+      renderFinancesView();
+    }
+
+    // -------------------------------------------------------------------------
+    // SUBTAB 3: ADMIN ROOM MANAGEMENT (ADD, BULK ADD, EDIT, DELETE ROOMS)
+    // -------------------------------------------------------------------------
+    function renderAdminRoomsManagement(container) {
+      if (!calendarSelectedProperty && properties.length > 0) {
+        calendarSelectedProperty = properties[0].id;
+      }
+      const propId = calendarSelectedProperty || (properties[0] ? properties[0].id : "");
+      const prop = properties.find(p => p.id === propId) || properties[0];
+      const propRooms = roomsList.filter(r => r.property_id === propId);
+
+      container.innerHTML = \`
+        <div class="space-y-4">
+          <!-- Property Filter & Add Single Room Bar -->
+          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <label for="adminManageRoomsProp" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
+              <select
+                id="adminManageRoomsProp"
+                onchange="calendarSelectedProperty = this.value; renderFinancesView();"
+                class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
+              >
+                \${properties.map(p => \`
+                  <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
+                \`).join("")}
+              </select>
+              <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
+                \${propRooms.length} Rooms
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onclick="openManageRoomModal(null)"
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>+ Add Single Room</span>
+            </button>
+          </div>
+
+          <!-- Quick Bulk Add Rooms Card -->
+          <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 sm:p-5 rounded-3xl border border-indigo-100 space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                  <i data-lucide="layers" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Quick Bulk Add Rooms</h4>
+                  <p class="text-[11px] text-indigo-700/80">Add multiple rooms in one go (e.g. 101, 102, 103, 104)</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Numbers (Comma Separated) *</label>
+                <input
+                  type="text"
+                  id="adminBulkRoomNumbers"
+                  placeholder="101, 102, 103, 104, 201, 202"
+                  class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Type</label>
+                <input
+                  type="text"
+                  id="adminBulkRoomType"
+                  value="Standard"
+                  placeholder="Standard, Deluxe"
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-indigo-950 mb-1">Base Price ₹</label>
+                <input
+                  type="number"
+                  id="adminBulkBasePrice"
+                  value="2000"
+                  step="1"
+                  min="0"
+                  placeholder="2000"
+                  class="w-full px-3 py-2 text-xs font-bold font-mono rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button
+                type="button"
+                onclick="bulkAddAdminRooms()"
+                class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>Bulk Add Rooms to \${escapeHtml(prop ? prop.name : 'Property')}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Rooms List Table -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+                Configured Rooms for \${escapeHtml(prop ? prop.name : 'Property')}
+              </h4>
+              <span class="text-xs font-semibold text-slate-500">\${propRooms.length} Active</span>
+            </div>
+
+            \${propRooms.length === 0 ? \`
+              <div class="p-8 text-center text-xs text-slate-400">
+                No rooms added for this property yet. Use the Quick Bulk Add form above to add rooms (101, 102, 103, 104).
+              </div>
+            \` : \`
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th class="py-3 px-4">Room Number</th>
+                      <th class="py-3 px-4">Type</th>
+                      <th class="py-3 px-4">Base Price</th>
+                      <th class="py-3 px-4">Status</th>
+                      <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    \${propRooms.map(rm => \`
+                      <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-4 font-black text-slate-900 text-sm whitespace-nowrap">
+                          Room \${escapeHtml(rm.room_number)}
                         </td>
-                        <td class="py-3 px-3.5 font-black font-mono whitespace-nowrap \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
-                          ₹\${formatCurrency(r.net_revenue)}
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+                            \${escapeHtml(rm.room_type || 'Standard')}
+                          </span>
                         </td>
-                        <td class="py-3 px-3.5 text-[11px] text-slate-500 whitespace-nowrap">\${escapeHtml(r.submitted_by || 'Staff')}</td>
-                        <td class="py-3 px-3.5 text-right whitespace-nowrap">
+                        <td class="py-3 px-4 font-mono font-bold text-indigo-900 whitespace-nowrap">
+                          ₹\${formatCurrency(rm.base_price || 0)}
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            Active
+                          </span>
+                        </td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap">
                           <div class="flex items-center justify-end gap-1">
                             <button
                               type="button"
-                              onclick="openFinanceModal('\${r.id}')"
-                              title="Edit Record"
+                              onclick="openManageRoomModal('\${rm.id}')"
+                              title="Edit Room"
                               class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
                             >
                               <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                             </button>
                             <button
                               type="button"
-                              onclick="handleDeleteFinance('\${r.id}')"
-                              title="Delete Record"
+                              onclick="deleteAdminRoom('\${rm.id}')"
+                              title="Delete Room"
                               class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                             >
                               <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -5130,87 +6318,386 @@ export function getDashboardHtml(): string {
                           </div>
                         </td>
                       </tr>
-                    \`;
-                  }).join("")}
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Mobile Cards View (< md) -->
-            <div class="md:hidden divide-y divide-slate-100 p-3 space-y-3">
-              \${records.map(r => {
-                const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
-                const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
-                const rLodging = (r.lodging_online || 0) + rLodgingCash;
-                const rFooding = (r.fooding_online || 0) + rFoodingCash;
-                return \`
-                  <div class="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/80 flex flex-col gap-2.5 shadow-2xs">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-bold text-slate-900">\${r.date}</span>
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white border border-slate-200 text-slate-700">
-                          \${escapeHtml(r.property_name || 'Property')}
-                        </span>
-                      </div>
-                      <div class="flex items-center gap-1">
-                        <button type="button" onclick="openFinanceModal('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 cursor-pointer">
-                          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button type="button" onclick="handleDeleteFinance('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 cursor-pointer">
-                          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-xl border border-slate-100">
-                      <div>
-                        <span class="text-[10px] font-bold text-indigo-700 uppercase">Lodging</span>
-                        <div class="font-mono font-bold text-indigo-950">₹\${formatCurrency(rLodging)}</div>
-                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Cash ₹\${formatCurrency(rLodgingCash)}</div>
-                      </div>
-                      <div>
-                        <span class="text-[10px] font-bold text-amber-700 uppercase">Fooding</span>
-                        <div class="font-mono font-bold text-amber-950">₹\${formatCurrency(rFooding)}</div>
-                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Cash ₹\${formatCurrency(rFoodingCash)}</div>
-                      </div>
-                    </div>
-
-                    <div class="flex items-center justify-between text-xs pt-1">
-                      <div>
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Sales</span>
-                        <div class="font-black text-emerald-700 font-mono">₹\${formatCurrency(r.total_sales)}</div>
-                      </div>
-                      <div class="text-center">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
-                        <div class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</div>
-                      </div>
-                      <div class="text-right">
-                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Net Profit</span>
-                        <div class="font-black font-mono \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
-                          ₹\${formatCurrency(r.net_revenue)}
-                        </div>
-                      </div>
-                    </div>
-
-                    \${r.expense_notes ? \`
-                      <div class="text-[10px] text-slate-600 bg-rose-50/60 p-2 rounded-lg border border-rose-100">
-                        <strong class="text-rose-800">Expense Notes:</strong> \${escapeHtml(r.expense_notes)}
-                      </div>
-                    \` : ''}
-                    \${r.notes ? \`
-                      <div class="text-[10px] text-slate-500 italic">
-                        Shift Notes: \${escapeHtml(r.notes)}
-                      </div>
-                    \` : ''}
-                  </div>
-                \`;
-              }).join("")}
-            </div>
-          \`}
+                    \`).join("")}
+                  </tbody>
+                </table>
+              </div>
+            \`}
+          </div>
         </div>
       \`;
     }
 
+    // Bulk Add Rooms Action
+    async function bulkAddAdminRooms() {
+      const propId = calendarSelectedProperty || (properties[0] ? properties[0].id : "");
+      const roomNumbersStr = document.getElementById("adminBulkRoomNumbers")?.value?.trim() || "";
+      const roomType = document.getElementById("adminBulkRoomType")?.value?.trim() || "Standard";
+      const basePrice = Math.max(0, parseFloat(document.getElementById("adminBulkBasePrice")?.value || "0") || 0);
+
+      if (!propId) return showToast("Please select a property first");
+      if (!roomNumbersStr) return showToast("Please enter at least one room number");
+
+      try {
+        const res = await fetch("/api/rooms", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            property_id: propId,
+            room_numbers: roomNumbersStr,
+            room_type: roomType,
+            base_price: basePrice
+          })
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to add rooms");
+        }
+
+        showToast(\`Successfully added \${data.count || ''} rooms!\`);
+        const input = document.getElementById("adminBulkRoomNumbers");
+        if (input) input.value = "";
+        await fetchRooms();
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error adding rooms: " + err.message);
+      }
+    }
+
+    async function deleteAdminRoom(roomId) {
+      if (!roomId) return;
+      if (!confirm("Are you sure you want to permanently delete this room?")) return;
+
+      try {
+        const res = await fetch("/api/rooms/" + roomId, {
+          method: "DELETE",
+          headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to delete room");
+        }
+
+        showToast("Room deleted successfully");
+        await fetchRooms();
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error deleting room: " + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // MODALS: ROOM BOOKING, ROOM DAY DETAIL & MANAGE ROOM
+    // -------------------------------------------------------------------------
+    function openRoomBookingModal(roomId = null, date = null, bookingId = null) {
+      const select = document.getElementById("modalBookingRoomSelect");
+      const propId = (currentUserRole === "manager" ? currentManagerInfo?.property_id : calendarSelectedProperty) || (properties[0] ? properties[0].id : "");
+      
+      const propRooms = roomsList.filter(r => r.property_id === propId);
+
+      if (select) {
+        select.innerHTML = propRooms.map(r => \`
+          <option value="\${r.id}" data-price="\${r.base_price || 0}">Room \${escapeHtml(r.room_number)} (\${escapeHtml(r.room_type || 'Standard')}) - ₹\${formatCurrency(r.base_price || 0)}</option>
+        \`).join("");
+      }
+
+      const idInput = document.getElementById("modalBookingId");
+      const propInput = document.getElementById("modalBookingProperty");
+      const dateInput = document.getElementById("modalBookingDate");
+      const amountInput = document.getElementById("modalBookingAmount");
+      const guestInput = document.getElementById("modalBookingGuestName");
+      const notesInput = document.getElementById("modalBookingNotes");
+      const title = document.getElementById("roomBookingModalTitle");
+
+      if (propInput) propInput.value = propId;
+
+      if (bookingId) {
+        const bk = roomBookingsList.find(b => b.id === bookingId);
+        if (bk) {
+          if (title) title.innerText = "Edit Room Booking";
+          if (idInput) idInput.value = bk.id;
+          if (select) select.value = bk.room_id;
+          if (dateInput) dateInput.value = bk.date;
+          if (amountInput) amountInput.value = bk.amount;
+          if (guestInput) guestInput.value = bk.guest_name || "";
+          if (notesInput) notesInput.value = bk.notes || "";
+          if (bk.payment_mode === "cash") {
+            const r = document.getElementById("modalBookingModeCash");
+            if (r) r.checked = true;
+          } else {
+            const r = document.getElementById("modalBookingModeOnline");
+            if (r) r.checked = true;
+          }
+        }
+      } else {
+        if (title) title.innerText = "Record Room Booking";
+        if (idInput) idInput.value = "";
+        if (dateInput) dateInput.value = date || managerFinanceDate || new Date().toISOString().split("T")[0];
+        if (select && roomId) {
+          select.value = roomId;
+        }
+        // Auto-populate price
+        const selectedOpt = select?.selectedOptions[0];
+        if (selectedOpt && amountInput) {
+          amountInput.value = selectedOpt.getAttribute("data-price") || 2000;
+        }
+        if (guestInput) guestInput.value = "";
+        if (notesInput) notesInput.value = "";
+        const r = document.getElementById("modalBookingModeOnline");
+        if (r) r.checked = true;
+      }
+
+      document.getElementById("roomBookingModal").classList.remove("hidden");
+      document.getElementById("roomBookingModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeRoomBookingModal() {
+      document.getElementById("roomBookingModal").classList.add("hidden");
+      document.getElementById("roomBookingModal").classList.remove("flex");
+    }
+
+    function openEditBookingModal(bookingId) {
+      openRoomBookingModal(null, null, bookingId);
+    }
+
+    async function handleSaveRoomBookingModal(e) {
+      if (e) e.preventDefault();
+      const bookingId = document.getElementById("modalBookingId")?.value?.trim() || null;
+      const property_id = document.getElementById("modalBookingProperty")?.value;
+      const room_id = document.getElementById("modalBookingRoomSelect")?.value;
+      const date = document.getElementById("modalBookingDate")?.value;
+      const amount = Math.max(0, parseFloat(document.getElementById("modalBookingAmount")?.value || "0") || 0);
+      const isCash = document.getElementById("modalBookingModeCash")?.checked;
+      const payment_mode = isCash ? "cash" : "online";
+      const guest_name = document.getElementById("modalBookingGuestName")?.value?.trim() || "";
+      const notes = document.getElementById("modalBookingNotes")?.value?.trim() || "";
+
+      if (!property_id || !room_id || !date) {
+        return showToast("Room and date are required");
+      }
+
+      try {
+        let url = "/api/room-bookings";
+        let method = "POST";
+        if (bookingId) {
+          url += "/" + bookingId;
+          method = "PUT";
+        }
+
+        const res = await fetch(url, {
+          method,
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            property_id,
+            room_id,
+            date,
+            amount,
+            payment_mode,
+            guest_name,
+            notes
+          })
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to save booking");
+        }
+
+        closeRoomBookingModal();
+        showToast("Room booking saved successfully!");
+        await Promise.all([fetchRoomBookings(), fetchFinances()]);
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error saving booking: " + err.message);
+      }
+    }
+
+    // Room Day Detail Modal (View / Add multiple bookings for a room on a date)
+    function openRoomDayDetail(roomId, date) {
+      currentDetailRoomId = roomId;
+      currentDetailDate = date;
+
+      const room = roomsList.find(r => r.id === roomId);
+      const roomNum = room ? room.room_number : "Unknown";
+      const roomType = room ? room.room_type : "Standard";
+
+      const title = document.getElementById("roomDayDetailTitle");
+      const subtitle = document.getElementById("roomDayDetailSubtitle");
+      const list = document.getElementById("roomDayDetailList");
+
+      if (title) title.innerText = \`Room \${roomNum} Bookings\`;
+      if (subtitle) subtitle.innerText = \`\${date} · \${roomType}\`;
+
+      const bookings = roomBookingsList.filter(b => b.room_id === roomId && b.date === date);
+
+      if (list) {
+        if (bookings.length === 0) {
+          list.innerHTML = \`
+            <div class="text-center py-6 text-xs text-slate-400">
+              No bookings recorded for this room on \${date}.
+            </div>
+          \`;
+        } else {
+          list.innerHTML = bookings.map(b => {
+            const isOnline = b.payment_mode === "online";
+            return \`
+              <div class="p-3 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3 shadow-2xs">
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-slate-900">Booking Slot #\${b.slot_number || 1}</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
+                      \${isOnline ? 'Online' : 'Cash'}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">
+                    Guest: \${escapeHtml(b.guest_name || 'Walk-in')}
+                    \${b.notes ? \` · \${escapeHtml(b.notes)}\` : ''}
+                  </div>
+                  <div class="text-[10px] text-slate-400 mt-0.5">Created: \${escapeHtml(b.created_by || 'Staff')}</div>
+                </div>
+
+                <div class="text-right flex items-center gap-2">
+                  <div class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
+                    ₹\${formatCurrency(b.amount)}
+                  </div>
+                  <button
+                    type="button"
+                    onclick="closeRoomDayDetailModal(); openEditBookingModal('\${b.id}')"
+                    title="Edit Booking"
+                    class="p-1.5 rounded-lg hover:bg-white text-slate-500 hover:text-indigo-600 cursor-pointer shadow-2xs"
+                  >
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="closeRoomDayDetailModal(); deleteRoomBooking('\${b.id}')"
+                    title="Delete Booking"
+                    class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 cursor-pointer"
+                  >
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            \`;
+          }).join("");
+        }
+      }
+
+      document.getElementById("roomDayDetailModal").classList.remove("hidden");
+      document.getElementById("roomDayDetailModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeRoomDayDetailModal() {
+      document.getElementById("roomDayDetailModal").classList.add("hidden");
+      document.getElementById("roomDayDetailModal").classList.remove("flex");
+    }
+
+    function openAddBookingForCurrentDetail() {
+      const roomId = currentDetailRoomId;
+      const date = currentDetailDate;
+      closeRoomDayDetailModal();
+      openRoomBookingModal(roomId, date, null);
+    }
+
+    // Manage Room Modal (Admin Add/Edit Room)
+    function openManageRoomModal(roomId = null) {
+      const propSelect = document.getElementById("modalRoomProperty");
+      if (propSelect) {
+        propSelect.innerHTML = properties.map(p => \`
+          <option value="\${p.id}" \${p.id === calendarSelectedProperty ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
+        \`).join("");
+      }
+
+      const title = document.getElementById("manageRoomModalTitle");
+      const idInput = document.getElementById("modalRoomId");
+      const numInput = document.getElementById("modalRoomNumber");
+      const typeInput = document.getElementById("modalRoomType");
+      const priceInput = document.getElementById("modalRoomBasePrice");
+
+      if (roomId) {
+        const room = roomsList.find(r => r.id === roomId);
+        if (room) {
+          if (title) title.innerText = "Edit Room";
+          if (idInput) idInput.value = room.id;
+          if (propSelect) propSelect.value = room.property_id;
+          if (numInput) numInput.value = room.room_number;
+          if (typeInput) typeInput.value = room.room_type || "Standard";
+          if (priceInput) priceInput.value = room.base_price || 2000;
+        }
+      } else {
+        if (title) title.innerText = "Add New Room";
+        if (idInput) idInput.value = "";
+        if (numInput) numInput.value = "";
+        if (typeInput) typeInput.value = "Standard";
+        if (priceInput) priceInput.value = 2000;
+      }
+
+      document.getElementById("manageRoomModal").classList.remove("hidden");
+      document.getElementById("manageRoomModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeManageRoomModal() {
+      document.getElementById("manageRoomModal").classList.add("hidden");
+      document.getElementById("manageRoomModal").classList.remove("flex");
+    }
+
+    async function handleSaveRoomModal(e) {
+      if (e) e.preventDefault();
+      const roomId = document.getElementById("modalRoomId")?.value?.trim() || null;
+      const property_id = document.getElementById("modalRoomProperty")?.value;
+      const room_number = document.getElementById("modalRoomNumber")?.value?.trim();
+      const room_type = document.getElementById("modalRoomType")?.value?.trim() || "Standard";
+      const base_price = Math.max(0, parseFloat(document.getElementById("modalRoomBasePrice")?.value || "0") || 0);
+
+      if (!property_id || !room_number) {
+        return showToast("Property and room number are required");
+      }
+
+      try {
+        let url = "/api/rooms";
+        let method = "POST";
+        if (roomId) {
+          url += "/" + roomId;
+          method = "PUT";
+        }
+
+        const res = await fetch(url, {
+          method,
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            property_id,
+            room_number,
+            room_type,
+            base_price
+          })
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to save room");
+        }
+
+        closeManageRoomModal();
+        showToast("Room saved successfully!");
+        await fetchRooms();
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error saving room: " + err.message);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // FINANCE MODAL & EXPORT HELPERS
+    // -------------------------------------------------------------------------
     async function changeFinanceMonth(delta) {
       financeMonth += delta;
       if (financeMonth < 0) {
@@ -5220,14 +6707,14 @@ export function getDashboardHtml(): string {
         financeMonth = 0;
         financeYear++;
       }
-      await fetchFinances();
+      await Promise.all([fetchFinances(), fetchRoomBookings()]);
       renderFinancesView();
     }
 
     async function goToFinanceCurrentMonth() {
       financeMonth = new Date().getMonth();
       financeYear = new Date().getFullYear();
-      await fetchFinances();
+      await Promise.all([fetchFinances(), fetchRoomBookings()]);
       renderFinancesView();
     }
 

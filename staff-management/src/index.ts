@@ -1,5 +1,5 @@
 import { getDashboardHtml } from "./ui";
-import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance } from "./types";
+import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance, Room, RoomBooking } from "./types";
 
 function jsonResponse(data: any, status = 200): Response {
 	return new Response(JSON.stringify(data), {
@@ -77,6 +77,54 @@ async function getAuthContext(request: Request, env: Env): Promise<AuthContext> 
 	}
 
 	return { authorized: false };
+}
+
+async function syncDailyFinanceLodging(env: Env, propertyId: string, date: string, submittedBy?: string) {
+	try {
+		const bookingSums = await env.DB.prepare(`
+			SELECT
+				COALESCE(SUM(CASE WHEN payment_mode = 'online' THEN amount ELSE 0 END), 0) AS lodging_online,
+				COALESCE(SUM(CASE WHEN payment_mode = 'cash' THEN amount ELSE 0 END), 0) AS lodging_cash,
+				COUNT(*) AS booking_count
+			FROM room_bookings
+			WHERE property_id = ? AND date = ?
+		`).bind(propertyId, date).first<{ lodging_online: number; lodging_cash: number; booking_count: number }>();
+
+		const lodgingOnline = Math.max(0, Math.round(bookingSums?.lodging_online || 0));
+		const lodgingCash = Math.max(0, Math.round(bookingSums?.lodging_cash || 0));
+		const bookingCount = bookingSums?.booking_count || 0;
+
+		const existing = await env.DB.prepare(`
+			SELECT * FROM daily_finances WHERE property_id = ? AND date = ?
+		`).bind(propertyId, date).first<DailyFinance>();
+
+		if (existing) {
+			const totalSales = lodgingOnline + lodgingCash + (existing.fooding_online || 0) + (existing.fooding_cash || existing.fooding_offline || 0) + (existing.other_sales || 0);
+			const netRevenue = totalSales - (existing.expenses_total || 0);
+			await env.DB.prepare(`
+				UPDATE daily_finances
+				SET lodging_online = ?, lodging_cash = ?, total_sales = ?, net_revenue = ?, updated_at = datetime('now')
+				WHERE property_id = ? AND date = ?
+			`).bind(lodgingOnline, lodgingCash, totalSales, netRevenue, propertyId, date).run();
+		} else if (bookingCount > 0) {
+			const id = `fin_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+			const totalSales = lodgingOnline + lodgingCash;
+			const netRevenue = totalSales;
+			await env.DB.prepare(`
+				INSERT INTO daily_finances (
+					id, property_id, date, lodging_online, lodging_cash,
+					fooding_online, fooding_cash, other_sales, total_sales,
+					expenses_total, expense_notes, net_revenue, notes, submitted_by,
+					created_at, updated_at
+				) VALUES (?, ?, ?, ?, ?, 0, 0, 0, ?, 0, NULL, ?, NULL, ?, datetime('now'), datetime('now'))
+			`).bind(id, propertyId, date, lodgingOnline, lodgingCash, totalSales, netRevenue, submittedBy || "Room Booking").run();
+		}
+
+		return { lodgingOnline, lodgingCash, bookingCount };
+	} catch (err) {
+		console.error("Error in syncDailyFinanceLodging:", err);
+		return { lodgingOnline: 0, lodgingCash: 0, bookingCount: 0 };
+	}
 }
 
 export default {
@@ -214,16 +262,18 @@ export default {
 				return jsonResponse({ error: "Unauthorized. Enter valid PIN." }, 401);
 			}
 
-			// Manager Restrictions: can ONLY view properties/staff, attendance, and sales/expenses for their assigned property!
+			// Manager Restrictions: can ONLY view properties/staff/rooms, attendance, room bookings, and sales/expenses for their assigned property!
 			if (auth.role === "manager") {
 				const isAllowedForManager =
 					(path === "/api/properties" && method === "GET") ||
 					(path === "/api/staff" && method === "GET") ||
+					(path === "/api/rooms" && method === "GET") ||
+					path.startsWith("/api/room-bookings") ||
 					path.startsWith("/api/attendance") || // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
 					(path === "/api/finances" && (method === "GET" || method === "POST")); // GET & POST for their property only
 
 				if (!isAllowedForManager) {
-					return jsonResponse({ error: "Forbidden. Managers only have access to Attendance, Roll Call, and Daily Sales & Expenses." }, 403);
+					return jsonResponse({ error: "Forbidden. Managers only have access to Attendance, Roll Call, Daily Sales & Expenses, and Room Bookings." }, 403);
 				}
 			}
 		}
@@ -906,8 +956,26 @@ export default {
 					return jsonResponse({ error: "Valid date (YYYY-MM-DD) is required." }, 400);
 				}
 
-				const lodgingOnline = Math.max(0, Math.round(Number(body.lodging_online) || 0));
-				const lodgingCash = Math.max(0, Math.round(Number(body.lodging_cash ?? body.lodging_offline) || 0));
+				// Lodging is automatically derived from room bookings if any exist
+				const bookingSums = await env.DB.prepare(`
+					SELECT
+						COALESCE(SUM(CASE WHEN payment_mode = 'online' THEN amount ELSE 0 END), 0) AS lodging_online,
+						COALESCE(SUM(CASE WHEN payment_mode = 'cash' THEN amount ELSE 0 END), 0) AS lodging_cash,
+						COUNT(*) AS booking_count
+					FROM room_bookings
+					WHERE property_id = ? AND date = ?
+				`).bind(propertyId, date).first<{ lodging_online: number; lodging_cash: number; booking_count: number }>();
+
+				let lodgingOnline = 0;
+				let lodgingCash = 0;
+				if (bookingSums && bookingSums.booking_count > 0) {
+					lodgingOnline = Math.max(0, Math.round(bookingSums.lodging_online));
+					lodgingCash = Math.max(0, Math.round(bookingSums.lodging_cash));
+				} else {
+					lodgingOnline = Math.max(0, Math.round(Number(body.lodging_online) || 0));
+					lodgingCash = Math.max(0, Math.round(Number(body.lodging_cash ?? body.lodging_offline) || 0));
+				}
+
 				const foodingOnline = Math.max(0, Math.round(Number(body.fooding_online) || 0));
 				const foodingCash = Math.max(0, Math.round(Number(body.fooding_cash ?? body.fooding_offline) || 0));
 				const otherSales = Math.max(0, Math.round(Number(body.other_sales) || 0));
@@ -963,6 +1031,284 @@ export default {
 				const finId = path.split("/")[3];
 				await env.DB.prepare("DELETE FROM daily_finances WHERE id = ?").bind(finId).run();
 				return jsonResponse({ success: true });
+			}
+
+			// =====================================================================
+			// ROOMS & ROOM BOOKINGS
+			// =====================================================================
+
+			// GET /api/rooms (Get rooms for a property, or all rooms for admin)
+			if (path === "/api/rooms" && method === "GET") {
+				let propertyId = url.searchParams.get("property_id") || "";
+				if (auth.role === "manager") {
+					if (!auth.manager?.property_id) {
+						return jsonResponse({ error: "Manager has no assigned property" }, 403);
+					}
+					propertyId = auth.manager.property_id;
+				}
+
+				let query = `
+					SELECT r.*, p.name AS property_name
+					FROM rooms r
+					LEFT JOIN properties p ON r.property_id = p.id
+					WHERE r.active = 1
+				`;
+				const params: any[] = [];
+				if (propertyId) {
+					query += " AND r.property_id = ?";
+					params.push(propertyId);
+				}
+				query += " ORDER BY p.name ASC, CAST(r.room_number AS INTEGER) ASC, r.room_number ASC";
+
+				const { results } = await env.DB.prepare(query).bind(...params).all<Room>();
+				return jsonResponse(results || []);
+			}
+
+			// POST /api/rooms (Admin only: Add room or bulk add rooms)
+			if (path === "/api/rooms" && method === "POST") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only can manage rooms." }, 403);
+				}
+				const body = await request.json() as any;
+				const propertyId = body.property_id?.trim();
+				if (!propertyId) {
+					return jsonResponse({ error: "Property is required." }, 400);
+				}
+
+				// Check if bulk add: room_numbers array or comma-separated string
+				let roomNumbers: string[] = [];
+				if (Array.isArray(body.room_numbers)) {
+					roomNumbers = body.room_numbers.map((r: any) => String(r).trim()).filter(Boolean);
+				} else if (typeof body.room_numbers === "string" && body.room_numbers.trim()) {
+					roomNumbers = body.room_numbers.split(",").map((s: string) => s.trim()).filter(Boolean);
+				} else if (body.room_number) {
+					roomNumbers = [String(body.room_number).trim()];
+				}
+
+				if (roomNumbers.length === 0) {
+					return jsonResponse({ error: "At least one room number is required." }, 400);
+				}
+
+				const roomType = body.room_type?.trim() || "Standard";
+				const basePrice = Math.max(0, Math.round(Number(body.base_price) || 0));
+
+				for (const roomNum of roomNumbers) {
+					const id = `rm_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+					await env.DB.prepare(`
+						INSERT INTO rooms (id, property_id, room_number, room_type, base_price, active, created_at, updated_at)
+						VALUES (?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
+						ON CONFLICT(property_id, room_number) DO UPDATE SET
+							room_type = excluded.room_type,
+							base_price = excluded.base_price,
+							active = 1,
+							updated_at = datetime('now')
+					`).bind(id, propertyId, roomNum, roomType, basePrice).run();
+				}
+
+				const { results } = await env.DB.prepare(`
+					SELECT r.*, p.name AS property_name
+					FROM rooms r
+					LEFT JOIN properties p ON r.property_id = p.id
+					WHERE r.property_id = ? AND r.active = 1
+					ORDER BY CAST(r.room_number AS INTEGER) ASC, r.room_number ASC
+				`).bind(propertyId).all<Room>();
+
+				return jsonResponse({ success: true, count: roomNumbers.length, rooms: results || [] });
+			}
+
+			// PUT /api/rooms/:id (Admin only: Update room)
+			if (path.startsWith("/api/rooms/") && method === "PUT") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only can edit rooms." }, 403);
+				}
+				const roomId = path.split("/")[3];
+				const body = await request.json() as any;
+				const roomNumber = body.room_number?.trim();
+				const roomType = body.room_type?.trim() || "Standard";
+				const basePrice = Math.max(0, Math.round(Number(body.base_price) || 0));
+				const active = body.active === 0 ? 0 : 1;
+
+				if (!roomNumber) {
+					return jsonResponse({ error: "Room number is required." }, 400);
+				}
+
+				await env.DB.prepare(`
+					UPDATE rooms
+					SET room_number = ?, room_type = ?, base_price = ?, active = ?, updated_at = datetime('now')
+					WHERE id = ?
+				`).bind(roomNumber, roomType, basePrice, active, roomId).run();
+
+				const updated = await env.DB.prepare("SELECT * FROM rooms WHERE id = ?").bind(roomId).first<Room>();
+				return jsonResponse({ success: true, room: updated });
+			}
+
+			// DELETE /api/rooms/:id (Admin only: Delete room)
+			if (path.startsWith("/api/rooms/") && method === "DELETE") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only can delete rooms." }, 403);
+				}
+				const roomId = path.split("/")[3];
+				await env.DB.prepare("DELETE FROM rooms WHERE id = ?").bind(roomId).run();
+				return jsonResponse({ success: true });
+			}
+
+			// GET /api/room-bookings (Get bookings by date or month, with optional property filter)
+			if (path === "/api/room-bookings" && method === "GET") {
+				let propertyId = url.searchParams.get("property_id") || "";
+				if (auth.role === "manager") {
+					if (!auth.manager?.property_id) {
+						return jsonResponse({ error: "Manager has no assigned property" }, 403);
+					}
+					propertyId = auth.manager.property_id;
+				}
+
+				const date = url.searchParams.get("date") || "";
+				const month = url.searchParams.get("month") || "";
+
+				let query = `
+					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
+					FROM room_bookings b
+					JOIN rooms r ON b.room_id = r.id
+					LEFT JOIN properties p ON b.property_id = p.id
+					WHERE 1=1
+				`;
+				const params: any[] = [];
+				if (propertyId) {
+					query += " AND b.property_id = ?";
+					params.push(propertyId);
+				}
+				if (date) {
+					query += " AND b.date = ?";
+					params.push(date);
+				} else if (month) {
+					query += " AND b.date LIKE ? || '%'";
+					params.push(month);
+				}
+
+				query += " ORDER BY b.date DESC, CAST(r.room_number AS INTEGER) ASC, r.room_number ASC, b.created_at ASC";
+
+				const { results } = await env.DB.prepare(query).bind(...params).all<RoomBooking>();
+				return jsonResponse(results || []);
+			}
+
+			// POST /api/room-bookings (Manager or Admin records a room booking; supports multiple bookings per room/day)
+			if (path === "/api/room-bookings" && method === "POST") {
+				const body = await request.json() as any;
+				let propertyId = body.property_id?.trim() || "";
+				let submittedBy = "Admin";
+
+				if (auth.role === "manager") {
+					if (!auth.manager?.property_id) {
+						return jsonResponse({ error: "Manager has no assigned property" }, 403);
+					}
+					propertyId = auth.manager.property_id;
+					submittedBy = `Manager: ${auth.manager.name}`;
+				}
+
+				const roomId = body.room_id?.trim() || "";
+				const date = body.date?.trim() || "";
+				const amount = Math.max(0, Math.round(Number(body.amount) || 0));
+				const paymentMode = body.payment_mode === "cash" ? "cash" : "online";
+				const guestName = body.guest_name?.trim() || null;
+				const notes = body.notes?.trim() || null;
+
+				if (!propertyId || !roomId || !date) {
+					return jsonResponse({ error: "Property, room, and valid date are required." }, 400);
+				}
+				if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+					return jsonResponse({ error: "Valid date format (YYYY-MM-DD) is required." }, 400);
+				}
+
+				// Verify room belongs to property
+				const room = await env.DB.prepare("SELECT * FROM rooms WHERE id = ? AND property_id = ?").bind(roomId, propertyId).first<Room>();
+				if (!room) {
+					return jsonResponse({ error: "Invalid room selected for this property." }, 400);
+				}
+
+				// Determine slot number for this room on this date (supports booking 2x, 3x per day)
+				const slotCount = await env.DB.prepare(`
+					SELECT COUNT(*) AS cnt FROM room_bookings WHERE room_id = ? AND date = ?
+				`).bind(roomId, date).first<{ cnt: number }>();
+				const slotNumber = (slotCount?.cnt || 0) + 1;
+
+				const id = `bk_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+
+				await env.DB.prepare(`
+					INSERT INTO room_bookings (
+						id, property_id, room_id, date, amount, payment_mode, guest_name, notes, slot_number, created_by, created_at, updated_at
+					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+				`).bind(id, propertyId, roomId, date, amount, paymentMode, guestName, notes, slotNumber, submittedBy).run();
+
+				// Automatically sync lodging numbers in daily_finances
+				const totals = await syncDailyFinanceLodging(env, propertyId, date, submittedBy);
+
+				const created = await env.DB.prepare(`
+					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
+					FROM room_bookings b
+					JOIN rooms r ON b.room_id = r.id
+					LEFT JOIN properties p ON b.property_id = p.id
+					WHERE b.id = ?
+				`).bind(id).first<RoomBooking>();
+
+				return jsonResponse({ success: true, booking: created, lodgingTotals: totals });
+			}
+
+			// PUT /api/room-bookings/:id (Update a booking)
+			if (path.startsWith("/api/room-bookings/") && method === "PUT") {
+				const bookingId = path.split("/")[3];
+				const existing = await env.DB.prepare("SELECT * FROM room_bookings WHERE id = ?").bind(bookingId).first<RoomBooking>();
+				if (!existing) {
+					return jsonResponse({ error: "Booking not found" }, 404);
+				}
+
+				if (auth.role === "manager" && existing.property_id !== auth.manager?.property_id) {
+					return jsonResponse({ error: "Forbidden. Manager can only update bookings for their assigned property." }, 403);
+				}
+
+				const body = await request.json() as any;
+				const amount = body.amount !== undefined ? Math.max(0, Math.round(Number(body.amount) || 0)) : existing.amount;
+				const paymentMode = body.payment_mode ? (body.payment_mode === "cash" ? "cash" : "online") : existing.payment_mode;
+				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
+				const notes = body.notes !== undefined ? (body.notes?.trim() || null) : existing.notes;
+
+				await env.DB.prepare(`
+					UPDATE room_bookings
+					SET amount = ?, payment_mode = ?, guest_name = ?, notes = ?, updated_at = datetime('now')
+					WHERE id = ?
+				`).bind(amount, paymentMode, guestName, notes, bookingId).run();
+
+				// Re-sync lodging in daily_finances
+				const totals = await syncDailyFinanceLodging(env, existing.property_id, existing.date);
+
+				const updated = await env.DB.prepare(`
+					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
+					FROM room_bookings b
+					JOIN rooms r ON b.room_id = r.id
+					LEFT JOIN properties p ON b.property_id = p.id
+					WHERE b.id = ?
+				`).bind(bookingId).first<RoomBooking>();
+
+				return jsonResponse({ success: true, booking: updated, lodgingTotals: totals });
+			}
+
+			// DELETE /api/room-bookings/:id (Delete a booking)
+			if (path.startsWith("/api/room-bookings/") && method === "DELETE") {
+				const bookingId = path.split("/")[3];
+				const existing = await env.DB.prepare("SELECT * FROM room_bookings WHERE id = ?").bind(bookingId).first<RoomBooking>();
+				if (!existing) {
+					return jsonResponse({ error: "Booking not found" }, 404);
+				}
+
+				if (auth.role === "manager" && existing.property_id !== auth.manager?.property_id) {
+					return jsonResponse({ error: "Forbidden. Manager can only delete bookings for their assigned property." }, 403);
+				}
+
+				await env.DB.prepare("DELETE FROM room_bookings WHERE id = ?").bind(bookingId).run();
+
+				// Re-sync lodging in daily_finances
+				const totals = await syncDailyFinanceLodging(env, existing.property_id, existing.date);
+
+				return jsonResponse({ success: true, lodgingTotals: totals });
 			}
 
 			return jsonResponse({ error: "Not Found" }, 404);
