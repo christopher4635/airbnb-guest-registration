@@ -1447,29 +1447,111 @@ export function getDashboardHtml(): string {
         </button>
       </div>
 
+      <!-- Stay Duration Type Segmented Control -->
+      <div id="modalStayTypeSegment" class="flex items-center justify-between p-1 bg-slate-100 rounded-xl mb-3">
+        <button type="button" id="btnModalStaySingle" onclick="setModalStayMode('single')" class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs">
+          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+          <span>Single Day</span>
+        </button>
+        <button type="button" id="btnModalStayRange" onclick="setModalStayMode('range')" class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
+          <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
+          <span>Multi-Day Date Range</span>
+        </button>
+      </div>
+
+      <!-- Notice when editing a multi-day stay -->
+      <div id="modalGroupStayNotice" class="hidden p-3 rounded-2xl bg-purple-50 border border-purple-200 text-purple-900 text-xs mb-3">
+        <div class="font-bold flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-purple-600"></i>
+          <span>Part of Multi-Day Stay</span>
+        </div>
+        <p class="text-[11px] text-purple-700 mt-0.5">Stay Period: <span id="modalGroupStayDates" class="font-semibold"></span></p>
+        <label class="mt-2 flex items-center gap-2 cursor-pointer font-semibold text-purple-950 select-none">
+          <input type="checkbox" id="modalUpdateEntireGroup" checked class="rounded text-purple-600 focus:ring-purple-500 w-4 h-4">
+          <span>Apply guest & payment mode changes to all days of this stay</span>
+        </label>
+      </div>
+
       <form id="roomBookingForm" onsubmit="handleSaveRoomBookingModal(event)" class="space-y-3.5">
         <input type="hidden" id="modalBookingId" />
         <input type="hidden" id="modalBookingProperty" />
 
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Select Room *</label>
-            <select id="modalBookingRoomSelect" required class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500">
-              <!-- Rendered options -->
-            </select>
+        <!-- Room Selector -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Select Room *</label>
+          <select id="modalBookingRoomSelect" required onchange="onModalRoomSelectChange(this.value)" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500">
+            <!-- Rendered options -->
+          </select>
+        </div>
+
+        <!-- 1. Single Day Date Input -->
+        <div id="modalSingleDateContainer">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+          <input type="date" id="modalBookingDate" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white" />
+        </div>
+
+        <!-- 2. Date Range Input (Multi-Day Stay) -->
+        <div id="modalDateRangeContainer" class="hidden space-y-2.5">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Check-in Date *</label>
+              <input type="date" id="modalBookingCheckInDate" onchange="onModalRangeDateChange()" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Check-out Date *</label>
+              <input type="date" id="modalBookingCheckOutDate" onchange="onModalRangeDateChange()" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white" />
+            </div>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
-            <input type="date" id="modalBookingDate" required class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white" />
+
+          <!-- Range Summary Pill -->
+          <div id="modalRangeSummaryCard" class="p-2.5 rounded-xl bg-indigo-50/80 border border-indigo-200 text-xs text-indigo-900 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                <i data-lucide="moon" class="w-3.5 h-3.5"></i>
+              </span>
+              <div>
+                <div id="modalRangeNightsLabel" class="font-bold">1 Night Stay</div>
+                <div id="modalRangeDatesLabel" class="text-[11px] text-indigo-700 font-medium">Nov 05 → Nov 06</div>
+              </div>
+            </div>
+            <label class="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-950 cursor-pointer select-none">
+              <input type="checkbox" id="modalIncludeCheckoutDay" onchange="onModalRangeDateChange()" class="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5">
+              <span>Include checkout day</span>
+            </label>
           </div>
         </div>
 
-        <div>
+        <!-- 3. Amount Inputs -->
+        <!-- Single Day Amount -->
+        <div id="modalSingleAmountContainer">
           <label class="block text-xs font-semibold text-slate-700 mb-1">Booking Amount (₹) *</label>
           <div class="relative">
             <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-            <input type="number" id="modalBookingAmount" required min="0" step="1" placeholder="2000" class="w-full pl-7 pr-3 py-2 text-sm font-black font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500" />
+            <input type="number" id="modalBookingAmount" min="0" step="1" placeholder="2000" class="w-full pl-7 pr-3 py-2 text-sm font-black font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500" />
           </div>
+        </div>
+
+        <!-- Multi-Day Amount (Rate per night + Total stay amount) -->
+        <div id="modalRangeAmountContainer" class="hidden space-y-1">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Rate / Night (₹) *</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                <input type="number" id="modalRatePerNight" min="0" step="1" placeholder="2000" oninput="onModalRateChange(this.value)" class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Total Stay Amount (₹) *</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                <input type="number" id="modalTotalStayAmount" min="0" step="1" placeholder="6000" oninput="onModalTotalAmountChange(this.value)" class="w-full pl-7 pr-3 py-2 text-sm font-black font-mono text-indigo-900 rounded-xl border border-indigo-300 bg-indigo-50/40 focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-400">
+            Records <span id="modalDailyRatePreview" class="font-bold text-indigo-700 font-mono">₹2,000</span>/day across the selected stay dates.
+          </p>
         </div>
 
         <div>
@@ -1494,7 +1576,7 @@ export function getDashboardHtml(): string {
 
         <div>
           <label class="block text-xs font-semibold text-slate-700 mb-1">Guest Name / Reference (Optional)</label>
-          <input type="text" id="modalBookingGuestName" placeholder="e.g. Guest Name, Slot 1, MMT, Walk-in" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" id="modalBookingGuestName" placeholder="e.g. Rahul Sharma, Booking.com, Walk-in" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
         </div>
 
         <div>
@@ -1504,16 +1586,16 @@ export function getDashboardHtml(): string {
 
         <p class="text-[11px] text-slate-400 italic">
           <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
-          Multiple bookings for the same room on the same day are recorded automatically (Booking #1, #2, etc.) and added to lodging revenue.
+          Multiple bookings for the same room on the same day are supported and automatically summed into lodging revenue.
         </p>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
           <button type="button" onclick="closeRoomBookingModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
             Cancel
           </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
+          <button type="submit" id="btnSubmitModalBooking" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
             <i data-lucide="check" class="w-3.5 h-3.5"></i>
-            <span>Save Booking</span>
+            <span id="btnSubmitModalBookingText">Save Booking</span>
           </button>
         </div>
       </form>
@@ -4914,6 +4996,64 @@ export function getDashboardHtml(): string {
                 <span class="text-[11px] text-indigo-600 font-medium">Click room above or select below</span>
               </div>
 
+              <!-- Stay Duration Type Segment -->
+              <div class="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  id="btnMgrStaySingle"
+                  onclick="setMgrStayMode('single')"
+                  class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${mgrStayMode === 'single' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}"
+                >
+                  <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                  <span>Single Day (\${managerFinanceDate})</span>
+                </button>
+                <button
+                  type="button"
+                  id="btnMgrStayRange"
+                  onclick="setMgrStayMode('range')"
+                  class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${mgrStayMode === 'range' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}"
+                >
+                  <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
+                  <span>Date Range (Multi-Day Stay)</span>
+                </button>
+              </div>
+
+              <!-- Multi-day date range section for manager -->
+              <div id="mgrStayRangeSection" class="\${mgrStayMode === 'range' ? '' : 'hidden'} p-3 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label class="block text-xs font-semibold text-indigo-950 mb-1">Check-in Date *</label>
+                    <input
+                      type="date"
+                      id="mgrBookCheckIn"
+                      value="\${managerFinanceDate}"
+                      onchange="onMgrRangeChange()"
+                      class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-indigo-950 mb-1">Check-out Date *</label>
+                    <input
+                      type="date"
+                      id="mgrBookCheckOut"
+                      value="\${getTomorrowIso(managerFinanceDate)}"
+                      onchange="onMgrRangeChange()"
+                      class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    />
+                  </div>
+                </div>
+                <div class="flex items-center justify-between text-xs text-indigo-900 bg-white p-2 rounded-xl border border-indigo-100 flex-wrap gap-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                    <span id="mgrRangeSummaryText" class="font-bold">1 Night Stay</span>
+                  </div>
+                  <label class="flex items-center gap-1 text-[11px] text-indigo-950 cursor-pointer select-none">
+                    <input type="checkbox" id="mgrIncludeCheckoutDay" onchange="onMgrRangeChange()" class="rounded text-indigo-600 w-3.5 h-3.5">
+                    <span>Include checkout day</span>
+                  </label>
+                </div>
+              </div>
+
               <form id="mgrQuickBookForm" onsubmit="submitManagerRoomBooking(event)" class="space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <!-- Room Select -->
@@ -4934,7 +5074,9 @@ export function getDashboardHtml(): string {
 
                   <!-- Amount -->
                   <div>
-                    <label class="block text-xs font-semibold text-indigo-950 mb-1">Booking Amount (₹) *</label>
+                    <label id="mgrAmountLabel" class="block text-xs font-semibold text-indigo-950 mb-1">
+                      \${mgrStayMode === 'range' ? 'Rate / Night (₹) *' : 'Booking Amount (₹) *'}
+                    </label>
                     <div class="relative">
                       <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
                       <input
@@ -4944,6 +5086,7 @@ export function getDashboardHtml(): string {
                         step="1"
                         required
                         placeholder="2000"
+                        oninput="onMgrRateInput(this.value)"
                         class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
                       />
                     </div>
@@ -5363,6 +5506,104 @@ export function getDashboardHtml(): string {
       \`;
     }
 
+    // -------------------------------------------------------------------------
+    // ROOM BOOKING & MULTI-DAY STAY HELPERS
+    // -------------------------------------------------------------------------
+    let mgrStayMode = 'single';
+    let modalStayMode = 'single';
+
+    function getTomorrowIso(dateStr) {
+      if (!dateStr) dateStr = new Date().toISOString().split("T")[0];
+      const d = new Date(dateStr + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + 1);
+      return d.toISOString().split("T")[0];
+    }
+
+    function calculateStayNights(startDateStr, endDateStr, includeCheckout = false) {
+      if (!startDateStr || !endDateStr) return 1;
+      const s = new Date(startDateStr + "T00:00:00Z");
+      const e = new Date(endDateStr + "T00:00:00Z");
+      const diffDays = Math.round((e - s) / (1000 * 60 * 60 * 24));
+      if (includeCheckout) {
+        return Math.max(1, diffDays + 1);
+      }
+      return Math.max(1, diffDays);
+    }
+
+    function setMgrStayMode(mode) {
+      mgrStayMode = mode;
+      const btnSingle = document.getElementById("btnMgrStaySingle");
+      const btnRange = document.getElementById("btnMgrStayRange");
+      const rangeSec = document.getElementById("mgrStayRangeSection");
+      const amtLabel = document.getElementById("mgrAmountLabel");
+      const btnText = document.getElementById("btnMgrSubmitBookText");
+
+      if (mode === 'single') {
+        if (btnSingle) {
+          btnSingle.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-indigo-600 text-white shadow-xs";
+        }
+        if (btnRange) {
+          btnRange.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+        }
+        if (rangeSec) rangeSec.classList.add("hidden");
+        if (amtLabel) amtLabel.innerText = "Booking Amount (₹) *";
+        if (btnText) btnText.innerText = "+ Book Room";
+      } else {
+        if (btnSingle) {
+          btnSingle.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+        }
+        if (btnRange) {
+          btnRange.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-indigo-600 text-white shadow-xs";
+        }
+        if (rangeSec) rangeSec.classList.remove("hidden");
+        if (amtLabel) amtLabel.innerText = "Rate / Night (₹) *";
+
+        const inInput = document.getElementById("mgrBookCheckIn");
+        const outInput = document.getElementById("mgrBookCheckOut");
+        if (inInput && !inInput.value) inInput.value = managerFinanceDate;
+        if (outInput && !outInput.value) outInput.value = getTomorrowIso(inInput.value || managerFinanceDate);
+        onMgrRangeChange();
+      }
+      refreshIcons();
+    }
+
+    function onMgrRangeChange() {
+      const checkIn = document.getElementById("mgrBookCheckIn")?.value;
+      let checkOut = document.getElementById("mgrBookCheckOut")?.value;
+      const includeCheckout = document.getElementById("mgrIncludeCheckoutDay")?.checked || false;
+
+      if (!checkIn) return;
+      if (!checkOut || checkOut <= checkIn) {
+        checkOut = getTomorrowIso(checkIn);
+        const outInput = document.getElementById("mgrBookCheckOut");
+        if (outInput) outInput.value = checkOut;
+      }
+
+      const nights = calculateStayNights(checkIn, checkOut, includeCheckout);
+      const summaryText = document.getElementById("mgrRangeSummaryText");
+      if (summaryText) {
+        summaryText.innerText = includeCheckout
+          ? \`\${nights} Days Stay (\${checkIn} to \${checkOut})\`
+          : \`\${nights} Night\${nights > 1 ? 's' : ''} Stay (\${checkIn} → \${checkOut})\`;
+      }
+
+      const rateInput = document.getElementById("mgrBookAmount");
+      const rate = parseFloat(rateInput?.value || "0") || 0;
+      const total = rate * nights;
+      const btnText = document.getElementById("btnMgrSubmitBookText");
+      if (btnText) {
+        btnText.innerText = total > 0
+          ? \`+ Book \${nights} Night\${nights > 1 ? 's' : ''} (₹\${formatCurrency(total)})\`
+          : \`+ Book \${nights} Night\${nights > 1 ? 's' : ''}\`;
+      }
+    }
+
+    function onMgrRateInput(val) {
+      if (mgrStayMode === 'range') {
+        onMgrRangeChange();
+      }
+    }
+
     // Quick Book Room Chip Selection
     function quickBookSelectRoom(roomId) {
       const select = document.getElementById("mgrBookRoomSelect");
@@ -5378,9 +5619,12 @@ export function getDashboardHtml(): string {
       const amountInput = document.getElementById("mgrBookAmount");
       if (opt && amountInput) {
         const price = opt.getAttribute("data-price");
-        if (price && !amountInput.value) {
+        if (price && (!amountInput.value || parseFloat(amountInput.value) === 0)) {
           amountInput.value = price;
         }
+      }
+      if (mgrStayMode === 'range') {
+        onMgrRangeChange();
       }
     }
 
@@ -5409,27 +5653,55 @@ export function getDashboardHtml(): string {
       if (e) e.preventDefault();
       const propId = currentManagerInfo?.property_id || "";
       const roomId = document.getElementById("mgrBookRoomSelect")?.value;
-      const amount = Math.max(0, parseFloat(document.getElementById("mgrBookAmount")?.value || "0") || 0);
       const guestName = document.getElementById("mgrBookGuest")?.value?.trim() || "";
       const notes = document.getElementById("mgrBookNotes")?.value?.trim() || "";
 
       if (!propId) return showToast("Error: No property assigned");
       if (!roomId) return showToast("Please select a room");
-      if (amount <= 0) return showToast("Please enter a valid booking amount");
+
+      let payload = {
+        property_id: propId,
+        room_id: roomId,
+        payment_mode: quickBookPaymentMode,
+        guest_name: guestName,
+        notes
+      };
+
+      if (mgrStayMode === 'range') {
+        const check_in_date = document.getElementById("mgrBookCheckIn")?.value;
+        const check_out_date = document.getElementById("mgrBookCheckOut")?.value;
+        const include_checkout_day = document.getElementById("mgrIncludeCheckoutDay")?.checked || false;
+        const rate_per_day = Math.max(0, parseFloat(document.getElementById("mgrBookAmount")?.value || "0") || 0);
+
+        if (!check_in_date || !check_out_date) {
+          return showToast("Please select check-in and check-out dates");
+        }
+        if (check_in_date > check_out_date) {
+          return showToast("Check-out date must be after check-in date");
+        }
+        if (rate_per_day <= 0) {
+          return showToast("Please enter a valid rate per night");
+        }
+
+        const nights = calculateStayNights(check_in_date, check_out_date, include_checkout_day);
+        payload.is_range = true;
+        payload.check_in_date = check_in_date;
+        payload.check_out_date = check_out_date;
+        payload.include_checkout_day = include_checkout_day;
+        payload.rate_per_day = rate_per_day;
+        payload.amount = rate_per_day * nights;
+      } else {
+        const amount = Math.max(0, parseFloat(document.getElementById("mgrBookAmount")?.value || "0") || 0);
+        if (amount <= 0) return showToast("Please enter a valid booking amount");
+        payload.date = managerFinanceDate;
+        payload.amount = amount;
+      }
 
       try {
         const res = await fetch("/api/room-bookings", {
           method: "POST",
           headers: getAuthHeaders(),
-          body: JSON.stringify({
-            property_id: propId,
-            room_id: roomId,
-            date: managerFinanceDate,
-            amount,
-            payment_mode: quickBookPaymentMode,
-            guest_name: guestName,
-            notes
-          })
+          body: JSON.stringify(payload)
         });
 
         if (res.status === 401) return lockApp();
@@ -5438,7 +5710,12 @@ export function getDashboardHtml(): string {
           return showToast(data.error || "Failed to record booking");
         }
 
-        showToast("Room booked successfully! Lodging total updated.");
+        if (data.isMultiDay) {
+          showToast(\`Multi-day stay booked! \${data.nights} nights (₹\${formatCurrency(data.total_stay_amount)}). Lodging totals updated.\`);
+        } else {
+          showToast("Room booked successfully! Lodging total updated.");
+        }
+
         const amountInput = document.getElementById("mgrBookAmount");
         const guestInput = document.getElementById("mgrBookGuest");
         const notesInput = document.getElementById("mgrBookNotes");
@@ -5455,11 +5732,30 @@ export function getDashboardHtml(): string {
 
     async function deleteRoomBooking(bookingId) {
       if (!bookingId) return;
-      if (!confirm("Are you sure you want to remove this room booking? Lodging revenue will adjust automatically.")) {
-        return;
+      const bk = roomBookingsList.find(b => b.id === bookingId);
+      let deleteGroup = false;
+
+      if (bk && bk.group_booking_id) {
+        const stayDesc = (bk.check_in_date && bk.check_out_date) ? \` (\${bk.check_in_date} to \${bk.check_out_date})\` : '';
+        const msg = \`This booking is part of a multi-day stay\${stayDesc}.\\n\\nClick OK to cancel the ENTIRE multi-day stay.\\nClick Cancel if you only want to delete THIS SINGLE DAY's booking.\`;
+        if (confirm(msg)) {
+          deleteGroup = true;
+        } else {
+          if (!confirm("Confirm deleting ONLY this single day's booking? Lodging revenue will adjust accordingly.")) {
+            return;
+          }
+          deleteGroup = false;
+        }
+      } else {
+        if (!confirm("Are you sure you want to remove this room booking? Lodging revenue will adjust automatically.")) {
+          return;
+        }
       }
+
       try {
-        const res = await fetch("/api/room-bookings/" + bookingId, {
+        let url = "/api/room-bookings/" + bookingId;
+        if (deleteGroup) url += "?delete_group=true";
+        const res = await fetch(url, {
           method: "DELETE",
           headers: getAuthHeaders()
         });
@@ -5468,7 +5764,7 @@ export function getDashboardHtml(): string {
         if (!res.ok || data.error) {
           return showToast(data.error || "Failed to delete booking");
         }
-        showToast("Booking deleted. Lodging revenue re-calculated.");
+        showToast(deleteGroup ? "Entire multi-day stay deleted. Lodging revenue re-calculated." : "Booking deleted. Lodging revenue re-calculated.");
         await Promise.all([fetchRoomBookings(), fetchFinances()]);
         renderFinancesView();
       } catch (err) {
@@ -6443,16 +6739,18 @@ export function getDashboardHtml(): string {
                         } else if (count === 1) {
                           const bk = cellBookings[0];
                           const isOnline = bk.payment_mode === "online";
+                          const isMultiDay = !!bk.group_booking_id;
                           const kAmt = Math.round(bk.amount / 1000 * 10) / 10;
+                          const stayInfo = isMultiDay ? \` (Multi-day stay: \${bk.check_in_date || ''} to \${bk.check_out_date || ''})\` : '';
                           return \`
                             <td
                               onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
-                              title="Booked: ₹\${formatCurrency(bk.amount)} (\${isOnline ? 'Online' : 'Cash'}) - \${bk.guest_name || 'Guest'}"
+                              title="Booked: ₹\${formatCurrency(bk.amount)} (\${isOnline ? 'Online' : 'Cash'}) - \${bk.guest_name || 'Guest'}\${stayInfo}"
                               class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
                             >
                               <span class="inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${isOnline ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-amber-100 text-amber-900 border border-amber-200'}">
                                 <span>₹\${kAmt}k</span>
-                                <span class="text-[8px] uppercase tracking-tighter opacity-80">\${isOnline ? 'On' : 'Cs'}</span>
+                                <span class="text-[8px] uppercase tracking-tighter opacity-80">\${isOnline ? 'On' : 'Cs'}\${isMultiDay ? '·Stay' : ''}</span>
                               </span>
                             </td>
                           \`;
@@ -7092,6 +7390,123 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     // MODALS: ROOM BOOKING, ROOM DAY DETAIL & MANAGE ROOM
     // -------------------------------------------------------------------------
+    function setModalStayMode(mode) {
+      modalStayMode = mode;
+      const btnSingle = document.getElementById("btnModalStaySingle");
+      const btnRange = document.getElementById("btnModalStayRange");
+      const singleDateSec = document.getElementById("modalSingleDateContainer");
+      const rangeDateSec = document.getElementById("modalDateRangeContainer");
+      const singleAmtSec = document.getElementById("modalSingleAmountContainer");
+      const rangeAmtSec = document.getElementById("modalRangeAmountContainer");
+
+      if (mode === 'single') {
+        if (btnSingle) {
+          btnSingle.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs";
+        }
+        if (btnRange) {
+          btnRange.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900";
+        }
+        if (singleDateSec) singleDateSec.classList.remove("hidden");
+        if (rangeDateSec) rangeDateSec.classList.add("hidden");
+        if (singleAmtSec) singleAmtSec.classList.remove("hidden");
+        if (rangeAmtSec) rangeAmtSec.classList.add("hidden");
+      } else {
+        if (btnSingle) {
+          btnSingle.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900";
+        }
+        if (btnRange) {
+          btnRange.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs";
+        }
+        if (singleDateSec) singleDateSec.classList.add("hidden");
+        if (rangeDateSec) rangeDateSec.classList.remove("hidden");
+        if (singleAmtSec) singleAmtSec.classList.add("hidden");
+        if (rangeAmtSec) rangeAmtSec.classList.remove("hidden");
+        onModalRangeDateChange();
+      }
+      refreshIcons();
+    }
+
+    function onModalRangeDateChange() {
+      const checkIn = document.getElementById("modalBookingCheckInDate")?.value;
+      let checkOut = document.getElementById("modalBookingCheckOutDate")?.value;
+      const includeCheckout = document.getElementById("modalIncludeCheckoutDay")?.checked || false;
+
+      if (!checkIn) return;
+      if (!checkOut || checkOut <= checkIn) {
+        checkOut = getTomorrowIso(checkIn);
+        const outInput = document.getElementById("modalBookingCheckOutDate");
+        if (outInput) outInput.value = checkOut;
+      }
+
+      const nights = calculateStayNights(checkIn, checkOut, includeCheckout);
+      const nightsLabel = document.getElementById("modalRangeNightsLabel");
+      const datesLabel = document.getElementById("modalRangeDatesLabel");
+
+      if (nightsLabel) {
+        nightsLabel.innerText = includeCheckout
+          ? \`\${nights} Days Stay\`
+          : \`\${nights} Night\${nights > 1 ? 's' : ''} Stay\`;
+      }
+      if (datesLabel) {
+        datesLabel.innerText = \`\${checkIn} → \${checkOut} (\${includeCheckout ? 'Full checkout day included' : 'Checkout ' + checkOut})\`;
+      }
+
+      // Sync amounts
+      const rateInput = document.getElementById("modalRatePerNight");
+      const totalInput = document.getElementById("modalTotalStayAmount");
+      const preview = document.getElementById("modalDailyRatePreview");
+
+      const rate = parseFloat(rateInput?.value || "0") || 0;
+      const total = rate * nights;
+      if (totalInput) totalInput.value = total > 0 ? total : "";
+      if (preview) preview.innerText = \`₹\${formatCurrency(rate)}\`;
+    }
+
+    function onModalRateChange(val) {
+      const checkIn = document.getElementById("modalBookingCheckInDate")?.value;
+      const checkOut = document.getElementById("modalBookingCheckOutDate")?.value;
+      const includeCheckout = document.getElementById("modalIncludeCheckoutDay")?.checked || false;
+      const nights = calculateStayNights(checkIn, checkOut, includeCheckout);
+
+      const rate = Math.max(0, parseFloat(val || "0") || 0);
+      const total = rate * nights;
+      const totalInput = document.getElementById("modalTotalStayAmount");
+      if (totalInput) totalInput.value = total > 0 ? total : "";
+      const preview = document.getElementById("modalDailyRatePreview");
+      if (preview) preview.innerText = \`₹\${formatCurrency(rate)}\`;
+    }
+
+    function onModalTotalAmountChange(val) {
+      const checkIn = document.getElementById("modalBookingCheckInDate")?.value;
+      const checkOut = document.getElementById("modalBookingCheckOutDate")?.value;
+      const includeCheckout = document.getElementById("modalIncludeCheckoutDay")?.checked || false;
+      const nights = calculateStayNights(checkIn, checkOut, includeCheckout);
+
+      const total = Math.max(0, parseFloat(val || "0") || 0);
+      const rate = nights > 0 ? Math.round(total / nights) : total;
+      const rateInput = document.getElementById("modalRatePerNight");
+      if (rateInput) rateInput.value = rate > 0 ? rate : "";
+      const preview = document.getElementById("modalDailyRatePreview");
+      if (preview) preview.innerText = \`₹\${formatCurrency(rate)}\`;
+    }
+
+    function onModalRoomSelectChange(roomId) {
+      const select = document.getElementById("modalBookingRoomSelect");
+      const opt = select?.selectedOptions[0];
+      const basePrice = parseFloat(opt?.getAttribute("data-price") || "0") || 2000;
+
+      const singleAmt = document.getElementById("modalBookingAmount");
+      if (singleAmt && (!singleAmt.value || parseFloat(singleAmt.value) === 0)) {
+        singleAmt.value = basePrice;
+      }
+
+      const rateInput = document.getElementById("modalRatePerNight");
+      if (rateInput && (!rateInput.value || parseFloat(rateInput.value) === 0)) {
+        rateInput.value = basePrice;
+      }
+      onModalRangeDateChange();
+    }
+
     function openRoomBookingModal(roomId = null, date = null, bookingId = null) {
       const select = document.getElementById("modalBookingRoomSelect");
       const propId = (currentUserRole === "manager" ? currentManagerInfo?.property_id : calendarSelectedProperty) || (properties[0] ? properties[0].id : "");
@@ -7111,6 +7526,9 @@ export function getDashboardHtml(): string {
       const guestInput = document.getElementById("modalBookingGuestName");
       const notesInput = document.getElementById("modalBookingNotes");
       const title = document.getElementById("roomBookingModalTitle");
+      const staySegment = document.getElementById("modalStayTypeSegment");
+      const groupNotice = document.getElementById("modalGroupStayNotice");
+      const groupDates = document.getElementById("modalGroupStayDates");
 
       if (propInput) propInput.value = propId;
 
@@ -7131,22 +7549,49 @@ export function getDashboardHtml(): string {
             const r = document.getElementById("modalBookingModeOnline");
             if (r) r.checked = true;
           }
+
+          if (bk.group_booking_id) {
+            if (groupNotice) groupNotice.classList.remove("hidden");
+            if (groupDates) {
+              groupDates.innerText = \`\${bk.check_in_date || bk.date} to \${bk.check_out_date || bk.date} (Total: ₹\${formatCurrency(bk.total_stay_amount || bk.amount)})\`;
+            }
+          } else {
+            if (groupNotice) groupNotice.classList.add("hidden");
+          }
+
+          if (staySegment) staySegment.classList.add("hidden");
+          setModalStayMode('single');
         }
       } else {
         if (title) title.innerText = "Record Room Booking";
         if (idInput) idInput.value = "";
-        if (dateInput) dateInput.value = date || managerFinanceDate || new Date().toISOString().split("T")[0];
+        const defaultDate = date || managerFinanceDate || new Date().toISOString().split("T")[0];
+        if (dateInput) dateInput.value = defaultDate;
+
+        const inInput = document.getElementById("modalBookingCheckInDate");
+        const outInput = document.getElementById("modalBookingCheckOutDate");
+        if (inInput) inInput.value = defaultDate;
+        if (outInput) outInput.value = getTomorrowIso(defaultDate);
+
         if (select && roomId) {
           select.value = roomId;
         }
         const selectedOpt = select?.selectedOptions[0];
-        if (selectedOpt && amountInput) {
-          amountInput.value = selectedOpt.getAttribute("data-price") || 2000;
-        }
+        const basePrice = selectedOpt ? (parseFloat(selectedOpt.getAttribute("data-price") || "0") || 2000) : 2000;
+
+        if (amountInput) amountInput.value = basePrice;
+        const rateInput = document.getElementById("modalRatePerNight");
+        if (rateInput) rateInput.value = basePrice;
+
         if (guestInput) guestInput.value = "";
         if (notesInput) notesInput.value = "";
         const r = document.getElementById("modalBookingModeOnline");
         if (r) r.checked = true;
+
+        if (staySegment) staySegment.classList.remove("hidden");
+        if (groupNotice) groupNotice.classList.add("hidden");
+        setModalStayMode('single');
+        onModalRangeDateChange();
       }
 
       document.getElementById("roomBookingModal").classList.remove("hidden");
@@ -7168,15 +7613,60 @@ export function getDashboardHtml(): string {
       const bookingId = document.getElementById("modalBookingId")?.value?.trim() || null;
       const property_id = document.getElementById("modalBookingProperty")?.value;
       const room_id = document.getElementById("modalBookingRoomSelect")?.value;
-      const date = document.getElementById("modalBookingDate")?.value;
-      const amount = Math.max(0, parseFloat(document.getElementById("modalBookingAmount")?.value || "0") || 0);
       const isCash = document.getElementById("modalBookingModeCash")?.checked;
       const payment_mode = isCash ? "cash" : "online";
       const guest_name = document.getElementById("modalBookingGuestName")?.value?.trim() || "";
       const notes = document.getElementById("modalBookingNotes")?.value?.trim() || "";
 
-      if (!property_id || !room_id || !date) {
-        return showToast("Room and date are required");
+      if (!property_id || !room_id) {
+        return showToast("Please select a room");
+      }
+
+      let payload = {
+        property_id,
+        room_id,
+        payment_mode,
+        guest_name,
+        notes
+      };
+
+      if (bookingId) {
+        const date = document.getElementById("modalBookingDate")?.value;
+        const amount = Math.max(0, parseFloat(document.getElementById("modalBookingAmount")?.value || "0") || 0);
+        if (!date) return showToast("Booking date is required");
+        payload.date = date;
+        payload.amount = amount;
+        payload.update_entire_group = document.getElementById("modalUpdateEntireGroup")?.checked || false;
+      } else if (modalStayMode === 'range') {
+        const check_in_date = document.getElementById("modalBookingCheckInDate")?.value;
+        const check_out_date = document.getElementById("modalBookingCheckOutDate")?.value;
+        const include_checkout_day = document.getElementById("modalIncludeCheckoutDay")?.checked || false;
+        const rate_per_day = Math.max(0, parseFloat(document.getElementById("modalRatePerNight")?.value || "0") || 0);
+        const amount = Math.max(0, parseFloat(document.getElementById("modalTotalStayAmount")?.value || "0") || 0);
+
+        if (!check_in_date || !check_out_date) {
+          return showToast("Check-in and check-out dates are required");
+        }
+        if (check_in_date > check_out_date) {
+          return showToast("Check-out date must be after check-in date");
+        }
+        if (rate_per_day <= 0 && amount <= 0) {
+          return showToast("Please enter a valid rate or total stay amount");
+        }
+
+        const nights = calculateStayNights(check_in_date, check_out_date, include_checkout_day);
+        payload.is_range = true;
+        payload.check_in_date = check_in_date;
+        payload.check_out_date = check_out_date;
+        payload.include_checkout_day = include_checkout_day;
+        payload.rate_per_day = rate_per_day;
+        payload.amount = amount > 0 ? amount : (rate_per_day * nights);
+      } else {
+        const date = document.getElementById("modalBookingDate")?.value;
+        const amount = Math.max(0, parseFloat(document.getElementById("modalBookingAmount")?.value || "0") || 0);
+        if (!date) return showToast("Booking date is required");
+        payload.date = date;
+        payload.amount = amount;
       }
 
       try {
@@ -7190,15 +7680,7 @@ export function getDashboardHtml(): string {
         const res = await fetch(url, {
           method,
           headers: getAuthHeaders(),
-          body: JSON.stringify({
-            property_id,
-            room_id,
-            date,
-            amount,
-            payment_mode,
-            guest_name,
-            notes
-          })
+          body: JSON.stringify(payload)
         });
 
         if (res.status === 401) return lockApp();
@@ -7208,7 +7690,11 @@ export function getDashboardHtml(): string {
         }
 
         closeRoomBookingModal();
-        showToast("Room booking saved successfully!");
+        if (data.isMultiDay) {
+          showToast(\`Multi-day stay booked! \${data.nights} nights (₹\${formatCurrency(data.total_stay_amount)}) saved.\`);
+        } else {
+          showToast("Room booking saved successfully!");
+        }
         await Promise.all([fetchRoomBookings(), fetchFinances()]);
         renderFinancesView();
       } catch (err) {
@@ -7243,14 +7729,21 @@ export function getDashboardHtml(): string {
         } else {
           list.innerHTML = bookings.map(b => {
             const isOnline = b.payment_mode === "online";
+            const isMultiDay = !!b.group_booking_id;
             return \`
               <div class="p-3 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3 shadow-2xs">
                 <div>
-                  <div class="flex items-center gap-1.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-xs font-bold text-slate-900">Booking Slot #\${b.slot_number || 1}</span>
                     <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
                       \${isOnline ? 'Online' : 'Cash'}
                     </span>
+                    \${isMultiDay ? \`
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-purple-100 text-purple-800 flex items-center gap-1" title="Stay: \${b.check_in_date || ''} to \${b.check_out_date || ''}">
+                        <i data-lucide="layers" class="w-2.5 h-2.5"></i>
+                        <span>Stay: \${b.check_in_date || ''} → \${b.check_out_date || ''}</span>
+                      </span>
+                    \` : ''}
                   </div>
                   <div class="text-[11px] text-slate-500 mt-0.5">
                     Guest: \${escapeHtml(b.guest_name || 'Walk-in')}

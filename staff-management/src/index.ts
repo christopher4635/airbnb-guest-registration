@@ -1200,6 +1200,9 @@ export default {
 
 				const date = url.searchParams.get("date") || "";
 				const month = url.searchParams.get("month") || "";
+				const startDate = url.searchParams.get("start_date") || "";
+				const endDate = url.searchParams.get("end_date") || "";
+				const groupBookingId = url.searchParams.get("group_booking_id") || "";
 
 				let query = `
 					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
@@ -1213,9 +1216,15 @@ export default {
 					query += " AND b.property_id = ?";
 					params.push(propertyId);
 				}
-				if (date) {
+				if (groupBookingId) {
+					query += " AND b.group_booking_id = ?";
+					params.push(groupBookingId);
+				} else if (date) {
 					query += " AND b.date = ?";
 					params.push(date);
+				} else if (startDate && endDate) {
+					query += " AND b.date >= ? AND b.date <= ?";
+					params.push(startDate, endDate);
 				} else if (month) {
 					query += " AND b.date LIKE ? || '%'";
 					params.push(month);
@@ -1227,7 +1236,7 @@ export default {
 				return jsonResponse(results || []);
 			}
 
-			// POST /api/room-bookings (Manager or Admin records a room booking; supports multiple bookings per room/day)
+			// POST /api/room-bookings (Manager or Admin records a room booking; supports single date or multi-day date range)
 			if (path === "/api/room-bookings" && method === "POST") {
 				const body = await request.json() as any;
 				let propertyId = body.property_id?.trim() || "";
@@ -1242,17 +1251,12 @@ export default {
 				}
 
 				const roomId = body.room_id?.trim() || "";
-				const date = body.date?.trim() || "";
-				const amount = Math.max(0, Math.round(Number(body.amount) || 0));
 				const paymentMode = body.payment_mode === "cash" ? "cash" : "online";
 				const guestName = body.guest_name?.trim() || null;
 				const notes = body.notes?.trim() || null;
 
-				if (!propertyId || !roomId || !date) {
-					return jsonResponse({ error: "Property, room, and valid date are required." }, 400);
-				}
-				if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-					return jsonResponse({ error: "Valid date format (YYYY-MM-DD) is required." }, 400);
+				if (!propertyId || !roomId) {
+					return jsonResponse({ error: "Property and room are required." }, 400);
 				}
 
 				// Verify room belongs to property
@@ -1261,32 +1265,117 @@ export default {
 					return jsonResponse({ error: "Invalid room selected for this property." }, 400);
 				}
 
-				// Determine slot number for this room on this date (supports booking 2x, 3x per day)
-				const slotCount = await env.DB.prepare(`
-					SELECT COUNT(*) AS cnt FROM room_bookings WHERE room_id = ? AND date = ?
-				`).bind(roomId, date).first<{ cnt: number }>();
-				const slotNumber = (slotCount?.cnt || 0) + 1;
+				const isRange = body.is_range === true || body.booking_type === "range";
+				const checkInDate = (body.check_in_date || body.start_date || body.date || "").trim();
+				const checkOutDate = (body.check_out_date || body.end_date || body.date || "").trim();
 
-				const id = `bk_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+				if (!checkInDate || !/^\d{4}-\d{2}-\d{2}$/.test(checkInDate)) {
+					return jsonResponse({ error: "Valid check-in date (YYYY-MM-DD) is required." }, 400);
+				}
 
-				await env.DB.prepare(`
-					INSERT INTO room_bookings (
-						id, property_id, room_id, date, amount, payment_mode, guest_name, notes, slot_number, created_by, created_at, updated_at
-					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-				`).bind(id, propertyId, roomId, date, amount, paymentMode, guestName, notes, slotNumber, submittedBy).run();
+				// Build list of dates for the stay
+				const dates: string[] = [];
+				if (isRange && checkOutDate && checkOutDate !== checkInDate) {
+					if (!/^\d{4}-\d{2}-\d{2}$/.test(checkOutDate)) {
+						return jsonResponse({ error: "Valid check-out date (YYYY-MM-DD) is required." }, 400);
+					}
+					if (checkInDate > checkOutDate) {
+						return jsonResponse({ error: "Check-out date must be after check-in date." }, 400);
+					}
 
-				// Automatically sync lodging numbers in daily_finances
-				const totals = await syncDailyFinanceLodging(env, propertyId, date, submittedBy);
+					const includeCheckoutDay = body.include_checkout_day === true;
+					const cur = new Date(checkInDate + "T00:00:00Z");
+					const end = new Date(checkOutDate + "T00:00:00Z");
 
-				const created = await env.DB.prepare(`
-					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
-					FROM room_bookings b
-					JOIN rooms r ON b.room_id = r.id
-					LEFT JOIN properties p ON b.property_id = p.id
-					WHERE b.id = ?
-				`).bind(id).first<RoomBooking>();
+					if (includeCheckoutDay) {
+						while (cur <= end) {
+							dates.push(cur.toISOString().split("T")[0]);
+							cur.setUTCDate(cur.getUTCDate() + 1);
+						}
+					} else {
+						// Standard hotel stay: nights from check-in up to check-out day
+						while (cur < end) {
+							dates.push(cur.toISOString().split("T")[0]);
+							cur.setUTCDate(cur.getUTCDate() + 1);
+						}
+					}
+				}
 
-				return jsonResponse({ success: true, booking: created, lodgingTotals: totals });
+				if (dates.length === 0) {
+					dates.push(checkInDate);
+				}
+
+				if (dates.length > 90) {
+					return jsonResponse({ error: "Stay duration exceeds maximum 90 days." }, 400);
+				}
+
+				// Determine daily amount and total stay amount
+				const rawAmount = Math.max(0, Math.round(Number(body.amount) || 0));
+				const rawRatePerDay = body.rate_per_day !== undefined ? Math.max(0, Math.round(Number(body.rate_per_day) || 0)) : null;
+
+				let totalStayAmount = rawAmount;
+				let dailyRate = rawRatePerDay !== null ? rawRatePerDay : Math.floor(rawAmount / dates.length);
+
+				if (rawRatePerDay !== null && dates.length > 1) {
+					totalStayAmount = rawRatePerDay * dates.length;
+				} else if (rawAmount > 0 && dates.length > 1 && rawRatePerDay === null) {
+					totalStayAmount = rawAmount;
+					dailyRate = Math.floor(rawAmount / dates.length);
+				}
+
+				const isMultiDay = dates.length > 1;
+				const groupBookingId = isMultiDay ? `grp_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}` : null;
+				const actualCheckOut = isMultiDay ? checkOutDate : checkInDate;
+
+				const createdBookings: RoomBooking[] = [];
+
+				for (let i = 0; i < dates.length; i++) {
+					const stayDate = dates[i];
+					const isLastDay = i === dates.length - 1;
+					// For multi-day, ensure sum of daily amounts exactly matches totalStayAmount
+					const dayAmount = isMultiDay ? (isLastDay ? (totalStayAmount - (dailyRate * (dates.length - 1))) : dailyRate) : totalStayAmount;
+
+					// Determine slot number for this room on this date
+					const slotCount = await env.DB.prepare(`
+						SELECT COUNT(*) AS cnt FROM room_bookings WHERE room_id = ? AND date = ?
+					`).bind(roomId, stayDate).first<{ cnt: number }>();
+					const slotNumber = (slotCount?.cnt || 0) + 1;
+
+					const id = `bk_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}_${i + 1}`;
+
+					await env.DB.prepare(`
+						INSERT INTO room_bookings (
+							id, property_id, room_id, date, amount, payment_mode, guest_name, notes, slot_number,
+							group_booking_id, check_in_date, check_out_date, total_stay_amount, created_by, created_at, updated_at
+						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+					`).bind(
+						id, propertyId, roomId, stayDate, dayAmount, paymentMode, guestName, notes, slotNumber,
+						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, submittedBy
+					).run();
+
+					// Sync lodging revenue in daily_finances for each date
+					await syncDailyFinanceLodging(env, propertyId, stayDate, submittedBy);
+
+					const created = await env.DB.prepare(`
+						SELECT b.*, r.room_number, r.room_type, p.name AS property_name
+						FROM room_bookings b
+						JOIN rooms r ON b.room_id = r.id
+						LEFT JOIN properties p ON b.property_id = p.id
+						WHERE b.id = ?
+					`).bind(id).first<RoomBooking>();
+
+					if (created) createdBookings.push(created);
+				}
+
+				return jsonResponse({
+					success: true,
+					isMultiDay,
+					nights: dates.length,
+					group_booking_id: groupBookingId,
+					total_stay_amount: totalStayAmount,
+					booking: createdBookings[0],
+					bookings: createdBookings
+				});
 			}
 
 			// PUT /api/room-bookings/:id (Update a booking)
@@ -1306,15 +1395,30 @@ export default {
 				const paymentMode = body.payment_mode ? (body.payment_mode === "cash" ? "cash" : "online") : existing.payment_mode;
 				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
 				const notes = body.notes !== undefined ? (body.notes?.trim() || null) : existing.notes;
+				const updateGroup = (body.update_entire_group === true || url.searchParams.get("update_group") === "true") && !!existing.group_booking_id;
 
-				await env.DB.prepare(`
-					UPDATE room_bookings
-					SET amount = ?, payment_mode = ?, guest_name = ?, notes = ?, updated_at = datetime('now')
-					WHERE id = ?
-				`).bind(amount, paymentMode, guestName, notes, bookingId).run();
+				if (updateGroup && existing.group_booking_id) {
+					await env.DB.prepare(`
+						UPDATE room_bookings
+						SET payment_mode = ?, guest_name = ?, notes = ?, updated_at = datetime('now')
+						WHERE group_booking_id = ?
+					`).bind(paymentMode, guestName, notes, existing.group_booking_id).run();
 
-				// Re-sync lodging in daily_finances
-				const totals = await syncDailyFinanceLodging(env, existing.property_id, existing.date);
+					// Re-sync lodging across all affected dates
+					const groupBookings = await env.DB.prepare("SELECT DISTINCT property_id, date FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ property_id: string; date: string }>();
+					for (const gb of (groupBookings.results || [])) {
+						await syncDailyFinanceLodging(env, gb.property_id, gb.date);
+					}
+				} else {
+					await env.DB.prepare(`
+						UPDATE room_bookings
+						SET amount = ?, payment_mode = ?, guest_name = ?, notes = ?, updated_at = datetime('now')
+						WHERE id = ?
+					`).bind(amount, paymentMode, guestName, notes, bookingId).run();
+
+					// Re-sync lodging in daily_finances
+					await syncDailyFinanceLodging(env, existing.property_id, existing.date);
+				}
 
 				const updated = await env.DB.prepare(`
 					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
@@ -1324,7 +1428,7 @@ export default {
 					WHERE b.id = ?
 				`).bind(bookingId).first<RoomBooking>();
 
-				return jsonResponse({ success: true, booking: updated, lodgingTotals: totals });
+				return jsonResponse({ success: true, booking: updated });
 			}
 
 			// DELETE /api/room-bookings/:id (Delete a booking)
@@ -1337,6 +1441,18 @@ export default {
 
 				if (auth.role === "manager" && existing.property_id !== auth.manager?.property_id) {
 					return jsonResponse({ error: "Forbidden. Manager can only delete bookings for their assigned property." }, 403);
+				}
+
+				const deleteGroup = (url.searchParams.get("delete_group") === "true" || url.searchParams.get("delete_entire_group") === "true") && !!existing.group_booking_id;
+
+				if (deleteGroup && existing.group_booking_id) {
+					const groupRows = await env.DB.prepare("SELECT property_id, date FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ property_id: string; date: string }>();
+					const list = groupRows.results || [];
+					await env.DB.prepare("DELETE FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).run();
+					for (const row of list) {
+						await syncDailyFinanceLodging(env, row.property_id, row.date);
+					}
+					return jsonResponse({ success: true, deletedGroup: true, countDeleted: list.length });
 				}
 
 				await env.DB.prepare("DELETE FROM room_bookings WHERE id = ?").bind(bookingId).run();

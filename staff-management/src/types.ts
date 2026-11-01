@@ -139,6 +139,10 @@ export interface RoomBooking {
 	guest_name?: string | null;
 	notes?: string | null;
 	slot_number?: number;
+	group_booking_id?: string | null;
+	check_in_date?: string | null;
+	check_out_date?: string | null;
+	total_stay_amount?: number | null;
 	created_by?: string | null;
 	created_at?: string;
 	updated_at?: string;
