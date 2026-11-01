@@ -36,6 +36,11 @@ export function getDashboardHtml(): string {
     }
   </script>
   <style>
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+      width: 100%;
+    }
     /* Custom scrollbars */
     ::-webkit-scrollbar {
       height: 6px;
@@ -219,57 +224,57 @@ export function getDashboardHtml(): string {
   <!-- ========================================================================= -->
   <!-- MAIN APP CONTAINER                                                        -->
   <!-- ========================================================================= -->
-  <div id="appContainer" class="flex-1 flex flex-col min-w-0">
+  <div id="appContainer" class="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
 
     <!-- Top Navigation Bar -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs w-full max-w-full overflow-hidden">
+      <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full min-w-0 max-w-full">
+        <div class="flex items-center justify-between h-14 sm:h-16 gap-1.5 sm:gap-2 w-full min-w-0">
           
           <!-- Logo & Brand -->
-          <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div class="flex items-center gap-1.5 sm:gap-3 shrink min-w-0">
             <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100 shrink-0">
               <i data-lucide="building-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
             </div>
-            <div>
-              <div class="flex items-center gap-1.5 sm:gap-2">
-                <span class="font-bold text-slate-900 text-base sm:text-lg leading-tight tracking-tight">StaffSync</span>
-                <span class="px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full flex items-center gap-1">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1 sm:gap-2">
+                <span class="font-bold text-slate-900 text-sm sm:text-lg leading-tight tracking-tight truncate">StaffSync</span>
+                <span class="hidden sm:inline-flex px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full items-center gap-1 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Cloud D1</span>
                 </span>
               </div>
-              <p class="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate max-w-[130px] sm:max-w-none">Hotel · Homes · Salon · Help</p>
+              <p class="hidden sm:block text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Hotel · Homes · Salon · Help</p>
             </div>
           </div>
 
           <!-- Quick Top Actions & Role Badge -->
-          <div class="flex items-center gap-1.5 sm:gap-2">
+          <div class="flex items-center gap-1 sm:gap-2 shrink-0">
             <!-- Sync Cloud Button -->
-            <button id="btnSyncNow" onclick="syncAllDataNow()" title="Sync and refresh all records from Cloud D1" class="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition shadow-2xs active:scale-95 cursor-pointer">
+            <button id="btnSyncNow" onclick="syncAllDataNow()" title="Sync and refresh all records from Cloud D1" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition shadow-2xs active:scale-95 cursor-pointer">
               <i data-lucide="refresh-cw" id="syncNowIcon" class="w-3.5 h-3.5 text-indigo-600"></i>
-              <span class="hidden sm:inline">Sync Cloud</span>
+              <span class="hidden sm:inline">Sync</span>
             </button>
 
-            <div id="userRoleBadge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+            <div id="userRoleBadge" class="hidden sm:inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
               <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
               <span>Admin Access</span>
             </div>
-            <button id="btnAdminSecurity" onclick="openAdminSecurityModal()" title="Change PIN" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+            <button id="btnAdminSecurity" onclick="openAdminSecurityModal()" title="Change PIN" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
               <i data-lucide="key-round" class="w-3.5 h-3.5 text-slate-600"></i>
-              <span class="hidden md:inline">Change PIN</span>
+              <span>Change PIN</span>
             </button>
-            <button id="btnLeaveRules" onclick="openLeavePolicyModal()" title="Leave Policy" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition">
+            <button id="btnLeaveRules" onclick="openLeavePolicyModal()" title="Leave Policy" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
               <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-600"></i>
-              <span class="hidden md:inline">Leave Rules</span>
+              <span>Leave Rules</span>
             </button>
-            <button id="btnHeaderAddStaff" onclick="openStaffModal()" title="Add Staff" class="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
+            <button id="btnHeaderAddStaff" onclick="openStaffModal()" title="Add Staff" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition cursor-pointer">
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Add Staff</span>
             </button>
-            <button onclick="lockApp()" title="Lock / Switch User" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-600 border border-slate-200 transition">
+            <button onclick="lockApp()" title="Lock / Switch User" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-600 border border-slate-200 transition cursor-pointer">
               <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Switch User</span>
+              <span class="hidden sm:inline">Switch</span>
             </button>
           </div>
 
@@ -277,29 +282,29 @@ export function getDashboardHtml(): string {
       </div>
 
       <!-- Properties & Primary View Tabs (Touch friendly scroll on mobile) -->
-      <div class="bg-slate-50/90 border-t border-slate-200 px-3 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between py-1.5 gap-2">
+      <div class="bg-slate-50/95 border-t border-slate-200 px-2.5 sm:px-6 lg:px-8 w-full max-w-full overflow-hidden">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between py-1.5 gap-1.5 sm:gap-2 w-full min-w-0 max-w-full">
           
           <!-- Properties Selector -->
-          <div id="propertyTabs" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar scrollbar-none py-1 flex-nowrap">
+          <div id="propertyTabs" class="w-full md:w-auto min-w-0 max-w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar scrollbar-none py-0.5 flex-nowrap">
             <!-- Rendered by JS -->
           </div>
           
           <!-- View Switcher Tabs -->
-          <div class="flex items-center bg-slate-200/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar scrollbar-none flex-nowrap">
-            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+          <div class="w-full md:w-auto min-w-0 max-w-full flex items-center bg-slate-200/80 p-0.5 sm:p-1 rounded-xl overflow-x-auto no-scrollbar scrollbar-none flex-nowrap">
+            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
               <span>Daily Roll Call</span>
             </button>
-            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
               <span>Monthly Sheet</span>
             </button>
-            <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
+            <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
               <span>Salary & Payroll</span>
             </button>
-            <button id="viewTabDirectory" onclick="switchView('directory')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
+            <button id="viewTabDirectory" onclick="switchView('directory')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-600"></i>
               <span>Staff & Docs</span>
             </button>
@@ -1451,16 +1456,16 @@ export function getDashboardHtml(): string {
       if (currentUserRole === "manager" && currentManagerInfo) {
         badge.innerHTML = \`
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Manager: \${escapeHtml(currentManagerInfo.name)} (\${escapeHtml(currentManagerInfo.property_name || 'Property')})</span>
+          <span class="sm:hidden">Manager</span>
+          <span class="hidden sm:inline">Manager: \${escapeHtml(currentManagerInfo.name)} (\${escapeHtml(currentManagerInfo.property_name || Property)})</span>
         \`;
-        badge.classList.remove("hidden");
-        badge.classList.add("inline-flex");
+        badge.className = "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0";
 
-        if (btnAdminSecurity) btnAdminSecurity.classList.add("hidden");
-        if (btnLeaveRules) btnLeaveRules.classList.add("hidden");
-        if (btnAddStaff) btnAddStaff.classList.add("hidden");
-        if (tabPayroll) tabPayroll.classList.add("hidden");
-        if (tabDirectory) tabDirectory.classList.add("hidden");
+        if (btnAdminSecurity) btnAdminSecurity.style.display = "none";
+        if (btnLeaveRules) btnLeaveRules.style.display = "none";
+        if (btnAddStaff) btnAddStaff.style.display = "none";
+        if (tabPayroll) tabPayroll.style.display = "none";
+        if (tabDirectory) tabDirectory.style.display = "none";
 
         if (currentView === "payroll" || currentView === "directory") {
           switchView("daily");
@@ -1470,16 +1475,16 @@ export function getDashboardHtml(): string {
       } else {
         badge.innerHTML = \`
           <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
-          <span>Admin Access</span>
+          <span class="sm:hidden">Admin</span>
+          <span class="hidden sm:inline">Admin Access</span>
         \`;
-        badge.classList.remove("hidden");
-        badge.classList.add("inline-flex");
+        badge.className = "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0";
 
-        if (btnAdminSecurity) btnAdminSecurity.classList.remove("hidden");
-        if (btnLeaveRules) btnLeaveRules.classList.remove("hidden");
-        if (btnAddStaff) btnAddStaff.classList.remove("hidden");
-        if (tabPayroll) tabPayroll.classList.remove("hidden");
-        if (tabDirectory) tabDirectory.classList.remove("hidden");
+        if (btnAdminSecurity) btnAdminSecurity.style.display = "";
+        if (btnLeaveRules) btnLeaveRules.style.display = "";
+        if (btnAddStaff) btnAddStaff.style.display = "";
+        if (tabPayroll) tabPayroll.style.display = "";
+        if (tabDirectory) tabDirectory.style.display = "";
       }
       refreshIcons();
     }
