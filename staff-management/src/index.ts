@@ -163,7 +163,7 @@ export default {
 					SELECT s.id, s.name, s.property_id, p.name AS property_name
 					FROM staff s
 					JOIN properties p ON s.property_id = p.id
-					WHERE s.active = 1 AND s.is_manager = 1
+					WHERE s.active = 1 AND s.is_manager = 1 AND (p.active IS NULL OR p.active = 1)
 					ORDER BY s.name ASC
 				`).all<{ id: string; name: string; property_id: string; property_name: string }>();
 
@@ -224,7 +224,7 @@ export default {
 						SELECT s.id, s.name, s.property_id, p.name AS property_name
 						FROM staff s
 						JOIN properties p ON s.property_id = p.id
-						WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ? AND s.id = ?
+						WHERE s.active = 1 AND s.is_manager = 1 AND (p.active IS NULL OR p.active = 1) AND s.manager_pin = ? AND s.id = ?
 					`).bind(pin, selectedStaffId).first<{ id: string; name: string; property_id: string; property_name: string }>();
 				}
 
@@ -233,7 +233,7 @@ export default {
 						SELECT s.id, s.name, s.property_id, p.name AS property_name
 						FROM staff s
 						JOIN properties p ON s.property_id = p.id
-						WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
+						WHERE s.active = 1 AND s.is_manager = 1 AND (p.active IS NULL OR p.active = 1) AND s.manager_pin = ?
 					`).bind(pin).first<{ id: string; name: string; property_id: string; property_name: string }>();
 				}
 
@@ -349,7 +349,7 @@ export default {
 						SELECT s.id, s.name, s.role, s.manager_pin, s.property_id, p.name AS property_name
 						FROM staff s
 						JOIN properties p ON s.property_id = p.id
-						WHERE s.active = 1 AND s.is_manager = 1
+						WHERE s.active = 1 AND s.is_manager = 1 AND (p.active IS NULL OR p.active = 1)
 						ORDER BY s.name ASC
 					`).all();
 
@@ -412,6 +412,11 @@ export default {
 					await env.DB.prepare(
 						"UPDATE properties SET business_type = ? WHERE id = ?"
 					).bind(body.business_type?.trim() || "general", id).run();
+				}
+				if (body.active !== undefined) {
+					await env.DB.prepare(
+						"UPDATE properties SET active = ? WHERE id = ?"
+					).bind(body.active ? 1 : 0, id).run();
 				}
 				if (body.services_label !== undefined) {
 					await env.DB.prepare(

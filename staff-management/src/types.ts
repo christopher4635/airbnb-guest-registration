@@ -8,6 +8,7 @@ export interface Property {
 	id: string;
 	name: string;
 	monthly_leave_allowance: number;
+	active?: number;
 	has_lodging?: number;
 	has_fooding?: number;
 	has_services?: number;

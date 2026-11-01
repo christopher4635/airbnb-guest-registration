@@ -1747,6 +1747,27 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
+        <!-- Operational Status Toggle -->
+        <label class="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-emerald-50/30 transition cursor-pointer">
+          <div>
+            <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <i data-lucide="power" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Business Operational Status</span>
+            </div>
+            <div class="text-[11px] text-slate-500 mt-0.5">Activate or deactivate this business. Inactive businesses are hidden from staff and managers.</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="modalConfigActiveLabel" class="text-xs font-bold text-emerald-700">Active</span>
+            <input
+              type="checkbox"
+              id="modalConfigIsActive"
+              onchange="document.getElementById('modalConfigActiveLabel').innerText = this.checked ? 'Active' : 'Inactive'; document.getElementById('modalConfigActiveLabel').className = this.checked ? 'text-xs font-bold text-emerald-700' : 'text-xs font-bold text-slate-400';"
+              class="w-4 h-4 text-emerald-600 rounded-md focus:ring-emerald-500 cursor-pointer"
+              checked
+            />
+          </div>
+        </label>
+
         <!-- Capability Toggles -->
         <div class="space-y-2.5 pt-1">
           <label class="block text-xs font-semibold text-slate-700 mb-1">Active Offerings / Revenue Modules</label>
@@ -2411,36 +2432,59 @@ export function getDashboardHtml(): string {
         return;
       }
 
-      let html = \`
-        <button onclick="selectProperty('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${activePropertyId === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
-          <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-          <span>All Properties (\${staffList.length})</span>
-        </button>
-      \`;
+      let html = "";
+      const activeProps = properties.filter(p => p.active !== 0);
+      if (activePropertyId !== "all" && !activeProps.some(p => p.id === activePropertyId)) {
+        activePropertyId = "all";
+      }
 
-      properties.forEach(prop => {
+      // 1. Individual active businesses rendered first
+      activeProps.forEach(prop => {
         const isSelected = activePropertyId === prop.id;
         const count = staffList.filter(s => s.property_id === prop.id).length;
         html += \`
-          <button onclick="selectProperty('\${prop.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}">
+          <button onclick="selectProperty('\${prop.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer'}">
             <span>\${escapeHtml(prop.name)}</span>
             <span class="px-1.5 py-0.2 rounded-full text-[10px] \${isSelected ? 'bg-indigo-800 text-white' : 'bg-slate-100 text-slate-600'}">\${count}</span>
           </button>
         \`;
       });
 
+      // 2. "All Properties" MUST be at last in sequence
+      const totalStaffCount = staffList.filter(s => {
+        const p = properties.find(prop => prop.id === s.property_id);
+        return !p || p.active !== 0;
+      }).length;
+
+      html += \`
+        <button onclick="selectProperty('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${activePropertyId === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer'}">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+          <span>All Properties (\${totalStaffCount})</span>
+        </button>
+      \`;
+
       container.innerHTML = html;
       updatePropertyAllowanceBanner();
       refreshIcons();
     }
 
-    function selectProperty(id) {
+    async function selectProperty(id) {
       if (currentUserRole === "manager" && currentManagerInfo) {
         activePropertyId = currentManagerInfo.property_id;
       } else {
         activePropertyId = id;
       }
+      calendarSelectedProperty = (id !== "all") ? id : (properties.find(p => p.active !== 0 && p.has_lodging === 1)?.id || properties[0]?.id || "");
+      financeFilterProperty = id;
+
+      if (id === "elite-homes") {
+        autoSyncEliteHomesCalendar();
+      }
+
       renderPropertyTabs();
+      if (currentView === "finances") {
+        await Promise.all([fetchRoomBookings(), fetchFinances()]);
+      }
       renderActiveView();
     }
 
@@ -4056,12 +4100,13 @@ export function getDashboardHtml(): string {
       const btnDelete = document.getElementById("btnDeleteStaff");
       const propSelect = document.getElementById("staffProperty");
 
-      propSelect.innerHTML = properties.map(p => \`
-        <option value="\${p.id}">\${escapeHtml(p.name)}</option>
+      const staff = staffId ? staffList.find(s => s.id === staffId) : null;
+      const allowedProps = properties.filter(p => p.active !== 0 || (staff && staff.property_id === p.id));
+      propSelect.innerHTML = allowedProps.map(p => \`
+        <option value="\${p.id}">\${escapeHtml(p.name)}\${p.active === 0 ? ' (Inactive)' : ''}</option>
       \`).join("");
 
       if (staffId) {
-        const staff = staffList.find(s => s.id === staffId);
         if (!staff) return;
         title.innerText = "Edit Staff Member";
         document.getElementById("staffId").value = staff.id;
@@ -6028,9 +6073,9 @@ export function getDashboardHtml(): string {
     // SUBTAB 1: ADMIN FINANCIAL DASHBOARD
     // -------------------------------------------------------------------------
     function renderAdminFinancialDashboard(container) {
-      const records = financeFilterProperty === "all"
+      const records = activePropertyId === "all"
         ? financesList
-        : financesList.filter(f => f.property_id === financeFilterProperty);
+        : financesList.filter(f => f.property_id === activePropertyId);
 
       let totalLodgingOnline = 0;
       let totalLodgingCash = 0;
@@ -6061,7 +6106,7 @@ export function getDashboardHtml(): string {
       const netOperatingProfit = grossRevenue - totalExpenses;
       const profitMarginPct = grossRevenue > 0 ? Math.round((netOperatingProfit / grossRevenue) * 100) : 0;
 
-      const selectedProp = financeFilterProperty !== "all" ? properties.find(p => p.id === financeFilterProperty) : null;
+      const selectedProp = activePropertyId !== "all" ? properties.find(p => p.id === activePropertyId) : null;
       const showLodgingCard = !selectedProp || selectedProp.has_lodging === 1;
       const showFoodingCard = !selectedProp || selectedProp.has_fooding === 1;
       const showServicesCard = !selectedProp || selectedProp.has_services === 1;
@@ -6071,22 +6116,13 @@ export function getDashboardHtml(): string {
           <!-- Admin Filter & Action Bar -->
           <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <!-- Property Filter -->
+              <!-- Active Business Indicator (Unified top bar selection) -->
               <div class="flex items-center gap-1.5">
-                <label for="adminFinancePropertySelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
-                <select
-                  id="adminFinancePropertySelect"
-                  onchange="onAdminFinanceFilterChange(this.value)"
-                  class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
-                >
-                  <option value="all" \${financeFilterProperty === 'all' ? 'selected' : ''}>All Businesses (\${properties.length})</option>
-                  \${properties.map(p => {
-                    const ti = getBusinessTypeInfo(p);
-                    return \`
-                      <option value="\${p.id}" \${financeFilterProperty === p.id ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
-                    \`;
-                  }).join("")}
-                </select>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold \${selectedProp ? 'bg-indigo-50 text-indigo-800 border border-indigo-200' : 'bg-slate-100 text-slate-800 border border-slate-200'}">
+                  <i data-lucide="\${selectedProp ? 'building' : 'layout-grid'}" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>\${selectedProp ? escapeHtml(selectedProp.name) : 'All Businesses Combined'}</span>
+                  \${selectedProp ? \`<span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold \${getBusinessTypeInfo(selectedProp).badgeClass}">\${escapeHtml(getBusinessTypeInfo(selectedProp).label)}</span>\` : ''}
+                </span>
               </div>
 
               <!-- Month Selector -->
@@ -6221,8 +6257,8 @@ export function getDashboardHtml(): string {
             </div>
           </div>
 
-          <!-- Business Performance Comparison (when All Businesses selected) -->
-          \${financeFilterProperty === 'all' && properties.length > 0 ? \`
+          <!-- Business Performance Comparison (when All Properties selected) -->
+          \${activePropertyId === 'all' && properties.length > 0 ? \`
             <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
@@ -6230,7 +6266,7 @@ export function getDashboardHtml(): string {
               </h4>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                \${properties.map(p => {
+                \${properties.filter(p => p.active !== 0).map(p => {
                   const propRecords = records.filter(r => r.property_id === p.id);
                   let pSales = 0, pExp = 0;
                   let pLodgingOn = 0, pLodgingCash = 0, pFoodingOn = 0, pFoodingCash = 0, pServicesOn = 0, pServicesCash = 0;
@@ -6504,105 +6540,259 @@ export function getDashboardHtml(): string {
     // SUBTAB 2: ADMIN ROOM BOOKINGS CALENDAR (MATRIX & MONTHLY VIEWS)
     // -------------------------------------------------------------------------
     function renderAdminRoomCalendarView(container) {
-      if (!calendarSelectedProperty && properties.length > 0) {
-        // Prefer a property that has lodging
-        const lodgingProp = properties.find(p => p.has_lodging === 1);
-        calendarSelectedProperty = lodgingProp ? lodgingProp.id : properties[0].id;
-      }
-      const prop = properties.find(p => p.id === calendarSelectedProperty) || properties[0];
-      const propId = prop ? prop.id : "";
-      const propName = prop ? prop.name : "Selected Property";
-      const hasLodging = prop ? (prop.has_lodging === 1) : false;
-
-      // If selected property has NO lodging, display a clean notice with a link to Business Offerings
-      if (!hasLodging) {
-        container.innerHTML = \`
-          <div class="space-y-4">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between flex-wrap gap-2">
-              <div class="flex items-center gap-2">
-                <label for="adminCalPropSelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
-                <select
-                  id="adminCalPropSelect"
-                  onchange="setCalendarProperty(this.value)"
-                  class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
-                >
-                  \${properties.map(p => {
-                    const ti = getBusinessTypeInfo(p);
-                    return \`
-                      <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
-                    \`;
-                  }).join("")}
-                </select>
-              </div>
-            </div>
-
-            <div class="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-xl mx-auto">
-              <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-                <i data-lucide="hotel" class="w-7 h-7"></i>
-              </div>
-              <h4 class="text-base font-bold text-slate-900">\${escapeHtml(propName)} has no Lodging / Rooms</h4>
-              <p class="text-xs text-slate-500 mt-1 max-w-md">
-                This business is currently configured as <strong>\${escapeHtml(getBusinessTypeInfo(prop).label)}</strong>. Room bookings and calendar are disabled.
-              </p>
-              <div class="flex items-center gap-3 mt-5">
-                <button
-                  type="button"
-                  onclick="openBusinessConfigModal('\${propId}')"
-                  class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
-                >
-                  <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
-                  <span>Enable Lodging for this Business</span>
-                </button>
-                <button
-                  type="button"
-                  onclick="setAdminFinanceSubTab('business')"
-                  class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
-                >
-                  View Business Offerings
-                </button>
-              </div>
-            </div>
-          </div>
-        \`;
-        return;
-      }
-
-      // Rooms for this property
-      const propRooms = roomsList.filter(r => r.property_id === propId);
+      const isAll = (activePropertyId === "all");
+      const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
 
       // Month info
       const mStr = String(financeMonth + 1).padStart(2, "0");
       const currentMonthPrefix = \`\${financeYear}-\${mStr}\`;
       const daysInMonth = new Date(financeYear, financeMonth + 1, 0).getDate();
 
-      // Filter bookings for this property & month
-      const monthBookings = roomBookingsList.filter(b => b.property_id === propId && b.date && b.date.startsWith(currentMonthPrefix));
+      // Case 1: Specific Business Selected in Top Bar
+      if (!isAll) {
+        const prop = properties.find(p => p.id === activePropertyId);
+        const propId = prop ? prop.id : "";
+        const propName = prop ? prop.name : "Selected Business";
+        const hasLodging = prop ? (prop.has_lodging === 1) : false;
 
-      const totalBookingsCount = monthBookings.length;
-      const monthLodgingOnline = monthBookings.filter(b => b.payment_mode === "online").reduce((s, b) => s + (b.amount || 0), 0);
-      const monthLodgingCash = monthBookings.filter(b => b.payment_mode === "cash").reduce((s, b) => s + (b.amount || 0), 0);
+        // If selected property has NO lodging, display a clean notice with a link to Business Offerings
+        if (!hasLodging) {
+          container.innerHTML = \`
+            <div class="space-y-4">
+              <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    <i data-lucide="building" class="w-3.5 h-3.5 text-amber-600"></i>
+                    <span>\${escapeHtml(propName)}</span>
+                    <span class="text-[10px] opacity-75">(\${escapeHtml(getBusinessTypeInfo(prop).label)})</span>
+                  </span>
+                </div>
+                <div class="text-xs text-slate-400">
+                  Switch business using the top navigation bar
+                </div>
+              </div>
+
+              <div class="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-xl mx-auto">
+                <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                  <i data-lucide="hotel" class="w-7 h-7"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-900">\${escapeHtml(propName)} has no Lodging / Rooms</h4>
+                <p class="text-xs text-slate-500 mt-1 max-w-md">
+                  This business is currently configured as <strong>\${escapeHtml(getBusinessTypeInfo(prop).label)}</strong>. Room bookings and calendar are disabled.
+                </p>
+                <div class="flex items-center gap-3 mt-5">
+                  <button
+                    type="button"
+                    onclick="openBusinessConfigModal('\${propId}')"
+                    class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                    <span>Enable Lodging for this Business</span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="setAdminFinanceSubTab('business')"
+                    class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+                  >
+                    View Business Offerings
+                  </button>
+                </div>
+              </div>
+            </div>
+          \`;
+          return;
+        }
+
+        // Rooms for this property
+        const propRooms = roomsList.filter(r => r.property_id === propId);
+
+        // Filter bookings for this property & month
+        const monthBookings = roomBookingsList.filter(b => b.property_id === propId && b.date && b.date.startsWith(currentMonthPrefix));
+
+        const totalBookingsCount = monthBookings.length;
+        const monthLodgingOnline = monthBookings.filter(b => b.payment_mode === "online").reduce((s, b) => s + (b.amount || 0), 0);
+        const monthLodgingCash = monthBookings.filter(b => b.payment_mode === "cash").reduce((s, b) => s + (b.amount || 0), 0);
+        const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
+
+        container.innerHTML = \`
+          <div class="space-y-4">
+            <!-- Calendar Controls Bar -->
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <!-- Business Indicator (Single source of truth: top bar) -->
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    <span>\${escapeHtml(propName)}</span>
+                  </span>
+                </div>
+
+                <!-- Month Navigation -->
+                <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
+                  <button onclick="changeCalendarMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <span class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
+                    \${MONTH_NAMES[financeMonth]} \${financeYear}
+                  </span>
+                  <button onclick="changeCalendarMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+
+                <button onclick="goToCalendarCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                  Today
+                </button>
+              </div>
+
+              <!-- View Switcher & Actions -->
+              <div class="flex items-center gap-2 self-start md:self-auto flex-wrap">
+                <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                  <button
+                    type="button"
+                    onclick="setCalendarViewMode('matrix')"
+                    class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'matrix' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+                  >
+                    <i data-lucide="grid" class="w-3.5 h-3.5"></i>
+                    <span>Matrix (Rooms × Days)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="setCalendarViewMode('calendar')"
+                    class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'calendar' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+                  >
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span>Monthly Grid</span>
+                  </button>
+                </div>
+
+                \${propId === 'elite-homes' ? \`
+                  <button
+                    type="button"
+                    onclick="syncAirbnbCalendar()"
+                    title="Synchronize confirmed bookings from Airbnb Host Portal"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-xs transition cursor-pointer"
+                  >
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 airbnb-sync-icon"></i>
+                    <span class="airbnb-sync-text">Sync Airbnb Portal</span>
+                  </button>
+                \` : ''}
+
+                <button
+                  type="button"
+                  onclick="openRoomBookingModal(null, null, null)"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
+                >
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>+ Book Room</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Calendar Summary Stats Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Configured Rooms</span>
+                <span class="text-base sm:text-lg font-black text-slate-900">\${propRooms.length} Rooms</span>
+              </div>
+              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month Bookings</span>
+                <span class="text-base sm:text-lg font-black text-indigo-600">\${totalBookingsCount} Bookings</span>
+              </div>
+              <div class="bg-white p-3 rounded-2xl border border-indigo-100 shadow-2xs">
+                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Lodging Total</span>
+                <span class="text-base sm:text-lg font-black font-mono text-indigo-950">₹\${formatCurrency(monthLodgingTotal)}</span>
+              </div>
+              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs text-[11px] text-slate-600 flex flex-col justify-center">
+                <div>Online: <strong class="text-indigo-700 font-mono">₹\${formatCurrency(monthLodgingOnline)}</strong></div>
+                <div>Cash: <strong class="text-amber-700 font-mono">₹\${formatCurrency(monthLodgingCash)}</strong></div>
+              </div>
+            </div>
+
+            <!-- Legend Bar -->
+            <div class="flex items-center gap-4 text-[11px] text-slate-600 flex-wrap px-2">
+              <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Legend:</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
+              \${propId === 'elite-homes' ? \`
+                <span class="ml-auto text-[11px] text-rose-700 font-semibold flex items-center gap-1">
+                  <i data-lucide="cloud-sync" class="w-3.5 h-3.5 text-rose-600"></i>
+                  <span>Connected: Airbnb Host Portal</span>
+                </span>
+              \` : ''}
+            </div>
+
+            <!-- RENDER MATRIX OR MONTHLY VIEW -->
+            \${propRooms.length === 0 ? \`
+              <div class="bg-white p-8 rounded-3xl border border-slate-200 text-center flex flex-col items-center justify-center">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                  <i data-lucide="door-closed" class="w-6 h-6"></i>
+                </div>
+                <h5 class="text-sm font-bold text-slate-900">No Rooms Found for \${escapeHtml(propName)}</h5>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm">Add rooms (e.g. 101, 102, 103, 104) to enable the room booking calendar.</p>
+                <button
+                  type="button"
+                  onclick="setAdminFinanceSubTab('rooms')"
+                  class="mt-4 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer"
+                >
+                  Configure Rooms Now
+                </button>
+              </div>
+            \` : (calendarViewMode === 'matrix' ? renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) : renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings))}
+          </div>
+        \`;
+        return;
+      }
+
+      // Case 2: activePropertyId === 'all'
+      if (activeLodgingProps.length === 0) {
+        container.innerHTML = \`
+          <div class="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-xl mx-auto">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3">
+              <i data-lucide="hotel" class="w-7 h-7"></i>
+            </div>
+            <h4 class="text-base font-bold text-slate-900">No Lodging Businesses Active</h4>
+            <p class="text-xs text-slate-500 mt-1 max-w-md">
+              None of your active businesses currently have Lodging enabled. Go to Business Offerings to enable Lodging.
+            </p>
+            <button
+              type="button"
+              onclick="setAdminFinanceSubTab('business')"
+              class="mt-5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
+            >
+              Configure Business Offerings
+            </button>
+          </div>
+        \`;
+        return;
+      }
+
+      const allLodgingRooms = roomsList.filter(r => activeLodgingProps.some(lp => lp.id === r.property_id));
+      const allMonthBookings = roomBookingsList.filter(b => activeLodgingProps.some(lp => lp.id === b.property_id) && b.date && b.date.startsWith(currentMonthPrefix));
+
+      const totalBookingsCount = allMonthBookings.length;
+      const monthLodgingOnline = allMonthBookings.filter(b => b.payment_mode === "online").reduce((s, b) => s + (b.amount || 0), 0);
+      const monthLodgingCash = allMonthBookings.filter(b => b.payment_mode === "cash").reduce((s, b) => s + (b.amount || 0), 0);
       const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
+      const hasEliteHomes = activeLodgingProps.some(p => p.id === "elite-homes");
 
       container.innerHTML = \`
         <div class="space-y-4">
           <!-- Calendar Controls Bar -->
           <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <!-- Property Selector -->
+              <!-- Business Indicator: All Properties -->
               <div class="flex items-center gap-1.5">
-                <label for="adminCalPropSelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
-                <select
-                  id="adminCalPropSelect"
-                  onchange="setCalendarProperty(this.value)"
-                  class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
-                >
-                  \${properties.map(p => {
-                    const ti = getBusinessTypeInfo(p);
-                    return \`
-                      <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
-                    \`;
-                  }).join("")}
-                </select>
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scope:</span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>All Properties (\${activeLodgingProps.map(p => escapeHtml(p.name)).join(', ')})</span>
+                </span>
               </div>
 
               <!-- Month Navigation -->
@@ -6644,7 +6834,7 @@ export function getDashboardHtml(): string {
                 </button>
               </div>
 
-              \${propId === 'elite-homes' ? \`
+              \${hasEliteHomes ? \`
                 <button
                   type="button"
                   onclick="syncAirbnbCalendar()"
@@ -6670,8 +6860,8 @@ export function getDashboardHtml(): string {
           <!-- Calendar Summary Stats Bar -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Configured Rooms</span>
-              <span class="text-base sm:text-lg font-black text-slate-900">\${propRooms.length} Rooms</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Rooms</span>
+              <span class="text-base sm:text-lg font-black text-slate-900">\${allLodgingRooms.length} Rooms</span>
             </div>
             <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month Bookings</span>
@@ -6695,7 +6885,7 @@ export function getDashboardHtml(): string {
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
-            \${propId === 'elite-homes' ? \`
+            \${hasEliteHomes ? \`
               <span class="ml-auto text-[11px] text-rose-700 font-semibold flex items-center gap-1">
                 <i data-lucide="cloud-sync" class="w-3.5 h-3.5 text-rose-600"></i>
                 <span>Connected: Airbnb Host Portal</span>
@@ -6704,13 +6894,13 @@ export function getDashboardHtml(): string {
           </div>
 
           <!-- RENDER MATRIX OR MONTHLY VIEW -->
-          \${propRooms.length === 0 ? \`
+          \${allLodgingRooms.length === 0 ? \`
             <div class="bg-white p-8 rounded-3xl border border-slate-200 text-center flex flex-col items-center justify-center">
               <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
                 <i data-lucide="door-closed" class="w-6 h-6"></i>
               </div>
-              <h5 class="text-sm font-bold text-slate-900">No Rooms Found for \${escapeHtml(propName)}</h5>
-              <p class="text-xs text-slate-500 mt-1 max-w-sm">Add rooms (e.g. 101, 102, 103, 104) to enable the room booking calendar.</p>
+              <h5 class="text-sm font-bold text-slate-900">No Rooms Added Yet</h5>
+              <p class="text-xs text-slate-500 mt-1 max-w-sm">No rooms found across your lodging businesses.</p>
               <button
                 type="button"
                 onclick="setAdminFinanceSubTab('rooms')"
@@ -6719,7 +6909,7 @@ export function getDashboardHtml(): string {
                 Configure Rooms Now
               </button>
             </div>
-          \` : (calendarViewMode === 'matrix' ? renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) : renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings))}
+          \` : (calendarViewMode === 'matrix' ? renderAdminMatrixGrid(allLodgingRooms, daysInMonth, currentMonthPrefix, allMonthBookings) : renderAdminMonthlyGrid(allLodgingRooms, daysInMonth, currentMonthPrefix, allMonthBookings))}
         </div>
       \`;
     }
@@ -6760,7 +6950,9 @@ export function getDashboardHtml(): string {
                           <i data-lucide="door-closed" class="w-3.5 h-3.5 text-indigo-600"></i>
                           <span>Room \${escapeHtml(rm.room_number)}</span>
                         </div>
-                        <div class="text-[10px] text-slate-400 font-normal">\${escapeHtml(rm.room_type || 'Standard')} · ₹\${formatCurrency(rm.base_price || 0)}</div>
+                        <div class="text-[10px] text-slate-400 font-normal">
+                          \${activePropertyId === 'all' ? \`<span class="font-bold text-indigo-600 mr-1">\${escapeHtml(properties.find(p => p.id === rm.property_id)?.name || '')} ·</span>\` : ''}\${escapeHtml(rm.room_type || 'Standard')} · ₹\${formatCurrency(rm.base_price || 0)}
+                        </div>
                       </td>
 
                       \${days.map(d => {
@@ -6941,41 +7133,69 @@ export function getDashboardHtml(): string {
     // SUBTAB 3: ADMIN ROOM MANAGEMENT (ADD, BULK ADD, EDIT, DELETE ROOMS)
     // -------------------------------------------------------------------------
     function renderAdminRoomsManagement(container) {
-      if (!calendarSelectedProperty && properties.length > 0) {
-        const lodgingProp = properties.find(p => p.has_lodging === 1);
-        calendarSelectedProperty = lodgingProp ? lodgingProp.id : properties[0].id;
-      }
-      const propId = calendarSelectedProperty || (properties[0] ? properties[0].id : "");
-      const prop = properties.find(p => p.id === propId) || properties[0];
-      const hasLodging = prop ? (prop.has_lodging === 1) : false;
-      const propRooms = roomsList.filter(r => r.property_id === propId);
+      const isAll = (activePropertyId === "all");
+      const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
 
-      container.innerHTML = \`
-        <div class="space-y-4">
-          <!-- Property Filter Bar -->
-          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-              <label for="adminManageRoomsProp" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
-              <select
-                id="adminManageRoomsProp"
-                onchange="calendarSelectedProperty = this.value; renderFinancesView();"
-                class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
-              >
-                \${properties.map(p => {
-                  const ti = getBusinessTypeInfo(p);
-                  return \`
-                    <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
-                  \`;
-                }).join("")}
-              </select>
-              \${hasLodging ? \`
+      // Case 1: Specific Business Selected in Top Bar
+      if (!isAll) {
+        const prop = properties.find(p => p.id === activePropertyId);
+        const propId = prop ? prop.id : "";
+        const propName = prop ? prop.name : "Selected Business";
+        const hasLodging = prop ? (prop.has_lodging === 1) : false;
+        const propRooms = roomsList.filter(r => r.property_id === propId);
+
+        if (!hasLodging) {
+          container.innerHTML = \`
+            <div class="space-y-4">
+              <!-- Business Indicator Bar -->
+              <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</span>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    <i data-lucide="building" class="w-3.5 h-3.5 text-amber-600"></i>
+                    <span>\${escapeHtml(propName)}</span>
+                    <span class="text-[10px] opacity-75">(\${escapeHtml(getBusinessTypeInfo(prop).label)})</span>
+                  </span>
+                </div>
+                <div class="text-xs text-slate-400">
+                  Switch business using the top navigation bar
+                </div>
+              </div>
+
+              <div class="bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-lg mx-auto">
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3">
+                  <i data-lucide="door-closed" class="w-6 h-6"></i>
+                </div>
+                <h5 class="text-sm font-bold text-slate-900">\${escapeHtml(propName)} has no Lodging / Rooms</h5>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm">This business is configured as <strong>\${escapeHtml(getBusinessTypeInfo(prop).label)}</strong>. Room management is not active for this business.</p>
+                <button
+                  type="button"
+                  onclick="openBusinessConfigModal('\${propId}')"
+                  class="mt-4 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer"
+                >
+                  Configure Offerings
+                </button>
+              </div>
+            </div>
+          \`;
+          return;
+        }
+
+        container.innerHTML = \`
+          <div class="space-y-4">
+            <!-- Property Header Bar (Controlled by Top Bar) -->
+            <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>\${escapeHtml(propName)}</span>
+                </span>
                 <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
                   \${propRooms.length} Rooms
                 </span>
-              \` : ''}
-            </div>
+              </div>
 
-            \${hasLodging ? \`
               <button
                 type="button"
                 onclick="openManageRoomModal(null)"
@@ -6984,34 +7204,8 @@ export function getDashboardHtml(): string {
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 <span>+ Add Single Room</span>
               </button>
-            \` : \`
-              <button
-                type="button"
-                onclick="openBusinessConfigModal('\${propId}')"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition cursor-pointer self-start sm:self-auto"
-              >
-                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
-                <span>Enable Lodging</span>
-              </button>
-            \`}
-          </div>
-
-          \${!hasLodging ? \`
-            <div class="bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-lg mx-auto">
-              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3">
-                <i data-lucide="door-closed" class="w-6 h-6"></i>
-              </div>
-              <h5 class="text-sm font-bold text-slate-900">\${escapeHtml(prop ? prop.name : 'Business')} has no Lodging / Rooms</h5>
-              <p class="text-xs text-slate-500 mt-1 max-w-sm">This business is configured as <strong>\${escapeHtml(getBusinessTypeInfo(prop).label)}</strong>. Room management is not active for this business.</p>
-              <button
-                type="button"
-                onclick="openBusinessConfigModal('\${propId}')"
-                class="mt-4 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer"
-              >
-                Configure Offerings
-              </button>
             </div>
-          \` : \`
+
             <!-- Quick Bulk Add Rooms Card -->
             <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 sm:p-5 rounded-3xl border border-indigo-100 space-y-3">
               <div class="flex items-center justify-between flex-wrap gap-2">
@@ -7021,7 +7215,7 @@ export function getDashboardHtml(): string {
                   </div>
                   <div>
                     <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Quick Bulk Add Rooms</h4>
-                    <p class="text-[11px] text-indigo-700/80">Add multiple rooms in one go (e.g. 101, 102, 103, 104)</p>
+                    <p class="text-[11px] text-indigo-700/80">Add multiple rooms in one go to \${escapeHtml(propName)} (e.g. 101, 102, 103, 104)</p>
                   </div>
                 </div>
               </div>
@@ -7067,7 +7261,7 @@ export function getDashboardHtml(): string {
                   class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                  <span>Bulk Add Rooms to \${escapeHtml(prop ? prop.name : 'Property')}</span>
+                  <span>Bulk Add Rooms to \${escapeHtml(propName)}</span>
                 </button>
               </div>
             </div>
@@ -7077,14 +7271,14 @@ export function getDashboardHtml(): string {
               <div class="p-4 border-b border-slate-100 flex items-center justify-between">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                   <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
-                  Configured Rooms for \${escapeHtml(prop ? prop.name : 'Property')}
+                  Configured Rooms for \${escapeHtml(propName)}
                 </h4>
                 <span class="text-xs font-semibold text-slate-500">\${propRooms.length} Active</span>
               </div>
 
               \${propRooms.length === 0 ? \`
                 <div class="p-8 text-center text-xs text-slate-400">
-                  No rooms added for this business yet. Use the Quick Bulk Add form above to add rooms (101, 102, 103, 104).
+                  No rooms added for \${escapeHtml(propName)} yet. Use the Quick Bulk Add form above to add rooms (101, 102, 103, 104).
                 </div>
               \` : \`
                 <div class="overflow-x-auto">
@@ -7144,7 +7338,192 @@ export function getDashboardHtml(): string {
                 </div>
               \`}
             </div>
-          \`}
+          </div>
+        \`;
+        return;
+      }
+
+      // Case 2: activePropertyId === 'all'
+      const allLodgingRooms = roomsList.filter(r => activeLodgingProps.some(lp => lp.id === r.property_id));
+
+      container.innerHTML = \`
+        <div class="space-y-4">
+          <!-- Property Header Bar (Scope: All Properties) -->
+          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scope:</span>
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>All Lodging Businesses</span>
+              </span>
+              <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
+                \${allLodgingRooms.length} Rooms Total
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onclick="openManageRoomModal(null)"
+              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>+ Add Single Room</span>
+            </button>
+          </div>
+
+          <!-- Quick Bulk Add Rooms Card (with property selection in all mode) -->
+          <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 sm:p-5 rounded-3xl border border-indigo-100 space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                  <i data-lucide="layers" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Quick Bulk Add Rooms</h4>
+                  <p class="text-[11px] text-indigo-700/80">Add multiple rooms in one go to any active lodging business</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
+              <div class="sm:col-span-1">
+                <label class="block text-xs font-semibold text-indigo-950 mb-1">Target Business *</label>
+                <select
+                  id="adminBulkRoomProperty"
+                  class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                >
+                  \${activeLodgingProps.map(p => \`
+                    <option value="\${p.id}">\${escapeHtml(p.name)}</option>
+                  \`).join("")}
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Numbers (Comma Separated) *</label>
+                <input
+                  type="text"
+                  id="adminBulkRoomNumbers"
+                  placeholder="101, 102, 103, 104, 201, 202"
+                  class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Type</label>
+                <input
+                  type="text"
+                  id="adminBulkRoomType"
+                  value="Standard"
+                  placeholder="Standard, Deluxe"
+                  class="w-full px-3 py-2 text-xs rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-indigo-950 mb-1">Base Price ₹</label>
+                <input
+                  type="number"
+                  id="adminBulkBasePrice"
+                  value="2000"
+                  step="1"
+                  min="0"
+                  placeholder="2000"
+                  class="w-full px-3 py-2 text-xs font-bold font-mono rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+            </div>
+
+            <div class="flex justify-end pt-1">
+              <button
+                type="button"
+                onclick="bulkAddAdminRooms()"
+                class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>Bulk Add Rooms</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Rooms List Table -->
+          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+                Configured Rooms across All Lodging Businesses
+              </h4>
+              <span class="text-xs font-semibold text-slate-500">\${allLodgingRooms.length} Active</span>
+            </div>
+
+            \${allLodgingRooms.length === 0 ? \`
+              <div class="p-8 text-center text-xs text-slate-400">
+                No rooms added yet. Use the Quick Bulk Add form above to add rooms (101, 102, 103, 104).
+              </div>
+            \` : \`
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th class="py-3 px-4">Business</th>
+                      <th class="py-3 px-4">Room Number</th>
+                      <th class="py-3 px-4">Type</th>
+                      <th class="py-3 px-4">Base Price</th>
+                      <th class="py-3 px-4">Status</th>
+                      <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    \${allLodgingRooms.map(rm => {
+                      const rProp = properties.find(p => p.id === rm.property_id);
+                      return \`
+                        <tr class="hover:bg-slate-50/80 transition">
+                          <td class="py-3 px-4 font-bold text-indigo-950 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-800">
+                              <i data-lucide="building" class="w-3 h-3 text-indigo-600"></i>
+                              <span>\${escapeHtml(rProp ? rProp.name : rm.property_id)}</span>
+                            </span>
+                          </td>
+                          <td class="py-3 px-4 font-black text-slate-900 text-sm whitespace-nowrap">
+                            Room \${escapeHtml(rm.room_number)}
+                          </td>
+                          <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+                              \${escapeHtml(rm.room_type || 'Standard')}
+                            </span>
+                          </td>
+                          <td class="py-3 px-4 font-mono font-bold text-indigo-900 whitespace-nowrap">
+                            ₹\${formatCurrency(rm.base_price || 0)}
+                          </td>
+                          <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              Active
+                            </span>
+                          </td>
+                          <td class="py-3 px-4 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onclick="openManageRoomModal('\${rm.id}')"
+                                title="Edit Room"
+                                class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
+                              >
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                              </button>
+                              <button
+                                type="button"
+                                onclick="deleteAdminRoom('\${rm.id}')"
+                                title="Delete Room"
+                                class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              >
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      \`;
+                    }).join("")}
+                  </tbody>
+                </table>
+              </div>
+            \`}
+          </div>
         </div>
       \`;
     }
@@ -7163,11 +7542,11 @@ export function getDashboardHtml(): string {
                 Business Offerings & Modules Configuration
               </h3>
               <p class="text-xs text-slate-500 mt-0.5">
-                Admin decides whether each business has Lodging (rooms), Fooding (restaurant/dining), or Services (salon, domestic, spa).
+                Admin can configure revenue modules (Lodging, Fooding, Services) and activate or deactivate businesses anytime.
               </p>
             </div>
             <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto">
-              \${properties.length} Configured Businesses
+              \${properties.length} Total Businesses (\${properties.filter(p => p.active !== 0).length} Active)
             </span>
           </div>
 
@@ -7177,27 +7556,64 @@ export function getDashboardHtml(): string {
               const hasL = p.has_lodging === 1;
               const hasF = p.has_fooding === 1;
               const hasS = p.has_services === 1;
+              const isActive = (p.active !== 0);
               const ti = getBusinessTypeInfo(p);
 
               return \`
-                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between gap-4 hover:shadow-md transition">
+                <div class="bg-white p-5 rounded-3xl border \${isActive ? 'border-slate-200' : 'border-slate-300/80 bg-slate-50/60 opacity-90'} shadow-xs flex flex-col justify-between gap-4 hover:shadow-md transition">
                   <div class="space-y-3">
-                    <!-- Title and Type -->
-                    <div class="flex items-center justify-between">
+                    <!-- Title and Status/Type -->
+                    <div class="flex items-start justify-between gap-2">
                       <div>
-                        <h4 class="text-sm font-black text-slate-900">\${escapeHtml(p.name)}</h4>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1 \${ti.badgeClass}">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h4 class="text-sm font-black text-slate-900">\${escapeHtml(p.name)}</h4>
+                          \${isActive ? \`
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                            </span>
+                          \` : \`
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300">
+                              <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Inactive
+                            </span>
+                          \`}
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1.5 \${ti.badgeClass}">
                           \${escapeHtml(ti.label)}
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onclick="openBusinessConfigModal('\${p.id}')"
-                        class="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-indigo-200"
-                      >
-                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                        <span>Configure</span>
-                      </button>
+
+                      <!-- Operational Toggle & Configure Buttons -->
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        \${isActive ? \`
+                          <button
+                            type="button"
+                            onclick="togglePropertyActive('\${p.id}', 0)"
+                            class="px-2.5 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition cursor-pointer flex items-center gap-1"
+                            title="Deactivate this business"
+                          >
+                            <i data-lucide="power" class="w-3.5 h-3.5 text-rose-600"></i>
+                            <span>Deactivate</span>
+                          </button>
+                        \` : \`
+                          <button
+                            type="button"
+                            onclick="togglePropertyActive('\${p.id}', 1)"
+                            class="px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition cursor-pointer flex items-center gap-1"
+                            title="Activate this business"
+                          >
+                            <i data-lucide="power" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <span>Activate</span>
+                          </button>
+                        \`}
+                        <button
+                          type="button"
+                          onclick="openBusinessConfigModal('\${p.id}')"
+                          class="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-indigo-200"
+                        >
+                          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                          <span>Configure</span>
+                        </button>
+                      </div>
                     </div>
 
                     <!-- Active Capability Status Badges -->
@@ -7263,6 +7679,8 @@ export function getDashboardHtml(): string {
       const idInput = document.getElementById("modalConfigPropId");
       const title = document.getElementById("businessConfigModalTitle");
       const subtitle = document.getElementById("businessConfigModalSubtitle");
+      const chkActive = document.getElementById("modalConfigIsActive");
+      const lblActive = document.getElementById("modalConfigActiveLabel");
       const chkL = document.getElementById("modalConfigHasLodging");
       const chkF = document.getElementById("modalConfigHasFooding");
       const chkS = document.getElementById("modalConfigHasServices");
@@ -7271,7 +7689,14 @@ export function getDashboardHtml(): string {
 
       if (idInput) idInput.value = prop.id;
       if (title) title.innerText = \`Configure: \${prop.name}\`;
-      if (subtitle) subtitle.innerText = \`Select active revenue modules and business type\`;
+      if (subtitle) subtitle.innerText = \`Select active revenue modules and operational status\`;
+
+      const isActive = (prop.active !== 0);
+      if (chkActive) chkActive.checked = isActive;
+      if (lblActive) {
+        lblActive.innerText = isActive ? "Active" : "Inactive";
+        lblActive.className = isActive ? "text-xs font-bold text-emerald-700" : "text-xs font-bold text-slate-400";
+      }
 
       if (chkL) chkL.checked = (prop.has_lodging === 1);
       if (chkF) chkF.checked = (prop.has_fooding === 1);
@@ -7344,6 +7769,7 @@ export function getDashboardHtml(): string {
       const propId = document.getElementById("modalConfigPropId")?.value;
       if (!propId) return;
 
+      const isActive = document.getElementById("modalConfigIsActive")?.checked ? 1 : 0;
       const hasLodging = document.getElementById("modalConfigHasLodging")?.checked ? 1 : 0;
       const hasFooding = document.getElementById("modalConfigHasFooding")?.checked ? 1 : 0;
       const hasServices = document.getElementById("modalConfigHasServices")?.checked ? 1 : 0;
@@ -7360,6 +7786,7 @@ export function getDashboardHtml(): string {
           method: "PUT",
           headers: getAuthHeaders(),
           body: JSON.stringify({
+            active: isActive,
             has_lodging: hasLodging,
             has_fooding: hasFooding,
             has_services: hasServices,
@@ -7374,23 +7801,63 @@ export function getDashboardHtml(): string {
           return showToast(data.error || "Failed to save business settings");
         }
 
+        if (isActive === 0 && activePropertyId === propId) {
+          activePropertyId = "all";
+        }
+
         closeBusinessConfigModal();
-        showToast("Business offerings updated successfully!");
-        await Promise.all([fetchProperties(), fetchFinances()]);
+        showToast("Business settings updated successfully!");
+        await Promise.all([fetchProperties(), fetchRooms(), fetchRoomBookings(), fetchFinances()]);
+        renderPropertyTabs();
         renderFinancesView();
       } catch (err) {
         showToast("Error updating business: " + err.message);
       }
     }
 
+    async function togglePropertyActive(propId, targetActive) {
+      const prop = properties.find(p => p.id === propId);
+      const actionName = targetActive === 1 ? "activate" : "deactivate";
+      if (!confirm(\`Are you sure you want to \${actionName} "\${prop ? prop.name : propId}"?\`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(\`/api/properties/\${propId}\`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ active: targetActive })
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || \`Failed to \${actionName} business\`);
+        }
+
+        showToast(\`Business "\${prop ? prop.name : propId}" \${targetActive === 1 ? 'activated' : 'deactivated'} successfully!\`);
+        if (activePropertyId === propId && targetActive === 0) {
+          activePropertyId = "all";
+        }
+        await Promise.all([fetchProperties(), fetchRooms(), fetchRoomBookings(), fetchFinances()]);
+        renderPropertyTabs();
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error updating business status: " + err.message);
+      }
+    }
+
     // Bulk Add Rooms Action
     async function bulkAddAdminRooms() {
-      const propId = calendarSelectedProperty || (properties[0] ? properties[0].id : "");
+      let propId = (activePropertyId !== "all" && activePropertyId) ? activePropertyId : document.getElementById("adminBulkRoomProperty")?.value;
+      if (!propId) {
+        const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
+        propId = activeLodgingProps[0]?.id || "";
+      }
       const roomNumbersStr = document.getElementById("adminBulkRoomNumbers")?.value?.trim() || "";
       const roomType = document.getElementById("adminBulkRoomType")?.value?.trim() || "Standard";
       const basePrice = Math.max(0, parseFloat(document.getElementById("adminBulkBasePrice")?.value || "0") || 0);
 
-      if (!propId) return showToast("Please select a property first");
+      if (!propId) return showToast("Please select a lodging business first");
       if (!roomNumbersStr) return showToast("Please enter at least one room number");
 
       try {
@@ -7552,6 +8019,11 @@ export function getDashboardHtml(): string {
       const select = document.getElementById("modalBookingRoomSelect");
       const opt = select?.selectedOptions[0];
       const basePrice = parseFloat(opt?.getAttribute("data-price") || "0") || 2000;
+      const optProp = opt?.getAttribute("data-prop");
+      const propInput = document.getElementById("modalBookingProperty");
+      if (optProp && propInput) {
+        propInput.value = optProp;
+      }
 
       const singleAmt = document.getElementById("modalBookingAmount");
       if (singleAmt && (!singleAmt.value || parseFloat(singleAmt.value) === 0)) {
@@ -7567,14 +8039,29 @@ export function getDashboardHtml(): string {
 
     function openRoomBookingModal(roomId = null, date = null, bookingId = null) {
       const select = document.getElementById("modalBookingRoomSelect");
-      const propId = (currentUserRole === "manager" ? currentManagerInfo?.property_id : calendarSelectedProperty) || (properties[0] ? properties[0].id : "");
-      
-      const propRooms = roomsList.filter(r => r.property_id === propId);
+      let propId = "";
+      if (currentUserRole === "manager") {
+        propId = currentManagerInfo?.property_id || "";
+      } else if (roomId) {
+        const found = roomsList.find(r => r.id === roomId);
+        if (found) propId = found.property_id;
+      } else if (activePropertyId !== "all" && activePropertyId) {
+        propId = activePropertyId;
+      }
+
+      const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
+      const eligibleRooms = propId
+        ? roomsList.filter(r => r.property_id === propId)
+        : roomsList.filter(r => activeLodgingProps.some(p => p.id === r.property_id));
 
       if (select) {
-        select.innerHTML = propRooms.map(r => \`
-          <option value="\${r.id}" data-price="\${r.base_price || 0}">Room \${escapeHtml(r.room_number)} (\${escapeHtml(r.room_type || 'Standard')}) - ₹\${formatCurrency(r.base_price || 0)}</option>
-        \`).join("");
+        select.innerHTML = eligibleRooms.map(r => {
+          const rProp = properties.find(p => p.id === r.property_id);
+          const propPrefix = (!propId || activePropertyId === "all") && rProp ? \`[\${rProp.name}] \` : "";
+          return \`
+            <option value="\${r.id}" data-prop="\${r.property_id}" data-price="\${r.base_price || 0}">\${propPrefix}Room \${escapeHtml(r.room_number)} (\${escapeHtml(r.room_type || 'Standard')}) - ₹\${formatCurrency(r.base_price || 0)}</option>
+          \`;
+        }).join("");
       }
 
       const idInput = document.getElementById("modalBookingId");
@@ -7588,7 +8075,11 @@ export function getDashboardHtml(): string {
       const groupNotice = document.getElementById("modalGroupStayNotice");
       const groupDates = document.getElementById("modalGroupStayDates");
 
-      if (propInput) propInput.value = propId;
+      if (select && (!propId || activePropertyId === "all")) {
+        const opt = select.selectedOptions[0];
+        if (opt) propId = opt.getAttribute("data-prop") || propId;
+      }
+      if (propInput) propInput.value = propId || (activeLodgingProps[0]?.id || "");
 
       if (bookingId) {
         const bk = roomBookingsList.find(b => b.id === bookingId);
@@ -7931,9 +8422,11 @@ export function getDashboardHtml(): string {
 
     function openManageRoomModal(roomId = null) {
       const propSelect = document.getElementById("modalRoomProperty");
+      const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
+      const defaultPropId = (activePropertyId !== "all" && activePropertyId) ? activePropertyId : (calendarSelectedProperty || activeLodgingProps[0]?.id || "");
       if (propSelect) {
-        propSelect.innerHTML = properties.filter(p => p.has_lodging === 1).map(p => \`
-          <option value="\${p.id}" \${p.id === calendarSelectedProperty ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
+        propSelect.innerHTML = activeLodgingProps.map(p => \`
+          <option value="\${p.id}" \${p.id === defaultPropId ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
         \`).join("");
       }
 
@@ -8064,8 +8557,9 @@ export function getDashboardHtml(): string {
 
     function openFinanceModal(recordId = null) {
       const select = document.getElementById("modalFinanceProperty");
+      const activeProps = properties.filter(p => p.active !== 0);
       if (select) {
-        select.innerHTML = properties.map(p => \`
+        select.innerHTML = activeProps.map(p => \`
           <option value="\${p.id}">\${escapeHtml(p.name)} (\${escapeHtml(getBusinessTypeInfo(p).label)})</option>
         \`).join("");
       }
@@ -8106,10 +8600,10 @@ export function getDashboardHtml(): string {
         if (title) title.innerText = "Record Sales & Expenses";
         if (idInput) idInput.value = "";
         if (select) {
-          if (financeFilterProperty !== "all") {
-            select.value = financeFilterProperty;
-          } else if (properties.length > 0) {
-            select.value = properties[0].id;
+          if (activePropertyId !== "all" && activePropertyId) {
+            select.value = activePropertyId;
+          } else if (activeProps.length > 0) {
+            select.value = activeProps[0].id;
           }
         }
         if (dateInput) {
@@ -8289,9 +8783,9 @@ export function getDashboardHtml(): string {
     }
 
     function exportFinancesCSV() {
-      const records = financeFilterProperty === "all"
+      const records = (activePropertyId === "all" || !activePropertyId)
         ? financesList
-        : financesList.filter(f => f.property_id === financeFilterProperty);
+        : financesList.filter(f => f.property_id === activePropertyId);
 
       if (records.length === 0) {
         showToast("No financial records to export");
