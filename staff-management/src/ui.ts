@@ -74,18 +74,10 @@ export function getDashboardHtml(): string {
       box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
     }
     .sticky-summary {
-      position: sticky;
-      right: 0;
-      z-index: 20;
       background-color: #ffffff;
-      box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06);
     }
     .sticky-summary-header {
-      position: sticky;
-      right: 0;
-      z-index: 30;
       background-color: #f8fafc;
-      box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06);
     }
     /* Mobile-first improvements to prevent iOS auto-zoom on input focus */
     @media screen and (max-width: 640px) {
@@ -295,13 +287,13 @@ export function getDashboardHtml(): string {
           
           <!-- View Switcher Tabs -->
           <div class="flex items-center bg-slate-200/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar scrollbar-none flex-nowrap">
-            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap">
-              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-              <span>Monthly Sheet</span>
-            </button>
-            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
+            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
               <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
               <span>Daily Roll Call</span>
+            </button>
+            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+              <span>Monthly Sheet</span>
             </button>
             <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
               <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
@@ -361,8 +353,8 @@ export function getDashboardHtml(): string {
 
       </div>
 
-      <!-- Quick Legend Bar (shown for monthly view) -->
-      <div id="legendBar" class="flex items-center gap-3 sm:gap-6 text-xs text-slate-600 mb-3 px-1 flex-wrap">
+      <!-- Quick Legend Bar (shown on desktop for monthly view) -->
+      <div id="legendBar" class="hidden sm:flex items-center gap-3 sm:gap-6 text-xs text-slate-600 mb-3 px-1 flex-wrap">
         <span class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Legend:</span>
         <div class="flex items-center gap-1.5">
           <span class="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-[10px] border border-emerald-300">P</span>
@@ -383,49 +375,112 @@ export function getDashboardHtml(): string {
       </div>
 
       <!-- ===================================================================== -->
-      <!-- VIEW 1: MONTHLY MATRIX TABLE                                          -->
+      <!-- VIEW 1: MONTHLY SHEET (Responsive Cards on Mobile, Table on Desktop) -->
       <!-- ===================================================================== -->
-      <div id="monthlyViewSection" class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex-1 flex flex-col">
-        <!-- Mobile Swipe Helper -->
-        <div class="sm:hidden px-3 py-2 bg-indigo-50/60 border-b border-indigo-100 flex items-center justify-between text-[11px] text-indigo-900">
-          <span class="flex items-center gap-1 font-medium">
-            <i data-lucide="move-horizontal" class="w-3.5 h-3.5 text-indigo-600"></i>
-            <span>Swipe left / right to view dates</span>
-          </span>
-          <span class="font-bold text-indigo-700">Tap cell to mark</span>
+      <div id="monthlyViewSection" class="hidden flex-1 flex flex-col gap-3">
+        
+        <!-- Mobile Monthly Overview Section (Phone screens < md) -->
+        <div id="monthlyMobileSection" class="md:hidden flex flex-col gap-3">
+          <!-- Suggestion Banner to use Daily Roll Call -->
+          <div class="bg-gradient-to-r from-indigo-50 to-indigo-100/60 p-3 rounded-2xl border border-indigo-200/80 flex items-center justify-between gap-2 shadow-2xs">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <i data-lucide="check-square" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-indigo-950">Daily Roll Call Recommended</div>
+                <div class="text-[10px] text-indigo-700">Faster single-tap marking on phone</div>
+              </div>
+            </div>
+            <button onclick="switchView('daily')" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shrink-0 transition active:scale-95 shadow-xs cursor-pointer">
+              Open Roll Call
+            </button>
+          </div>
+
+          <!-- Mode Toggle: Cards vs Desktop Table -->
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Monthly Overview</span>
+            <div class="inline-flex bg-slate-200/80 p-0.5 rounded-xl border border-slate-200 text-xs font-semibold">
+              <button id="btnMobileCardsMode" onclick="toggleMobileMonthlyMode('cards')" class="px-2.5 py-1 rounded-lg bg-white text-indigo-700 shadow-2xs font-bold cursor-pointer">
+                Cards
+              </button>
+              <button id="btnMobileTableMode" onclick="toggleMobileMonthlyMode('table')" class="px-2.5 py-1 rounded-lg text-slate-600 font-medium cursor-pointer">
+                Desktop Table
+              </button>
+            </div>
+          </div>
+
+          <!-- Mobile Cards Container -->
+          <div id="monthlyMobileCardsList" class="flex flex-col gap-3">
+            <!-- Rendered by JS -->
+          </div>
         </div>
-        <div class="overflow-x-auto overflow-y-auto flex-1 relative max-h-[70vh]">
-          <table class="w-full text-left border-collapse text-xs">
-            <thead id="monthlyTableHead" class="text-slate-500 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200 select-none">
-              <!-- Rendered by JS -->
-            </thead>
-            <tbody id="monthlyTableBody" class="divide-y divide-slate-100">
-              <!-- Rendered by JS -->
-            </tbody>
-          </table>
+
+        <!-- Desktop Matrix Table (Default on md:flex, or when Table Mode toggled on mobile) -->
+        <div id="monthlyTableContainer" class="hidden md:flex bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex-1 flex-col">
+          <!-- Scroll helper for medium screens -->
+          <div class="lg:hidden px-3 py-2 bg-indigo-50/60 border-b border-indigo-100 flex items-center justify-between text-[11px] text-indigo-900">
+            <span class="flex items-center gap-1 font-medium">
+              <i data-lucide="move-horizontal" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Scroll horizontally to view dates</span>
+            </span>
+            <span class="font-bold text-indigo-700">Click cell to mark</span>
+          </div>
+          <div class="overflow-x-auto overflow-y-auto flex-1 relative max-h-[70vh]">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead id="monthlyTableHead" class="text-slate-500 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200 select-none">
+                <!-- Rendered by JS -->
+              </thead>
+              <tbody id="monthlyTableBody" class="divide-y divide-slate-100">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div id="tableEmptyState" class="hidden p-12 text-center text-slate-400">
+
+        <div id="tableEmptyState" class="hidden p-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
           <i data-lucide="user-x" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
           <p class="font-medium text-sm text-slate-600">No staff members found for this property.</p>
           <button onclick="openStaffModal()" class="mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">Add your first staff member</button>
         </div>
+
       </div>
 
       <!-- ===================================================================== -->
       <!-- VIEW 2: DAILY ROLL CALL VIEW (Mobile-Optimized)                       -->
       <!-- ===================================================================== -->
-      <div id="dailyViewSection" class="hidden flex-1 flex flex-col gap-3">
+      <div id="dailyViewSection" class="flex-1 flex flex-col gap-3">
         <!-- Day Selector -->
-        <div class="bg-white p-3 rounded-2xl border border-slate-200 flex items-center justify-between shadow-xs">
-          <button onclick="changeDailyDate(-1)" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100">
-            <i data-lucide="chevron-left" class="w-5 h-5"></i>
-          </button>
-          <div class="text-center">
-            <div id="dailyDateTitle" class="text-base font-bold text-slate-900">Today, 31 Oct 2026</div>
-            <div class="text-xs text-slate-500 font-medium">Click buttons to instantly mark attendance</div>
+        <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between shadow-xs gap-2">
+          <div class="flex items-center gap-1">
+            <button onclick="changeDailyDate(-1)" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer" title="Previous Day">
+              <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <button onclick="goToTodayDaily()" class="text-xs font-semibold px-2.5 py-1.5 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition active:scale-95 cursor-pointer">
+              Today
+            </button>
           </div>
-          <button onclick="changeDailyDate(1)" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100">
-            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          <div class="text-center">
+            <div id="dailyDateTitle" class="text-sm sm:text-base font-bold text-slate-900">Today, 31 Oct 2026</div>
+            <div class="text-[11px] text-slate-500 font-medium">Single-tap marking · Live cloud sync</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="markAllTodayPresent()" class="hidden sm:inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-bold px-2.5 py-1.5 rounded-xl transition cursor-pointer" title="Mark all staff present for this day">
+              <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
+              <span>All Present</span>
+            </button>
+            <button onclick="changeDailyDate(1)" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer" title="Next Day">
+              <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile Quick All Present Bar -->
+        <div class="sm:hidden flex items-center justify-between px-1">
+          <span class="text-xs font-bold text-slate-600">Daily Roll Call</span>
+          <button onclick="markAllTodayPresent()" class="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-bold px-2.5 py-1 rounded-xl transition cursor-pointer">
+            <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
+            <span>Mark All Present</span>
           </button>
         </div>
 
@@ -1235,7 +1290,9 @@ export function getDashboardHtml(): string {
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth(); // 0-indexed
     let dailyDate = new Date();
-    let currentView = "monthly"; // 'monthly', 'daily', 'payroll', 'directory'
+    let currentView = "daily"; // Default to Daily Roll Call for best mobile & daily experience ('daily', 'monthly', 'payroll', 'directory')
+    let mobileMonthlyMode = "cards"; // 'cards' or 'table'
+    const openStaffCalendars = new Set();
 
     let properties = [];
     let staffList = [];
@@ -1406,7 +1463,7 @@ export function getDashboardHtml(): string {
         if (tabDirectory) tabDirectory.classList.add("hidden");
 
         if (currentView === "payroll" || currentView === "directory") {
-          switchView("monthly");
+          switchView("daily");
         }
 
         activePropertyId = currentManagerInfo.property_id || "all";
@@ -1834,11 +1891,60 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     // VIEW SWITCHER
     // -------------------------------------------------------------------------
+    function toggleMobileMonthlyMode(mode) {
+      mobileMonthlyMode = mode;
+      const cardsBtn = document.getElementById("btnMobileCardsMode");
+      const tableBtn = document.getElementById("btnMobileTableMode");
+      const cardsSection = document.getElementById("monthlyMobileCardsList");
+      const tableContainer = document.getElementById("monthlyTableContainer");
+
+      if (mode === "cards") {
+        if (cardsBtn) cardsBtn.className = "px-2.5 py-1 rounded-lg bg-white text-indigo-700 shadow-2xs font-bold cursor-pointer";
+        if (tableBtn) tableBtn.className = "px-2.5 py-1 rounded-lg text-slate-600 font-medium cursor-pointer";
+        if (cardsSection) cardsSection.classList.remove("hidden");
+        if (tableContainer) {
+          tableContainer.classList.add("hidden");
+          tableContainer.classList.remove("flex");
+        }
+      } else {
+        if (tableBtn) tableBtn.className = "px-2.5 py-1 rounded-lg bg-white text-indigo-700 shadow-2xs font-bold cursor-pointer";
+        if (cardsBtn) cardsBtn.className = "px-2.5 py-1 rounded-lg text-slate-600 font-medium cursor-pointer";
+        if (cardsSection) cardsSection.classList.add("hidden");
+        if (tableContainer) {
+          tableContainer.classList.remove("hidden");
+          tableContainer.classList.add("flex");
+        }
+      }
+    }
+
+    function toggleStaffCalendar(staffId) {
+      if (openStaffCalendars.has(staffId)) {
+        openStaffCalendars.delete(staffId);
+      } else {
+        openStaffCalendars.add(staffId);
+      }
+      const el = document.getElementById("staffCal_" + staffId);
+      const icon = document.getElementById("calIcon_" + staffId);
+      const isOpen = openStaffCalendars.has(staffId);
+      if (el) el.classList.toggle("hidden", !isOpen);
+      if (icon) icon.style.transform = isOpen ? "rotate(180deg)" : "rotate(0deg)";
+    }
+
+    async function goToTodayDaily() {
+      dailyDate = new Date();
+      currentMonth = dailyDate.getMonth();
+      currentYear = dailyDate.getFullYear();
+      document.getElementById("currentMonthLabel").innerText = \`\${MONTH_NAMES[currentMonth]} \${currentYear}\`;
+      await fetchAttendance();
+      renderDailyView();
+    }
+
     function switchView(view) {
       currentView = view;
-      const tabs = ["Monthly", "Daily", "Payroll", "Directory"];
+      const tabs = ["Daily", "Monthly", "Payroll", "Directory"];
       tabs.forEach(t => {
         const btn = document.getElementById("viewTab" + t);
+        if (!btn) return;
         if (t.toLowerCase() === view) {
           btn.classList.add("bg-white", "text-indigo-600", "shadow-xs");
           btn.classList.remove("text-slate-600");
@@ -1849,13 +1955,13 @@ export function getDashboardHtml(): string {
       });
 
       // Show/Hide sections
-      document.getElementById("monthlyViewSection").classList.toggle("hidden", view !== "monthly");
       document.getElementById("dailyViewSection").classList.toggle("hidden", view !== "daily");
+      document.getElementById("monthlyViewSection").classList.toggle("hidden", view !== "monthly");
       document.getElementById("payrollViewSection").classList.toggle("hidden", view !== "payroll");
       document.getElementById("directoryViewSection").classList.toggle("hidden", view !== "directory");
 
       // Controls visibility
-      document.getElementById("monthControlBar").classList.toggle("hidden", view === "directory");
+      document.getElementById("monthControlBar").classList.toggle("hidden", view === "directory" || view === "daily");
       document.getElementById("legendBar").classList.toggle("hidden", view !== "monthly");
       document.getElementById("btnMarkAllPresent").classList.toggle("hidden", view === "payroll");
 
@@ -1916,6 +2022,7 @@ export function getDashboardHtml(): string {
     function renderMonthlyView() {
       const thead = document.getElementById("monthlyTableHead");
       const tbody = document.getElementById("monthlyTableBody");
+      const mobileList = document.getElementById("monthlyMobileCardsList");
       const emptyState = document.getElementById("tableEmptyState");
 
       const daysCount = getDaysInMonth(currentYear, currentMonth);
@@ -1924,13 +2031,15 @@ export function getDashboardHtml(): string {
       const filteredStaff = getVisibleStaffList();
 
       if (filteredStaff.length === 0) {
-        thead.innerHTML = "";
-        tbody.innerHTML = "";
-        emptyState.classList.remove("hidden");
+        if (thead) thead.innerHTML = "";
+        if (tbody) tbody.innerHTML = "";
+        if (mobileList) mobileList.innerHTML = "";
+        if (emptyState) emptyState.classList.remove("hidden");
         return;
       }
-      emptyState.classList.add("hidden");
+      if (emptyState) emptyState.classList.add("hidden");
 
+      // 1. Desktop Matrix Table Header
       const DAY_LETTERS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
       let headHtml = "<tr>";
       headHtml += \`<th class="sticky-col-header py-3 px-3.5 min-w-[210px] bg-slate-50 border-r border-slate-200">Staff Member & Property</th>\`;
@@ -1951,23 +2060,29 @@ export function getDashboardHtml(): string {
       }
 
       headHtml += \`
-        <th class="sticky-summary-header py-3 px-2 text-center min-w-[50px] bg-emerald-50/60 text-emerald-800 border-l border-slate-200">P</th>
-        <th class="sticky-summary-header py-3 px-2 text-center min-w-[50px] bg-sky-50/60 text-sky-800 border-l border-slate-200">DO</th>
-        <th class="sticky-summary-header py-3 px-2 text-center min-w-[50px] bg-rose-50/60 text-rose-800 border-l border-slate-200">A</th>
-        <th class="sticky-summary-header py-3 px-2 text-center min-w-[55px] bg-amber-50/60 text-amber-800 border-l border-slate-200">Leave</th>
-        <th class="sticky-summary-header py-3 px-3 text-center min-w-[105px] bg-indigo-50/70 text-indigo-900 border-l border-slate-200" title="Accrued leaves carried forward minus leaves taken">Total Leave Bal</th>
+        <th class="py-3 px-2 text-center min-w-[50px] bg-emerald-50/60 text-emerald-800 border-l border-slate-200">P</th>
+        <th class="py-3 px-2 text-center min-w-[50px] bg-sky-50/60 text-sky-800 border-l border-slate-200">DO</th>
+        <th class="py-3 px-2 text-center min-w-[50px] bg-rose-50/60 text-rose-800 border-l border-slate-200">A</th>
+        <th class="py-3 px-2 text-center min-w-[55px] bg-amber-50/60 text-amber-800 border-l border-slate-200">Leave</th>
+        <th class="py-3 px-3 text-center min-w-[105px] bg-indigo-50/70 text-indigo-900 border-l border-slate-200" title="Accrued leaves carried forward minus leaves taken">Total Leave Bal</th>
       </tr>\`;
-      thead.innerHTML = headHtml;
+      if (thead) thead.innerHTML = headHtml;
 
       let bodyHtml = "";
+      let mobileCardsHtml = "";
+      const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0 is Sun
+
       filteredStaff.forEach(staff => {
         const prop = properties.find(p => p.id === staff.property_id) || { name: staff.property_name || 'General', monthly_leave_allowance: 2 };
-        const allowedLeaves = (staff.custom_leave_allowance !== null && staff.custom_leave_allowance !== undefined)
-          ? staff.custom_leave_allowance
-          : prop.monthly_leave_allowance;
 
         let countP = 0, countDO = 0, countA = 0, countL = 0;
         let rowCells = "";
+        let calDaysHtml = "";
+
+        // Blank padding for days before 1st of month in mobile mini calendar
+        for (let i = 0; i < firstDayOfWeek; i++) {
+          calDaysHtml += '<div class="h-9"></div>';
+        }
 
         for (let day = 1; day <= daysCount; day++) {
           const dateStr = \`\${currentYear}-\${String(currentMonth + 1).padStart(2, "0")}-\${String(day).padStart(2, "0")}\`;
@@ -1994,12 +2109,21 @@ export function getDashboardHtml(): string {
             label = "L";
           }
 
+          // Desktop Table Cell
           rowCells += \`
             <td class="p-1 text-center border-r border-slate-200/80 \${isToday ? 'bg-indigo-50/40 ring-1 ring-inset ring-indigo-200' : ''}">
-              <button onclick="cycleCellStatus('\${staff.id}', '\${dateStr}', event)" oncontextmenu="openStatusPicker('\${staff.id}', '\${dateStr}', event)" title="Click to cycle status, Right click to choose" class="w-7 h-7 rounded-lg text-[11px] font-bold border transition active:scale-90 flex items-center justify-center mx-auto \${badgeClass}">
+              <button onclick="cycleCellStatus('\${staff.id}', '\${dateStr}', event)" oncontextmenu="openStatusPicker('\${staff.id}', '\${dateStr}', event)" title="Click to cycle status, Right click to choose" class="w-7 h-7 rounded-lg text-[11px] font-bold border transition active:scale-90 flex items-center justify-center mx-auto cursor-pointer \${badgeClass}">
                 \${label}
               </button>
             </td>
+          \`;
+
+          // Mobile Calendar Button
+          calDaysHtml += \`
+            <button onclick="cycleCellStatus('\${staff.id}', '\${dateStr}', event)" oncontextmenu="openStatusPicker('\${staff.id}', '\${dateStr}', event)" class="h-9 rounded-lg border text-xs font-bold flex flex-col items-center justify-center transition active:scale-90 cursor-pointer \${badgeClass} \${isToday ? 'ring-2 ring-indigo-500 font-extrabold' : ''}" title="Day \${day}: \${status.toUpperCase()} (Tap to change)">
+              <span class="text-[10px] opacity-75 leading-none">\${day}</span>
+              <span class="text-[9px] font-extrabold uppercase leading-none mt-0.5">\${label}</span>
+            </button>
           \`;
         }
 
@@ -2015,6 +2139,7 @@ export function getDashboardHtml(): string {
           balanceText = "0.0 Bal";
         }
 
+        // Desktop Table Row (Summary columns without sticky-summary overlap bug)
         bodyHtml += \`
           <tr class="hover:bg-slate-50/60 transition group">
             <td class="sticky-col py-2.5 px-3.5 bg-white group-hover:bg-slate-50 border-r border-slate-200">
@@ -2033,20 +2158,85 @@ export function getDashboardHtml(): string {
               </div>
             </td>
             \${rowCells}
-            <td class="sticky-summary py-2 px-1 text-center font-bold text-emerald-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countP}</td>
-            <td class="sticky-summary py-2 px-1 text-center font-bold text-sky-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countDO}</td>
-            <td class="sticky-summary py-2 px-1 text-center font-bold text-rose-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countA}</td>
-            <td class="sticky-summary py-2 px-1 text-center font-bold text-amber-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countL}</td>
-            <td class="sticky-summary py-2 px-2 text-center bg-white group-hover:bg-slate-50 border-l border-slate-200">
+            <td class="py-2 px-1 text-center font-bold text-emerald-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countP}</td>
+            <td class="py-2 px-1 text-center font-bold text-sky-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countDO}</td>
+            <td class="py-2 px-1 text-center font-bold text-rose-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countA}</td>
+            <td class="py-2 px-1 text-center font-bold text-amber-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countL}</td>
+            <td class="py-2 px-2 text-center bg-white group-hover:bg-slate-50 border-l border-slate-200">
               <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Carried Leave Balance: \${leaveRemaining.toFixed(1)} days | Accrued: \${leaveDetails.totalAccrued} | Used: \${leaveDetails.totalTaken}">
                 \${balanceText}
               </span>
             </td>
           </tr>
         \`;
+
+        // Mobile Card with 7-column Calendar Accordion
+        const isOpen = openStaffCalendars.has(staff.id);
+        mobileCardsHtml += \`
+          <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-xs space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <div class="font-bold text-slate-900 text-sm flex items-center gap-1.5 cursor-pointer" onclick="handleStaffNameClick('\${staff.id}')">
+                  <span>\${escapeHtml(staff.name)}</span>
+                  \${staff.is_manager ? '<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-violet-100 text-violet-800">Manager</span>' : ''}
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                  <span class="text-indigo-600 font-semibold">\${escapeHtml(prop.name)}</span>
+                  \${staff.role ? \`<span>•</span><span>\${escapeHtml(staff.role)}</span>\` : ''}
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Carried Leave Balance: Accrued \${leaveDetails.totalAccrued} - Taken \${leaveDetails.totalTaken}">
+                \${balanceText}
+              </span>
+            </div>
+
+            <!-- 4 Summary Pills -->
+            <div class="grid grid-cols-4 gap-2 text-center text-xs">
+              <div class="p-2 rounded-xl bg-emerald-50 border border-emerald-200/80">
+                <div class="font-bold text-emerald-800 text-base font-mono">\${countP}</div>
+                <div class="text-[10px] text-emerald-600 font-semibold">Present</div>
+              </div>
+              <div class="p-2 rounded-xl bg-sky-50 border border-sky-200/80">
+                <div class="font-bold text-sky-800 text-base font-mono">\${countDO}</div>
+                <div class="text-[10px] text-sky-600 font-semibold">Day Off</div>
+              </div>
+              <div class="p-2 rounded-xl bg-amber-50 border border-amber-200/80">
+                <div class="font-bold text-amber-800 text-base font-mono">\${countL}</div>
+                <div class="text-[10px] text-amber-600 font-semibold">Leave</div>
+              </div>
+              <div class="p-2 rounded-xl bg-rose-50 border border-rose-200/80">
+                <div class="font-bold text-rose-800 text-base font-mono">\${countA}</div>
+                <div class="text-[10px] text-rose-600 font-semibold">Absent</div>
+              </div>
+            </div>
+
+            <!-- Expandable Month Calendar Toggle -->
+            <button onclick="toggleStaffCalendar('\${staff.id}')" class="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 flex items-center justify-between transition cursor-pointer">
+              <span class="flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>View / Edit Month Dates (\${MONTH_NAMES[currentMonth]})</span>
+              </span>
+              <i data-lucide="chevron-down" id="calIcon_\${staff.id}" class="w-4 h-4 text-slate-400 transition-transform" style="\${isOpen ? 'transform: rotate(180deg)' : ''}"></i>
+            </button>
+
+            <!-- 7-Column Calendar Grid -->
+            <div id="staffCal_\${staff.id}" class="\${isOpen ? '' : 'hidden'} pt-2 border-t border-slate-100 space-y-2">
+              <div class="grid grid-cols-7 gap-1 text-center font-bold text-[10px] text-slate-400 pb-1">
+                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+              </div>
+              <div class="grid grid-cols-7 gap-1">
+                \${calDaysHtml}
+              </div>
+              <div class="text-[10px] text-slate-400 text-center pt-1">
+                <span>Tap any day to cycle status (P → A → DO → L)</span>
+              </div>
+            </div>
+          </div>
+        \`;
       });
 
-      tbody.innerHTML = bodyHtml;
+      if (tbody) tbody.innerHTML = bodyHtml;
+      if (mobileList) mobileList.innerHTML = mobileCardsHtml;
       refreshIcons();
     }
 
