@@ -613,7 +613,7 @@ export function getDashboardHtml(): string {
 
     <!-- Footer -->
     <footer class="mt-auto border-t border-slate-200 bg-white py-3 px-4 text-center text-xs text-slate-400">
-      StaffSync Cloud · Connected to Cloudflare D1 · PIN: 4635 Protected
+      StaffSync Cloud · Connected to Cloudflare D1 · Secure Access
     </footer>
 
   </div>
@@ -1691,7 +1691,7 @@ export function getDashboardHtml(): string {
     }
 
     function getAuthHeaders() {
-      const pin = currentSessionPin || localStorage.getItem(AUTH_PIN_KEY) || "4635";
+      const pin = currentSessionPin || localStorage.getItem(AUTH_PIN_KEY) || "";
       return {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + pin,
