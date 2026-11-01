@@ -1307,7 +1307,7 @@ export function getDashboardHtml(): string {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">Property *</label>
-            <select id="modalFinanceProperty" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white">
+            <select id="modalFinanceProperty" onchange="onModalFinancePropertyChange(this.value)" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white">
               <!-- Rendered options -->
             </select>
           </div>
@@ -1318,7 +1318,7 @@ export function getDashboardHtml(): string {
         </div>
 
         <!-- Lodging Group (Derived from Room Bookings) -->
-        <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 space-y-2">
+        <div id="modalLodgingGroup" class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
               <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
@@ -1337,7 +1337,7 @@ export function getDashboardHtml(): string {
         </div>
 
         <!-- Fooding Group -->
-        <div class="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100 space-y-2">
+        <div id="modalFoodingGroup" class="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100 space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-amber-950 flex items-center gap-1.5">
               <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-600"></i>
@@ -1353,6 +1353,27 @@ export function getDashboardHtml(): string {
             <div>
               <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">Cash Payment (Cash)</label>
               <input type="number" id="modalFoodingCash" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-amber-200 bg-white font-mono focus:ring-2 focus:ring-amber-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Services Group (for Salon / Services) -->
+        <div id="modalServicesGroup" class="bg-purple-50/70 p-3.5 rounded-2xl border border-purple-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-600"></i>
+              <span id="modalServicesTitleLabel">Services Revenue</span>
+            </span>
+            <span class="text-xs font-black text-purple-900 font-mono">₹<span id="modalServicesSubtotal">0</span></span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-purple-800 uppercase tracking-wider mb-0.5">Online Payment (UPI/Card/QR)</label>
+              <input type="number" id="modalServicesOnline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-purple-200 bg-white font-mono focus:ring-2 focus:ring-purple-500" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-purple-800 uppercase tracking-wider mb-0.5">Cash Payment (Cash at Counter)</label>
+              <input type="number" id="modalServicesCash" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-purple-200 bg-white font-mono focus:ring-2 focus:ring-purple-500" />
             </div>
           </div>
         </div>
@@ -1580,6 +1601,129 @@ export function getDashboardHtml(): string {
           <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
             <i data-lucide="check" class="w-3.5 h-3.5"></i>
             <span>Save Room</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Business Offerings Configuration Modal (Admin) -->
+  <div id="businessConfigModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h3 id="businessConfigModalTitle" class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i>
+            Configure Business Offerings
+          </h3>
+          <p id="businessConfigModalSubtitle" class="text-xs text-slate-500 mt-0.5">Select active offerings and revenue modules</p>
+        </div>
+        <button type="button" onclick="closeBusinessConfigModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="businessConfigForm" onsubmit="handleSaveBusinessConfig(event)" class="space-y-4">
+        <input type="hidden" id="modalConfigPropId" />
+
+        <!-- Quick Template Presets -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Business Template / Preset</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button
+              type="button"
+              onclick="applyBusinessPreset('hotel')"
+              class="p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-left transition cursor-pointer"
+            >
+              <div class="text-xs font-bold text-indigo-950 flex items-center gap-1">🏨 Hotel</div>
+              <div class="text-[10px] text-indigo-700/80 mt-0.5">Lodging + Fooding</div>
+            </button>
+            <button
+              type="button"
+              onclick="applyBusinessPreset('restaurant')"
+              class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-left transition cursor-pointer"
+            >
+              <div class="text-xs font-bold text-amber-950 flex items-center gap-1">🍽️ Fooding</div>
+              <div class="text-[10px] text-amber-700/80 mt-0.5">Restaurant only</div>
+            </button>
+            <button
+              type="button"
+              onclick="applyBusinessPreset('salon')"
+              class="p-2.5 rounded-xl border border-purple-200 bg-purple-50/50 hover:bg-purple-50 text-left transition cursor-pointer"
+            >
+              <div class="text-xs font-bold text-purple-950 flex items-center gap-1">✂️ Salon</div>
+              <div class="text-[10px] text-purple-700/80 mt-0.5">Services only</div>
+            </button>
+            <button
+              type="button"
+              onclick="applyBusinessPreset('services')"
+              class="p-2.5 rounded-xl border border-teal-200 bg-teal-50/50 hover:bg-teal-50 text-left transition cursor-pointer"
+            >
+              <div class="text-xs font-bold text-teal-950 flex items-center gap-1">🛎️ Services</div>
+              <div class="text-[10px] text-teal-700/80 mt-0.5">Custom services</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Capability Toggles -->
+        <div class="space-y-2.5 pt-1">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Active Offerings / Revenue Modules</label>
+
+          <!-- Lodging Toggle -->
+          <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-indigo-50/30 transition cursor-pointer">
+            <input type="checkbox" id="modalConfigHasLodging" class="mt-0.5 w-4 h-4 text-indigo-600 rounded-md focus:ring-indigo-500 cursor-pointer" />
+            <div class="flex-1">
+              <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>Lodging & Rooms</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Enables Room status chips, room booking manager, room matrix calendar, and automated lodging revenue.</div>
+            </div>
+          </label>
+
+          <!-- Fooding Toggle -->
+          <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-amber-50/30 transition cursor-pointer">
+            <input type="checkbox" id="modalConfigHasFooding" class="mt-0.5 w-4 h-4 text-amber-600 rounded-md focus:ring-amber-500 cursor-pointer" />
+            <div class="flex-1">
+              <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span>Fooding & Restaurant</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Enables daily Fooding revenue entry with Online payment vs Cash payment breakdown.</div>
+            </div>
+          </label>
+
+          <!-- Services Toggle -->
+          <label class="flex items-start gap-3 p-3 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-purple-50/30 transition cursor-pointer">
+            <input type="checkbox" id="modalConfigHasServices" onchange="toggleServicesLabelInput(this.checked)" class="mt-0.5 w-4 h-4 text-purple-600 rounded-md focus:ring-purple-500 cursor-pointer" />
+            <div class="flex-1">
+              <div class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-600"></i>
+                <span>Services (Salon, Spa, Agency, Domestic)</span>
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5">Enables daily Services revenue entry with Online payment vs Cash payment breakdown.</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Services Label -->
+        <div id="modalConfigServicesLabelRow" class="hidden">
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Custom Services Label</label>
+          <input
+            type="text"
+            id="modalConfigServicesLabel"
+            placeholder="e.g. Salon Services, Spa Treatments, Professional Services"
+            class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeBusinessConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save Settings</span>
           </button>
         </div>
       </form>
@@ -4571,33 +4715,79 @@ export function getDashboardHtml(): string {
       refreshIcons();
     }
 
+    // Helper: Business Type Label and Color
+    function getBusinessTypeInfo(prop) {
+      if (!prop) return { label: "General", badgeClass: "bg-slate-100 text-slate-700" };
+      const hasL = prop.has_lodging === 1;
+      const hasF = prop.has_fooding === 1;
+      const hasS = prop.has_services === 1;
+
+      if (hasL && hasF) {
+        return { label: "Hotel & Restaurant", badgeClass: "bg-indigo-100 text-indigo-800 border border-indigo-200" };
+      }
+      if (hasL && !hasF) {
+        return { label: "Lodging Only", badgeClass: "bg-blue-100 text-blue-800 border border-blue-200" };
+      }
+      if (!hasL && hasF) {
+        return { label: "Fooding Only", badgeClass: "bg-amber-100 text-amber-800 border border-amber-200" };
+      }
+      if (hasS) {
+        return { label: prop.services_label || "Services", badgeClass: "bg-purple-100 text-purple-800 border border-purple-200" };
+      }
+      return { label: "Custom Business", badgeClass: "bg-slate-100 text-slate-700" };
+    }
+
     // -------------------------------------------------------------------------
-    // MANAGER VIEW (NO MANUAL LODGING ENTRY - AUTOMATED FROM ROOM BOOKINGS)
+    // MANAGER VIEW (DYNAMIC BASED ON PROPERTY CAPABILITIES)
     // -------------------------------------------------------------------------
     function renderManagerFinancesView(container) {
       const propId = currentManagerInfo?.property_id || "";
-      const propName = currentManagerInfo?.property_name || properties.find(p => p.id === propId)?.name || "Assigned Property";
+      const currentProp = properties.find(p => p.id === propId) || {};
+      const propName = currentManagerInfo?.property_name || currentProp.name || "Assigned Property";
       
+      const hasLodging = currentProp.has_lodging === 1;
+      const hasFooding = currentProp.has_fooding === 1;
+      const hasServices = currentProp.has_services === 1;
+      const servicesLabel = currentProp.services_label || "Services";
+      const typeInfo = getBusinessTypeInfo(currentProp);
+
       const currentRecord = financesList.find(f => f.property_id === propId && f.date === managerFinanceDate);
       
-      // Filter rooms and bookings for this property & date
-      const propRooms = roomsList.filter(r => r.property_id === propId);
-      const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate);
+      // Filter rooms and bookings if lodging is active
+      const propRooms = hasLodging ? roomsList.filter(r => r.property_id === propId) : [];
+      const todayBookings = hasLodging ? roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate) : [];
 
-      // Automated lodging calculations from bookings
-      const lo = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
-      const lc = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+      // Lodging calculations (automated from bookings)
+      const lo = hasLodging ? todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0) : 0;
+      const lc = hasLodging ? todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0) : 0;
       const lodgingSub = lo + lc;
 
-      const fo = currentRecord ? (currentRecord.fooding_online || 0) : 0;
-      const fc = currentRecord ? (currentRecord.fooding_cash ?? currentRecord.fooding_offline ?? 0) : 0;
+      // Fooding calculations
+      const fo = hasFooding && currentRecord ? (currentRecord.fooding_online || 0) : 0;
+      const fc = hasFooding && currentRecord ? (currentRecord.fooding_cash ?? currentRecord.fooding_offline ?? 0) : 0;
+      const foodingSub = fo + fc;
+
+      // Services calculations
+      const so = hasServices && currentRecord ? (currentRecord.services_online || 0) : 0;
+      const sc = hasServices && currentRecord ? (currentRecord.services_cash || 0) : 0;
+      const servicesSub = so + sc;
+
+      // Other & Expenses
       const os = currentRecord ? (currentRecord.other_sales || 0) : 0;
       const exp = currentRecord ? (currentRecord.expenses_total || 0) : 0;
       const expNotes = currentRecord ? (currentRecord.expense_notes || "") : "";
       const notes = currentRecord ? (currentRecord.notes || "") : "";
-      const foodingSub = fo + fc;
-      const totSales = lodgingSub + foodingSub + os;
+
+      const totSales = lodgingSub + foodingSub + servicesSub + os;
       const netProf = totSales - exp;
+
+      // Active streams descriptor for banner
+      const streamNames = [];
+      if (hasLodging) streamNames.push(\`Lodging (\${todayBookings.length} bookings)\`);
+      if (hasFooding) streamNames.push("Fooding");
+      if (hasServices) streamNames.push(servicesLabel);
+      if (os > 0 || streamNames.length === 0) streamNames.push("Other");
+      const streamsDescriptor = streamNames.join(" + ");
 
       const isSaved = !!currentRecord;
       const statusBadge = isSaved
@@ -4614,8 +4804,11 @@ export function getDashboardHtml(): string {
         <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div class="flex items-center gap-2.5 flex-wrap">
             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
-              <i data-lucide="hotel" class="w-4 h-4 text-indigo-600"></i>
+              <i data-lucide="building" class="w-4 h-4 text-indigo-600"></i>
               \${escapeHtml(propName)}
+            </span>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-[11px] font-bold \${typeInfo.badgeClass}">
+              \${escapeHtml(typeInfo.label)}
             </span>
             \${statusBadge}
           </div>
@@ -4641,301 +4834,365 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
-        <!-- SECTION 1: ROOM BOOKINGS & AUTOMATED LODGING -->
-        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-indigo-100/90 shadow-sm flex flex-col gap-5">
-          <div class="flex items-center justify-between border-b border-indigo-50 pb-3 flex-wrap gap-2">
+        <!-- CONDITIONAL MODULE 1: ROOM BOOKINGS & AUTOMATED LODGING -->
+        \${hasLodging ? \`
+          <div class="bg-white p-4 sm:p-6 rounded-3xl border border-indigo-100/90 shadow-sm flex flex-col gap-5">
+            <div class="flex items-center justify-between border-b border-indigo-50 pb-3 flex-wrap gap-2">
+              <div>
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <i data-lucide="door-closed" class="w-5 h-5 text-indigo-600"></i>
+                  Room Bookings & Lodging Revenue
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Select a room and record the booking. Lodging online & cash amounts are calculated automatically.</p>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">Lodging Total</span>
+                <span class="text-xl sm:text-2xl font-black font-mono text-indigo-950">₹<span id="mgrLodgingSubtotal">\${formatCurrency(lodgingSub)}</span></span>
+              </div>
+            </div>
+
+            <!-- Room Status Chips -->
             <div>
-              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                <i data-lucide="door-closed" class="w-5 h-5 text-indigo-600"></i>
-                Room Bookings & Lodging Revenue
-              </h3>
-              <p class="text-xs text-slate-500 mt-0.5">Select a room and record the booking. Lodging online & cash amounts are calculated automatically.</p>
-            </div>
-            <div class="text-right">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">Lodging Total</span>
-              <span class="text-xl sm:text-2xl font-black font-mono text-indigo-950">₹<span id="mgrLodgingSubtotal">\${formatCurrency(lodgingSub)}</span></span>
-            </div>
-          </div>
-
-          <!-- Room Status Chips -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
-                Rooms Status for \${managerFinanceDate}
-              </label>
-              <span class="text-[11px] text-slate-400">\${propRooms.length} Active Rooms</span>
-            </div>
-
-            \${propRooms.length === 0 ? \`
-              <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
-                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-amber-600"></i>
-                <span>No rooms configured for this property yet. Admin can add rooms (101, 102, 103, 104) in Manage Rooms.</span>
-              </div>
-            \` : \`
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                \${propRooms.map(rm => {
-                  const rmBookings = todayBookings.filter(b => b.room_id === rm.id);
-                  const count = rmBookings.length;
-                  const totalRm = rmBookings.reduce((s, b) => s + (b.amount || 0), 0);
-                  const isBooked = count > 0;
-                  return \`
-                    <div
-                      onclick="quickBookSelectRoom('\${rm.id}')"
-                      class="p-3 rounded-2xl border transition cursor-pointer select-none \${isBooked ? 'bg-indigo-50/70 border-indigo-300 ring-1 ring-indigo-200' : 'bg-slate-50/70 hover:bg-white border-slate-200'}"
-                    >
-                      <div class="flex items-center justify-between mb-1">
-                        <span class="text-xs font-black text-slate-900 flex items-center gap-1">
-                          <i data-lucide="door-closed" class="w-3.5 h-3.5 \${isBooked ? 'text-indigo-600' : 'text-slate-400'}"></i>
-                          Room \${escapeHtml(rm.room_number)}
-                        </span>
-                        <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold \${isBooked ? (count > 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800') : 'bg-emerald-100 text-emerald-800'}">
-                          \${isBooked ? (count > 1 ? \`\${count}x Booked\` : 'Booked') : 'Vacant'}
-                        </span>
-                      </div>
-                      <div class="text-[11px] text-slate-500 flex items-center justify-between">
-                        <span>\${escapeHtml(rm.room_type || 'Standard')}</span>
-                        <span class="font-mono font-bold \${isBooked ? 'text-indigo-900' : 'text-slate-600'}">
-                          \${isBooked ? \`₹\${formatCurrency(totalRm)}\` : \`₹\${formatCurrency(rm.base_price || 0)}\`}
-                        </span>
-                      </div>
-                    </div>
-                  \`;
-                }).join("")}
-              </div>
-            \`}
-          </div>
-
-          <!-- Quick Booking Input Card -->
-          <div class="bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-3.5">
-            <div class="flex items-center justify-between flex-wrap gap-2">
-              <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
-                Quick Room Booking (Supports Multiple Bookings per Room / Day)
-              </h4>
-              <span class="text-[11px] text-indigo-600 font-medium">Click room above or select below</span>
-            </div>
-
-            <form id="mgrQuickBookForm" onsubmit="submitManagerRoomBooking(event)" class="space-y-3">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <!-- Room Select -->
-                <div>
-                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Room *</label>
-                  <select
-                    id="mgrBookRoomSelect"
-                    required
-                    onchange="onMgrBookRoomSelectChange(this.value)"
-                    class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  >
-                    <option value="">-- Choose Room --</option>
-                    \${propRooms.map(rm => \`
-                      <option value="\${rm.id}" data-price="\${rm.base_price || 0}">Room \${escapeHtml(rm.room_number)} (\${escapeHtml(rm.room_type)}) - ₹\${formatCurrency(rm.base_price || 0)}</option>
-                    \`).join("")}
-                  </select>
-                </div>
-
-                <!-- Amount -->
-                <div>
-                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Booking Amount (₹) *</label>
-                  <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                    <input
-                      type="number"
-                      id="mgrBookAmount"
-                      min="0"
-                      step="1"
-                      required
-                      placeholder="2000"
-                      class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                    />
-                  </div>
-                </div>
-
-                <!-- Payment Method Toggle -->
-                <div>
-                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Payment Method *</label>
-                  <div class="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-indigo-200 shadow-2xs">
-                    <button
-                      type="button"
-                      id="btnModeOnline"
-                      onclick="setQuickBookPaymentMode('online')"
-                      class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-indigo-600 text-white shadow-xs"
-                    >
-                      <i data-lucide="globe" class="w-3.5 h-3.5"></i>
-                      <span>Online</span>
-                    </button>
-                    <button
-                      type="button"
-                      id="btnModeCash"
-                      onclick="setQuickBookPaymentMode('cash')"
-                      class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100"
-                    >
-                      <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
-                      <span>Cash</span>
-                    </button>
-                  </div>
-                </div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                  <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  Rooms Status for \${managerFinanceDate}
+                </label>
+                <span class="text-[11px] text-slate-400">\${propRooms.length} Active Rooms</span>
               </div>
 
-              <!-- Guest / Notes Row -->
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                <div class="sm:col-span-1">
-                  <label class="block text-xs font-semibold text-slate-700 mb-1">Guest Name / Ref (Optional)</label>
-                  <input
-                    type="text"
-                    id="mgrBookGuest"
-                    placeholder="e.g. Rahul Sharma, Walk-in"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
+              \${propRooms.length === 0 ? \`
+                <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+                  <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-amber-600"></i>
+                  <span>No rooms configured for this property yet. Admin can add rooms in Manage Rooms.</span>
                 </div>
-                <div class="sm:col-span-1">
-                  <label class="block text-xs font-semibold text-slate-700 mb-1">Remarks / Slot (Optional)</label>
-                  <input
-                    type="text"
-                    id="mgrBookNotes"
-                    placeholder="e.g. Day use, Slot 2, Extra bed"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
-                </div>
-                <div class="sm:col-span-1">
-                  <button
-                    type="submit"
-                    class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <i data-lucide="check" class="w-4 h-4"></i>
-                    <span>+ Book Room</span>
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-
-          <!-- Itemized Today's Bookings List -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <i data-lucide="list" class="w-3.5 h-3.5 text-indigo-600"></i>
-                Today's Bookings (\${todayBookings.length})
-              </h4>
-              <div class="text-[11px] text-slate-500 flex items-center gap-3">
-                <span>Online: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(lo)}</strong></span>
-                <span>Cash: <strong class="text-amber-900 font-mono">₹\${formatCurrency(lc)}</strong></span>
-              </div>
-            </div>
-
-            \${todayBookings.length === 0 ? \`
-              <div class="text-center py-6 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400">
-                No room bookings recorded yet for \${managerFinanceDate}. Select a room above to record lodging.
-              </div>
-            \` : \`
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                \${todayBookings.map(b => {
-                  const isOnline = b.payment_mode === "online";
-                  return \`
-                    <div class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition shadow-2xs flex flex-col justify-between gap-2">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-1.5">
-                          <span class="text-xs font-black text-slate-900">Room \${escapeHtml(b.room_number)}</span>
-                          <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700">Slot #\${b.slot_number || 1}</span>
-                          <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
-                            \${isOnline ? 'Online' : 'Cash'}
+              \` : \`
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  \${propRooms.map(rm => {
+                    const rmBookings = todayBookings.filter(b => b.room_id === rm.id);
+                    const count = rmBookings.length;
+                    const totalRm = rmBookings.reduce((s, b) => s + (b.amount || 0), 0);
+                    const isBooked = count > 0;
+                    return \`
+                      <div
+                        onclick="quickBookSelectRoom('\${rm.id}')"
+                        class="p-3 rounded-2xl border transition cursor-pointer select-none \${isBooked ? 'bg-indigo-50/70 border-indigo-300 ring-1 ring-indigo-200' : 'bg-slate-50/70 hover:bg-white border-slate-200'}"
+                      >
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="text-xs font-black text-slate-900 flex items-center gap-1">
+                            <i data-lucide="door-closed" class="w-3.5 h-3.5 \${isBooked ? 'text-indigo-600' : 'text-slate-400'}"></i>
+                            Room \${escapeHtml(rm.room_number)}
+                          </span>
+                          <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold \${isBooked ? (count > 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800') : 'bg-emerald-100 text-emerald-800'}">
+                            \${isBooked ? (count > 1 ? \`\${count}x Booked\` : 'Booked') : 'Vacant'}
                           </span>
                         </div>
-                        <div class="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onclick="openEditBookingModal('\${b.id}')"
-                            title="Edit Booking"
-                            class="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition cursor-pointer"
-                          >
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                          </button>
-                          <button
-                            type="button"
-                            onclick="deleteRoomBooking('\${b.id}')"
-                            title="Delete Booking"
-                            class="p-1 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                          >
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                          </button>
+                        <div class="text-[11px] text-slate-500 flex items-center justify-between">
+                          <span>\${escapeHtml(rm.room_type || 'Standard')}</span>
+                          <span class="font-mono font-bold \${isBooked ? 'text-indigo-900' : 'text-slate-600'}">
+                            \${isBooked ? \`₹\${formatCurrency(totalRm)}\` : \`₹\${formatCurrency(rm.base_price || 0)}\`}
+                          </span>
                         </div>
                       </div>
+                    \`;
+                  }).join("")}
+                </div>
+              \`}
+            </div>
 
-                      <div class="flex items-center justify-between text-xs">
-                        <span class="text-slate-500 truncate max-w-[150px]">\${escapeHtml(b.guest_name || 'Guest')}</span>
-                        <span class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
-                          ₹\${formatCurrency(b.amount)}
-                        </span>
-                      </div>
-
-                      \${b.notes ? \`<div class="text-[10px] text-slate-400 italic truncate">\${escapeHtml(b.notes)}</div>\` : ''}
-                    </div>
-                  \`;
-                }).join("")}
+            <!-- Quick Booking Input Card -->
+            <div class="bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-3.5">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
+                  Quick Room Booking (Supports Multiple Bookings per Room / Day)
+                </h4>
+                <span class="text-[11px] text-indigo-600 font-medium">Click room above or select below</span>
               </div>
-            \`}
-          </div>
-        </div>
 
-        <!-- SECTION 2: FOODING REVENUE -->
-        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-amber-100 shadow-sm flex flex-col gap-4">
-          <div class="flex items-center justify-between border-b border-amber-50 pb-3 flex-wrap gap-2">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-2xs">
-                <i data-lucide="utensils" class="w-4 h-4"></i>
+              <form id="mgrQuickBookForm" onsubmit="submitManagerRoomBooking(event)" class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <!-- Room Select -->
+                  <div>
+                    <label class="block text-xs font-semibold text-indigo-950 mb-1">Room *</label>
+                    <select
+                      id="mgrBookRoomSelect"
+                      required
+                      onchange="onMgrBookRoomSelectChange(this.value)"
+                      class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    >
+                      <option value="">-- Choose Room --</option>
+                      \${propRooms.map(rm => \`
+                        <option value="\${rm.id}" data-price="\${rm.base_price || 0}">Room \${escapeHtml(rm.room_number)} (\${escapeHtml(rm.room_type)}) - ₹\${formatCurrency(rm.base_price || 0)}</option>
+                      \`).join("")}
+                    </select>
+                  </div>
+
+                  <!-- Amount -->
+                  <div>
+                    <label class="block text-xs font-semibold text-indigo-950 mb-1">Booking Amount (₹) *</label>
+                    <div class="relative">
+                      <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                      <input
+                        type="number"
+                        id="mgrBookAmount"
+                        min="0"
+                        step="1"
+                        required
+                        placeholder="2000"
+                        class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Payment Method Toggle -->
+                  <div>
+                    <label class="block text-xs font-semibold text-indigo-950 mb-1">Payment Method *</label>
+                    <div class="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-indigo-200 shadow-2xs">
+                      <button
+                        type="button"
+                        id="btnModeOnline"
+                        onclick="setQuickBookPaymentMode('online')"
+                        class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-indigo-600 text-white shadow-xs"
+                      >
+                        <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                        <span>Online</span>
+                      </button>
+                      <button
+                        type="button"
+                        id="btnModeCash"
+                        onclick="setQuickBookPaymentMode('cash')"
+                        class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100"
+                      >
+                        <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
+                        <span>Cash</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Guest / Notes Row -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                  <div class="sm:col-span-1">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Guest Name / Ref (Optional)</label>
+                    <input
+                      type="text"
+                      id="mgrBookGuest"
+                      placeholder="e.g. Rahul Sharma, Walk-in"
+                      class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    />
+                  </div>
+                  <div class="sm:col-span-1">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Remarks / Slot (Optional)</label>
+                    <input
+                      type="text"
+                      id="mgrBookNotes"
+                      placeholder="e.g. Day use, Slot 2, Extra bed"
+                      class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    />
+                  </div>
+                  <div class="sm:col-span-1">
+                    <button
+                      type="submit"
+                      class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <i data-lucide="check" class="w-4 h-4"></i>
+                      <span>+ Book Room</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <!-- Itemized Today's Bookings List -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <i data-lucide="list" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  Today's Bookings (\${todayBookings.length})
+                </h4>
+                <div class="text-[11px] text-slate-500 flex items-center gap-3">
+                  <span>Online: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(lo)}</strong></span>
+                  <span>Cash: <strong class="text-amber-900 font-mono">₹\${formatCurrency(lc)}</strong></span>
+                </div>
+              </div>
+
+              \${todayBookings.length === 0 ? \`
+                <div class="text-center py-6 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-400">
+                  No room bookings recorded yet for \${managerFinanceDate}. Select a room above to record lodging.
+                </div>
+              \` : \`
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  \${todayBookings.map(b => {
+                    const isOnline = b.payment_mode === "online";
+                    return \`
+                      <div class="p-3 rounded-2xl border border-slate-200 bg-white hover:border-indigo-300 transition shadow-2xs flex flex-col justify-between gap-2">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-black text-slate-900">Room \${escapeHtml(b.room_number)}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700">Slot #\${b.slot_number || 1}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
+                              \${isOnline ? 'Online' : 'Cash'}
+                            </span>
+                          </div>
+                          <div class="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onclick="openEditBookingModal('\${b.id}')"
+                              title="Edit Booking"
+                              class="p-1 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-indigo-600 transition cursor-pointer"
+                            >
+                              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onclick="deleteRoomBooking('\${b.id}')"
+                              title="Delete Booking"
+                              class="p-1 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                            >
+                              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs">
+                          <span class="text-slate-500 truncate max-w-[150px]">\${escapeHtml(b.guest_name || 'Guest')}</span>
+                          <span class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
+                            ₹\${formatCurrency(b.amount)}
+                          </span>
+                        </div>
+
+                        \${b.notes ? \`<div class="text-[10px] text-slate-400 italic truncate">\${escapeHtml(b.notes)}</div>\` : ''}
+                      </div>
+                    \`;
+                  }).join("")}
+                </div>
+              \`}
+            </div>
+          </div>
+        \` : ''}
+
+        <!-- CONDITIONAL MODULE 2: FOODING REVENUE -->
+        \${hasFooding ? \`
+          <div class="bg-white p-4 sm:p-6 rounded-3xl border border-amber-100 shadow-sm flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-amber-50 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-2xs">
+                  <i data-lucide="utensils" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Fooding Revenue (Restaurant / Dining)</h4>
+                  <p class="text-[11px] text-amber-700/80">Online payment revenue vs Cash payment revenue</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] font-bold text-amber-700 uppercase">Fooding Subtotal</div>
+                <div class="text-base font-black text-amber-950 font-mono">₹<span id="mgrFoodingSubtotal">\${formatCurrency(foodingSub)}</span></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-xs font-semibold text-amber-950 mb-1">
+                  Online Payment (UPI / QR / Delivery) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrFoodingOnline"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${fo || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                  />
+                </div>
               </div>
               <div>
-                <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Fooding Revenue (Restaurant / Dining)</h4>
-                <p class="text-[11px] text-amber-700/80">Online payment revenue vs Cash payment revenue</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-[10px] font-bold text-amber-700 uppercase">Fooding Subtotal</div>
-              <div class="text-base font-black text-amber-950 font-mono">₹<span id="mgrFoodingSubtotal">\${formatCurrency(foodingSub)}</span></div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div>
-              <label class="block text-xs font-semibold text-amber-950 mb-1">
-                Online Payment (UPI / QR / Delivery) ₹
-              </label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                <input
-                  type="number"
-                  id="mgrFoodingOnline"
-                  min="0"
-                  step="1"
-                  placeholder="0"
-                  value="\${fo || ''}"
-                  oninput="calculateMgrFinanceLiveTotals()"
-                  class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-amber-950 mb-1">
-                Cash Payment (Cash at Counter / Dine-in) ₹
-              </label>
-              <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
-                <input
-                  type="number"
-                  id="mgrFoodingCash"
-                  min="0"
-                  step="1"
-                  placeholder="0"
-                  value="\${fc || ''}"
-                  oninput="calculateMgrFinanceLiveTotals()"
-                  class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
-                />
+                <label class="block text-xs font-semibold text-amber-950 mb-1">
+                  Cash Payment (Cash at Counter / Dine-in) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrFoodingCash"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${fc || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        \` : ''}
 
-        <!-- SECTION 3: OTHER SALES & GROSS TOTAL -->
+        <!-- CONDITIONAL MODULE 3: SERVICES REVENUE (SALON / SERVICES) -->
+        \${hasServices ? \`
+          <div class="bg-white p-4 sm:p-6 rounded-3xl border border-purple-100 shadow-sm flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-purple-50 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-2xs">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-purple-950 uppercase tracking-wider">\${escapeHtml(servicesLabel)} Revenue</h4>
+                  <p class="text-[11px] text-purple-700/80">Online payment revenue vs Cash payment revenue</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] font-bold text-purple-700 uppercase">\${escapeHtml(servicesLabel)} Subtotal</div>
+                <div class="text-base font-black text-purple-950 font-mono">₹<span id="mgrServicesSubtotal">\${formatCurrency(servicesSub)}</span></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-xs font-semibold text-purple-950 mb-1">
+                  Online Payment (UPI / QR / Card) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrServicesOnline"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${so || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-purple-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-purple-950 mb-1">
+                  Cash Payment (Cash at Counter) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrServicesCash"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${sc || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-purple-200 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        \` : ''}
+
+        <!-- SECTION: OTHER SALES & GROSS TOTAL -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div class="md:col-span-1 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col justify-center">
             <label class="block text-xs font-semibold text-slate-700 mb-1">
@@ -4954,14 +5211,14 @@ export function getDashboardHtml(): string {
                 class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
               />
             </div>
-            <p class="text-[10px] text-slate-400 mt-1">Laundry, transport, extra bed, etc.</p>
+            <p class="text-[10px] text-slate-400 mt-1">Laundry, transport, extras, etc.</p>
           </div>
 
           <!-- Gross Sales Live Banner -->
           <div class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 sm:p-5 rounded-3xl shadow-sm flex items-center justify-between">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-100 block">Total Gross Sales</span>
-              <span class="text-xs text-emerald-200">Lodging (\${todayBookings.length} bookings) + Fooding + Other</span>
+              <span class="text-xs text-emerald-200">\${streamsDescriptor}</span>
             </div>
             <div class="text-right">
               <span class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
@@ -4971,7 +5228,7 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
-        <!-- SECTION 4: OPERATING EXPENSES -->
+        <!-- SECTION: OPERATING EXPENSES -->
         <div class="bg-white p-4 sm:p-6 rounded-3xl border border-rose-100 shadow-sm flex flex-col gap-4">
           <div class="flex items-center justify-between border-b border-rose-50 pb-3">
             <div class="flex items-center gap-2">
@@ -4980,7 +5237,7 @@ export function getDashboardHtml(): string {
               </div>
               <div>
                 <h4 class="text-xs font-bold text-rose-950 uppercase tracking-wider">Total Daily Expenses (₹)</h4>
-                <p class="text-[11px] text-rose-700/80">Supplies, vegetables, diesel, local purchases, maintenance</p>
+                <p class="text-[11px] text-rose-700/80">Supplies, vegetables, products, diesel, local purchases, maintenance</p>
               </div>
             </div>
           </div>
@@ -5011,14 +5268,14 @@ export function getDashboardHtml(): string {
               <textarea
                 id="mgrExpenseNotes"
                 rows="2"
-                placeholder="e.g. Vegetables ₹1200, Grocery ₹1800, Diesel ₹1000"
+                placeholder="e.g. Products ₹1200, Grocery ₹1800, Diesel ₹1000"
                 class="w-full px-3 py-1.5 text-xs text-slate-800 rounded-xl border border-rose-200 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
               >\${escapeHtml(expNotes)}</textarea>
             </div>
           </div>
         </div>
 
-        <!-- SECTION 5: NET OPERATING PROFIT BANNER -->
+        <!-- SECTION: NET OPERATING PROFIT BANNER -->
         <div class="p-4 sm:p-5 rounded-3xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
           <div>
             <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Estimated Net Profit for the Day</div>
@@ -5031,7 +5288,7 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
-        <!-- SECTION 6: REMARKS & SAVE FORM -->
+        <!-- SECTION: REMARKS & SAVE FORM -->
         <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs space-y-3.5">
           <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1">General Notes / Remarks (Optional)</label>
@@ -5066,7 +5323,7 @@ export function getDashboardHtml(): string {
 
           \${recentRecords.length === 0 ? \`
             <div class="text-center py-6 text-xs text-slate-400">
-              No previous financial records entered yet for this property.
+              No previous financial records entered yet for this business.
             </div>
           \` : \`
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -5075,6 +5332,7 @@ export function getDashboardHtml(): string {
                 const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
                 const rLodging = (r.lodging_online || 0) + rLodgingCash;
                 const rFooding = (r.fooding_online || 0) + rFoodingCash;
+                const rServices = (r.services_online || 0) + (r.services_cash || 0);
                 const isSelected = r.date === managerFinanceDate;
                 return \`
                   <div class="p-3.5 rounded-2xl border \${isSelected ? 'border-indigo-400 bg-indigo-50/40 ring-2 ring-indigo-200' : 'border-slate-200 bg-slate-50/50 hover:bg-white'} transition flex flex-col justify-between gap-2 shadow-2xs">
@@ -5085,13 +5343,11 @@ export function getDashboardHtml(): string {
                       </button>
                     </div>
                     <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
-                      <div>Lodging: <strong class="text-indigo-900">₹\${formatCurrency(rLodging)}</strong></div>
-                      <div>Fooding: <strong class="text-amber-900">₹\${formatCurrency(rFooding)}</strong></div>
+                      \${hasLodging ? \`<div>Lodging: <strong class="text-indigo-900">₹\${formatCurrency(rLodging)}</strong></div>\` : ''}
+                      \${hasFooding ? \`<div>Fooding: <strong class="text-amber-900">₹\${formatCurrency(rFooding)}</strong></div>\` : ''}
+                      \${hasServices ? \`<div>\${escapeHtml(servicesLabel)}: <strong class="text-purple-900">₹\${formatCurrency(rServices)}</strong></div>\` : ''}
                       <div>Expenses: <strong class="text-rose-700">₹\${formatCurrency(r.expenses_total)}</strong></div>
                       <div>Net: <strong class="\${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(r.net_revenue)}</strong></div>
-                    <div class="text-[10px] text-slate-400 col-span-2 pt-0.5 border-t border-slate-100">
-                      Lodging (On: ₹\${formatCurrency(r.lodging_online)} · Cash: ₹\${formatCurrency(rLodgingCash)}) · Fooding (On: ₹\${formatCurrency(r.fooding_online)} · Cash: ₹\${formatCurrency(rFoodingCash)})
-                    </div>
                     </div>
                     \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic truncate" title="\${escapeHtml(r.expense_notes)}">Notes: \${escapeHtml(r.expense_notes)}</div>\` : ''}
                   </div>
@@ -5179,7 +5435,6 @@ export function getDashboardHtml(): string {
         }
 
         showToast("Room booked successfully! Lodging total updated.");
-        // Reset quick booking inputs
         const amountInput = document.getElementById("mgrBookAmount");
         const guestInput = document.getElementById("mgrBookGuest");
         const notesInput = document.getElementById("mgrBookNotes");
@@ -5218,27 +5473,45 @@ export function getDashboardHtml(): string {
     }
 
     function calculateMgrFinanceLiveTotals() {
-      // Lodging is derived from today's bookings
       const propId = currentManagerInfo?.property_id || "";
-      const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate);
-      const lo = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
-      const lc = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
-      const lodgingSub = lo + lc;
+      const currentProp = properties.find(p => p.id === propId) || {};
+      const hasLodging = currentProp.has_lodging === 1;
+      const hasFooding = currentProp.has_fooding === 1;
+      const hasServices = currentProp.has_services === 1;
 
-      const fo = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
-      const fc = Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0);
+      let lodgingSub = 0;
+      if (hasLodging) {
+        const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate);
+        const lo = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
+        const lc = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+        lodgingSub = lo + lc;
+        const elLodging = document.getElementById("mgrLodgingSubtotal");
+        if (elLodging) elLodging.innerText = formatCurrency(lodgingSub);
+      }
+
+      let foodingSub = 0;
+      if (hasFooding) {
+        const fo = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
+        const fc = Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0);
+        foodingSub = fo + fc;
+        const elFooding = document.getElementById("mgrFoodingSubtotal");
+        if (elFooding) elFooding.innerText = formatCurrency(foodingSub);
+      }
+
+      let servicesSub = 0;
+      if (hasServices) {
+        const so = Math.max(0, parseFloat(document.getElementById("mgrServicesOnline")?.value || "0") || 0);
+        const sc = Math.max(0, parseFloat(document.getElementById("mgrServicesCash")?.value || "0") || 0);
+        servicesSub = so + sc;
+        const elServices = document.getElementById("mgrServicesSubtotal");
+        if (elServices) elServices.innerText = formatCurrency(servicesSub);
+      }
+
       const os = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
       const exp = Math.max(0, parseFloat(document.getElementById("mgrExpensesTotal")?.value || "0") || 0);
 
-      const foodingSub = fo + fc;
-      const totalSales = lodgingSub + foodingSub + os;
+      const totalSales = lodgingSub + foodingSub + servicesSub + os;
       const netProfit = totalSales - exp;
-
-      const elLodging = document.getElementById("mgrLodgingSubtotal");
-      if (elLodging) elLodging.innerText = formatCurrency(lodgingSub);
-
-      const elFooding = document.getElementById("mgrFoodingSubtotal");
-      if (elFooding) elFooding.innerText = formatCurrency(foodingSub);
 
       const elSales = document.getElementById("mgrTotalSalesDisplay");
       if (elSales) elSales.innerText = formatCurrency(totalSales);
@@ -5259,15 +5532,26 @@ export function getDashboardHtml(): string {
         return showToast("Error: Manager assigned property not found");
       }
       const propId = currentManagerInfo.property_id;
+      const currentProp = properties.find(p => p.id === propId) || {};
+      const hasLodging = currentProp.has_lodging === 1;
+      const hasFooding = currentProp.has_fooding === 1;
+      const hasServices = currentProp.has_services === 1;
       const date = managerFinanceDate;
 
-      // Lodging is automatically computed from room bookings
-      const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === date);
-      const lodgingOnline = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
-      const lodgingCash = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+      // Lodging is automatically computed from room bookings if lodging is active
+      let lodgingOnline = 0;
+      let lodgingCash = 0;
+      if (hasLodging) {
+        const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === date);
+        lodgingOnline = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
+        lodgingCash = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+      }
 
-      const foodingOnline = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
-      const foodingCash = Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0);
+      const foodingOnline = hasFooding ? Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0) : 0;
+      const foodingCash = hasFooding ? Math.max(0, parseFloat(document.getElementById("mgrFoodingCash")?.value || "0") || 0) : 0;
+      const servicesOnline = hasServices ? Math.max(0, parseFloat(document.getElementById("mgrServicesOnline")?.value || "0") || 0) : 0;
+      const servicesCash = hasServices ? Math.max(0, parseFloat(document.getElementById("mgrServicesCash")?.value || "0") || 0) : 0;
+
       const otherSales = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
       const expensesTotal = Math.max(0, parseFloat(document.getElementById("mgrExpensesTotal")?.value || "0") || 0);
       const expenseNotes = document.getElementById("mgrExpenseNotes")?.value?.trim() || "";
@@ -5286,6 +5570,8 @@ export function getDashboardHtml(): string {
             fooding_online: foodingOnline,
             fooding_cash: foodingCash,
             fooding_offline: foodingCash,
+            services_online: servicesOnline,
+            services_cash: servicesCash,
             other_sales: otherSales,
             expenses_total: expensesTotal,
             expense_notes: expenseNotes,
@@ -5348,10 +5634,9 @@ export function getDashboardHtml(): string {
     }
 
     // -------------------------------------------------------------------------
-    // ADMIN FINANCES, ROOM BOOKINGS CALENDAR & ROOM MANAGEMENT
+    // ADMIN FINANCES, ROOM BOOKINGS CALENDAR, ROOMS & BUSINESS OFFERINGS
     // -------------------------------------------------------------------------
     function renderAdminFinancesView(container) {
-      // Admin Subtabs: Dashboard | Calendar | Rooms
       container.innerHTML = \`
         <div class="space-y-4">
           <!-- Admin Subnavigation Tabs -->
@@ -5380,6 +5665,14 @@ export function getDashboardHtml(): string {
               <i data-lucide="door-closed" class="w-4 h-4"></i>
               <span>Manage Rooms</span>
             </button>
+            <button
+              type="button"
+              onclick="setAdminFinanceSubTab('business')"
+              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'business' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
+            >
+              <i data-lucide="sliders" class="w-4 h-4"></i>
+              <span>Business Offerings</span>
+            </button>
           </div>
 
           <!-- Subtab Content Container -->
@@ -5396,6 +5689,8 @@ export function getDashboardHtml(): string {
         renderAdminRoomCalendarView(subContainer);
       } else if (adminFinanceSubTab === "rooms") {
         renderAdminRoomsManagement(subContainer);
+      } else if (adminFinanceSubTab === "business") {
+        renderAdminBusinessSetup(subContainer);
       }
     }
 
@@ -5416,6 +5711,8 @@ export function getDashboardHtml(): string {
       let totalLodgingCash = 0;
       let totalFoodingOnline = 0;
       let totalFoodingCash = 0;
+      let totalServicesOnline = 0;
+      let totalServicesCash = 0;
       let totalOtherSales = 0;
       let totalExpenses = 0;
 
@@ -5426,15 +5723,23 @@ export function getDashboardHtml(): string {
         totalLodgingCash += rLodgingCash;
         totalFoodingOnline += (r.fooding_online || 0);
         totalFoodingCash += rFoodingCash;
+        totalServicesOnline += (r.services_online || 0);
+        totalServicesCash += (r.services_cash || 0);
         totalOtherSales += (r.other_sales || 0);
         totalExpenses += (r.expenses_total || 0);
       });
 
       const totalLodging = totalLodgingOnline + totalLodgingCash;
       const totalFooding = totalFoodingOnline + totalFoodingCash;
-      const grossRevenue = totalLodging + totalFooding + totalOtherSales;
+      const totalServices = totalServicesOnline + totalServicesCash;
+      const grossRevenue = totalLodging + totalFooding + totalServices + totalOtherSales;
       const netOperatingProfit = grossRevenue - totalExpenses;
       const profitMarginPct = grossRevenue > 0 ? Math.round((netOperatingProfit / grossRevenue) * 100) : 0;
+
+      const selectedProp = financeFilterProperty !== "all" ? properties.find(p => p.id === financeFilterProperty) : null;
+      const showLodgingCard = !selectedProp || selectedProp.has_lodging === 1;
+      const showFoodingCard = !selectedProp || selectedProp.has_fooding === 1;
+      const showServicesCard = !selectedProp || selectedProp.has_services === 1;
 
       container.innerHTML = \`
         <div class="space-y-4">
@@ -5443,16 +5748,19 @@ export function getDashboardHtml(): string {
             <div class="flex items-center gap-2.5 flex-wrap">
               <!-- Property Filter -->
               <div class="flex items-center gap-1.5">
-                <label for="adminFinancePropertySelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
+                <label for="adminFinancePropertySelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
                 <select
                   id="adminFinancePropertySelect"
                   onchange="onAdminFinanceFilterChange(this.value)"
                   class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
                 >
-                  <option value="all" \${financeFilterProperty === 'all' ? 'selected' : ''}>All Properties (\${properties.length})</option>
-                  \${properties.map(p => \`
-                    <option value="\${p.id}" \${financeFilterProperty === p.id ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
-                  \`).join("")}
+                  <option value="all" \${financeFilterProperty === 'all' ? 'selected' : ''}>All Businesses (\${properties.length})</option>
+                  \${properties.map(p => {
+                    const ti = getBusinessTypeInfo(p);
+                    return \`
+                      <option value="\${p.id}" \${financeFilterProperty === p.id ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
+                    \`;
+                  }).join("")}
                 </select>
               </div>
 
@@ -5473,7 +5781,7 @@ export function getDashboardHtml(): string {
               </button>
             </div>
 
-            <div class="flex items-center gap-2 self-start sm:self-auto">
+            <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
               <button
                 type="button"
                 onclick="openFinanceModal()"
@@ -5493,8 +5801,8 @@ export function getDashboardHtml(): string {
             </div>
           </div>
 
-          <!-- 5 Executive Summary Cards -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <!-- Dynamic Executive Summary Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <!-- Card 1: Gross Revenue -->
             <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
               <div>
@@ -5505,39 +5813,59 @@ export function getDashboardHtml(): string {
                 <div class="text-lg sm:text-xl font-black text-slate-900 font-mono mt-1">₹\${formatCurrency(grossRevenue)}</div>
               </div>
               <div class="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 font-medium">
-                \${records.length} daily entries recorded
+                \${records.length} daily entries
               </div>
             </div>
 
             <!-- Card 2: Lodging Sales -->
-            <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between">
+            <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between \${showLodgingCard ? '' : 'opacity-50'}">
               <div>
                 <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center justify-between">
                   <span>Lodging Sales</span>
                   <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-500"></i>
                 </div>
-                <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">₹\${formatCurrency(totalLodging)}</div>
+                <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">
+                  \${showLodgingCard ? \`₹\${formatCurrency(totalLodging)}\` : 'N/A'}
+                </div>
               </div>
               <div class="text-[10px] text-indigo-800 mt-2 pt-2 border-t border-indigo-50 font-medium truncate">
-                Online: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}
+                \${showLodgingCard ? \`On: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}\` : 'Non-lodging business'}
               </div>
             </div>
 
             <!-- Card 3: Fooding Sales -->
-            <div class="bg-white p-3.5 rounded-2xl border border-amber-100 shadow-xs flex flex-col justify-between">
+            <div class="bg-white p-3.5 rounded-2xl border border-amber-100 shadow-xs flex flex-col justify-between \${showFoodingCard ? '' : 'opacity-50'}">
               <div>
                 <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center justify-between">
                   <span>Fooding Sales</span>
                   <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-500"></i>
                 </div>
-                <div class="text-lg sm:text-xl font-black text-amber-950 font-mono mt-1">₹\${formatCurrency(totalFooding)}</div>
+                <div class="text-lg sm:text-xl font-black text-amber-950 font-mono mt-1">
+                  \${showFoodingCard ? \`₹\${formatCurrency(totalFooding)}\` : 'N/A'}
+                </div>
               </div>
               <div class="text-[10px] text-amber-800 mt-2 pt-2 border-t border-amber-50 font-medium truncate">
-                Online: ₹\${formatCurrency(totalFoodingOnline)} · Cash: ₹\${formatCurrency(totalFoodingCash)}
+                \${showFoodingCard ? \`On: ₹\${formatCurrency(totalFoodingOnline)} · Cash: ₹\${formatCurrency(totalFoodingCash)}\` : 'No fooding module'}
               </div>
             </div>
 
-            <!-- Card 4: Operating Expenses -->
+            <!-- Card 4: Services Sales -->
+            <div class="bg-white p-3.5 rounded-2xl border border-purple-100 shadow-xs flex flex-col justify-between \${showServicesCard ? '' : 'opacity-50'}">
+              <div>
+                <div class="text-[10px] font-bold text-purple-700 uppercase tracking-wider flex items-center justify-between">
+                  <span>Services Sales</span>
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-500"></i>
+                </div>
+                <div class="text-lg sm:text-xl font-black text-purple-950 font-mono mt-1">
+                  \${showServicesCard ? \`₹\${formatCurrency(totalServices)}\` : 'N/A'}
+                </div>
+              </div>
+              <div class="text-[10px] text-purple-800 mt-2 pt-2 border-t border-purple-50 font-medium truncate">
+                \${showServicesCard ? \`On: ₹\${formatCurrency(totalServicesOnline)} · Cash: ₹\${formatCurrency(totalServicesCash)}\` : 'No services module'}
+              </div>
+            </div>
+
+            <!-- Card 5: Operating Expenses -->
             <div class="bg-white p-3.5 rounded-2xl border border-rose-100 shadow-xs flex flex-col justify-between">
               <div>
                 <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center justify-between">
@@ -5551,8 +5879,8 @@ export function getDashboardHtml(): string {
               </div>
             </div>
 
-            <!-- Card 5: Net Operating Profit -->
-            <div class="col-span-2 sm:col-span-1 bg-white p-3.5 rounded-2xl border \${netOperatingProfit < 0 ? 'border-rose-200' : 'border-emerald-200'} shadow-xs flex flex-col justify-between">
+            <!-- Card 6: Net Operating Profit -->
+            <div class="bg-white p-3.5 rounded-2xl border \${netOperatingProfit < 0 ? 'border-rose-200' : 'border-emerald-200'} shadow-xs flex flex-col justify-between">
               <div>
                 <div class="text-[10px] font-bold \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'} uppercase tracking-wider flex items-center justify-between">
                   <span>Net Profit</span>
@@ -5568,19 +5896,19 @@ export function getDashboardHtml(): string {
             </div>
           </div>
 
-          <!-- Property Performance Comparison (when All Properties selected) -->
+          <!-- Business Performance Comparison (when All Businesses selected) -->
           \${financeFilterProperty === 'all' && properties.length > 0 ? \`
             <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
-                Property Performance Comparison (\${MONTH_NAMES[financeMonth]} \${financeYear})
+                Business Performance Comparison (\${MONTH_NAMES[financeMonth]} \${financeYear})
               </h4>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 \${properties.map(p => {
                   const propRecords = records.filter(r => r.property_id === p.id);
                   let pSales = 0, pExp = 0;
-                  let pLodgingOn = 0, pLodgingCash = 0, pFoodingOn = 0, pFoodingCash = 0;
+                  let pLodgingOn = 0, pLodgingCash = 0, pFoodingOn = 0, pFoodingCash = 0, pServicesOn = 0, pServicesCash = 0;
                   propRecords.forEach(r => {
                     pSales += (r.total_sales || 0);
                     pExp += (r.expenses_total || 0);
@@ -5590,17 +5918,26 @@ export function getDashboardHtml(): string {
                     pLodgingCash += rLodgingCash;
                     pFoodingOn += (r.fooding_online || 0);
                     pFoodingCash += rFoodingCash;
+                    pServicesOn += (r.services_online || 0);
+                    pServicesCash += (r.services_cash || 0);
                   });
                   const pLodging = pLodgingOn + pLodgingCash;
                   const pFooding = pFoodingOn + pFoodingCash;
+                  const pServices = pServicesOn + pServicesCash;
                   const pNet = pSales - pExp;
+                  const ti = getBusinessTypeInfo(p);
+
                   return \`
-                    <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white transition flex flex-col gap-2 shadow-2xs">
-                      <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-900">\${escapeHtml(p.name)}</span>
-                        <span class="text-[10px] text-slate-500 font-medium">\${propRecords.length} entries</span>
+                    <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white transition flex flex-col justify-between gap-2 shadow-2xs">
+                      <div>
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="text-xs font-black text-slate-900">\${escapeHtml(p.name)}</span>
+                          <span class="text-[10px] px-2 py-0.5 rounded-md font-bold \${ti.badgeClass}">\${escapeHtml(ti.label)}</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 font-medium">\${propRecords.length} entries recorded</div>
                       </div>
-                      <div class="grid grid-cols-2 gap-1.5 text-xs">
+
+                      <div class="grid grid-cols-2 gap-1.5 text-xs py-1">
                         <div>
                           <span class="text-[10px] text-slate-400 uppercase font-semibold">Gross Sales</span>
                           <div class="font-bold font-mono text-emerald-700">₹\${formatCurrency(pSales)}</div>
@@ -5610,13 +5947,17 @@ export function getDashboardHtml(): string {
                           <div class="font-bold font-mono text-rose-700">₹\${formatCurrency(pExp)}</div>
                         </div>
                       </div>
+
                       <div class="pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
                         <span class="text-slate-500">Net Profit:</span>
                         <span class="font-bold font-mono \${pNet < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(pNet)}</span>
                       </div>
+
+                      <!-- Itemized Active Offerings Only -->
                       <div class="text-[10px] text-slate-500 space-y-0.5 pt-1 border-t border-slate-100">
-                        <div>Lodging: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(pLodging)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pLodgingOn)} · Cash ₹\${formatCurrency(pLodgingCash)})</span></div>
-                        <div>Fooding: <strong class="text-amber-900 font-mono">₹\${formatCurrency(pFooding)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pFoodingOn)} · Cash ₹\${formatCurrency(pFoodingCash)})</span></div>
+                        \${p.has_lodging === 1 ? \`<div>Lodging: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(pLodging)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pLodgingOn)} · Cs ₹\${formatCurrency(pLodgingCash)})</span></div>\` : ''}
+                        \${p.has_fooding === 1 ? \`<div>Fooding: <strong class="text-amber-900 font-mono">₹\${formatCurrency(pFooding)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pFoodingOn)} · Cs ₹\${formatCurrency(pFoodingCash)})</span></div>\` : ''}
+                        \${p.has_services === 1 ? \`<div>\${escapeHtml(p.services_label || 'Services')}: <strong class="text-purple-900 font-mono">₹\${formatCurrency(pServices)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pServicesOn)} · Cs ₹\${formatCurrency(pServicesCash)})</span></div>\` : ''}
                       </div>
                     </div>
                   \`;
@@ -5646,7 +5987,7 @@ export function getDashboardHtml(): string {
                   <i data-lucide="receipt" class="w-6 h-6"></i>
                 </div>
                 <h5 class="text-sm font-bold text-slate-700">No Financial Records Found</h5>
-                <p class="text-xs text-slate-400 mt-1 max-w-sm">No daily sales or expenses entered for this month / property yet.</p>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm">No daily sales or expenses entered for this month / business yet.</p>
                 <button type="button" onclick="openFinanceModal()" class="mt-4 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer">
                   + Record Daily Sales
                 </button>
@@ -5658,9 +5999,8 @@ export function getDashboardHtml(): string {
                   <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     <tr>
                       <th class="py-3 px-3.5">Date</th>
-                      <th class="py-3 px-3.5">Property</th>
-                      <th class="py-3 px-3.5">Lodging (Online / Cash)</th>
-                      <th class="py-3 px-3.5">Fooding (Online / Cash)</th>
+                      <th class="py-3 px-3.5">Business</th>
+                      <th class="py-3 px-3.5">Revenue Breakdown</th>
                       <th class="py-3 px-3.5">Other</th>
                       <th class="py-3 px-3.5 font-bold text-slate-900">Total Sales</th>
                       <th class="py-3 px-3.5 font-bold text-rose-700">Expenses</th>
@@ -5671,25 +6011,43 @@ export function getDashboardHtml(): string {
                   </thead>
                   <tbody class="divide-y divide-slate-100">
                     \${records.map(r => {
+                      const rProp = properties.find(p => p.id === r.property_id);
                       const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
                       const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
                       const rLodging = (r.lodging_online || 0) + rLodgingCash;
                       const rFooding = (r.fooding_online || 0) + rFoodingCash;
+                      const rServices = (r.services_online || 0) + (r.services_cash || 0);
+                      const ti = getBusinessTypeInfo(rProp);
+
                       return \`
                         <tr class="hover:bg-slate-50/80 transition">
                           <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">\${r.date}</td>
                           <td class="py-3 px-3.5 whitespace-nowrap">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700">
-                              \${escapeHtml(r.property_name || 'Property')}
+                              \${escapeHtml(r.property_name || 'Business')}
                             </span>
                           </td>
                           <td class="py-3 px-3.5 whitespace-nowrap">
-                            <div class="font-bold text-indigo-900 font-mono">₹\${formatCurrency(rLodging)}</div>
-                            <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.lodging_online)} · Cash: ₹\${formatCurrency(rLodgingCash)}</div>
-                          </td>
-                          <td class="py-3 px-3.5 whitespace-nowrap">
-                            <div class="font-bold text-amber-900 font-mono">₹\${formatCurrency(rFooding)}</div>
-                            <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.fooding_online)} · Cash: ₹\${formatCurrency(rFoodingCash)}</div>
+                            <div class="space-y-1">
+                              \${rLodging > 0 || rProp?.has_lodging === 1 ? \`
+                                <div>
+                                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700">Lodging: ₹\${formatCurrency(rLodging)}</span>
+                                  <span class="text-[9px] text-slate-400">(On ₹\${formatCurrency(r.lodging_online)} · Cs ₹\${formatCurrency(rLodgingCash)})</span>
+                                </div>
+                              \` : ''}
+                              \${rFooding > 0 || rProp?.has_fooding === 1 ? \`
+                                <div>
+                                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700">Fooding: ₹\${formatCurrency(rFooding)}</span>
+                                  <span class="text-[9px] text-slate-400">(On ₹\${formatCurrency(r.fooding_online)} · Cs ₹\${formatCurrency(rFoodingCash)})</span>
+                                </div>
+                              \` : ''}
+                              \${rServices > 0 || rProp?.has_services === 1 ? \`
+                                <div>
+                                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700">\${escapeHtml(rProp?.services_label || 'Services')}: ₹\${formatCurrency(rServices)}</span>
+                                  <span class="text-[9px] text-slate-400">(On ₹\${formatCurrency(r.services_online)} · Cs ₹\${formatCurrency(r.services_cash)})</span>
+                                </div>
+                              \` : ''}
+                            </div>
                           </td>
                           <td class="py-3 px-3.5 font-mono text-slate-600 whitespace-nowrap">₹\${formatCurrency(r.other_sales)}</td>
                           <td class="py-3 px-3.5 font-black text-emerald-700 font-mono whitespace-nowrap">₹\${formatCurrency(r.total_sales)}</td>
@@ -5731,17 +6089,20 @@ export function getDashboardHtml(): string {
               <!-- Mobile Cards View (< md) -->
               <div class="md:hidden divide-y divide-slate-100 p-3 space-y-3">
                 \${records.map(r => {
+                  const rProp = properties.find(p => p.id === r.property_id);
                   const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
                   const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
                   const rLodging = (r.lodging_online || 0) + rLodgingCash;
                   const rFooding = (r.fooding_online || 0) + rFoodingCash;
+                  const rServices = (r.services_online || 0) + (r.services_cash || 0);
+
                   return \`
                     <div class="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/80 flex flex-col gap-2.5 shadow-2xs">
                       <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1.5">
                           <span class="text-xs font-bold text-slate-900">\${r.date}</span>
                           <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white border border-slate-200 text-slate-700">
-                            \${escapeHtml(r.property_name || 'Property')}
+                            \${escapeHtml(r.property_name || 'Business')}
                           </span>
                         </div>
                         <div class="flex items-center gap-1">
@@ -5755,15 +6116,30 @@ export function getDashboardHtml(): string {
                       </div>
 
                       <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-xl border border-slate-100">
+                        \${rProp?.has_lodging === 1 ? \`
+                          <div>
+                            <span class="text-[10px] font-bold text-indigo-700 uppercase">Lodging</span>
+                            <div class="font-mono font-bold text-indigo-950">₹\${formatCurrency(rLodging)}</div>
+                            <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Cs ₹\${formatCurrency(rLodgingCash)}</div>
+                          </div>
+                        \` : ''}
+                        \${rProp?.has_fooding === 1 ? \`
+                          <div>
+                            <span class="text-[10px] font-bold text-amber-700 uppercase">Fooding</span>
+                            <div class="font-mono font-bold text-amber-950">₹\${formatCurrency(rFooding)}</div>
+                            <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Cs ₹\${formatCurrency(rFoodingCash)}</div>
+                          </div>
+                        \` : ''}
+                        \${rProp?.has_services === 1 ? \`
+                          <div>
+                            <span class="text-[10px] font-bold text-purple-700 uppercase">\${escapeHtml(rProp?.services_label || 'Services')}</span>
+                            <div class="font-mono font-bold text-purple-950">₹\${formatCurrency(rServices)}</div>
+                            <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.services_online)} · Cs ₹\${formatCurrency(r.services_cash)}</div>
+                          </div>
+                        \` : ''}
                         <div>
-                          <span class="text-[10px] font-bold text-indigo-700 uppercase">Lodging</span>
-                          <div class="font-mono font-bold text-indigo-950">₹\${formatCurrency(rLodging)}</div>
-                          <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Cash ₹\${formatCurrency(rLodgingCash)}</div>
-                        </div>
-                        <div>
-                          <span class="text-[10px] font-bold text-amber-700 uppercase">Fooding</span>
-                          <div class="font-mono font-bold text-amber-950">₹\${formatCurrency(rFooding)}</div>
-                          <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Cash ₹\${formatCurrency(rFoodingCash)}</div>
+                          <span class="text-[10px] font-bold text-slate-500 uppercase">Other Sales</span>
+                          <div class="font-mono font-bold text-slate-700">₹\${formatCurrency(r.other_sales)}</div>
                         </div>
                       </div>
 
@@ -5789,11 +6165,6 @@ export function getDashboardHtml(): string {
                           <strong class="text-rose-800">Expense Notes:</strong> \${escapeHtml(r.expense_notes)}
                         </div>
                       \` : ''}
-                      \${r.notes ? \`
-                        <div class="text-[10px] text-slate-500 italic">
-                          Shift Notes: \${escapeHtml(r.notes)}
-                        </div>
-                      \` : ''}
                     </div>
                   \`;
                 }).join("")}
@@ -5809,11 +6180,67 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     function renderAdminRoomCalendarView(container) {
       if (!calendarSelectedProperty && properties.length > 0) {
-        calendarSelectedProperty = properties[0].id;
+        // Prefer a property that has lodging
+        const lodgingProp = properties.find(p => p.has_lodging === 1);
+        calendarSelectedProperty = lodgingProp ? lodgingProp.id : properties[0].id;
       }
       const prop = properties.find(p => p.id === calendarSelectedProperty) || properties[0];
       const propId = prop ? prop.id : "";
       const propName = prop ? prop.name : "Selected Property";
+      const hasLodging = prop ? (prop.has_lodging === 1) : false;
+
+      // If selected property has NO lodging, display a clean notice with a link to Business Offerings
+      if (!hasLodging) {
+        container.innerHTML = \`
+          <div class="space-y-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-2">
+                <label for="adminCalPropSelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
+                <select
+                  id="adminCalPropSelect"
+                  onchange="setCalendarProperty(this.value)"
+                  class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
+                >
+                  \${properties.map(p => {
+                    const ti = getBusinessTypeInfo(p);
+                    return \`
+                      <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
+                    \`;
+                  }).join("")}
+                </select>
+              </div>
+            </div>
+
+            <div class="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-xl mx-auto">
+              <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                <i data-lucide="hotel" class="w-7 h-7"></i>
+              </div>
+              <h4 class="text-base font-bold text-slate-900">\${escapeHtml(propName)} has no Lodging / Rooms</h4>
+              <p class="text-xs text-slate-500 mt-1 max-w-md">
+                This business is currently configured as <strong>\${escapeHtml(getBusinessTypeInfo(prop).label)}</strong>. Room bookings and calendar are disabled.
+              </p>
+              <div class="flex items-center gap-3 mt-5">
+                <button
+                  type="button"
+                  onclick="openBusinessConfigModal('\${propId}')"
+                  class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                  <span>Enable Lodging for this Business</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="setAdminFinanceSubTab('business')"
+                  class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+                >
+                  View Business Offerings
+                </button>
+              </div>
+            </div>
+          </div>
+        \`;
+        return;
+      }
 
       // Rooms for this property
       const propRooms = roomsList.filter(r => r.property_id === propId);
@@ -5838,15 +6265,18 @@ export function getDashboardHtml(): string {
             <div class="flex items-center gap-2.5 flex-wrap">
               <!-- Property Selector -->
               <div class="flex items-center gap-1.5">
-                <label for="adminCalPropSelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
+                <label for="adminCalPropSelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
                 <select
                   id="adminCalPropSelect"
                   onchange="setCalendarProperty(this.value)"
                   class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
                 >
-                  \${properties.map(p => \`
-                    <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
-                  \`).join("")}
+                  \${properties.map(p => {
+                    const ti = getBusinessTypeInfo(p);
+                    return \`
+                      <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
+                    \`;
+                  }).join("")}
                 </select>
               </div>
 
@@ -5981,7 +6411,6 @@ export function getDashboardHtml(): string {
                 \${propRooms.map(rm => {
                   return \`
                     <tr class="hover:bg-slate-50/70 transition">
-                      <!-- Sticky Room Col -->
                       <td class="py-2.5 px-3.5 sticky left-0 z-10 bg-white shadow-xs font-bold text-slate-900 whitespace-nowrap">
                         <div class="flex items-center gap-1.5">
                           <i data-lucide="door-closed" class="w-3.5 h-3.5 text-indigo-600"></i>
@@ -5990,7 +6419,6 @@ export function getDashboardHtml(): string {
                         <div class="text-[10px] text-slate-400 font-normal">\${escapeHtml(rm.room_type || 'Standard')} · ₹\${formatCurrency(rm.base_price || 0)}</div>
                       </td>
 
-                      <!-- Days Cells -->
                       \${days.map(d => {
                         const dayStr = String(d).padStart(2, "0");
                         const dateStr = \`\${currentMonthPrefix}-\${dayStr}\`;
@@ -5999,7 +6427,6 @@ export function getDashboardHtml(): string {
                         const count = cellBookings.length;
 
                         if (count === 0) {
-                          // Vacant
                           return \`
                             <td
                               onclick="openRoomBookingModal('\${rm.id}', '\${dateStr}', null)"
@@ -6026,7 +6453,6 @@ export function getDashboardHtml(): string {
                             </td>
                           \`;
                         } else {
-                          // Multiple Bookings in 1 Day! (2x or 3x)
                           const totalAmt = cellBookings.reduce((s, b) => s + (b.amount || 0), 0);
                           const kAmt = Math.round(totalAmt / 1000 * 10) / 10;
                           return \`
@@ -6056,7 +6482,7 @@ export function getDashboardHtml(): string {
     // Helper: Monthly 7-Day Grid Calendar View
     function renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) {
       const todayIso = new Date().toISOString().split("T")[0];
-      const firstDayOfWeek = new Date(financeYear, financeMonth, 1).getDay(); // 0 = Sun
+      const firstDayOfWeek = new Date(financeYear, financeMonth, 1).getDay();
       const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
       return \`
@@ -6156,176 +6582,445 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     function renderAdminRoomsManagement(container) {
       if (!calendarSelectedProperty && properties.length > 0) {
-        calendarSelectedProperty = properties[0].id;
+        const lodgingProp = properties.find(p => p.has_lodging === 1);
+        calendarSelectedProperty = lodgingProp ? lodgingProp.id : properties[0].id;
       }
       const propId = calendarSelectedProperty || (properties[0] ? properties[0].id : "");
       const prop = properties.find(p => p.id === propId) || properties[0];
+      const hasLodging = prop ? (prop.has_lodging === 1) : false;
       const propRooms = roomsList.filter(r => r.property_id === propId);
 
       container.innerHTML = \`
         <div class="space-y-4">
-          <!-- Property Filter & Add Single Room Bar -->
+          <!-- Property Filter Bar -->
           <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center gap-2">
-              <label for="adminManageRoomsProp" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
+              <label for="adminManageRoomsProp" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</label>
               <select
                 id="adminManageRoomsProp"
                 onchange="calendarSelectedProperty = this.value; renderFinancesView();"
                 class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
               >
-                \${properties.map(p => \`
-                  <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
-                \`).join("")}
+                \${properties.map(p => {
+                  const ti = getBusinessTypeInfo(p);
+                  return \`
+                    <option value="\${p.id}" \${p.id === propId ? 'selected' : ''}>\${escapeHtml(p.name)} (\${escapeHtml(ti.label)})</option>
+                  \`;
+                }).join("")}
               </select>
-              <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
-                \${propRooms.length} Rooms
-              </span>
+              \${hasLodging ? \`
+                <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
+                  \${propRooms.length} Rooms
+                </span>
+              \` : ''}
             </div>
 
-            <button
-              type="button"
-              onclick="openManageRoomModal(null)"
-              class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto"
-            >
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>+ Add Single Room</span>
-            </button>
-          </div>
-
-          <!-- Quick Bulk Add Rooms Card -->
-          <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 sm:p-5 rounded-3xl border border-indigo-100 space-y-3">
-            <div class="flex items-center justify-between flex-wrap gap-2">
-              <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-                  <i data-lucide="layers" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Quick Bulk Add Rooms</h4>
-                  <p class="text-[11px] text-indigo-700/80">Add multiple rooms in one go (e.g. 101, 102, 103, 104)</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-              <div class="sm:col-span-2">
-                <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Numbers (Comma Separated) *</label>
-                <input
-                  type="text"
-                  id="adminBulkRoomNumbers"
-                  placeholder="101, 102, 103, 104, 201, 202"
-                  class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Type</label>
-                <input
-                  type="text"
-                  id="adminBulkRoomType"
-                  value="Standard"
-                  placeholder="Standard, Deluxe"
-                  class="w-full px-3 py-2 text-xs rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-indigo-950 mb-1">Base Price ₹</label>
-                <input
-                  type="number"
-                  id="adminBulkBasePrice"
-                  value="2000"
-                  step="1"
-                  min="0"
-                  placeholder="2000"
-                  class="w-full px-3 py-2 text-xs font-bold font-mono rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                />
-              </div>
-            </div>
-
-            <div class="flex justify-end pt-1">
+            \${hasLodging ? \`
               <button
                 type="button"
-                onclick="bulkAddAdminRooms()"
-                class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                onclick="openManageRoomModal(null)"
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto"
               >
-                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                <span>Bulk Add Rooms to \${escapeHtml(prop ? prop.name : 'Property')}</span>
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>+ Add Single Room</span>
               </button>
-            </div>
+            \` : \`
+              <button
+                type="button"
+                onclick="openBusinessConfigModal('\${propId}')"
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition cursor-pointer self-start sm:self-auto"
+              >
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Enable Lodging</span>
+              </button>
+            \`}
           </div>
 
-          <!-- Rooms List Table -->
-          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
-                Configured Rooms for \${escapeHtml(prop ? prop.name : 'Property')}
-              </h4>
-              <span class="text-xs font-semibold text-slate-500">\${propRooms.length} Active</span>
+          \${!hasLodging ? \`
+            <div class="bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-lg mx-auto">
+              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3">
+                <i data-lucide="door-closed" class="w-6 h-6"></i>
+              </div>
+              <h5 class="text-sm font-bold text-slate-900">\${escapeHtml(prop ? prop.name : 'Business')} has no Lodging / Rooms</h5>
+              <p class="text-xs text-slate-500 mt-1 max-w-sm">This business is configured as <strong>\${escapeHtml(getBusinessTypeInfo(prop).label)}</strong>. Room management is not active for this business.</p>
+              <button
+                type="button"
+                onclick="openBusinessConfigModal('\${propId}')"
+                class="mt-4 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer"
+              >
+                Configure Offerings
+              </button>
+            </div>
+          \` : \`
+            <!-- Quick Bulk Add Rooms Card -->
+            <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 sm:p-5 rounded-3xl border border-indigo-100 space-y-3">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                    <i data-lucide="layers" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Quick Bulk Add Rooms</h4>
+                    <p class="text-[11px] text-indigo-700/80">Add multiple rooms in one go (e.g. 101, 102, 103, 104)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Numbers (Comma Separated) *</label>
+                  <input
+                    type="text"
+                    id="adminBulkRoomNumbers"
+                    placeholder="101, 102, 103, 104, 201, 202"
+                    class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Type</label>
+                  <input
+                    type="text"
+                    id="adminBulkRoomType"
+                    value="Standard"
+                    placeholder="Standard, Deluxe"
+                    class="w-full px-3 py-2 text-xs rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Base Price ₹</label>
+                  <input
+                    type="number"
+                    id="adminBulkBasePrice"
+                    value="2000"
+                    step="1"
+                    min="0"
+                    placeholder="2000"
+                    class="w-full px-3 py-2 text-xs font-bold font-mono rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              <div class="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onclick="bulkAddAdminRooms()"
+                  class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                  <span>Bulk Add Rooms to \${escapeHtml(prop ? prop.name : 'Property')}</span>
+                </button>
+              </div>
             </div>
 
-            \${propRooms.length === 0 ? \`
-              <div class="p-8 text-center text-xs text-slate-400">
-                No rooms added for this property yet. Use the Quick Bulk Add form above to add rooms (101, 102, 103, 104).
+            <!-- Rooms List Table -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+                  Configured Rooms for \${escapeHtml(prop ? prop.name : 'Property')}
+                </h4>
+                <span class="text-xs font-semibold text-slate-500">\${propRooms.length} Active</span>
               </div>
-            \` : \`
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-700">
-                  <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    <tr>
-                      <th class="py-3 px-4">Room Number</th>
-                      <th class="py-3 px-4">Type</th>
-                      <th class="py-3 px-4">Base Price</th>
-                      <th class="py-3 px-4">Status</th>
-                      <th class="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100">
-                    \${propRooms.map(rm => \`
-                      <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3 px-4 font-black text-slate-900 text-sm whitespace-nowrap">
-                          Room \${escapeHtml(rm.room_number)}
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
-                            \${escapeHtml(rm.room_type || 'Standard')}
-                          </span>
-                        </td>
-                        <td class="py-3 px-4 font-mono font-bold text-indigo-900 whitespace-nowrap">
-                          ₹\${formatCurrency(rm.base_price || 0)}
-                        </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            Active
-                          </span>
-                        </td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap">
-                          <div class="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              onclick="openManageRoomModal('\${rm.id}')"
-                              title="Edit Room"
-                              class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
-                            >
-                              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button
-                              type="button"
-                              onclick="deleteAdminRoom('\${rm.id}')"
-                              title="Delete Room"
-                              class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                            >
-                              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                          </div>
-                        </td>
+
+              \${propRooms.length === 0 ? \`
+                <div class="p-8 text-center text-xs text-slate-400">
+                  No rooms added for this business yet. Use the Quick Bulk Add form above to add rooms (101, 102, 103, 104).
+                </div>
+              \` : \`
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      <tr>
+                        <th class="py-3 px-4">Room Number</th>
+                        <th class="py-3 px-4">Type</th>
+                        <th class="py-3 px-4">Base Price</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
                       </tr>
-                    \`).join("")}
-                  </tbody>
-                </table>
-              </div>
-            \`}
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      \${propRooms.map(rm => \`
+                        <tr class="hover:bg-slate-50/80 transition">
+                          <td class="py-3 px-4 font-black text-slate-900 text-sm whitespace-nowrap">
+                            Room \${escapeHtml(rm.room_number)}
+                          </td>
+                          <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+                              \${escapeHtml(rm.room_type || 'Standard')}
+                            </span>
+                          </td>
+                          <td class="py-3 px-4 font-mono font-bold text-indigo-900 whitespace-nowrap">
+                            ₹\${formatCurrency(rm.base_price || 0)}
+                          </td>
+                          <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              Active
+                            </span>
+                          </td>
+                          <td class="py-3 px-4 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onclick="openManageRoomModal('\${rm.id}')"
+                                title="Edit Room"
+                                class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
+                              >
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                              </button>
+                              <button
+                                type="button"
+                                onclick="deleteAdminRoom('\${rm.id}')"
+                                title="Delete Room"
+                                class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              >
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      \`).join("")}
+                    </tbody>
+                  </table>
+                </div>
+              \`}
+            </div>
+          \`}
+        </div>
+      \`;
+    }
+
+    // -------------------------------------------------------------------------
+    // SUBTAB 4: ADMIN BUSINESS OFFERINGS SETUP (HOTEL, FOODING, SALON, SERVICES)
+    // -------------------------------------------------------------------------
+    function renderAdminBusinessSetup(container) {
+      container.innerHTML = \`
+        <div class="space-y-4">
+          <!-- Setup Header -->
+          <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="sliders" class="w-5 h-5 text-indigo-600"></i>
+                Business Offerings & Modules Configuration
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Admin decides whether each business has Lodging (rooms), Fooding (restaurant/dining), or Services (salon, domestic, spa).
+              </p>
+            </div>
+            <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl self-start sm:self-auto">
+              \${properties.length} Configured Businesses
+            </span>
+          </div>
+
+          <!-- Business Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            \${properties.map(p => {
+              const hasL = p.has_lodging === 1;
+              const hasF = p.has_fooding === 1;
+              const hasS = p.has_services === 1;
+              const ti = getBusinessTypeInfo(p);
+
+              return \`
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs flex flex-col justify-between gap-4 hover:shadow-md transition">
+                  <div class="space-y-3">
+                    <!-- Title and Type -->
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h4 class="text-sm font-black text-slate-900">\${escapeHtml(p.name)}</h4>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold mt-1 \${ti.badgeClass}">
+                          \${escapeHtml(ti.label)}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onclick="openBusinessConfigModal('\${p.id}')"
+                        class="px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-indigo-200"
+                      >
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        <span>Configure</span>
+                      </button>
+                    </div>
+
+                    <!-- Active Capability Status Badges -->
+                    <div class="space-y-2 pt-1 border-t border-slate-100 text-xs">
+                      <!-- Lodging -->
+                      <div class="flex items-center justify-between p-2 rounded-xl \${hasL ? 'bg-indigo-50/70 border border-indigo-100' : 'bg-slate-50 text-slate-400'}">
+                        <span class="flex items-center gap-2 font-medium">
+                          <i data-lucide="hotel" class="w-4 h-4 \${hasL ? 'text-indigo-600' : 'text-slate-300'}"></i>
+                          <span>Lodging & Rooms</span>
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full \${hasL ? 'bg-indigo-200 text-indigo-900' : 'bg-slate-200 text-slate-600'}">
+                          \${hasL ? 'Active' : 'Disabled'}
+                        </span>
+                      </div>
+
+                      <!-- Fooding -->
+                      <div class="flex items-center justify-between p-2 rounded-xl \${hasF ? 'bg-amber-50/70 border border-amber-100' : 'bg-slate-50 text-slate-400'}">
+                        <span class="flex items-center gap-2 font-medium">
+                          <i data-lucide="utensils" class="w-4 h-4 \${hasF ? 'text-amber-600' : 'text-slate-300'}"></i>
+                          <span>Fooding & Restaurant</span>
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full \${hasF ? 'bg-amber-200 text-amber-900' : 'bg-slate-200 text-slate-600'}">
+                          \${hasF ? 'Active' : 'Disabled'}
+                        </span>
+                      </div>
+
+                      <!-- Services -->
+                      <div class="flex items-center justify-between p-2 rounded-xl \${hasS ? 'bg-purple-50/70 border border-purple-100' : 'bg-slate-50 text-slate-400'}">
+                        <span class="flex items-center gap-2 font-medium">
+                          <i data-lucide="sparkles" class="w-4 h-4 \${hasS ? 'text-purple-600' : 'text-slate-300'}"></i>
+                          <span>Services (\${escapeHtml(p.services_label || 'Services')})</span>
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full \${hasS ? 'bg-purple-200 text-purple-900' : 'bg-slate-200 text-slate-600'}">
+                          \${hasS ? 'Active' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <span>Leave Allowance: \${p.monthly_leave_allowance || 2} days/mo</span>
+                    <button
+                      type="button"
+                      onclick="openBusinessConfigModal('\${p.id}')"
+                      class="text-indigo-600 hover:text-indigo-800 font-bold text-[11px] cursor-pointer"
+                    >
+                      Change Offerings →
+                    </button>
+                  </div>
+                </div>
+              \`;
+            }).join("")}
           </div>
         </div>
       \`;
+    }
+
+    // Business Config Modal Handlers
+    function openBusinessConfigModal(propId) {
+      const prop = properties.find(p => p.id === propId);
+      if (!prop) return;
+
+      const idInput = document.getElementById("modalConfigPropId");
+      const title = document.getElementById("businessConfigModalTitle");
+      const subtitle = document.getElementById("businessConfigModalSubtitle");
+      const chkL = document.getElementById("modalConfigHasLodging");
+      const chkF = document.getElementById("modalConfigHasFooding");
+      const chkS = document.getElementById("modalConfigHasServices");
+      const lblInput = document.getElementById("modalConfigServicesLabel");
+      const lblRow = document.getElementById("modalConfigServicesLabelRow");
+
+      if (idInput) idInput.value = prop.id;
+      if (title) title.innerText = \`Configure: \${prop.name}\`;
+      if (subtitle) subtitle.innerText = \`Select active revenue modules and business type\`;
+
+      if (chkL) chkL.checked = (prop.has_lodging === 1);
+      if (chkF) chkF.checked = (prop.has_fooding === 1);
+      if (chkS) chkS.checked = (prop.has_services === 1);
+
+      if (lblInput) lblInput.value = prop.services_label || "Services";
+      if (lblRow) {
+        if (prop.has_services === 1) {
+          lblRow.classList.remove("hidden");
+        } else {
+          lblRow.classList.add("hidden");
+        }
+      }
+
+      document.getElementById("businessConfigModal").classList.remove("hidden");
+      document.getElementById("businessConfigModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeBusinessConfigModal() {
+      document.getElementById("businessConfigModal").classList.add("hidden");
+      document.getElementById("businessConfigModal").classList.remove("flex");
+    }
+
+    function applyBusinessPreset(presetKey) {
+      const chkL = document.getElementById("modalConfigHasLodging");
+      const chkF = document.getElementById("modalConfigHasFooding");
+      const chkS = document.getElementById("modalConfigHasServices");
+      const lblInput = document.getElementById("modalConfigServicesLabel");
+      const lblRow = document.getElementById("modalConfigServicesLabelRow");
+
+      if (presetKey === "hotel") {
+        if (chkL) chkL.checked = true;
+        if (chkF) chkF.checked = true;
+        if (chkS) chkS.checked = false;
+        if (lblRow) lblRow.classList.add("hidden");
+      } else if (presetKey === "restaurant") {
+        if (chkL) chkL.checked = false;
+        if (chkF) chkF.checked = true;
+        if (chkS) chkS.checked = false;
+        if (lblRow) lblRow.classList.add("hidden");
+      } else if (presetKey === "salon") {
+        if (chkL) chkL.checked = false;
+        if (chkF) chkF.checked = false;
+        if (chkS) chkS.checked = true;
+        if (lblInput) lblInput.value = "Salon Services";
+        if (lblRow) lblRow.classList.remove("hidden");
+      } else if (presetKey === "services") {
+        if (chkL) chkL.checked = false;
+        if (chkF) chkF.checked = false;
+        if (chkS) chkS.checked = true;
+        if (lblInput) lblInput.value = "Services";
+        if (lblRow) lblRow.classList.remove("hidden");
+      }
+    }
+
+    function toggleServicesLabelInput(checked) {
+      const row = document.getElementById("modalConfigServicesLabelRow");
+      if (row) {
+        if (checked) {
+          row.classList.remove("hidden");
+        } else {
+          row.classList.add("hidden");
+        }
+      }
+    }
+
+    async function handleSaveBusinessConfig(e) {
+      if (e) e.preventDefault();
+      const propId = document.getElementById("modalConfigPropId")?.value;
+      if (!propId) return;
+
+      const hasLodging = document.getElementById("modalConfigHasLodging")?.checked ? 1 : 0;
+      const hasFooding = document.getElementById("modalConfigHasFooding")?.checked ? 1 : 0;
+      const hasServices = document.getElementById("modalConfigHasServices")?.checked ? 1 : 0;
+      const servicesLabel = document.getElementById("modalConfigServicesLabel")?.value?.trim() || "Services";
+
+      let businessType = "general";
+      if (hasLodging && hasFooding) businessType = "hotel";
+      else if (hasLodging) businessType = "hotel";
+      else if (hasFooding) businessType = "restaurant";
+      else if (hasServices) businessType = "salon";
+
+      try {
+        const res = await fetch(\`/api/properties/\${propId}\`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            has_lodging: hasLodging,
+            has_fooding: hasFooding,
+            has_services: hasServices,
+            services_label: servicesLabel,
+            business_type: businessType
+          })
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to save business settings");
+        }
+
+        closeBusinessConfigModal();
+        showToast("Business offerings updated successfully!");
+        await Promise.all([fetchProperties(), fetchFinances()]);
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error updating business: " + err.message);
+      }
     }
 
     // Bulk Add Rooms Action
@@ -6440,7 +7135,6 @@ export function getDashboardHtml(): string {
         if (select && roomId) {
           select.value = roomId;
         }
-        // Auto-populate price
         const selectedOpt = select?.selectedOptions[0];
         if (selectedOpt && amountInput) {
           amountInput.value = selectedOpt.getAttribute("data-price") || 2000;
@@ -6518,7 +7212,6 @@ export function getDashboardHtml(): string {
       }
     }
 
-    // Room Day Detail Modal (View / Add multiple bookings for a room on a date)
     function openRoomDayDetail(roomId, date) {
       currentDetailRoomId = roomId;
       currentDetailDate = date;
@@ -6606,11 +7299,10 @@ export function getDashboardHtml(): string {
       openRoomBookingModal(roomId, date, null);
     }
 
-    // Manage Room Modal (Admin Add/Edit Room)
     function openManageRoomModal(roomId = null) {
       const propSelect = document.getElementById("modalRoomProperty");
       if (propSelect) {
-        propSelect.innerHTML = properties.map(p => \`
+        propSelect.innerHTML = properties.filter(p => p.has_lodging === 1).map(p => \`
           <option value="\${p.id}" \${p.id === calendarSelectedProperty ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
         \`).join("");
       }
@@ -6696,7 +7388,7 @@ export function getDashboardHtml(): string {
     }
 
     // -------------------------------------------------------------------------
-    // FINANCE MODAL & EXPORT HELPERS
+    // FINANCE MODAL & EXPORT HELPERS (DYNAMIC OFFERINGS SUPPORT)
     // -------------------------------------------------------------------------
     async function changeFinanceMonth(delta) {
       financeMonth += delta;
@@ -6724,11 +7416,27 @@ export function getDashboardHtml(): string {
       renderFinancesView();
     }
 
+    function onModalFinancePropertyChange(propId) {
+      const prop = properties.find(p => p.id === propId);
+      const grpLodging = document.getElementById("modalLodgingGroup");
+      const grpFooding = document.getElementById("modalFoodingGroup");
+      const grpServices = document.getElementById("modalServicesGroup");
+      const lblServices = document.getElementById("modalServicesTitleLabel");
+
+      if (prop) {
+        if (grpLodging) grpLodging.style.display = prop.has_lodging === 1 ? "block" : "none";
+        if (grpFooding) grpFooding.style.display = prop.has_fooding === 1 ? "block" : "none";
+        if (grpServices) grpServices.style.display = prop.has_services === 1 ? "block" : "none";
+        if (lblServices) lblServices.innerText = \`\${prop.services_label || 'Services'} Revenue\`;
+      }
+      calculateModalFinanceLiveTotals();
+    }
+
     function openFinanceModal(recordId = null) {
       const select = document.getElementById("modalFinanceProperty");
       if (select) {
         select.innerHTML = properties.map(p => \`
-          <option value="\${p.id}">\${escapeHtml(p.name)}</option>
+          <option value="\${p.id}">\${escapeHtml(p.name)} (\${escapeHtml(getBusinessTypeInfo(p).label)})</option>
         \`).join("");
       }
 
@@ -6739,6 +7447,8 @@ export function getDashboardHtml(): string {
       const lcInput = document.getElementById("modalLodgingCash");
       const foInput = document.getElementById("modalFoodingOnline");
       const fcInput = document.getElementById("modalFoodingCash");
+      const soInput = document.getElementById("modalServicesOnline");
+      const scInput = document.getElementById("modalServicesCash");
       const osInput = document.getElementById("modalOtherSales");
       const expInput = document.getElementById("modalExpensesTotal");
       const expNotesInput = document.getElementById("modalExpenseNotes");
@@ -6755,6 +7465,8 @@ export function getDashboardHtml(): string {
           if (lcInput) lcInput.value = record.lodging_cash ?? record.lodging_offline ?? 0;
           if (foInput) foInput.value = record.fooding_online || 0;
           if (fcInput) fcInput.value = record.fooding_cash ?? record.fooding_offline ?? 0;
+          if (soInput) soInput.value = record.services_online || 0;
+          if (scInput) scInput.value = record.services_cash || 0;
           if (osInput) osInput.value = record.other_sales || 0;
           if (expInput) expInput.value = record.expenses_total || 0;
           if (expNotesInput) expNotesInput.value = record.expense_notes || "";
@@ -6781,13 +7493,20 @@ export function getDashboardHtml(): string {
         if (lcInput) lcInput.value = "";
         if (foInput) foInput.value = "";
         if (fcInput) fcInput.value = "";
+        if (soInput) soInput.value = "";
+        if (scInput) scInput.value = "";
         if (osInput) osInput.value = "";
         if (expInput) expInput.value = "";
         if (expNotesInput) expNotesInput.value = "";
         if (notesInput) notesInput.value = "";
       }
 
-      calculateModalFinanceLiveTotals();
+      if (select) {
+        onModalFinancePropertyChange(select.value);
+      } else {
+        calculateModalFinanceLiveTotals();
+      }
+
       document.getElementById("financeModal").classList.remove("hidden");
       document.getElementById("financeModal").classList.add("flex");
       refreshIcons();
@@ -6799,16 +7518,25 @@ export function getDashboardHtml(): string {
     }
 
     function calculateModalFinanceLiveTotals() {
-      const lo = Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0);
-      const lc = Math.max(0, parseFloat(document.getElementById("modalLodgingCash")?.value || "0") || 0);
-      const fo = Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0);
-      const fc = Math.max(0, parseFloat(document.getElementById("modalFoodingCash")?.value || "0") || 0);
+      const propId = document.getElementById("modalFinanceProperty")?.value;
+      const prop = properties.find(p => p.id === propId);
+      const hasL = prop ? prop.has_lodging === 1 : true;
+      const hasF = prop ? prop.has_fooding === 1 : true;
+      const hasS = prop ? prop.has_services === 1 : false;
+
+      const lo = hasL ? Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0) : 0;
+      const lc = hasL ? Math.max(0, parseFloat(document.getElementById("modalLodgingCash")?.value || "0") || 0) : 0;
+      const fo = hasF ? Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0) : 0;
+      const fc = hasF ? Math.max(0, parseFloat(document.getElementById("modalFoodingCash")?.value || "0") || 0) : 0;
+      const so = hasS ? Math.max(0, parseFloat(document.getElementById("modalServicesOnline")?.value || "0") || 0) : 0;
+      const sc = hasS ? Math.max(0, parseFloat(document.getElementById("modalServicesCash")?.value || "0") || 0) : 0;
       const os = Math.max(0, parseFloat(document.getElementById("modalOtherSales")?.value || "0") || 0);
       const exp = Math.max(0, parseFloat(document.getElementById("modalExpensesTotal")?.value || "0") || 0);
 
       const lodgingSub = lo + lc;
       const foodingSub = fo + fc;
-      const totalSales = lodgingSub + foodingSub + os;
+      const servicesSub = so + sc;
+      const totalSales = lodgingSub + foodingSub + servicesSub + os;
       const netProfit = totalSales - exp;
 
       const elLodging = document.getElementById("modalLodgingSubtotal");
@@ -6816,6 +7544,9 @@ export function getDashboardHtml(): string {
 
       const elFooding = document.getElementById("modalFoodingSubtotal");
       if (elFooding) elFooding.innerText = formatCurrency(foodingSub);
+
+      const elServices = document.getElementById("modalServicesSubtotal");
+      if (elServices) elServices.innerText = formatCurrency(servicesSub);
 
       const elSales = document.getElementById("modalTotalSales");
       if (elSales) elSales.innerText = formatCurrency(totalSales);
@@ -6836,17 +7567,26 @@ export function getDashboardHtml(): string {
       const id = document.getElementById("modalFinanceId")?.value?.trim() || null;
       const property_id = document.getElementById("modalFinanceProperty")?.value;
       const date = document.getElementById("modalFinanceDate")?.value;
-      const lodging_online = Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0);
-      const lodging_cash = Math.max(0, parseFloat(document.getElementById("modalLodgingCash")?.value || "0") || 0);
-      const fooding_online = Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0);
-      const fooding_cash = Math.max(0, parseFloat(document.getElementById("modalFoodingCash")?.value || "0") || 0);
+
+      const prop = properties.find(p => p.id === property_id);
+      const hasL = prop ? prop.has_lodging === 1 : true;
+      const hasF = prop ? prop.has_fooding === 1 : true;
+      const hasS = prop ? prop.has_services === 1 : false;
+
+      const lodging_online = hasL ? Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0) : 0;
+      const lodging_cash = hasL ? Math.max(0, parseFloat(document.getElementById("modalLodgingCash")?.value || "0") || 0) : 0;
+      const fooding_online = hasF ? Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0) : 0;
+      const fooding_cash = hasF ? Math.max(0, parseFloat(document.getElementById("modalFoodingCash")?.value || "0") || 0) : 0;
+      const services_online = hasS ? Math.max(0, parseFloat(document.getElementById("modalServicesOnline")?.value || "0") || 0) : 0;
+      const services_cash = hasS ? Math.max(0, parseFloat(document.getElementById("modalServicesCash")?.value || "0") || 0) : 0;
+
       const other_sales = Math.max(0, parseFloat(document.getElementById("modalOtherSales")?.value || "0") || 0);
       const expenses_total = Math.max(0, parseFloat(document.getElementById("modalExpensesTotal")?.value || "0") || 0);
       const expense_notes = document.getElementById("modalExpenseNotes")?.value?.trim() || "";
       const notes = document.getElementById("modalNotes")?.value?.trim() || "";
 
       if (!property_id || !date) {
-        showToast("Please select a property and date");
+        showToast("Please select a business and date");
         return;
       }
 
@@ -6860,6 +7600,8 @@ export function getDashboardHtml(): string {
           fooding_online,
           fooding_cash,
           fooding_offline: fooding_cash,
+          services_online,
+          services_cash,
           other_sales,
           expenses_total,
           expense_notes,
@@ -6926,22 +7668,32 @@ export function getDashboardHtml(): string {
         return;
       }
 
-      let csv = "Date,Property,Lodging Online Payment,Lodging Cash Payment,Lodging Total,Fooding Online Payment,Fooding Cash Payment,Fooding Total,Other Sales,Gross Total Sales,Total Expenses,Expense Breakdown,Net Operating Profit,Shift Notes,Submitted By\\n";
+      let csv = "Date,Business,Business Type,Lodging Online,Lodging Cash,Lodging Total,Fooding Online,Fooding Cash,Fooding Total,Services Online,Services Cash,Services Total,Other Sales,Gross Total Sales,Total Expenses,Expense Breakdown,Net Operating Profit,Shift Notes,Submitted By\\n";
 
       records.forEach(r => {
+        const prop = properties.find(p => p.id === r.property_id);
+        const ti = getBusinessTypeInfo(prop);
         const lodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
         const foodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
         const lodgingTot = (r.lodging_online || 0) + lodgingCash;
         const foodingTot = (r.fooding_online || 0) + foodingCash;
+        const servicesOnline = r.services_online || 0;
+        const servicesCash = r.services_cash || 0;
+        const servicesTot = servicesOnline + servicesCash;
+
         const row = [
           r.date,
           r.property_name || "",
+          ti.label,
           r.lodging_online || 0,
           lodgingCash,
           lodgingTot,
           r.fooding_online || 0,
           foodingCash,
           foodingTot,
+          servicesOnline,
+          servicesCash,
+          servicesTot,
           r.other_sales || 0,
           r.total_sales || 0,
           r.expenses_total || 0,
@@ -6950,7 +7702,7 @@ export function getDashboardHtml(): string {
           r.notes || "",
           r.submitted_by || ""
         ];
-        csv += row.map(v => \`"\${String(v || '').replace(/"/g, '""')}"\`).join(",") + "\\n";
+        csv += row.map(v => \`"\${String(v || '').replace(/"/g, '""')}"\`).join(",") + "\n";
       });
 
       const m = String(financeMonth + 1).padStart(2, "0");

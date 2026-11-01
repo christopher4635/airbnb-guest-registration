@@ -99,7 +99,7 @@ async function syncDailyFinanceLodging(env: Env, propertyId: string, date: strin
 		`).bind(propertyId, date).first<DailyFinance>();
 
 		if (existing) {
-			const totalSales = lodgingOnline + lodgingCash + (existing.fooding_online || 0) + (existing.fooding_cash || existing.fooding_offline || 0) + (existing.other_sales || 0);
+			const totalSales = lodgingOnline + lodgingCash + (existing.fooding_online || 0) + (existing.fooding_cash || existing.fooding_offline || 0) + (existing.services_online || 0) + (existing.services_cash || 0) + (existing.other_sales || 0);
 			const netRevenue = totalSales - (existing.expenses_total || 0);
 			await env.DB.prepare(`
 				UPDATE daily_finances
@@ -113,10 +113,10 @@ async function syncDailyFinanceLodging(env: Env, propertyId: string, date: strin
 			await env.DB.prepare(`
 				INSERT INTO daily_finances (
 					id, property_id, date, lodging_online, lodging_cash,
-					fooding_online, fooding_cash, other_sales, total_sales,
+					fooding_online, fooding_cash, services_online, services_cash, other_sales, total_sales,
 					expenses_total, expense_notes, net_revenue, notes, submitted_by,
 					created_at, updated_at
-				) VALUES (?, ?, ?, ?, ?, 0, 0, 0, ?, 0, NULL, ?, NULL, ?, datetime('now'), datetime('now'))
+				) VALUES (?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?, 0, NULL, ?, NULL, ?, datetime('now'), datetime('now'))
 			`).bind(id, propertyId, date, lodgingOnline, lodgingCash, totalSales, netRevenue, submittedBy || "Room Booking").run();
 		}
 
@@ -376,8 +376,11 @@ export default {
 
 			// PUT /api/properties/:id
 			if (path.startsWith("/api/properties/") && method === "PUT") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only can configure businesses." }, 403);
+				}
 				const id = path.split("/")[3];
-				const body = (await request.json()) as Partial<Property>;
+				const body = (await request.json()) as any;
 				if (body.monthly_leave_allowance !== undefined) {
 					await env.DB.prepare(
 						"UPDATE properties SET monthly_leave_allowance = ? WHERE id = ?"
@@ -388,7 +391,34 @@ export default {
 						"UPDATE properties SET name = ? WHERE id = ?"
 					).bind(body.name, id).run();
 				}
-				return jsonResponse({ success: true });
+				if (body.has_lodging !== undefined) {
+					await env.DB.prepare(
+						"UPDATE properties SET has_lodging = ? WHERE id = ?"
+					).bind(body.has_lodging ? 1 : 0, id).run();
+				}
+				if (body.has_fooding !== undefined) {
+					await env.DB.prepare(
+						"UPDATE properties SET has_fooding = ? WHERE id = ?"
+					).bind(body.has_fooding ? 1 : 0, id).run();
+				}
+				if (body.has_services !== undefined) {
+					await env.DB.prepare(
+						"UPDATE properties SET has_services = ? WHERE id = ?"
+					).bind(body.has_services ? 1 : 0, id).run();
+				}
+				if (body.business_type !== undefined) {
+					await env.DB.prepare(
+						"UPDATE properties SET business_type = ? WHERE id = ?"
+					).bind(body.business_type?.trim() || "general", id).run();
+				}
+				if (body.services_label !== undefined) {
+					await env.DB.prepare(
+						"UPDATE properties SET services_label = ? WHERE id = ?"
+					).bind(body.services_label?.trim() || "Services", id).run();
+				}
+
+				const updated = await env.DB.prepare("SELECT * FROM properties WHERE id = ?").bind(id).first<Property>();
+				return jsonResponse({ success: true, property: updated });
 			}
 
 			// GET /api/staff
@@ -928,6 +958,8 @@ export default {
 					...r,
 					lodging_cash: r.lodging_cash ?? r.lodging_offline ?? 0,
 					fooding_cash: r.fooding_cash ?? r.fooding_offline ?? 0,
+					services_online: r.services_online ?? 0,
+					services_cash: r.services_cash ?? 0,
 					lodging_offline: r.lodging_cash ?? r.lodging_offline ?? 0,
 					fooding_offline: r.fooding_cash ?? r.fooding_offline ?? 0,
 				}));
@@ -978,8 +1010,10 @@ export default {
 
 				const foodingOnline = Math.max(0, Math.round(Number(body.fooding_online) || 0));
 				const foodingCash = Math.max(0, Math.round(Number(body.fooding_cash ?? body.fooding_offline) || 0));
+				const servicesOnline = Math.max(0, Math.round(Number(body.services_online) || 0));
+				const servicesCash = Math.max(0, Math.round(Number(body.services_cash) || 0));
 				const otherSales = Math.max(0, Math.round(Number(body.other_sales) || 0));
-				const totalSales = lodgingOnline + lodgingCash + foodingOnline + foodingCash + otherSales;
+				const totalSales = lodgingOnline + lodgingCash + foodingOnline + foodingCash + servicesOnline + servicesCash + otherSales;
 				const expensesTotal = Math.max(0, Math.round(Number(body.expenses_total) || 0));
 				const expenseNotes = body.expense_notes?.trim() || null;
 				const netRevenue = totalSales - expensesTotal;
@@ -990,15 +1024,17 @@ export default {
 				await env.DB.prepare(`
 					INSERT INTO daily_finances (
 						id, property_id, date, lodging_online, lodging_cash,
-						fooding_online, fooding_cash, other_sales, total_sales,
+						fooding_online, fooding_cash, services_online, services_cash, other_sales, total_sales,
 						expenses_total, expense_notes, net_revenue, notes, submitted_by,
 						created_at, updated_at
-					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					ON CONFLICT(property_id, date) DO UPDATE SET
 						lodging_online = excluded.lodging_online,
 						lodging_cash = excluded.lodging_cash,
 						fooding_online = excluded.fooding_online,
 						fooding_cash = excluded.fooding_cash,
+						services_online = excluded.services_online,
+						services_cash = excluded.services_cash,
 						other_sales = excluded.other_sales,
 						total_sales = excluded.total_sales,
 						expenses_total = excluded.expenses_total,
@@ -1009,7 +1045,7 @@ export default {
 						updated_at = datetime('now')
 				`).bind(
 					id, propertyId, date, lodgingOnline, lodgingCash,
-					foodingOnline, foodingCash, otherSales, totalSales,
+					foodingOnline, foodingCash, servicesOnline, servicesCash, otherSales, totalSales,
 					expensesTotal, expenseNotes, netRevenue, notes, submittedBy
 				).run();
 

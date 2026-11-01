@@ -7,6 +7,11 @@ export interface Property {
 	id: string;
 	name: string;
 	monthly_leave_allowance: number;
+	has_lodging?: number;
+	has_fooding?: number;
+	has_services?: number;
+	services_label?: string;
+	business_type?: string;
 	created_at?: string;
 }
 
@@ -96,6 +101,8 @@ export interface DailyFinance {
 	lodging_cash: number;
 	fooding_online: number;
 	fooding_cash: number;
+	services_online?: number;
+	services_cash?: number;
 	lodging_offline?: number;
 	fooding_offline?: number;
 	other_sales?: number;
