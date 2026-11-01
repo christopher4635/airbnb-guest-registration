@@ -2133,7 +2133,11 @@ export function getDashboardHtml(): string {
           }
 
           applyRolePermissions();
-          await loadDashboardData();
+          try {
+            await loadDashboardData();
+          } catch (dataErr) {
+            console.error("Dashboard initial load error:", dataErr);
+          }
           showToast("Signed in as " + (currentUserRole === "admin" ? "Administrator" : data.name + " (Manager)"));
         } else {
           throw new Error(data.error || "Incorrect PIN. Please check and try again.");
@@ -7702,7 +7706,7 @@ export function getDashboardHtml(): string {
           r.notes || "",
           r.submitted_by || ""
         ];
-        csv += row.map(v => \`"\${String(v || '').replace(/"/g, '""')}"\`).join(",") + "\n";
+        csv += row.map(v => \`"\${String(v || '').replace(/"/g, '""')}"\`).join(",") + "\\n";
       });
 
       const m = String(financeMonth + 1).padStart(2, "0");
