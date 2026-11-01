@@ -300,6 +300,10 @@ export function getDashboardHtml(): string {
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
               <span>Monthly Sheet</span>
             </button>
+            <button id="viewTabFinances" onclick="switchView('finances')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Sales & Expenses</span>
+            </button>
             <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
               <span>Salary & Payroll</span>
@@ -612,6 +616,15 @@ export function getDashboardHtml(): string {
           <!-- Rendered by JS -->
         </div>
 
+      </div>
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 5: SALES & EXPENSES (Manager Daily Entry & Admin Revenue Hub)    -->
+      <!-- ===================================================================== -->
+      <div id="financesViewSection" class="hidden flex-1 flex flex-col gap-4">
+        <div id="financesViewContent" class="flex-1 flex flex-col gap-4">
+          <!-- Dynamically populated by renderFinancesView() -->
+        </div>
       </div>
 
     </main>
@@ -1273,6 +1286,135 @@ export function getDashboardHtml(): string {
     </button>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- MODAL: ADD / EDIT DAILY SALES & EXPENSES                                  -->
+  <!-- ========================================================================= -->
+  <div id="financeModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 id="financeModalTitle" class="text-base font-bold text-slate-900">Record Sales & Expenses</h3>
+          <p class="text-xs text-slate-500">Enter lodging, fooding and daily operating expenses</p>
+        </div>
+        <button onclick="closeFinanceModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="financeModalForm" onsubmit="handleSaveFinance(event)" class="space-y-4 pt-4">
+        <input type="hidden" id="modalFinanceId" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Property *</label>
+            <select id="modalFinanceProperty" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 bg-white">
+              <!-- Rendered options -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Date *</label>
+            <input type="date" id="modalFinanceDate" required class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-medium" />
+          </div>
+        </div>
+
+        <!-- Lodging Group -->
+        <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+              <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
+              Lodging Sales (Rooms)
+            </span>
+            <span class="text-[11px] font-bold text-indigo-700">Subtotal: ₹<span id="modalLodgingSubtotal">0</span></span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Online (OTA/UPI)</label>
+              <input type="number" id="modalLodgingOnline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-indigo-200 bg-white font-mono focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-indigo-800 uppercase tracking-wider mb-0.5">Offline (Counter/Cash)</label>
+              <input type="number" id="modalLodgingOffline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-indigo-200 bg-white font-mono focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Fooding Group -->
+        <div class="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+              <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-600"></i>
+              Fooding Sales (F&B)
+            </span>
+            <span class="text-[11px] font-bold text-amber-800">Subtotal: ₹<span id="modalFoodingSubtotal">0</span></span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">Online (Delivery/UPI)</label>
+              <input type="number" id="modalFoodingOnline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-amber-200 bg-white font-mono focus:ring-2 focus:ring-amber-500" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">Offline (Dine-in/Cash)</label>
+              <input type="number" id="modalFoodingOffline" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-amber-200 bg-white font-mono focus:ring-2 focus:ring-amber-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Other Sales & Total Sales Live Card -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Other / Misc Sales (₹)</label>
+            <input type="number" id="modalOtherSales" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-mono" />
+          </div>
+          <div class="bg-gradient-to-br from-emerald-50 to-teal-50 p-2.5 rounded-2xl border border-emerald-200 flex flex-col justify-center">
+            <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Gross Total Sales</span>
+            <span class="text-lg font-black text-emerald-700 font-mono">₹<span id="modalTotalSales">0</span></span>
+          </div>
+        </div>
+
+        <!-- Expenses Group -->
+        <div class="bg-rose-50/70 p-3.5 rounded-2xl border border-rose-100 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-rose-950 flex items-center gap-1.5">
+              <i data-lucide="receipt" class="w-3.5 h-3.5 text-rose-600"></i>
+              Daily Operating Expenses (₹) *
+            </span>
+          </div>
+          <input type="number" id="modalExpensesTotal" min="0" placeholder="0" oninput="calculateModalFinanceLiveTotals()" class="w-full px-3 py-2 text-xs rounded-xl border border-rose-300 bg-white font-mono font-bold text-rose-700 focus:ring-2 focus:ring-rose-500" />
+          <div>
+            <label class="block text-[10px] font-bold text-rose-800 uppercase tracking-wider mb-1">Expense Breakdown / Notes</label>
+            <textarea id="modalExpenseNotes" rows="2" placeholder="Itemize e.g. Vegetables ₹1200, Diesel ₹1500, Grocery ₹800..." class="w-full px-2.5 py-1.5 text-xs rounded-xl border border-rose-200 bg-white focus:ring-2 focus:ring-rose-500"></textarea>
+          </div>
+        </div>
+
+        <!-- Net Operating Profit Live Banner -->
+        <div class="p-3.5 rounded-2xl bg-slate-900 text-white flex items-center justify-between shadow-sm">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Net Operating Profit</div>
+            <div class="text-xs text-slate-300">Gross Sales minus Total Expenses</div>
+          </div>
+          <div class="text-xl font-black font-mono text-emerald-400">
+            ₹<span id="modalNetProfit">0</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Remarks / Shift Notes (Optional)</label>
+          <input type="text" id="modalNotes" placeholder="Additional details..." class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeFinanceModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" id="btnSaveFinanceModal" class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="save" class="w-3.5 h-3.5"></i>
+            <span>Save Record</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform translate-y-16 opacity-0 transition-all duration-200">
     <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
@@ -1306,6 +1448,11 @@ export function getDashboardHtml(): string {
     let advancesList = []; // Array of advance records for current month
     let bonusesList = []; // Array of salary bonus records for current month
     let paymentsList = []; // Array of salary payment records for current month
+    let financesList = []; // Array of daily_finances records
+    let managerFinanceDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    let financeYear = new Date().getFullYear();
+    let financeMonth = new Date().getMonth(); // 0-indexed
+    let financeFilterProperty = "all";
     let currentDocStaffId = null;
     let currentPaymentStaffId = null;
     let currentPaymentAmount = 0;
@@ -1325,7 +1472,8 @@ export function getDashboardHtml(): string {
         const promises = [
           fetchProperties(),
           fetchStaff(),
-          fetchAttendance()
+          fetchAttendance(),
+          fetchFinances()
         ];
         if (currentUserRole === "admin") {
           promises.push(fetchAdvances(), fetchBonuses(), fetchPayments());
@@ -1457,7 +1605,7 @@ export function getDashboardHtml(): string {
         badge.innerHTML = \`
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span class="sm:hidden">Manager</span>
-          <span class="hidden sm:inline">Manager: \${escapeHtml(currentManagerInfo.name)} (\${escapeHtml(currentManagerInfo.property_name || Property)})</span>
+          <span class="hidden sm:inline">Manager: \${escapeHtml(currentManagerInfo.name)} (\${escapeHtml(currentManagerInfo.property_name || 'Property')})</span>
         \`;
         badge.className = "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0";
 
@@ -1713,7 +1861,8 @@ export function getDashboardHtml(): string {
         const promises = [
           fetchProperties(),
           fetchStaff(),
-          fetchAttendance()
+          fetchAttendance(),
+          fetchFinances()
         ];
         if (currentUserRole === "admin") {
           promises.push(fetchAdvances(), fetchBonuses(), fetchPayments());
@@ -1946,7 +2095,7 @@ export function getDashboardHtml(): string {
 
     function switchView(view) {
       currentView = view;
-      const tabs = ["Daily", "Monthly", "Payroll", "Directory"];
+      const tabs = ["Daily", "Monthly", "Finances", "Payroll", "Directory"];
       tabs.forEach(t => {
         const btn = document.getElementById("viewTab" + t);
         if (!btn) return;
@@ -1962,13 +2111,14 @@ export function getDashboardHtml(): string {
       // Show/Hide sections
       document.getElementById("dailyViewSection").classList.toggle("hidden", view !== "daily");
       document.getElementById("monthlyViewSection").classList.toggle("hidden", view !== "monthly");
+      document.getElementById("financesViewSection").classList.toggle("hidden", view !== "finances");
       document.getElementById("payrollViewSection").classList.toggle("hidden", view !== "payroll");
       document.getElementById("directoryViewSection").classList.toggle("hidden", view !== "directory");
 
       // Controls visibility
-      document.getElementById("monthControlBar").classList.toggle("hidden", view === "directory" || view === "daily");
+      document.getElementById("monthControlBar").classList.toggle("hidden", view === "directory" || view === "daily" || view === "finances");
       document.getElementById("legendBar").classList.toggle("hidden", view !== "monthly");
-      document.getElementById("btnMarkAllPresent").classList.toggle("hidden", view === "payroll");
+      document.getElementById("btnMarkAllPresent").classList.toggle("hidden", view === "payroll" || view === "finances");
 
       renderActiveView();
       refreshIcons();
@@ -1977,6 +2127,7 @@ export function getDashboardHtml(): string {
     function renderActiveView() {
       if (currentView === "monthly") renderMonthlyView();
       else if (currentView === "daily") renderDailyView();
+      else if (currentView === "finances") renderFinancesView();
       else if (currentView === "payroll") renderPayrollView();
       else if (currentView === "directory") renderDirectoryView();
     }
@@ -3367,6 +3518,8 @@ export function getDashboardHtml(): string {
     function exportCurrentView() {
       if (currentView === "payroll") {
         exportPayrollCSV();
+      } else if (currentView === "finances") {
+        exportFinancesCSV();
       } else {
         exportAttendanceCSV();
       }
@@ -4139,6 +4292,1164 @@ export function getDashboardHtml(): string {
       } catch (err) {
         showToast("Network error: " + err.message);
       }
+    }
+
+
+    // -------------------------------------------------------------------------
+    // DAILY SALES & EXPENSES (MANAGER ENTRY & ADMIN REVENUE DASHBOARD)
+    // -------------------------------------------------------------------------
+    function formatCurrency(num) {
+      return (Number(num) || 0).toLocaleString('en-IN');
+    }
+
+    async function fetchFinances() {
+      try {
+        let url = "/api/finances";
+        if (currentUserRole === "manager") {
+          url = "/api/finances";
+        } else {
+          const m = String(financeMonth + 1).padStart(2, "0");
+          url = \`/api/finances?month=\${financeYear}-\${m}\`;
+          if (financeFilterProperty && financeFilterProperty !== "all") {
+            url += \`&property_id=\${encodeURIComponent(financeFilterProperty)}\`;
+          }
+        }
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        if (res.ok) {
+          financesList = await res.json();
+        }
+      } catch (e) {
+        console.error("fetchFinances error:", e);
+      }
+    }
+
+    function renderFinancesView() {
+      const container = document.getElementById("financesViewContent");
+      if (!container) return;
+      if (currentUserRole === "manager") {
+        renderManagerFinancesView(container);
+      } else {
+        renderAdminFinancesView(container);
+      }
+      refreshIcons();
+    }
+
+    function renderManagerFinancesView(container) {
+      const propId = currentManagerInfo?.property_id || "";
+      const propName = currentManagerInfo?.property_name || properties.find(p => p.id === propId)?.name || "Assigned Property";
+      
+      const currentRecord = financesList.find(f => f.property_id === propId && f.date === managerFinanceDate);
+      const lo = currentRecord ? (currentRecord.lodging_online || 0) : 0;
+      const lf = currentRecord ? (currentRecord.lodging_offline || 0) : 0;
+      const fo = currentRecord ? (currentRecord.fooding_online || 0) : 0;
+      const ff = currentRecord ? (currentRecord.fooding_offline || 0) : 0;
+      const os = currentRecord ? (currentRecord.other_sales || 0) : 0;
+      const exp = currentRecord ? (currentRecord.expenses_total || 0) : 0;
+      const expNotes = currentRecord ? (currentRecord.expense_notes || "") : "";
+      const notes = currentRecord ? (currentRecord.notes || "") : "";
+      const lodgingSub = lo + lf;
+      const foodingSub = fo + ff;
+      const totSales = lodgingSub + foodingSub + os;
+      const netProf = totSales - exp;
+
+      const isSaved = !!currentRecord;
+      const statusBadge = isSaved
+        ? \`<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i> Saved Record</span>\`
+        : \`<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs"><i data-lucide="clock" class="w-3.5 h-3.5 text-amber-600"></i> Not Yet Entered</span>\`;
+
+      const recentRecords = financesList
+        .filter(f => f.property_id === propId)
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 10);
+
+      container.innerHTML = \`
+        <!-- Manager Header & Date Navigation -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+              <i data-lucide="hotel" class="w-4 h-4 text-indigo-600"></i>
+              \${escapeHtml(propName)}
+            </span>
+            \${statusBadge}
+          </div>
+
+          <!-- Date Control -->
+          <div class="flex items-center gap-1.5 self-start sm:self-auto">
+            <button type="button" onclick="changeFinanceDate(-1)" title="Previous Day" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <input
+              type="date"
+              id="mgrFinanceDate"
+              value="\${managerFinanceDate}"
+              onchange="onManagerFinanceDateChange(this.value)"
+              class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800"
+            />
+            <button type="button" onclick="changeFinanceDate(1)" title="Next Day" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer">
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+            <button type="button" onclick="goToFinanceToday()" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer">
+              Today
+            </button>
+          </div>
+        </div>
+
+        <!-- Manager Entry Form -->
+        <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col gap-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="receipt" class="w-5 h-5 text-indigo-600"></i>
+                Daily Sales & Expenses Entry
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">Enter lodging (online & offline), fooding (online & offline), and total expenses for this date.</p>
+            </div>
+            \${isSaved ? \`<span class="text-[11px] text-slate-400">Last updated: \${currentRecord.updated_at || 'Recently'}</span>\` : ''}
+          </div>
+
+          <!-- Section 1: Lodging Sales -->
+          <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 rounded-2xl border border-indigo-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
+                  <i data-lucide="hotel" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Lodging Revenue (Room Bookings)</h4>
+                  <p class="text-[11px] text-indigo-700/80">Online portals (OTA/UPI) vs Counter cash/offline</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] font-bold text-indigo-600 uppercase">Lodging Subtotal</div>
+                <div class="text-base font-black text-indigo-900 font-mono">₹<span id="mgrLodgingSubtotal">\${formatCurrency(lodgingSub)}</span></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-xs font-semibold text-indigo-900 mb-1">
+                  Online Lodging (OTA / MMT / Agoda / UPI) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrLodgingOnline"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${lo || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-indigo-900 mb-1">
+                  Offline Lodging (Counter / Cash / Direct) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrLodgingOffline"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${lf || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Fooding Sales -->
+          <div class="bg-gradient-to-br from-amber-50/70 to-orange-50/40 p-4 rounded-2xl border border-amber-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-2xs">
+                  <i data-lucide="utensils" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Fooding Revenue (Restaurant / Room Service)</h4>
+                  <p class="text-[11px] text-amber-700/80">Online orders / QR UPI vs Counter cash</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] font-bold text-amber-700 uppercase">Fooding Subtotal</div>
+                <div class="text-base font-black text-amber-950 font-mono">₹<span id="mgrFoodingSubtotal">\${formatCurrency(foodingSub)}</span></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block text-xs font-semibold text-amber-950 mb-1">
+                  Online Fooding (Zomato / Swiggy / UPI) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrFoodingOnline"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${fo || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-amber-950 mb-1">
+                  Offline Fooding (Dine-in / Cash Counter) ₹
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrFoodingOffline"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${ff || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Other Sales & Gross Total -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="md:col-span-1 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 flex flex-col justify-center">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">
+                Other / Misc Sales (₹)
+              </label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                <input
+                  type="number"
+                  id="mgrOtherSales"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value="\${os || ''}"
+                  oninput="calculateMgrFinanceLiveTotals()"
+                  class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-slate-900 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">Laundry, transport, extra bed, etc.</p>
+            </div>
+
+            <!-- Gross Sales Live Banner -->
+            <div class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-100 block">Total Gross Sales</span>
+                <span class="text-xs text-emerald-200">Lodging + Fooding + Other</span>
+              </div>
+              <div class="text-right">
+                <span class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
+                  ₹<span id="mgrTotalSalesDisplay">\${formatCurrency(totSales)}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Operating Expenses -->
+          <div class="bg-gradient-to-br from-rose-50/70 to-red-50/40 p-4 rounded-2xl border border-rose-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-2xs">
+                  <i data-lucide="receipt" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold text-rose-950 uppercase tracking-wider">Total Daily Expenses (₹)</h4>
+                  <p class="text-[11px] text-rose-700/80">Supplies, vegetables, diesel, local purchases, maintenance</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div class="sm:col-span-1">
+                <label class="block text-xs font-semibold text-rose-950 mb-1">
+                  Expenses Total (₹) *
+                </label>
+                <div class="relative">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-rose-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                  <input
+                    type="number"
+                    id="mgrExpensesTotal"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    value="\${exp || ''}"
+                    oninput="calculateMgrFinanceLiveTotals()"
+                    class="w-full pl-7 pr-3 py-2 text-sm font-bold font-mono text-rose-700 rounded-xl border border-rose-300 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-rose-950 mb-1">
+                  Expense Itemization / Notes
+                </label>
+                <textarea
+                  id="mgrExpenseNotes"
+                  rows="2"
+                  placeholder="e.g. Vegetables ₹1200, Grocery ₹1800, Diesel ₹1000"
+                  class="w-full px-3 py-1.5 text-xs text-slate-800 rounded-xl border border-rose-200 bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                >\${escapeHtml(expNotes)}</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: Net Operating Profit Live Banner -->
+          <div class="p-4 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+            <div>
+              <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Estimated Net Profit for the Day</div>
+              <div class="text-xs text-slate-300">Gross Sales minus Total Expenses</div>
+            </div>
+            <div class="text-right">
+              <span class="text-2xl sm:text-3xl font-black font-mono \${netProf < 0 ? 'text-rose-400' : 'text-emerald-400'}">
+                ₹<span id="mgrNetRevenueDisplay">\${formatCurrency(netProf)}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Section 6: Remarks & Submit -->
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">General Notes / Remarks (Optional)</label>
+              <input
+                type="text"
+                id="mgrNotes"
+                value="\${escapeHtml(notes)}"
+                placeholder="Shift comments, occupancy highlights, weather impact, etc."
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <button
+              type="button"
+              onclick="saveManagerDailyFinance()"
+              class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>Save Today's Sales & Expenses</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Recent Records for this Property -->
+        <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+              <i data-lucide="history" class="w-4 h-4 text-slate-500"></i>
+              Recent Entries for \${escapeHtml(propName)}
+            </h4>
+            <span class="text-[11px] text-slate-400">\${recentRecords.length} records</span>
+          </div>
+
+          \${recentRecords.length === 0 ? \`
+            <div class="text-center py-6 text-xs text-slate-400">
+              No previous financial records entered yet for this property.
+            </div>
+          \` : \`
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              \${recentRecords.map(r => {
+                const rLodging = (r.lodging_online || 0) + (r.lodging_offline || 0);
+                const rFooding = (r.fooding_online || 0) + (r.fooding_offline || 0);
+                const isSelected = r.date === managerFinanceDate;
+                return \`
+                  <div class="p-3.5 rounded-2xl border \${isSelected ? 'border-indigo-400 bg-indigo-50/40 ring-2 ring-indigo-200' : 'border-slate-200 bg-slate-50/50 hover:bg-white'} transition flex flex-col justify-between gap-2 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-slate-800">\${r.date}</span>
+                      <button type="button" onclick="setManagerFinanceDate('\${r.date}')" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-100/60 hover:bg-indigo-100 px-2 py-0.5 rounded-lg transition cursor-pointer">
+                        \${isSelected ? 'Editing' : 'Load / Edit'}
+                      </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+                      <div>Lodging: <strong class="text-indigo-900">₹\${formatCurrency(rLodging)}</strong></div>
+                      <div>Fooding: <strong class="text-amber-900">₹\${formatCurrency(rFooding)}</strong></div>
+                      <div>Expenses: <strong class="text-rose-700">₹\${formatCurrency(r.expenses_total)}</strong></div>
+                      <div>Net: <strong class="\${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(r.net_revenue)}</strong></div>
+                    </div>
+                    \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic truncate" title="\${escapeHtml(r.expense_notes)}">Notes: \${escapeHtml(r.expense_notes)}</div>\` : ''}
+                  </div>
+                \`;
+              }).join("")}
+            </div>
+          \`}
+        </div>
+      \`;
+    }
+
+    function calculateMgrFinanceLiveTotals() {
+      const lo = Math.max(0, parseFloat(document.getElementById("mgrLodgingOnline")?.value || "0") || 0);
+      const lf = Math.max(0, parseFloat(document.getElementById("mgrLodgingOffline")?.value || "0") || 0);
+      const fo = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
+      const ff = Math.max(0, parseFloat(document.getElementById("mgrFoodingOffline")?.value || "0") || 0);
+      const os = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
+      const exp = Math.max(0, parseFloat(document.getElementById("mgrExpensesTotal")?.value || "0") || 0);
+
+      const lodgingSub = lo + lf;
+      const foodingSub = fo + ff;
+      const totalSales = lodgingSub + foodingSub + os;
+      const netProfit = totalSales - exp;
+
+      const elLodging = document.getElementById("mgrLodgingSubtotal");
+      if (elLodging) elLodging.innerText = formatCurrency(lodgingSub);
+
+      const elFooding = document.getElementById("mgrFoodingSubtotal");
+      if (elFooding) elFooding.innerText = formatCurrency(foodingSub);
+
+      const elSales = document.getElementById("mgrTotalSalesDisplay");
+      if (elSales) elSales.innerText = formatCurrency(totalSales);
+
+      const elNet = document.getElementById("mgrNetRevenueDisplay");
+      if (elNet) {
+        elNet.innerText = formatCurrency(netProfit);
+        if (netProfit < 0) {
+          elNet.parentElement.className = "text-2xl sm:text-3xl font-black font-mono text-rose-400";
+        } else {
+          elNet.parentElement.className = "text-2xl sm:text-3xl font-black font-mono text-emerald-400";
+        }
+      }
+    }
+
+    async function saveManagerDailyFinance() {
+      if (!currentManagerInfo || !currentManagerInfo.property_id) {
+        return showToast("Error: Manager assigned property not found");
+      }
+      const propId = currentManagerInfo.property_id;
+      const date = managerFinanceDate;
+      const lodgingOnline = Math.max(0, parseFloat(document.getElementById("mgrLodgingOnline")?.value || "0") || 0);
+      const lodgingOffline = Math.max(0, parseFloat(document.getElementById("mgrLodgingOffline")?.value || "0") || 0);
+      const foodingOnline = Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0);
+      const foodingOffline = Math.max(0, parseFloat(document.getElementById("mgrFoodingOffline")?.value || "0") || 0);
+      const otherSales = Math.max(0, parseFloat(document.getElementById("mgrOtherSales")?.value || "0") || 0);
+      const expensesTotal = Math.max(0, parseFloat(document.getElementById("mgrExpensesTotal")?.value || "0") || 0);
+      const expenseNotes = document.getElementById("mgrExpenseNotes")?.value?.trim() || "";
+      const notes = document.getElementById("mgrNotes")?.value?.trim() || "";
+
+      try {
+        const res = await fetch("/api/finances", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            property_id: propId,
+            date,
+            lodging_online: lodgingOnline,
+            lodging_offline: lodgingOffline,
+            fooding_online: foodingOnline,
+            fooding_offline: foodingOffline,
+            other_sales: otherSales,
+            expenses_total: expensesTotal,
+            expense_notes: expenseNotes,
+            notes
+          })
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast(data.error || "Failed to save daily record");
+          return;
+        }
+
+        showToast("Daily Sales & Expenses saved for " + date);
+        await fetchFinances();
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error saving record: " + err.message);
+      }
+    }
+
+    function changeFinanceDate(delta) {
+      const parts = managerFinanceDate.split("-");
+      const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      d.setDate(d.getDate() + delta);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      managerFinanceDate = \`\${year}-\${month}-\${day}\`;
+      renderFinancesView();
+    }
+
+    function goToFinanceToday() {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      managerFinanceDate = \`\${year}-\${month}-\${day}\`;
+      renderFinancesView();
+    }
+
+    function onManagerFinanceDateChange(val) {
+      if (val) {
+        managerFinanceDate = val;
+        renderFinancesView();
+      }
+    }
+
+    function setManagerFinanceDate(dateStr) {
+      if (dateStr) {
+        managerFinanceDate = dateStr;
+        renderFinancesView();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // ADMIN REVENUE & EXPENSES DASHBOARD
+    // -------------------------------------------------------------------------
+    function renderAdminFinancesView(container) {
+      const records = financeFilterProperty === "all"
+        ? financesList
+        : financesList.filter(f => f.property_id === financeFilterProperty);
+
+      let totalLodgingOnline = 0;
+      let totalLodgingOffline = 0;
+      let totalFoodingOnline = 0;
+      let totalFoodingOffline = 0;
+      let totalOtherSales = 0;
+      let totalExpenses = 0;
+
+      records.forEach(r => {
+        totalLodgingOnline += (r.lodging_online || 0);
+        totalLodgingOffline += (r.lodging_offline || 0);
+        totalFoodingOnline += (r.fooding_online || 0);
+        totalFoodingOffline += (r.fooding_offline || 0);
+        totalOtherSales += (r.other_sales || 0);
+        totalExpenses += (r.expenses_total || 0);
+      });
+
+      const totalLodging = totalLodgingOnline + totalLodgingOffline;
+      const totalFooding = totalFoodingOnline + totalFoodingOffline;
+      const grossRevenue = totalLodging + totalFooding + totalOtherSales;
+      const netOperatingProfit = grossRevenue - totalExpenses;
+      const profitMarginPct = grossRevenue > 0 ? Math.round((netOperatingProfit / grossRevenue) * 100) : 0;
+
+      container.innerHTML = \`
+        <!-- Admin Filter & Action Bar -->
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <!-- Property Filter -->
+            <div class="flex items-center gap-1.5">
+              <label for="adminFinancePropertySelect" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Property:</label>
+              <select
+                id="adminFinancePropertySelect"
+                onchange="onAdminFinanceFilterChange(this.value)"
+                class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
+              >
+                <option value="all" \${financeFilterProperty === 'all' ? 'selected' : ''}>All Properties (\${properties.length})</option>
+                \${properties.map(p => \`
+                  <option value="\${p.id}" \${financeFilterProperty === p.id ? 'selected' : ''}>\${escapeHtml(p.name)}</option>
+                \`).join("")}
+              </select>
+            </div>
+
+            <!-- Month Selector -->
+            <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
+              <button onclick="changeFinanceMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+              </button>
+              <span id="adminFinanceMonthLabel" class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
+                \${MONTH_NAMES[financeMonth]} \${financeYear}
+              </span>
+              <button onclick="changeFinanceMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <button onclick="goToFinanceCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+              Current
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onclick="openFinanceModal()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
+            >
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add Record</span>
+            </button>
+            <button
+              type="button"
+              onclick="exportFinancesCSV()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer"
+            >
+              <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
+              <span>Export CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 5 Executive Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <!-- Card 1: Gross Revenue -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Gross Revenue</span>
+                <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-indigo-500"></i>
+              </div>
+              <div class="text-lg sm:text-xl font-black text-slate-900 font-mono mt-1">₹\${formatCurrency(grossRevenue)}</div>
+            </div>
+            <div class="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 font-medium">
+              \${records.length} daily entries recorded
+            </div>
+          </div>
+
+          <!-- Card 2: Lodging Sales -->
+          <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center justify-between">
+                <span>Lodging Sales</span>
+                <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-500"></i>
+              </div>
+              <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">₹\${formatCurrency(totalLodging)}</div>
+            </div>
+            <div class="text-[10px] text-indigo-800 mt-2 pt-2 border-t border-indigo-50 font-medium truncate">
+              Online: ₹\${formatCurrency(totalLodgingOnline)} · Offline: ₹\${formatCurrency(totalLodgingOffline)}
+            </div>
+          </div>
+
+          <!-- Card 3: Fooding Sales -->
+          <div class="bg-white p-3.5 rounded-2xl border border-amber-100 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center justify-between">
+                <span>Fooding Sales</span>
+                <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-500"></i>
+              </div>
+              <div class="text-lg sm:text-xl font-black text-amber-950 font-mono mt-1">₹\${formatCurrency(totalFooding)}</div>
+            </div>
+            <div class="text-[10px] text-amber-800 mt-2 pt-2 border-t border-amber-50 font-medium truncate">
+              Online: ₹\${formatCurrency(totalFoodingOnline)} · Offline: ₹\${formatCurrency(totalFoodingOffline)}
+            </div>
+          </div>
+
+          <!-- Card 4: Operating Expenses -->
+          <div class="bg-white p-3.5 rounded-2xl border border-rose-100 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center justify-between">
+                <span>Total Expenses</span>
+                <i data-lucide="receipt" class="w-3.5 h-3.5 text-rose-500"></i>
+              </div>
+              <div class="text-lg sm:text-xl font-black text-rose-700 font-mono mt-1">₹\${formatCurrency(totalExpenses)}</div>
+            </div>
+            <div class="text-[11px] text-rose-700 mt-2 pt-2 border-t border-rose-50 font-medium">
+              \${grossRevenue > 0 ? Math.round((totalExpenses / grossRevenue) * 100) : 0}% expense ratio
+            </div>
+          </div>
+
+          <!-- Card 5: Net Operating Profit -->
+          <div class="col-span-2 sm:col-span-1 bg-white p-3.5 rounded-2xl border \${netOperatingProfit < 0 ? 'border-rose-200' : 'border-emerald-200'} shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="text-[10px] font-bold \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'} uppercase tracking-wider flex items-center justify-between">
+                <span>Net Profit</span>
+                <i data-lucide="trending-up" class="w-3.5 h-3.5 \${netOperatingProfit < 0 ? 'text-rose-500' : 'text-emerald-600'}"></i>
+              </div>
+              <div class="text-lg sm:text-xl font-black font-mono mt-1 \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                ₹\${formatCurrency(netOperatingProfit)}
+              </div>
+            </div>
+            <div class="text-[11px] mt-2 pt-2 border-t \${netOperatingProfit < 0 ? 'border-rose-50 text-rose-600' : 'border-emerald-50 text-emerald-800'} font-medium">
+              Margin: \${profitMarginPct}%
+            </div>
+          </div>
+        </div>
+
+        <!-- Property Performance Comparison (when All Properties selected) -->
+        \${financeFilterProperty === 'all' && properties.length > 0 ? \`
+          <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
+              Property Performance Comparison (\${MONTH_NAMES[financeMonth]} \${financeYear})
+            </h4>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              \${properties.map(p => {
+                const propRecords = records.filter(r => r.property_id === p.id);
+                let pSales = 0, pExp = 0, pLodging = 0, pFooding = 0;
+                propRecords.forEach(r => {
+                  pSales += (r.total_sales || 0);
+                  pExp += (r.expenses_total || 0);
+                  pLodging += ((r.lodging_online || 0) + (r.lodging_offline || 0));
+                  pFooding += ((r.fooding_online || 0) + (r.fooding_offline || 0));
+                });
+                const pNet = pSales - pExp;
+                return \`
+                  <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white transition flex flex-col gap-2 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs font-bold text-slate-900">\${escapeHtml(p.name)}</span>
+                      <span class="text-[10px] text-slate-500 font-medium">\${propRecords.length} entries</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 text-xs">
+                      <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Gross Sales</span>
+                        <div class="font-bold font-mono text-emerald-700">₹\${formatCurrency(pSales)}</div>
+                      </div>
+                      <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
+                        <div class="font-bold font-mono text-rose-700">₹\${formatCurrency(pExp)}</div>
+                      </div>
+                    </div>
+                    <div class="pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
+                      <span class="text-slate-500">Net Profit:</span>
+                      <span class="font-bold font-mono \${pNet < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(pNet)}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 truncate">
+                      Lodging ₹\${formatCurrency(pLodging)} · Fooding ₹\${formatCurrency(pFooding)}
+                    </div>
+                  </div>
+                \`;
+              }).join("")}
+            </div>
+          </div>
+        \` : ''}
+
+        <!-- Itemized Daily Records Table (Desktop) & Cards (Mobile) -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="table" class="w-4 h-4 text-slate-500"></i>
+                Daily Breakdown Records
+              </h4>
+              <p class="text-[11px] text-slate-400">Detailed logs submitted by property managers and admin</p>
+            </div>
+            <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
+              \${records.length} Records
+            </span>
+          </div>
+
+          \${records.length === 0 ? \`
+            <div class="text-center py-12 px-4 flex flex-col items-center justify-center">
+              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-2">
+                <i data-lucide="receipt" class="w-6 h-6"></i>
+              </div>
+              <h5 class="text-sm font-bold text-slate-700">No Financial Records Found</h5>
+              <p class="text-xs text-slate-400 mt-1 max-w-sm">No daily sales or expenses entered for this month / property yet.</p>
+              <button type="button" onclick="openFinanceModal()" class="mt-4 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer">
+                + Record Daily Sales
+              </button>
+            </div>
+          \` : \`
+            <!-- Desktop Table View (md and above) -->
+            <div class="hidden md:block overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <tr>
+                    <th class="py-3 px-3.5">Date</th>
+                    <th class="py-3 px-3.5">Property</th>
+                    <th class="py-3 px-3.5">Lodging (On/Off)</th>
+                    <th class="py-3 px-3.5">Fooding (On/Off)</th>
+                    <th class="py-3 px-3.5">Other</th>
+                    <th class="py-3 px-3.5 font-bold text-slate-900">Total Sales</th>
+                    <th class="py-3 px-3.5 font-bold text-rose-700">Expenses</th>
+                    <th class="py-3 px-3.5 font-bold text-slate-900">Net Profit</th>
+                    <th class="py-3 px-3.5">Submitted By</th>
+                    <th class="py-3 px-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  \${records.map(r => {
+                    const rLodging = (r.lodging_online || 0) + (r.lodging_offline || 0);
+                    const rFooding = (r.fooding_online || 0) + (r.fooding_offline || 0);
+                    return \`
+                      <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">\${r.date}</td>
+                        <td class="py-3 px-3.5 whitespace-nowrap">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700">
+                            \${escapeHtml(r.property_name || 'Property')}
+                          </span>
+                        </td>
+                        <td class="py-3 px-3.5 whitespace-nowrap">
+                          <div class="font-bold text-indigo-900 font-mono">₹\${formatCurrency(rLodging)}</div>
+                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.lodging_online)} · Off: ₹\${formatCurrency(r.lodging_offline)}</div>
+                        </td>
+                        <td class="py-3 px-3.5 whitespace-nowrap">
+                          <div class="font-bold text-amber-900 font-mono">₹\${formatCurrency(rFooding)}</div>
+                          <div class="text-[10px] text-slate-400">On: ₹\${formatCurrency(r.fooding_online)} · Off: ₹\${formatCurrency(r.fooding_offline)}</div>
+                        </td>
+                        <td class="py-3 px-3.5 font-mono text-slate-600 whitespace-nowrap">₹\${formatCurrency(r.other_sales)}</td>
+                        <td class="py-3 px-3.5 font-black text-emerald-700 font-mono whitespace-nowrap">₹\${formatCurrency(r.total_sales)}</td>
+                        <td class="py-3 px-3.5 whitespace-nowrap">
+                          <div class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</div>
+                          \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic max-w-[150px] truncate" title="\${escapeHtml(r.expense_notes)}">\${escapeHtml(r.expense_notes)}</div>\` : ''}
+                        </td>
+                        <td class="py-3 px-3.5 font-black font-mono whitespace-nowrap \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                          ₹\${formatCurrency(r.net_revenue)}
+                        </td>
+                        <td class="py-3 px-3.5 text-[11px] text-slate-500 whitespace-nowrap">\${escapeHtml(r.submitted_by || 'Staff')}</td>
+                        <td class="py-3 px-3.5 text-right whitespace-nowrap">
+                          <div class="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onclick="openFinanceModal('\${r.id}')"
+                              title="Edit Record"
+                              class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
+                            >
+                              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onclick="handleDeleteFinance('\${r.id}')"
+                              title="Delete Record"
+                              class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                            >
+                              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    \`;
+                  }).join("")}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Mobile Cards View (< md) -->
+            <div class="md:hidden divide-y divide-slate-100 p-3 space-y-3">
+              \${records.map(r => {
+                const rLodging = (r.lodging_online || 0) + (r.lodging_offline || 0);
+                const rFooding = (r.fooding_online || 0) + (r.fooding_offline || 0);
+                return \`
+                  <div class="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/80 flex flex-col gap-2.5 shadow-2xs">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-bold text-slate-900">\${r.date}</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white border border-slate-200 text-slate-700">
+                          \${escapeHtml(r.property_name || 'Property')}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1">
+                        <button type="button" onclick="openFinanceModal('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 cursor-pointer">
+                          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button type="button" onclick="handleDeleteFinance('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 cursor-pointer">
+                          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-xl border border-slate-100">
+                      <div>
+                        <span class="text-[10px] font-bold text-indigo-700 uppercase">Lodging</span>
+                        <div class="font-mono font-bold text-indigo-950">₹\${formatCurrency(rLodging)}</div>
+                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Off ₹\${formatCurrency(r.lodging_offline)}</div>
+                      </div>
+                      <div>
+                        <span class="text-[10px] font-bold text-amber-700 uppercase">Fooding</span>
+                        <div class="font-mono font-bold text-amber-950">₹\${formatCurrency(rFooding)}</div>
+                        <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Off ₹\${formatCurrency(r.fooding_offline)}</div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs pt-1">
+                      <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Sales</span>
+                        <div class="font-black text-emerald-700 font-mono">₹\${formatCurrency(r.total_sales)}</div>
+                      </div>
+                      <div class="text-center">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
+                        <div class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</div>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Net Profit</span>
+                        <div class="font-black font-mono \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                          ₹\${formatCurrency(r.net_revenue)}
+                        </div>
+                      </div>
+                    </div>
+
+                    \${r.expense_notes ? \`
+                      <div class="text-[10px] text-slate-600 bg-rose-50/60 p-2 rounded-lg border border-rose-100">
+                        <strong class="text-rose-800">Expense Notes:</strong> \${escapeHtml(r.expense_notes)}
+                      </div>
+                    \` : ''}
+                    \${r.notes ? \`
+                      <div class="text-[10px] text-slate-500 italic">
+                        Shift Notes: \${escapeHtml(r.notes)}
+                      </div>
+                    \` : ''}
+                  </div>
+                \`;
+              }).join("")}
+            </div>
+          \`}
+        </div>
+      \`;
+    }
+
+    async function changeFinanceMonth(delta) {
+      financeMonth += delta;
+      if (financeMonth < 0) {
+        financeMonth = 11;
+        financeYear--;
+      } else if (financeMonth > 11) {
+        financeMonth = 0;
+        financeYear++;
+      }
+      await fetchFinances();
+      renderFinancesView();
+    }
+
+    async function goToFinanceCurrentMonth() {
+      financeMonth = new Date().getMonth();
+      financeYear = new Date().getFullYear();
+      await fetchFinances();
+      renderFinancesView();
+    }
+
+    async function onAdminFinanceFilterChange(val) {
+      financeFilterProperty = val || "all";
+      await fetchFinances();
+      renderFinancesView();
+    }
+
+    function openFinanceModal(recordId = null) {
+      const select = document.getElementById("modalFinanceProperty");
+      if (select) {
+        select.innerHTML = properties.map(p => \`
+          <option value="\${p.id}">\${escapeHtml(p.name)}</option>
+        \`).join("");
+      }
+
+      const title = document.getElementById("financeModalTitle");
+      const idInput = document.getElementById("modalFinanceId");
+      const dateInput = document.getElementById("modalFinanceDate");
+      const loInput = document.getElementById("modalLodgingOnline");
+      const lfInput = document.getElementById("modalLodgingOffline");
+      const foInput = document.getElementById("modalFoodingOnline");
+      const ffInput = document.getElementById("modalFoodingOffline");
+      const osInput = document.getElementById("modalOtherSales");
+      const expInput = document.getElementById("modalExpensesTotal");
+      const expNotesInput = document.getElementById("modalExpenseNotes");
+      const notesInput = document.getElementById("modalNotes");
+
+      if (recordId) {
+        const record = financesList.find(f => f.id === recordId);
+        if (record) {
+          if (title) title.innerText = "Edit Sales & Expenses";
+          if (idInput) idInput.value = record.id;
+          if (select) select.value = record.property_id;
+          if (dateInput) dateInput.value = record.date;
+          if (loInput) loInput.value = record.lodging_online || 0;
+          if (lfInput) lfInput.value = record.lodging_offline || 0;
+          if (foInput) foInput.value = record.fooding_online || 0;
+          if (ffInput) ffInput.value = record.fooding_offline || 0;
+          if (osInput) osInput.value = record.other_sales || 0;
+          if (expInput) expInput.value = record.expenses_total || 0;
+          if (expNotesInput) expNotesInput.value = record.expense_notes || "";
+          if (notesInput) notesInput.value = record.notes || "";
+        }
+      } else {
+        if (title) title.innerText = "Record Sales & Expenses";
+        if (idInput) idInput.value = "";
+        if (select) {
+          if (financeFilterProperty !== "all") {
+            select.value = financeFilterProperty;
+          } else if (properties.length > 0) {
+            select.value = properties[0].id;
+          }
+        }
+        if (dateInput) {
+          const d = new Date();
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          dateInput.value = \`\${year}-\${month}-\${day}\`;
+        }
+        if (loInput) loInput.value = "";
+        if (lfInput) lfInput.value = "";
+        if (foInput) foInput.value = "";
+        if (ffInput) ffInput.value = "";
+        if (osInput) osInput.value = "";
+        if (expInput) expInput.value = "";
+        if (expNotesInput) expNotesInput.value = "";
+        if (notesInput) notesInput.value = "";
+      }
+
+      calculateModalFinanceLiveTotals();
+      document.getElementById("financeModal").classList.remove("hidden");
+      document.getElementById("financeModal").classList.add("flex");
+      refreshIcons();
+    }
+
+    function closeFinanceModal() {
+      document.getElementById("financeModal").classList.add("hidden");
+      document.getElementById("financeModal").classList.remove("flex");
+    }
+
+    function calculateModalFinanceLiveTotals() {
+      const lo = Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0);
+      const lf = Math.max(0, parseFloat(document.getElementById("modalLodgingOffline")?.value || "0") || 0);
+      const fo = Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0);
+      const ff = Math.max(0, parseFloat(document.getElementById("modalFoodingOffline")?.value || "0") || 0);
+      const os = Math.max(0, parseFloat(document.getElementById("modalOtherSales")?.value || "0") || 0);
+      const exp = Math.max(0, parseFloat(document.getElementById("modalExpensesTotal")?.value || "0") || 0);
+
+      const lodgingSub = lo + lf;
+      const foodingSub = fo + ff;
+      const totalSales = lodgingSub + foodingSub + os;
+      const netProfit = totalSales - exp;
+
+      const elLodging = document.getElementById("modalLodgingSubtotal");
+      if (elLodging) elLodging.innerText = formatCurrency(lodgingSub);
+
+      const elFooding = document.getElementById("modalFoodingSubtotal");
+      if (elFooding) elFooding.innerText = formatCurrency(foodingSub);
+
+      const elSales = document.getElementById("modalTotalSales");
+      if (elSales) elSales.innerText = formatCurrency(totalSales);
+
+      const elNet = document.getElementById("modalNetProfit");
+      if (elNet) {
+        elNet.innerText = formatCurrency(netProfit);
+        if (netProfit < 0) {
+          elNet.parentElement.className = "text-xl font-black font-mono text-rose-400";
+        } else {
+          elNet.parentElement.className = "text-xl font-black font-mono text-emerald-400";
+        }
+      }
+    }
+
+    async function handleSaveFinance(e) {
+      if (e) e.preventDefault();
+      const id = document.getElementById("modalFinanceId")?.value?.trim() || null;
+      const property_id = document.getElementById("modalFinanceProperty")?.value;
+      const date = document.getElementById("modalFinanceDate")?.value;
+      const lodging_online = Math.max(0, parseFloat(document.getElementById("modalLodgingOnline")?.value || "0") || 0);
+      const lodging_offline = Math.max(0, parseFloat(document.getElementById("modalLodgingOffline")?.value || "0") || 0);
+      const fooding_online = Math.max(0, parseFloat(document.getElementById("modalFoodingOnline")?.value || "0") || 0);
+      const fooding_offline = Math.max(0, parseFloat(document.getElementById("modalFoodingOffline")?.value || "0") || 0);
+      const other_sales = Math.max(0, parseFloat(document.getElementById("modalOtherSales")?.value || "0") || 0);
+      const expenses_total = Math.max(0, parseFloat(document.getElementById("modalExpensesTotal")?.value || "0") || 0);
+      const expense_notes = document.getElementById("modalExpenseNotes")?.value?.trim() || "";
+      const notes = document.getElementById("modalNotes")?.value?.trim() || "";
+
+      if (!property_id || !date) {
+        showToast("Please select a property and date");
+        return;
+      }
+
+      try {
+        const payload = {
+          property_id,
+          date,
+          lodging_online,
+          lodging_offline,
+          fooding_online,
+          fooding_offline,
+          other_sales,
+          expenses_total,
+          expense_notes,
+          notes
+        };
+        if (id) payload.id = id;
+
+        const res = await fetch("/api/finances", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast(data.error || "Failed to save financial record");
+          return;
+        }
+
+        closeFinanceModal();
+        showToast("Daily Sales & Expenses saved successfully");
+        await fetchFinances();
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error saving: " + err.message);
+      }
+    }
+
+    async function handleDeleteFinance(recordId) {
+      if (!recordId) return;
+      if (!confirm("Are you sure you want to permanently delete this financial record?")) {
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/finances/" + recordId, {
+          method: "DELETE",
+          headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          showToast(data.error || "Failed to delete record");
+          return;
+        }
+
+        showToast("Record deleted successfully");
+        await fetchFinances();
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error deleting: " + err.message);
+      }
+    }
+
+    function exportFinancesCSV() {
+      const records = financeFilterProperty === "all"
+        ? financesList
+        : financesList.filter(f => f.property_id === financeFilterProperty);
+
+      if (records.length === 0) {
+        showToast("No financial records to export");
+        return;
+      }
+
+      let csv = "Date,Property,Lodging Online,Lodging Offline,Lodging Total,Fooding Online,Fooding Offline,Fooding Total,Other Sales,Gross Total Sales,Total Expenses,Expense Breakdown,Net Profit,Shift Notes,Submitted By\\n";
+
+      records.forEach(r => {
+        const lodgingTot = (r.lodging_online || 0) + (r.lodging_offline || 0);
+        const foodingTot = (r.fooding_online || 0) + (r.fooding_offline || 0);
+        const row = [
+          r.date,
+          r.property_name || "",
+          r.lodging_online || 0,
+          r.lodging_offline || 0,
+          lodgingTot,
+          r.fooding_online || 0,
+          r.fooding_offline || 0,
+          foodingTot,
+          r.other_sales || 0,
+          r.total_sales || 0,
+          r.expenses_total || 0,
+          r.expense_notes || "",
+          r.net_revenue || 0,
+          r.notes || "",
+          r.submitted_by || ""
+        ];
+        csv += row.map(v => \`"\${String(v || '').replace(/"/g, '""')}"\`).join(",") + "\\n";
+      });
+
+      const m = String(financeMonth + 1).padStart(2, "0");
+      const filename = \`sales_expenses_\${financeYear}_\${m}.csv\`;
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Financial CSV downloaded: " + filename);
     }
 
     // -------------------------------------------------------------------------

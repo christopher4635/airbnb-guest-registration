@@ -1,5 +1,5 @@
 import { getDashboardHtml } from "./ui";
-import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument } from "./types";
+import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance } from "./types";
 
 function jsonResponse(data: any, status = 200): Response {
 	return new Response(JSON.stringify(data), {
@@ -214,15 +214,16 @@ export default {
 				return jsonResponse({ error: "Unauthorized. Enter valid PIN." }, 401);
 			}
 
-			// Manager Restrictions: can ONLY view properties/staff and view/mark attendance!
+			// Manager Restrictions: can ONLY view properties/staff, attendance, and sales/expenses for their assigned property!
 			if (auth.role === "manager") {
 				const isAllowedForManager =
 					(path === "/api/properties" && method === "GET") ||
 					(path === "/api/staff" && method === "GET") ||
-					path.startsWith("/api/attendance"); // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
+					path.startsWith("/api/attendance") || // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
+					(path === "/api/finances" && (method === "GET" || method === "POST")); // GET & POST for their property only
 
 				if (!isAllowedForManager) {
-					return jsonResponse({ error: "Forbidden. Managers only have access to Attendance Sheet and Daily Roll Call." }, 403);
+					return jsonResponse({ error: "Forbidden. Managers only have access to Attendance, Roll Call, and Daily Sales & Expenses." }, 403);
 				}
 			}
 		}
@@ -833,6 +834,127 @@ export default {
 			if (path.startsWith("/api/documents/") && method === "DELETE") {
 				const docId = path.split("/")[3];
 				await env.DB.prepare("DELETE FROM staff_documents WHERE id = ?").bind(docId).run();
+				return jsonResponse({ success: true });
+			}
+
+			// GET /api/finances (Manager gets their property only, Admin can filter by property/month/date)
+			if (path === "/api/finances" && method === "GET") {
+				let propertyId = url.searchParams.get("property_id") || "";
+				if (auth.role === "manager") {
+					if (!auth.manager?.property_id) {
+						return jsonResponse({ error: "Manager has no assigned property" }, 403);
+					}
+					propertyId = auth.manager.property_id;
+				}
+				const month = url.searchParams.get("month") || "";
+				const date = url.searchParams.get("date") || "";
+				const limit = Math.min(parseInt(url.searchParams.get("limit") || "200", 10), 1000);
+
+				let query = `
+					SELECT f.*, p.name AS property_name
+					FROM daily_finances f
+					LEFT JOIN properties p ON f.property_id = p.id
+					WHERE 1=1
+				`;
+				const params: any[] = [];
+
+				if (propertyId) {
+					query += " AND f.property_id = ?";
+					params.push(propertyId);
+				}
+				if (date) {
+					query += " AND f.date = ?";
+					params.push(date);
+				} else if (month) {
+					query += " AND f.date LIKE ? || '%'";
+					params.push(month);
+				}
+
+				query += " ORDER BY f.date DESC, f.created_at DESC LIMIT ?";
+				params.push(limit);
+
+				const { results } = await env.DB.prepare(query).bind(...params).all<DailyFinance>();
+				return jsonResponse(results || []);
+			}
+
+			// POST /api/finances (Add or update daily sales and expenses record)
+			if (path === "/api/finances" && method === "POST") {
+				const body = (await request.json()) as Partial<DailyFinance>;
+				let propertyId = body.property_id?.trim() || "";
+				let submittedBy = "Admin";
+
+				if (auth.role === "manager") {
+					if (!auth.manager?.property_id) {
+						return jsonResponse({ error: "Manager has no assigned property" }, 403);
+					}
+					propertyId = auth.manager.property_id;
+					submittedBy = `Manager: ${auth.manager.name}`;
+				}
+
+				if (!propertyId) {
+					return jsonResponse({ error: "Property is required." }, 400);
+				}
+				const date = body.date?.trim() || "";
+				if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+					return jsonResponse({ error: "Valid date (YYYY-MM-DD) is required." }, 400);
+				}
+
+				const lodgingOnline = Math.max(0, Math.round(Number(body.lodging_online) || 0));
+				const lodgingOffline = Math.max(0, Math.round(Number(body.lodging_offline) || 0));
+				const foodingOnline = Math.max(0, Math.round(Number(body.fooding_online) || 0));
+				const foodingOffline = Math.max(0, Math.round(Number(body.fooding_offline) || 0));
+				const otherSales = Math.max(0, Math.round(Number(body.other_sales) || 0));
+				const totalSales = lodgingOnline + lodgingOffline + foodingOnline + foodingOffline + otherSales;
+				const expensesTotal = Math.max(0, Math.round(Number(body.expenses_total) || 0));
+				const expenseNotes = body.expense_notes?.trim() || null;
+				const netRevenue = totalSales - expensesTotal;
+				const notes = body.notes?.trim() || null;
+
+				const id = body.id || `fin_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+
+				await env.DB.prepare(`
+					INSERT INTO daily_finances (
+						id, property_id, date, lodging_online, lodging_offline,
+						fooding_online, fooding_offline, other_sales, total_sales,
+						expenses_total, expense_notes, net_revenue, notes, submitted_by,
+						created_at, updated_at
+					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+					ON CONFLICT(property_id, date) DO UPDATE SET
+						lodging_online = excluded.lodging_online,
+						lodging_offline = excluded.lodging_offline,
+						fooding_online = excluded.fooding_online,
+						fooding_offline = excluded.fooding_offline,
+						other_sales = excluded.other_sales,
+						total_sales = excluded.total_sales,
+						expenses_total = excluded.expenses_total,
+						expense_notes = excluded.expense_notes,
+						net_revenue = excluded.net_revenue,
+						notes = excluded.notes,
+						submitted_by = excluded.submitted_by,
+						updated_at = datetime('now')
+				`).bind(
+					id, propertyId, date, lodgingOnline, lodgingOffline,
+					foodingOnline, foodingOffline, otherSales, totalSales,
+					expensesTotal, expenseNotes, netRevenue, notes, submittedBy
+				).run();
+
+				const saved = await env.DB.prepare(`
+					SELECT f.*, p.name AS property_name
+					FROM daily_finances f
+					LEFT JOIN properties p ON f.property_id = p.id
+					WHERE f.property_id = ? AND f.date = ?
+				`).bind(propertyId, date).first<DailyFinance>();
+
+				return jsonResponse({ success: true, finance: saved });
+			}
+
+			// DELETE /api/finances/:id (Admin only)
+			if (path.startsWith("/api/finances/") && method === "DELETE") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only can delete financial records." }, 403);
+				}
+				const finId = path.split("/")[3];
+				await env.DB.prepare("DELETE FROM daily_finances WHERE id = ?").bind(finId).run();
 				return jsonResponse({ success: true });
 			}
 

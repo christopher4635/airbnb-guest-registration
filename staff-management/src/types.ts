@@ -86,3 +86,24 @@ export interface StaffDocument {
 	file_data?: string;
 	created_at?: string;
 }
+
+export interface DailyFinance {
+	id: string;
+	property_id: string;
+	property_name?: string;
+	date: string;
+	lodging_online: number;
+	lodging_offline: number;
+	fooding_online: number;
+	fooding_offline: number;
+	other_sales?: number;
+	total_sales: number;
+	expenses_total: number;
+	expense_notes?: string | null;
+	net_revenue: number;
+	notes?: string | null;
+	submitted_by?: string | null;
+	created_at?: string;
+	updated_at?: string;
+}
+
