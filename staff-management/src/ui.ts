@@ -1579,6 +1579,78 @@ export function getDashboardHtml(): string {
           <input type="text" id="modalBookingGuestName" placeholder="e.g. Rahul Sharma, Booking.com, Walk-in" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
         </div>
 
+        <!-- Guest ID Photo Upload Section -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="id-card" class="w-4 h-4 text-indigo-600"></i>
+              <span>Guest ID Photo (Optional)</span>
+            </label>
+            <span class="text-[10px] text-slate-400 font-medium">Aadhaar / DL / Passport</span>
+          </div>
+
+          <input type="hidden" id="modalBookingGuestIdData" />
+          <input type="file" id="modalGuestIdCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleModalGuestIdSelected(event)" />
+          <input type="file" id="modalGuestIdFileInput" accept="image/*" class="hidden" onchange="handleModalGuestIdSelected(event)" />
+
+          <!-- Empty state: Take photo or choose file -->
+          <div id="modalGuestIdEmptyState" class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onclick="document.getElementById('modalGuestIdCameraInput').click()"
+                class="py-2 px-3 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/70 hover:bg-indigo-100/70 text-indigo-900 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <i data-lucide="camera" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>📷 Take Photo</span>
+              </button>
+              <button
+                type="button"
+                onclick="document.getElementById('modalGuestIdFileInput').click()"
+                class="py-2 px-3 rounded-xl border border-dashed border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <i data-lucide="image" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>Upload File</span>
+              </button>
+            </div>
+            <p class="text-[10px] text-slate-400 text-center">Mobile camera will open directly to click the guest's ID card.</p>
+          </div>
+
+          <!-- Filled state: Thumbnail preview with View / Retake / Remove -->
+          <div id="modalGuestIdPreviewState" class="hidden items-center justify-between gap-3 p-2 rounded-xl bg-white border border-indigo-200">
+            <div class="flex items-center gap-2.5 overflow-hidden">
+              <img id="modalGuestIdThumbnail" src="" alt="Guest ID Preview" onclick="viewModalGuestIdFull()" class="w-12 h-10 object-cover rounded-lg border border-slate-200 cursor-pointer shadow-2xs shrink-0 hover:opacity-90" />
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-900 truncate">ID Attached</span>
+                  <span class="text-[9px] px-1.5 py-0.2 rounded-md font-bold bg-emerald-100 text-emerald-800">Ready</span>
+                </div>
+                <button type="button" onclick="viewModalGuestIdFull()" class="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium underline cursor-pointer text-left">
+                  Click to view full photo
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onclick="document.getElementById('modalGuestIdCameraInput').click()"
+                title="Retake Photo"
+                class="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              </button>
+              <button
+                type="button"
+                onclick="clearModalGuestId()"
+                title="Remove Photo"
+                class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+              >
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label class="block text-xs font-semibold text-slate-700 mb-1">Notes / Remarks (Optional)</label>
           <input type="text" id="modalBookingNotes" placeholder="e.g. Day use, Checked out early, Extra bed" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500" />
@@ -1628,6 +1700,80 @@ export function getDashboardHtml(): string {
           <span>Book This Room Again</span>
         </button>
         <button type="button" onclick="closeRoomDayDetailModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden global inputs for quick camera / file ID uploads from cards -->
+  <input type="file" id="globalGuestIdCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleGlobalGuestIdPicked(event)" />
+  <input type="file" id="globalGuestIdFileInput" accept="image/*" class="hidden" onchange="handleGlobalGuestIdPicked(event)" />
+
+  <!-- Guest ID Lightbox Viewer Modal -->
+  <div id="guestIdViewerModal" class="fixed inset-0 z-60 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <!-- Header -->
+      <div class="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-white">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+            <i data-lucide="id-card" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 id="guestIdViewerTitle" class="text-sm font-bold text-white">Guest ID Photo</h3>
+            <p id="guestIdViewerSubtitle" class="text-[11px] text-slate-400">Guest Identification Document</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            onclick="rotateGuestIdViewer()"
+            title="Rotate 90°"
+            class="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer flex items-center gap-1 text-xs"
+          >
+            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Rotate</span>
+          </button>
+          <button
+            type="button"
+            onclick="downloadGuestIdViewer()"
+            title="Download Photo"
+            class="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer flex items-center gap-1 text-xs"
+          >
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Download</span>
+          </button>
+          <button
+            type="button"
+            onclick="closeGuestIdViewer()"
+            class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer ml-1"
+          >
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Viewer Body -->
+      <div class="p-3 sm:p-5 bg-slate-950 flex items-center justify-center min-h-[340px] max-h-[75vh] overflow-auto select-none">
+        <img
+          id="guestIdViewerImg"
+          src=""
+          alt="Guest ID Photo"
+          class="max-h-[68vh] max-w-full rounded-xl object-contain shadow-2xl transition-transform duration-200"
+        />
+      </div>
+
+      <!-- Footer -->
+      <div class="px-5 py-3 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <span class="text-[11px] flex items-center gap-1.5 text-slate-400">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-slate-500"></i>
+          Rotate if captured sideways on phone
+        </span>
+        <button
+          type="button"
+          onclick="closeGuestIdViewer()"
+          class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition cursor-pointer"
+        >
           Close
         </button>
       </div>
@@ -5206,6 +5352,36 @@ export function getDashboardHtml(): string {
                     </button>
                   </div>
                 </div>
+
+                <!-- Quick ID Snap for Manager -->
+                <div class="pt-2 border-t border-indigo-100 flex items-center justify-between gap-3 flex-wrap">
+                  <div class="flex items-center gap-2">
+                    <input type="hidden" id="mgrGuestIdData" />
+                    <input type="file" id="mgrGuestIdCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleMgrGuestIdSelected(event)" />
+                    <input type="file" id="mgrGuestIdFileInput" accept="image/*" class="hidden" onchange="handleMgrGuestIdSelected(event)" />
+                    <button
+                      type="button"
+                      onclick="document.getElementById('mgrGuestIdCameraInput').click()"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/70 hover:bg-indigo-100/70 text-indigo-900 text-xs font-bold transition cursor-pointer shadow-2xs"
+                    >
+                      <i data-lucide="camera" class="w-3.5 h-3.5 text-indigo-600"></i>
+                      <span id="mgrGuestIdButtonText">📷 Click / Snap Guest ID</span>
+                    </button>
+                    <button
+                      type="button"
+                      onclick="document.getElementById('mgrGuestIdFileInput').click()"
+                      class="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer"
+                    >
+                      Upload File
+                    </button>
+                    <div id="mgrGuestIdBadge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-bold">
+                      <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>ID Attached</span>
+                      <button type="button" onclick="clearMgrGuestId()" title="Remove ID" class="text-rose-500 hover:text-rose-700 ml-1 text-xs cursor-pointer font-bold">×</button>
+                    </div>
+                  </div>
+                  <span class="text-[10px] text-slate-400">Attach photo of guest ID card</span>
+                </div>
               </form>
             </div>
 
@@ -5277,6 +5453,37 @@ export function getDashboardHtml(): string {
                         </div>
 
                         \${b.notes ? \`<div class="text-[10px] text-slate-400 italic truncate">\${escapeHtml(b.notes)}</div>\` : ''}
+
+                        <!-- Guest ID indicator & quick upload -->
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+                          \${b.guest_id_image ? \`
+                            <button
+                              type="button"
+                              onclick="openGuestIdViewer('\${b.id}')"
+                              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition cursor-pointer border border-indigo-200"
+                            >
+                              <i data-lucide="id-card" class="w-3.5 h-3.5 text-indigo-600"></i>
+                              <span>🪪 View ID Photo</span>
+                            </button>
+                            <button
+                              type="button"
+                              onclick="triggerQuickIdUpload('\${b.id}')"
+                              title="Retake ID Photo"
+                              class="text-[10px] text-slate-400 hover:text-indigo-600 underline cursor-pointer"
+                            >
+                              Retake
+                            </button>
+                          \` : \`
+                            <button
+                              type="button"
+                              onclick="triggerQuickIdUpload('\${b.id}')"
+                              class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-dashed border-slate-300 hover:border-indigo-300 text-slate-500 hover:text-indigo-700 text-[11px] font-semibold transition cursor-pointer"
+                            >
+                              <i data-lucide="camera" class="w-3 h-3 text-slate-400"></i>
+                              <span>📷 Snap Guest ID</span>
+                            </button>
+                          \`}
+                        </div>
                       </div>
                     \`;
                   }).join("")}
@@ -5716,12 +5923,51 @@ export function getDashboardHtml(): string {
       }
     }
 
+    async function handleMgrGuestIdSelected(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        showToast("Processing ID photo...");
+        const dataUrl = await compressImageToDataUrl(file);
+        const dataInput = document.getElementById("mgrGuestIdData");
+        const badge = document.getElementById("mgrGuestIdBadge");
+        const btnText = document.getElementById("mgrGuestIdButtonText");
+        if (dataInput) dataInput.value = dataUrl;
+        if (badge) {
+          badge.classList.remove("hidden");
+          badge.classList.add("inline-flex");
+        }
+        if (btnText) btnText.innerText = "Change ID Photo";
+        showToast("ID photo snapped & attached!");
+        refreshIcons();
+      } catch (err) {
+        showToast("Failed to snap ID: " + err.message);
+      }
+    }
+
+    function clearMgrGuestId() {
+      const dataInput = document.getElementById("mgrGuestIdData");
+      const badge = document.getElementById("mgrGuestIdBadge");
+      const btnText = document.getElementById("mgrGuestIdButtonText");
+      const cam = document.getElementById("mgrGuestIdCameraInput");
+      const file = document.getElementById("mgrGuestIdFileInput");
+      if (dataInput) dataInput.value = "";
+      if (badge) {
+        badge.classList.add("hidden");
+        badge.classList.remove("inline-flex");
+      }
+      if (btnText) btnText.innerText = "📷 Click / Snap Guest ID";
+      if (cam) cam.value = "";
+      if (file) file.value = "";
+    }
+
     async function submitManagerRoomBooking(e) {
       if (e) e.preventDefault();
       const propId = currentManagerInfo?.property_id || "";
       const roomId = document.getElementById("mgrBookRoomSelect")?.value;
       const guestName = document.getElementById("mgrBookGuest")?.value?.trim() || "";
       const notes = document.getElementById("mgrBookNotes")?.value?.trim() || "";
+      const guestIdImage = document.getElementById("mgrGuestIdData")?.value?.trim() || null;
 
       if (!propId) return showToast("Error: No property assigned");
       if (!roomId) return showToast("Please select a room");
@@ -5731,6 +5977,7 @@ export function getDashboardHtml(): string {
         room_id: roomId,
         payment_mode: quickBookPaymentMode,
         guest_name: guestName,
+        guest_id_image: guestIdImage,
         notes
       };
 
@@ -5789,6 +6036,7 @@ export function getDashboardHtml(): string {
         if (amountInput) amountInput.value = "";
         if (guestInput) guestInput.value = "";
         if (notesInput) notesInput.value = "";
+        clearMgrGuestId();
 
         await Promise.all([fetchRoomBookings(), fetchFinances()]);
         renderFinancesView();
@@ -6719,6 +6967,7 @@ export function getDashboardHtml(): string {
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
+              <span class="inline-flex items-center gap-1.5"><span>🪪</span> ID Attached</span>
               \${propId === 'elite-homes' ? \`
                 <span class="ml-auto text-[11px] text-rose-700 font-semibold flex items-center gap-1">
                   <i data-lucide="cloud-sync" class="w-3.5 h-3.5 text-rose-600"></i>
@@ -6885,6 +7134,7 @@ export function getDashboardHtml(): string {
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
+            <span class="inline-flex items-center gap-1.5"><span>🪪</span> ID Attached</span>
             \${hasEliteHomes ? \`
               <span class="ml-auto text-[11px] text-rose-700 font-semibold flex items-center gap-1">
                 <i data-lucide="cloud-sync" class="w-3.5 h-3.5 text-rose-600"></i>
@@ -6976,6 +7226,7 @@ export function getDashboardHtml(): string {
                           const bk = cellBookings[0];
                           const isOnline = bk.payment_mode === "online";
                           const isMultiDay = !!bk.group_booking_id;
+                          const hasId = !!bk.guest_id_image;
                           const kAmt = Math.round(bk.amount / 1000 * 10) / 10;
                           const stayInfo = isMultiDay ? \` (Multi-day stay: \${bk.check_in_date || ''} to \${bk.check_out_date || ''})\` : '';
                           const isAirbnb = (bk.platform || '').toLowerCase().includes('airbnb');
@@ -6990,10 +7241,11 @@ export function getDashboardHtml(): string {
                           return \`
                             <td
                               onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
-                              title="Booked: ₹\${formatCurrency(bk.amount)} [\${bk.platform || (isOnline ? 'Online' : 'Cash')}] - \${bk.guest_name || 'Guest'}\${stayInfo}"
+                              title="Booked: ₹\${formatCurrency(bk.amount)} [\${bk.platform || (isOnline ? 'Online' : 'Cash')}] - \${bk.guest_name || 'Guest'}\${hasId ? ' (🪪 ID Attached)' : ''}\${stayInfo}"
                               class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
                             >
-                              <span class="inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${cellStyle}">
+                              <span class="relative inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${cellStyle}">
+                                \${hasId ? '<span class="absolute -top-1.5 -right-1 text-[8px] leading-none" title="Guest ID Attached">🪪</span>' : ''}
                                 <span>₹\${kAmt}k</span>
                                 <span class="text-[8px] uppercase tracking-tighter opacity-90">\${platformTag}</span>
                               </span>
@@ -7002,13 +7254,15 @@ export function getDashboardHtml(): string {
                         } else {
                           const totalAmt = cellBookings.reduce((s, b) => s + (b.amount || 0), 0);
                           const kAmt = Math.round(totalAmt / 1000 * 10) / 10;
+                          const anyHasId = cellBookings.some(b => !!b.guest_id_image);
                           return \`
                             <td
                               onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
-                              title="\${count} Bookings: ₹\${formatCurrency(totalAmt)} - Click to view details"
+                              title="\${count} Bookings: ₹\${formatCurrency(totalAmt)}\${anyHasId ? ' (🪪 ID Attached)' : ''} - Click to view details"
                               class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
                             >
-                              <span class="inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs hover:scale-105 transition">
+                              <span class="relative inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs hover:scale-105 transition">
+                                \${anyHasId ? '<span class="absolute -top-1.5 -right-1 text-[8px] leading-none" title="Guest ID Attached">🪪</span>' : ''}
                                 <span>\${count}x</span>
                                 <span class="text-[8px]">₹\${kAmt}k</span>
                               </span>
@@ -7071,8 +7325,9 @@ export function getDashboardHtml(): string {
                       const pTag = b.platform ? (b.platform.toLowerCase().includes('airbnb') ? 'Ab·' : (b.platform.toLowerCase().includes('booking') ? 'OTA·' : '')) : '';
                       const itemBg = (b.platform || '').toLowerCase().includes('airbnb') ? 'bg-rose-100/90 text-rose-950 border border-rose-200' : (isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900');
                       return \`
-                        <div class="text-[9px] truncate font-medium px-1.5 py-0.5 rounded-md \${itemBg}">
-                          \${pTag}Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k
+                        <div class="text-[9px] truncate font-medium px-1.5 py-0.5 rounded-md flex items-center justify-between gap-1 \${itemBg}">
+                          <span class="truncate">\${pTag}Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k</span>
+                          \${b.guest_id_image ? '<span title="ID Attached" class="text-[8px] shrink-0">🪪</span>' : ''}
                         </div>
                       \`;
                     }).join("")}
@@ -8037,6 +8292,230 @@ export function getDashboardHtml(): string {
       onModalRangeDateChange();
     }
 
+    // Guest ID Photo Compression & Handlers
+    function compressImageToDataUrl(file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) {
+      return new Promise((resolve, reject) => {
+        if (!file) return reject(new Error("No file selected"));
+        if (!file.type || !file.type.startsWith("image/")) return reject(new Error("Selected file is not an image"));
+
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Failed to read image file"));
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = () => reject(new Error("Failed to load image"));
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth || height > maxHeight) {
+              if (width / height > maxWidth / maxHeight) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+              } else {
+                width = Math.round((width * maxHeight) / height);
+                height = maxHeight;
+              }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+
+            try {
+              const dataUrl = canvas.toDataURL("image/jpeg", quality);
+              resolve(dataUrl);
+            } catch (err) {
+              reject(err);
+            }
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function setModalGuestIdData(dataUrl) {
+      const dataInput = document.getElementById("modalBookingGuestIdData");
+      const emptyState = document.getElementById("modalGuestIdEmptyState");
+      const previewState = document.getElementById("modalGuestIdPreviewState");
+      const thumb = document.getElementById("modalGuestIdThumbnail");
+
+      if (dataInput) dataInput.value = dataUrl || "";
+      if (dataUrl) {
+        if (thumb) thumb.src = dataUrl;
+        if (emptyState) emptyState.classList.add("hidden");
+        if (previewState) {
+          previewState.classList.remove("hidden");
+          previewState.classList.add("flex");
+        }
+      } else {
+        if (thumb) thumb.src = "";
+        if (emptyState) emptyState.classList.remove("hidden");
+        if (previewState) {
+          previewState.classList.add("hidden");
+          previewState.classList.remove("flex");
+        }
+      }
+      refreshIcons();
+    }
+
+    function clearModalGuestId() {
+      setModalGuestIdData("");
+      const cam = document.getElementById("modalGuestIdCameraInput");
+      const file = document.getElementById("modalGuestIdFileInput");
+      if (cam) cam.value = "";
+      if (file) file.value = "";
+    }
+
+    async function handleModalGuestIdSelected(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        showToast("Processing & optimizing ID photo...");
+        const compressed = await compressImageToDataUrl(file);
+        setModalGuestIdData(compressed);
+        showToast("Guest ID photo attached!");
+      } catch (err) {
+        showToast("Error processing photo: " + err.message);
+      }
+    }
+
+    function viewModalGuestIdFull() {
+      const dataUrl = document.getElementById("modalBookingGuestIdData")?.value;
+      if (!dataUrl) return;
+      const guestName = document.getElementById("modalBookingGuestName")?.value?.trim() || "Guest";
+      openGuestIdViewerModal(dataUrl, guestName, "Booking Modal Preview");
+    }
+
+    // Lightbox Viewer State & Functions
+    let currentViewerRotation = 0;
+    let currentViewerDataUrl = "";
+    let currentViewerGuestName = "";
+
+    function openGuestIdViewer(bookingId) {
+      const bk = roomBookingsList.find(b => b.id === bookingId);
+      if (!bk || !bk.guest_id_image) {
+        return showToast("No ID photo found for this booking");
+      }
+      const room = roomsList.find(r => r.id === bk.room_id);
+      const roomNum = room ? room.room_number : (bk.room_number || "Room");
+      const guestName = bk.guest_name || "Guest";
+      const infoText = \`Room \${roomNum} · \${bk.date} · \${bk.payment_mode === 'cash' ? 'Cash' : 'Online'}\`;
+      openGuestIdViewerModal(bk.guest_id_image, guestName, infoText);
+    }
+
+    function openGuestIdViewerModal(dataUrl, guestName, infoText) {
+      currentViewerDataUrl = dataUrl;
+      currentViewerGuestName = guestName || "Guest";
+      currentViewerRotation = 0;
+
+      const modal = document.getElementById("guestIdViewerModal");
+      const title = document.getElementById("guestIdViewerTitle");
+      const subtitle = document.getElementById("guestIdViewerSubtitle");
+      const img = document.getElementById("guestIdViewerImg");
+
+      if (title) title.innerText = \`\${guestName}'s ID\`;
+      if (subtitle) subtitle.innerText = infoText || "Guest Identification Document";
+      if (img) {
+        img.src = dataUrl;
+        img.style.transform = "rotate(0deg)";
+      }
+
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+      refreshIcons();
+    }
+
+    function closeGuestIdViewer() {
+      const modal = document.getElementById("guestIdViewerModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+      const img = document.getElementById("guestIdViewerImg");
+      if (img) {
+        img.src = "";
+        img.style.transform = "rotate(0deg)";
+      }
+      currentViewerDataUrl = "";
+    }
+
+    function rotateGuestIdViewer() {
+      currentViewerRotation = (currentViewerRotation + 90) % 360;
+      const img = document.getElementById("guestIdViewerImg");
+      if (img) {
+        img.style.transform = \`rotate(\${currentViewerRotation}deg)\`;
+      }
+    }
+
+    function downloadGuestIdViewer() {
+      if (!currentViewerDataUrl) return;
+      const a = document.createElement("a");
+      a.href = currentViewerDataUrl;
+      const cleanName = (currentViewerGuestName || "Guest").replace(/[^a-zA-Z0-9_-]/g, "_");
+      a.download = \`ID-\${cleanName}-\${new Date().toISOString().split("T")[0]}.jpg\`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // Quick ID Upload directly from card rows
+    let pendingQuickUploadBookingId = null;
+
+    function triggerQuickIdUpload(bookingId) {
+      pendingQuickUploadBookingId = bookingId;
+      const input = document.getElementById("globalGuestIdCameraInput");
+      if (input) {
+        input.value = "";
+        input.click();
+      }
+    }
+
+    async function handleGlobalGuestIdPicked(e) {
+      const file = e.target.files?.[0];
+      const bookingId = pendingQuickUploadBookingId;
+      if (!file || !bookingId) return;
+
+      try {
+        showToast("Processing ID photo...");
+        const compressed = await compressImageToDataUrl(file);
+
+        showToast("Uploading ID photo...");
+        const res = await fetch(\`/api/room-bookings/\${bookingId}\`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            guest_id_image: compressed,
+            update_entire_group: true
+          })
+        });
+
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to upload ID photo");
+        }
+
+        showToast("Guest ID photo uploaded successfully!");
+        await fetchRoomBookings();
+        if (currentDetailRoomId && currentDetailDate) {
+          openRoomDayDetail(currentDetailRoomId, currentDetailDate);
+        }
+        renderFinancesView();
+      } catch (err) {
+        showToast("Error uploading ID: " + err.message);
+      } finally {
+        pendingQuickUploadBookingId = null;
+        e.target.value = "";
+      }
+    }
+
     function openRoomBookingModal(roomId = null, date = null, bookingId = null) {
       const select = document.getElementById("modalBookingRoomSelect");
       let propId = "";
@@ -8108,6 +8587,12 @@ export function getDashboardHtml(): string {
             if (groupNotice) groupNotice.classList.add("hidden");
           }
 
+          if (bk.guest_id_image) {
+            setModalGuestIdData(bk.guest_id_image);
+          } else {
+            clearModalGuestId();
+          }
+
           if (staySegment) staySegment.classList.add("hidden");
           setModalStayMode('single');
         }
@@ -8134,6 +8619,7 @@ export function getDashboardHtml(): string {
 
         if (guestInput) guestInput.value = "";
         if (notesInput) notesInput.value = "";
+        clearModalGuestId();
         const r = document.getElementById("modalBookingModeOnline");
         if (r) r.checked = true;
 
@@ -8151,6 +8637,7 @@ export function getDashboardHtml(): string {
     function closeRoomBookingModal() {
       document.getElementById("roomBookingModal").classList.add("hidden");
       document.getElementById("roomBookingModal").classList.remove("flex");
+      clearModalGuestId();
     }
 
     function openEditBookingModal(bookingId) {
@@ -8165,6 +8652,7 @@ export function getDashboardHtml(): string {
       const isCash = document.getElementById("modalBookingModeCash")?.checked;
       const payment_mode = isCash ? "cash" : "online";
       const guest_name = document.getElementById("modalBookingGuestName")?.value?.trim() || "";
+      const guest_id_image = document.getElementById("modalBookingGuestIdData")?.value?.trim() || null;
       const notes = document.getElementById("modalBookingNotes")?.value?.trim() || "";
 
       if (!property_id || !room_id) {
@@ -8176,6 +8664,7 @@ export function getDashboardHtml(): string {
         room_id,
         payment_mode,
         guest_name,
+        guest_id_image,
         notes
       };
 
@@ -8316,6 +8805,36 @@ export function getDashboardHtml(): string {
                   <div class="text-[10px] text-slate-400 mt-0.5">
                     Created: \${escapeHtml(b.created_by || 'Staff')}
                     \${b.external_booking_id ? \` · External ID: \${escapeHtml(b.external_booking_id)}\` : ''}
+                  </div>
+
+                  <div class="mt-2 flex items-center gap-2">
+                    \${b.guest_id_image ? \`
+                      <button
+                        type="button"
+                        onclick="openGuestIdViewer('\${b.id}')"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold transition cursor-pointer border border-indigo-200 shadow-2xs"
+                      >
+                        <i data-lucide="id-card" class="w-3.5 h-3.5 text-indigo-600"></i>
+                        <span>🪪 View Guest ID</span>
+                      </button>
+                      <button
+                        type="button"
+                        onclick="triggerQuickIdUpload('\${b.id}')"
+                        title="Retake / Replace ID Photo"
+                        class="text-[10px] text-slate-400 hover:text-indigo-600 underline cursor-pointer"
+                      >
+                        Retake
+                      </button>
+                    \` : \`
+                      <button
+                        type="button"
+                        onclick="triggerQuickIdUpload('\${b.id}')"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dashed border-slate-300 hover:border-indigo-300 bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 text-[11px] font-semibold transition cursor-pointer shadow-2xs"
+                      >
+                        <i data-lucide="camera" class="w-3.5 h-3.5 text-slate-400"></i>
+                        <span>📷 Snap / Upload Guest ID</span>
+                      </button>
+                    \`}
                   </div>
                 </div>
 

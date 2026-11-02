@@ -1260,6 +1260,7 @@ export default {
 				const roomId = body.room_id?.trim() || "";
 				const paymentMode = body.payment_mode === "cash" ? "cash" : "online";
 				const guestName = body.guest_name?.trim() || null;
+				const guestIdImage = body.guest_id_image?.trim() || null;
 				const notes = body.notes?.trim() || null;
 
 				if (!propertyId || !roomId) {
@@ -1352,11 +1353,11 @@ export default {
 
 					await env.DB.prepare(`
 						INSERT INTO room_bookings (
-							id, property_id, room_id, date, amount, payment_mode, guest_name, notes, slot_number,
+							id, property_id, room_id, date, amount, payment_mode, guest_name, guest_id_image, notes, slot_number,
 							group_booking_id, check_in_date, check_out_date, total_stay_amount, platform, created_by, created_at, updated_at
-						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					`).bind(
-						id, propertyId, roomId, stayDate, dayAmount, paymentMode, guestName, notes, slotNumber,
+						id, propertyId, roomId, stayDate, dayAmount, paymentMode, guestName, guestIdImage, notes, slotNumber,
 						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, body.platform || "Direct", submittedBy
 					).run();
 
@@ -1422,15 +1423,16 @@ export default {
 				const amount = body.amount !== undefined ? Math.max(0, Math.round(Number(body.amount) || 0)) : existing.amount;
 				const paymentMode = body.payment_mode ? (body.payment_mode === "cash" ? "cash" : "online") : existing.payment_mode;
 				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
+				const guestIdImage = body.guest_id_image !== undefined ? (body.guest_id_image?.trim() || null) : existing.guest_id_image;
 				const notes = body.notes !== undefined ? (body.notes?.trim() || null) : existing.notes;
 				const updateGroup = (body.update_entire_group === true || url.searchParams.get("update_group") === "true") && !!existing.group_booking_id;
 
 				if (updateGroup && existing.group_booking_id) {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET payment_mode = ?, guest_name = ?, notes = ?, updated_at = datetime('now')
+						SET payment_mode = ?, guest_name = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE group_booking_id = ?
-					`).bind(paymentMode, guestName, notes, existing.group_booking_id).run();
+					`).bind(paymentMode, guestName, guestIdImage, notes, existing.group_booking_id).run();
 
 					// Re-sync lodging across all affected dates
 					const groupBookings = await env.DB.prepare("SELECT DISTINCT property_id, date FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ property_id: string; date: string }>();
@@ -1440,9 +1442,9 @@ export default {
 				} else {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET amount = ?, payment_mode = ?, guest_name = ?, notes = ?, updated_at = datetime('now')
+						SET amount = ?, payment_mode = ?, guest_name = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE id = ?
-					`).bind(amount, paymentMode, guestName, notes, bookingId).run();
+					`).bind(amount, paymentMode, guestName, guestIdImage, notes, bookingId).run();
 
 					// Re-sync lodging in daily_finances
 					await syncDailyFinanceLodging(env, existing.property_id, existing.date);
