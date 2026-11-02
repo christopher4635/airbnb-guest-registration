@@ -1245,6 +1245,59 @@
     .badge-supplies { background: #FCE7F3; color: #9D174D; }
     .badge-other { background: #F1F5F9; color: #475569; }
 
+    /* Channel Manager Styles */
+    .channel-manage-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      transition: all 0.15s ease;
+    }
+    .channel-manage-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .channel-manage-card.is-deactivated {
+      background: #F8FAFC;
+      opacity: 0.78;
+    }
+    .channel-info-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .channel-color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.06);
+    }
+    .emoji-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.15s ease, transform 0.1s ease;
+      user-select: none;
+    }
+    .emoji-chip:hover {
+      background: #F1F5F9;
+      transform: scale(1.1);
+    }
+
     /* Booking Mode Chart Styles */
     .chart-flex-grid {
       display: flex;
@@ -1615,7 +1668,7 @@
                 Comparison of booking volume vs mode &bull; Hover or tap any bar to view mode-wise revenue
               </p>
             </div>
-            <div style="display: flex; gap: 6px; align-items: center;">
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <div class="view-mode-toggle" style="background: #F1F5F9;">
                 <button type="button" class="view-mode-btn active" id="chart-scope-month" onclick="switchChartScope('month')">
                   This Month
@@ -1624,6 +1677,9 @@
                   All Stays
                 </button>
               </div>
+              <button type="button" class="btn btn-outline" onclick="openChannelSettingsShortcut()" style="font-size: 11px; height: 32px; padding: 0 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Manage booking channels, add OTAs or deactivate channels">
+                <span>📡 Manage Channels</span>
+              </button>
             </div>
           </div>
 
@@ -1685,6 +1741,9 @@
             </button>
             <button type="button" class="btn btn-outline" id="btn-open-manage-rooms" onclick="openManageRoomsModal()" title="Add, rename, and manage rooms and custom units">
               <span>🏡 Manage Rooms</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="btn-open-manage-channels" onclick="openChannelSettingsShortcut()" title="Add, remove, or deactivate booking channels">
+              <span>📡 Channels</span>
             </button>
             <button type="button" class="btn btn-outline" id="btn-open-ical-sync" onclick="openIcalSyncModal()" style="background:#EFF6FF; border-color:#3B82F6; color:#1D4ED8; font-weight:600;" title="Two-Way iCal Sync with Airbnb & Booking.com">
               <span>🔄 Sync Channels</span>
@@ -1793,13 +1852,12 @@
                 </select>
               </div>
               <div class="form-group">
-                <label>Booking Mode *</label>
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>Booking Mode / Channel *</span>
+                  <a href="javascript:void(0)" onclick="openChannelSettingsShortcut()" style="font-size: 11px; font-weight: normal; color: #2563EB; text-decoration: underline;">⚙️ Manage</a>
+                </label>
                 <select id="mb-booking-mode">
-                  <option value="Offline">Offline / Direct Guest</option>
-                  <option value="Booking.com">Booking.com</option>
-                  <option value="Airbnb">Airbnb</option>
-                  <option value="Direct Call / WhatsApp">Direct Call / WhatsApp</option>
-                  <option value="Other">Other Mode</option>
+                  <!-- Dynamically populated from active channels -->
                 </select>
               </div>
             </div>
@@ -2218,6 +2276,84 @@
         </div>
       </div>
 
+      <!-- MODAL 7: Add / Edit Booking Channel Modal -->
+      <div class="modal-backdrop" id="modal-manage-channel" style="z-index: 10001;">
+        <div class="modal-dialog" style="max-width: 480px;">
+          <div class="modal-header">
+            <div>
+              <h3 id="modal-channel-title">➕ Add Booking Channel</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Add, configure, or activate reservation sources and OTAs</p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeManageChannelModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="channel-form-id">
+            
+            <div class="form-group">
+              <label>Channel / Platform Name *</label>
+              <input type="text" id="channel-form-name" placeholder="e.g. Agoda, VRBO, MakeMyTrip, Corporate Direct" required>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Icon / Emoji</label>
+                <input type="text" id="channel-form-icon" value="📌" style="font-size: 16px; text-align: center;">
+                <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                  <span class="emoji-chip" onclick="selectChannelEmoji('🤝')">🤝</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('🏠')">🏠</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('🌐')">🌐</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('💬')">💬</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('🏨')">🏨</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('🧳')">🧳</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('📱')">📱</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('✨')">✨</span>
+                  <span class="emoji-chip" onclick="selectChannelEmoji('💼')">💼</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Theme Color</label>
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 2px;">
+                  <input type="color" id="channel-form-color" value="#3B82F6" style="width: 44px; height: 38px; padding: 2px; border-radius: 6px; cursor: pointer;" onchange="document.getElementById('channel-form-color-text').value = this.value">
+                  <input type="text" id="channel-form-color-text" value="#3B82F6" style="font-family: monospace; font-size: 12px; height: 38px; flex: 1;" oninput="document.getElementById('channel-form-color').value = this.value">
+                </div>
+                <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                  <span style="width: 18px; height: 18px; border-radius: 50%; background: #0D9488; cursor: pointer; display: inline-block;" onclick="selectChannelColor('#0D9488')"></span>
+                  <span style="width: 18px; height: 18px; border-radius: 50%; background: #FF385C; cursor: pointer; display: inline-block;" onclick="selectChannelColor('#FF385C')"></span>
+                  <span style="width: 18px; height: 18px; border-radius: 50%; background: #003580; cursor: pointer; display: inline-block;" onclick="selectChannelColor('#003580')"></span>
+                  <span style="width: 18px; height: 18px; border-radius: 50%; background: #16A34A; cursor: pointer; display: inline-block;" onclick="selectChannelColor('#16A34A')"></span>
+                  <span style="width: 18px; height: 18px; border-radius: 50%; background: #8B5CF6; cursor: pointer; display: inline-block;" onclick="selectChannelColor('#8B5CF6')"></span>
+                  <span style="width: 18px; height: 18px; border-radius: 50%; background: #F59E0B; cursor: pointer; display: inline-block;" onclick="selectChannelColor('#F59E0B')"></span>
+                  <span style="width: 18px; height: 18px; border-radius: 50%; background: #EC4899; cursor: pointer; display: inline-block;" onclick="selectChannelColor('#EC4899')"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Channel Type</label>
+                <select id="channel-form-type">
+                  <option value="direct">Direct Booking (Offline / Phone)</option>
+                  <option value="ota">OTA / Online Travel Agency</option>
+                  <option value="custom">Other / Custom Source</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <select id="channel-form-status">
+                  <option value="1">🟢 Active (Visible in forms &amp; dropdowns)</option>
+                  <option value="0">⚪ Deactivated (Hidden from new bookings)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeManageChannelModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-save-channel" onclick="handleSaveChannel()">Save Channel</button>
+          </div>
+        </div>
+      </div>
+
 
       <!-- TAB 2: GUEST ENTRIES & SUBMISSIONS VIEW -->
       <div id="view-entries" style="display: none;">
@@ -2406,20 +2542,40 @@
         </div>
       </div>
 
-      <!-- SECTION 2: Standard Fields (Toggle on/off, Required) -->
+      <!-- SECTION 2: Booking Channels & Modes -->
+      <div class="card" id="card-manage-channels">
+        <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">📡</span>
+            <span>2. Booking Channels &amp; Modes</span>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="openAddChannelModal()" style="font-size: 12px; height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 4px;">
+            <span>➕ Add Channel</span>
+          </button>
+        </div>
+        <p class="card-desc">
+          Add, remove, or deactivate booking channels (OTAs and direct booking sources). Deactivated channels are hidden from new bookings while preserving historical records and past revenue.
+        </p>
+
+        <div id="channels-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- SECTION 3: Standard Fields (Toggle on/off, Required) -->
       <div class="card">
         <div class="card-title">
-          <span>2. Standard Form Fields</span>
+          <span>3. Standard Form Fields</span>
         </div>
         <p class="card-desc">Enable, disable, or make fields optional/required.</p>
 
         <div id="standard-fields-list"></div>
       </div>
 
-      <!-- SECTION 3: Custom Fields (Add new fields) -->
+      <!-- SECTION 4: Custom Fields (Add new fields) -->
       <div class="card">
         <div class="card-title">
-          <span>3. Custom Additional Fields</span>
+          <span>4. Custom Additional Fields</span>
           <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">Optional</span>
         </div>
         <p class="card-desc">Add extra questions like Vehicle Number, Flight Info, or Special Requests.</p>
@@ -2445,10 +2601,10 @@
         </div>
       </div>
 
-      <!-- SECTION 4: House Rules & Security PIN -->
+      <!-- SECTION 5: House Rules & Security PIN -->
       <div class="card">
         <div class="card-title">
-          <span>4. House Rules & Admin Security</span>
+          <span>5. House Rules &amp; Admin Security</span>
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -2464,10 +2620,10 @@
         </div>
       </div>
 
-      <!-- SECTION 5: Host Contact & Social Media (Shown to Guests) -->
+      <!-- SECTION 6: Host Contact & Social Media (Shown to Guests) -->
       <div class="card">
         <div class="card-title">
-          <span>5. Host Contact & Social Media</span>
+          <span>6. Host Contact &amp; Social Media</span>
         </div>
         <p class="card-desc">Shown in the header of the guest check-in form for inquiries & early arrival support.</p>
 
@@ -2850,6 +3006,7 @@
       } else if (tab === 'settings') {
         if (btnSettings) btnSettings.classList.add('active');
         if (viewSettings) viewSettings.style.display = 'block';
+        if (typeof renderChannelsList === 'function') renderChannelsList();
       }
     };
 
@@ -3317,6 +3474,13 @@
 
     let currentBookings = [];
     let loadedProperties = [];
+    let loadedChannels = [
+      { id: 'ch_offline', name: 'Offline / Direct', icon: '🤝', color: '#0D9488', isActive: true, is_active: 1, type: 'direct', isSystem: true },
+      { id: 'ch_airbnb', name: 'Airbnb', icon: '🏠', color: '#FF385C', isActive: true, is_active: 1, type: 'ota', isSystem: true },
+      { id: 'ch_booking', name: 'Booking.com', icon: '🌐', color: '#003580', isActive: true, is_active: 1, type: 'ota', isSystem: true },
+      { id: 'ch_whatsapp', name: 'Direct Call / WhatsApp', icon: '💬', color: '#16A34A', isActive: true, is_active: 1, type: 'direct', isSystem: true },
+      { id: 'ch_other', name: 'Other Channels', icon: '✨', color: '#8B5CF6', isActive: true, is_active: 1, type: 'custom', isSystem: true }
+    ];
     let currentCalYear = 2026;
     let currentCalMonth = 9; // 0-indexed: 9 = October, 10 = November
     let currentCalView = 'timeline'; // 'timeline' | 'month' | 'list'
@@ -3354,15 +3518,42 @@
       return false;
     }
 
-    // Helper: Normalize booking mode
+    // Helper: Normalize booking mode against active and loaded channels
     function getBookingMode(b) {
+      if (b.status === 'Blocked' || (b.platform || '').toLowerCase().includes('blocked')) {
+        return 'Maintenance Block';
+      }
       const notes = (b.notes || '').toLowerCase();
       const plat = (b.platform || '').toLowerCase();
+
+      // 1. Explicit Booking Mode in notes
+      if (b.notes && b.notes.includes('Booking Mode:')) {
+        const m = b.notes.match(/Booking Mode:\s*([^\n|]+)/i);
+        if (m) {
+          const parsed = m[1].trim();
+          const matched = loadedChannels.find(ch => ch.name.toLowerCase() === parsed.toLowerCase());
+          if (matched) return matched.name;
+          if (parsed.toLowerCase() === 'offline' || parsed.toLowerCase() === 'direct') return 'Offline / Direct';
+          if (parsed.toLowerCase() === 'other') return 'Other Channels';
+          return parsed;
+        }
+      }
+
+      // 2. Standard OTA & Direct mapping
       if (plat.includes('airbnb') || notes.includes('mode: airbnb')) return 'Airbnb';
       if (plat.includes('booking.com') || notes.includes('mode: booking.com')) return 'Booking.com';
       if (plat.includes('whatsapp') || notes.includes('whatsapp') || notes.includes('direct call')) return 'Direct Call / WhatsApp';
       if (plat.includes('direct') || plat.includes('offline') || notes.includes('mode: offline') || (b.id && b.id.includes('real'))) return 'Offline / Direct';
-      if (b.status === 'Blocked' || plat.includes('blocked')) return 'Maintenance Block';
+
+      // 3. Match against custom channels
+      if (Array.isArray(loadedChannels)) {
+        for (const ch of loadedChannels) {
+          if (plat === ch.name.toLowerCase() || notes.includes(ch.name.toLowerCase())) {
+            return ch.name;
+          }
+        }
+      }
+
       return b.platform || 'Other Channels';
     }
 
@@ -3432,6 +3623,331 @@
       const subEl = document.getElementById('kpi-properties-summary');
       if (countEl) countEl.textContent = `${props.length} Units`;
       if (subEl) subEl.textContent = props.join(' • ');
+    }
+
+    // =========================================================================
+    // BOOKING CHANNELS & MODES MANAGEMENT
+    // =========================================================================
+    function getLoadedChannels() {
+      if (Array.isArray(loadedChannels) && loadedChannels.length > 0) {
+        return loadedChannels;
+      }
+      return [
+        { id: 'ch_offline', name: 'Offline / Direct', icon: '🤝', color: '#0D9488', isActive: true, is_active: 1, type: 'direct', isSystem: true },
+        { id: 'ch_airbnb', name: 'Airbnb', icon: '🏠', color: '#FF385C', isActive: true, is_active: 1, type: 'ota', isSystem: true },
+        { id: 'ch_booking', name: 'Booking.com', icon: '🌐', color: '#003580', isActive: true, is_active: 1, type: 'ota', isSystem: true },
+        { id: 'ch_whatsapp', name: 'Direct Call / WhatsApp', icon: '💬', color: '#16A34A', isActive: true, is_active: 1, type: 'direct', isSystem: true },
+        { id: 'ch_other', name: 'Other Channels', icon: '✨', color: '#8B5CF6', isActive: true, is_active: 1, type: 'custom', isSystem: true }
+      ];
+    }
+
+    async function fetchChannels() {
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getChannels === 'function') {
+        try {
+          const channels = await window.AirbnbAPI.getChannels();
+          if (Array.isArray(channels) && channels.length > 0) {
+            loadedChannels = channels;
+            localStorage.setItem('airbnb_channels_cache', JSON.stringify(channels));
+            if (typeof renderChannelsList === 'function') renderChannelsList();
+            return channels;
+          }
+        } catch(e) {
+          console.warn('[Cloudflare D1] Using cached channels:', e);
+        }
+      }
+      const cached = localStorage.getItem('airbnb_channels_cache');
+      if (cached) {
+        try {
+          loadedChannels = JSON.parse(cached);
+          if (typeof renderChannelsList === 'function') renderChannelsList();
+          return loadedChannels;
+        } catch(e) {}
+      }
+      return getLoadedChannels();
+    }
+
+    function renderChannelsList() {
+      const container = document.getElementById('channels-list-container');
+      if (!container) return;
+
+      const channels = getLoadedChannels();
+      if (!channels || channels.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No channels found. Click "+ Add Channel" to create one.</div>';
+        return;
+      }
+
+      container.innerHTML = channels.map(ch => {
+        const isActive = ch.isActive !== undefined ? ch.isActive : (ch.is_active !== 0);
+        const count = ch.activeBookingsCount !== undefined ? ch.activeBookingsCount : (ch.bookingsCount || 0);
+        const typeLabel = ch.type === 'direct' ? 'Direct' : (ch.type === 'ota' ? 'OTA' : 'Custom');
+        const typeBadgeColor = ch.type === 'direct' ? 'background: #ECFDF5; color: #047857;' : (ch.type === 'ota' ? 'background: #EFF6FF; color: #1D4ED8;' : 'background: #F3E8FF; color: #6B21A8;');
+
+        return `
+          <div class="channel-manage-card ${isActive ? '' : 'is-deactivated'}" id="channel-row-${ch.id}">
+            <div class="channel-info-group">
+              <span class="channel-color-dot" style="background: ${ch.color || '#3B82F6'};"></span>
+              <span style="font-size: 18px;">${ch.icon || '📌'}</span>
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <strong style="font-size: 14px; color: var(--text-main);">${escapeHtml(ch.name)}</strong>
+                  <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; ${typeBadgeColor}">
+                    ${typeLabel}
+                  </span>
+                  <span class="badge ${isActive ? 'badge-confirmed' : 'badge-blocked'}" style="font-size: 11px;">
+                    ${isActive ? '🟢 Active' : '⚪ Deactivated'}
+                  </span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                  ${count} confirmed booking${count === 1 ? '' : 's'} linked &bull; Channel ID: <code style="font-size: 10px; color: #64748B;">${ch.id}</code>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-outline" onclick="toggleChannelStatus('${ch.id}')" style="height: 30px; padding: 0 10px; font-size: 11px; font-weight: 600; ${isActive ? 'color: #92400E; border-color: #FDE68A; background: #FFFBEB;' : 'color: #047857; border-color: #A7F3D0; background: #ECFDF5;'}" title="${isActive ? 'Deactivate channel' : 'Activate channel'}">
+                ${isActive ? '⏸️ Deactivate' : '▶️ Activate'}
+              </button>
+              <button type="button" class="btn btn-outline" onclick="openEditChannelModal('${ch.id}')" style="height: 30px; padding: 0 10px; font-size: 11px; font-weight: 600; color: #2563EB; border-color: #BFDBFE;" title="Edit channel details">
+                ✏️ Edit
+              </button>
+              <button type="button" class="btn btn-outline" onclick="deleteChannelConfirm('${ch.id}', '${escapeJsString(ch.name)}', ${count})" style="height: 30px; padding: 0 8px; font-size: 11px; color: var(--danger); border-color: #FECACA;" title="Remove this channel">
+                🗑️ Remove
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.openAddChannelModal = function() {
+      document.getElementById('modal-channel-title').textContent = '➕ Add Booking Channel';
+      document.getElementById('channel-form-id').value = '';
+      document.getElementById('channel-form-name').value = '';
+      document.getElementById('channel-form-icon').value = '📌';
+      document.getElementById('channel-form-color').value = '#3B82F6';
+      document.getElementById('channel-form-color-text').value = '#3B82F6';
+      document.getElementById('channel-form-type').value = 'ota';
+      document.getElementById('channel-form-status').value = '1';
+      document.getElementById('modal-manage-channel').style.display = 'flex';
+      setTimeout(() => document.getElementById('channel-form-name').focus(), 100);
+    };
+
+    window.openEditChannelModal = function(id) {
+      const ch = loadedChannels.find(c => c.id === id);
+      if (!ch) return;
+      document.getElementById('modal-channel-title').textContent = `✏️ Edit "${ch.name}"`;
+      document.getElementById('channel-form-id').value = ch.id;
+      document.getElementById('channel-form-name').value = ch.name;
+      document.getElementById('channel-form-icon').value = ch.icon || '📌';
+      document.getElementById('channel-form-color').value = ch.color || '#3B82F6';
+      document.getElementById('channel-form-color-text').value = ch.color || '#3B82F6';
+      document.getElementById('channel-form-type').value = ch.type || 'custom';
+      const isActive = ch.isActive !== undefined ? ch.isActive : (ch.is_active !== 0);
+      document.getElementById('channel-form-status').value = isActive ? '1' : '0';
+      document.getElementById('modal-manage-channel').style.display = 'flex';
+    };
+
+    window.closeManageChannelModal = function() {
+      document.getElementById('modal-manage-channel').style.display = 'none';
+    };
+
+    window.selectChannelEmoji = function(emoji) {
+      document.getElementById('channel-form-icon').value = emoji;
+    };
+
+    window.selectChannelColor = function(color) {
+      document.getElementById('channel-form-color').value = color;
+      document.getElementById('channel-form-color-text').value = color;
+    };
+
+    window.handleSaveChannel = async function() {
+      const id = document.getElementById('channel-form-id').value.trim();
+      const name = document.getElementById('channel-form-name').value.trim();
+      const icon = document.getElementById('channel-form-icon').value.trim() || '📌';
+      const color = document.getElementById('channel-form-color').value || '#3B82F6';
+      const type = document.getElementById('channel-form-type').value || 'custom';
+      const status = document.getElementById('channel-form-status').value;
+      const isActive = status === '1';
+
+      if (!name) {
+        alert('Please enter a channel name.');
+        document.getElementById('channel-form-name').focus();
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-channel');
+      const origText = btn ? btn.textContent : '';
+      if (btn) { btn.textContent = 'Saving...'; btn.disabled = true; }
+
+      try {
+        if (id) {
+          // Update
+          if (window.AirbnbAPI && typeof window.AirbnbAPI.updateChannel === 'function') {
+            await window.AirbnbAPI.updateChannel(id, { name, icon, color, type, isActive });
+          } else {
+            const idx = loadedChannels.findIndex(c => c.id === id);
+            if (idx >= 0) loadedChannels[idx] = { ...loadedChannels[idx], name, icon, color, type, isActive, is_active: isActive ? 1 : 0 };
+          }
+          if (typeof showToast === 'function') showToast(`✅ Channel "${name}" updated!`);
+        } else {
+          // Add
+          if (window.AirbnbAPI && typeof window.AirbnbAPI.addChannel === 'function') {
+            await window.AirbnbAPI.addChannel({ name, icon, color, type, isActive });
+          } else {
+            const newCh = { id: `ch_${Date.now()}`, name, icon, color, type, isActive, is_active: isActive ? 1 : 0 };
+            loadedChannels.push(newCh);
+          }
+          if (typeof showToast === 'function') showToast(`✅ Channel "${name}" created!`);
+        }
+
+        closeManageChannelModal();
+        await fetchChannels();
+        renderChannelsList();
+        renderBookingModeChart();
+        renderBookingModeOptions();
+      } catch (err) {
+        alert('Failed to save channel: ' + err.message);
+      } finally {
+        if (btn) { btn.textContent = origText || 'Save Channel'; btn.disabled = false; }
+      }
+    };
+
+    window.toggleChannelStatus = async function(id) {
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.toggleChannel === 'function') {
+          const res = await window.AirbnbAPI.toggleChannel(id);
+          if (res && res.data) {
+            const statusStr = res.data.isActive ? 'activated' : 'deactivated';
+            if (typeof showToast === 'function') showToast(`✅ Channel "${res.data.name}" ${statusStr}!`);
+          }
+        } else {
+          const ch = loadedChannels.find(c => c.id === id);
+          if (ch) {
+            ch.isActive = !ch.isActive;
+            ch.is_active = ch.isActive ? 1 : 0;
+          }
+        }
+        await fetchChannels();
+        renderChannelsList();
+        renderBookingModeChart();
+        renderBookingModeOptions();
+      } catch (err) {
+        alert('Failed to toggle channel: ' + err.message);
+      }
+    };
+
+    window.deleteChannelConfirm = async function(id, name, bookingsCount) {
+      let force = false;
+      if (bookingsCount > 0) {
+        const proceed = confirm(`⚠️ Warning: Channel "${name}" currently has ${bookingsCount} booking(s) associated with it.\n\nDeactivating the channel is recommended instead so that historical reports remain intact.\n\nDo you really want to remove it anyway?`);
+        if (!proceed) return;
+        force = true;
+      } else {
+        const proceed = confirm(`Are you sure you want to remove the channel "${name}"?`);
+        if (!proceed) return;
+      }
+
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.deleteChannel === 'function') {
+          await window.AirbnbAPI.deleteChannel(id, force);
+        } else {
+          loadedChannels = loadedChannels.filter(c => c.id !== id);
+        }
+        if (typeof showToast === 'function') showToast(`🗑️ Channel "${name}" removed.`);
+        await fetchChannels();
+        renderChannelsList();
+        renderBookingModeChart();
+        renderBookingModeOptions();
+      } catch (err) {
+        alert('Failed to delete channel: ' + err.message);
+      }
+    };
+
+    window.openChannelSettingsShortcut = function() {
+      if (typeof switchAdminTab === 'function') switchAdminTab('settings');
+      setTimeout(() => {
+        const card = document.getElementById('card-manage-channels');
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          card.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+          card.style.borderColor = '#3B82F6';
+          card.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.2)';
+          setTimeout(() => {
+            card.style.borderColor = '';
+            card.style.boxShadow = '';
+          }, 1800);
+        }
+      }, 50);
+    };
+
+    function renderBookingModeOptions(selectedMode) {
+      const select = document.getElementById('mb-booking-mode');
+      if (!select) return;
+
+      const channels = getLoadedChannels();
+      const options = [];
+      const seen = new Set();
+
+      channels.forEach(ch => {
+        const active = ch.isActive !== undefined ? ch.isActive : (ch.is_active !== 0);
+        if (active) {
+          options.push({ value: ch.name, label: `${ch.icon || '📌'} ${ch.name}` });
+          seen.add(ch.name.toLowerCase());
+        }
+      });
+
+      // If editing an existing booking whose channel was deactivated or custom, keep it visible
+      if (selectedMode) {
+        const norm = selectedMode.trim().toLowerCase();
+        let alreadyCovered = false;
+        if (seen.has(norm)) alreadyCovered = true;
+        if ((norm === 'offline' || norm === 'direct') && (seen.has('offline / direct') || seen.has('offline'))) alreadyCovered = true;
+        if (norm === 'other' && seen.has('other channels')) alreadyCovered = true;
+
+        if (!alreadyCovered) {
+          options.push({ value: selectedMode, label: `📌 ${selectedMode} (Archived / Inactive)` });
+        }
+      }
+
+      if (options.length === 0) {
+        options.push(
+          { value: 'Offline / Direct', label: '🤝 Offline / Direct' },
+          { value: 'Booking.com', label: '🌐 Booking.com' },
+          { value: 'Airbnb', label: '🏠 Airbnb' },
+          { value: 'Direct Call / WhatsApp', label: '💬 Direct Call / WhatsApp' },
+          { value: 'Other Channels', label: '✨ Other Channels' }
+        );
+      }
+
+      select.innerHTML = options.map(opt => `
+        <option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>
+      `).join('');
+
+      if (selectedMode) {
+        let found = false;
+        for (let i = 0; i < select.options.length; i++) {
+          if (select.options[i].value.toLowerCase() === selectedMode.toLowerCase()) {
+            select.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          if (selectedMode.toLowerCase().includes('offline')) {
+            for (let i = 0; i < select.options.length; i++) {
+              if (select.options[i].value.toLowerCase().includes('offline')) { select.selectedIndex = i; break; }
+            }
+          } else if (selectedMode.toLowerCase().includes('booking')) {
+            for (let i = 0; i < select.options.length; i++) {
+              if (select.options[i].value.toLowerCase().includes('booking')) { select.selectedIndex = i; break; }
+            }
+          } else if (selectedMode.toLowerCase().includes('airbnb')) {
+            for (let i = 0; i < select.options.length; i++) {
+              if (select.options[i].value.toLowerCase().includes('airbnb')) { select.selectedIndex = i; break; }
+            }
+          }
+        }
+      }
     }
 
     // Default Sample Bookings (Realistic 3-property bookings covering Oct/Nov 2026)
@@ -3629,6 +4145,9 @@
       const CURRENT_DATA_VERSION = 'v3_real_bookings_active';
       // 1. Try loading rooms & properties from Cloudflare D1
       await fetchProperties();
+
+      // 1b. Try loading booking channels & modes from Cloudflare D1
+      await fetchChannels();
 
       // 2. Try loading bookings from Cloudflare D1 via Hono backend
       let loadedFromD1 = false;
@@ -3932,18 +4451,23 @@
         return true;
       });
 
-      // Channels configuration
-      const channels = [
-        { name: 'Offline / Direct', icon: '🤝', color: '#0D9488', bg: '#ECFDF5' },
-        { name: 'Airbnb', icon: '🏠', color: '#FF385C', bg: '#FFF0F2' },
-        { name: 'Booking.com', icon: '🌐', color: '#003580', bg: '#EFF6FF' },
-        { name: 'Direct Call / WhatsApp', icon: '💬', color: '#16A34A', bg: '#F0FDF4' },
-        { name: 'Other Channels', icon: '✨', color: '#8B5CF6', bg: '#F5F3FF' }
-      ];
+      // Dynamic Channels configuration from database/cache
+      const channels = getLoadedChannels();
 
       const stats = {};
       channels.forEach(ch => {
-        stats[ch.name] = { count: 0, revenue: 0, nights: 0, config: ch };
+        const active = ch.isActive !== undefined ? ch.isActive : (ch.is_active !== 0);
+        stats[ch.name] = {
+          count: 0,
+          revenue: 0,
+          nights: 0,
+          config: {
+            name: ch.name,
+            icon: ch.icon || '📌',
+            color: ch.color || '#3B82F6',
+            isActive: active
+          }
+        };
       });
 
       let totalBookings = 0;
@@ -3953,7 +4477,7 @@
       targetBookings.forEach(b => {
         const mode = getBookingMode(b);
         if (!stats[mode]) {
-          stats[mode] = { count: 0, revenue: 0, nights: 0, config: { name: mode, icon: '📌', color: '#64748B', bg: '#F1F5F9' } };
+          stats[mode] = { count: 0, revenue: 0, nights: 0, config: { name: mode, icon: '📌', color: '#64748B', isActive: true } };
         }
         const rev = getBookingRevenue(b);
         const nights = Number(b.nights) || calculateNightsBetween(b.checkInDate, b.checkOutDate) || 1;
@@ -3967,12 +4491,15 @@
         totalNights += nights;
       });
 
-      const counts = Object.values(stats).map(s => s.count);
+      // Show active channels OR channels that have past bookings in the current scope
+      const visibleStats = Object.values(stats).filter(s => s.config.isActive || s.count > 0);
+
+      const counts = visibleStats.map(s => s.count);
       const maxCount = Math.max(...counts, 1);
 
       container.innerHTML = `
         <div class="chart-flex-grid">
-          ${Object.values(stats).map(s => {
+          ${visibleStats.map(s => {
             const count = s.count;
             const rev = s.revenue;
             const cfg = s.config;
@@ -4016,7 +4543,7 @@
       if (summaryEl) {
         let topChannel = '—';
         let maxB = 0;
-        Object.values(stats).forEach(s => {
+        visibleStats.forEach(s => {
           if (s.count > maxB) {
             maxB = s.count;
             topChannel = `${s.config.icon} ${s.config.name} (${s.count} stays)`;
@@ -4406,7 +4933,7 @@
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">🌙 ${b.nights || 1} nights</div>
           </td>
           <td>
-            <span class="badge-pill" style="background: #F1F1F4;">${b.platform || 'Airbnb'}</span>
+            <span class="badge-pill" style="background: #F1F1F4;">${escapeHtml(getBookingMode(b))}</span>
             ${b.reservationCode ? `<div style="font-size: 11px; font-family: monospace; color: var(--text-muted); margin-top: 4px;">#${b.reservationCode}</div>` : ''}
           </td>
           <td>
@@ -4533,7 +5060,7 @@
       document.getElementById('mb-advance').value = '';
       document.getElementById('mb-balance').value = '₹0';
       document.getElementById('mb-payout').value = '';
-      document.getElementById('mb-booking-mode').value = 'Offline';
+      renderBookingModeOptions('Offline / Direct');
 
       // Dates
       const start = prefillDate || new Date().toISOString().slice(0, 10);
@@ -4620,30 +5147,14 @@
       document.getElementById('mb-advance').value = advVal;
       calculatePricingAndBalance(false);
 
-      const bModeEl = document.getElementById('mb-booking-mode');
-      if (bModeEl) {
-        if (b.notes && b.notes.includes('Booking Mode:')) {
-          const m = b.notes.match(/Booking Mode:\s*([^\n|]+)/i);
-          if (m) {
-            const detectedMode = m[1].trim();
-            if (['Offline', 'Booking.com', 'Airbnb', 'Direct Call / WhatsApp', 'Other'].includes(detectedMode)) {
-              bModeEl.value = detectedMode;
-            } else if (detectedMode.toLowerCase().includes('booking')) {
-              bModeEl.value = 'Booking.com';
-            } else if (detectedMode.toLowerCase().includes('airbnb')) {
-              bModeEl.value = 'Airbnb';
-            } else {
-              bModeEl.value = 'Offline';
-            }
-          }
-        } else if (b.platform === 'Booking.com') {
-          bModeEl.value = 'Booking.com';
-        } else if (b.platform === 'Airbnb') {
-          bModeEl.value = 'Airbnb';
-        } else {
-          bModeEl.value = 'Offline';
-        }
+      let detectedMode = 'Offline / Direct';
+      if (b.notes && b.notes.includes('Booking Mode:')) {
+        const m = b.notes.match(/Booking Mode:\s*([^\n|]+)/i);
+        if (m) detectedMode = m[1].trim();
+      } else if (b.platform) {
+        detectedMode = b.platform;
       }
+      renderBookingModeOptions(detectedMode);
 
       onBookingDateOrPropChange();
       document.getElementById('modal-booking').style.display = 'flex';
@@ -4714,7 +5225,7 @@
         totalAmount = nightlyRate * (nights > 0 ? nights : 1);
       }
       const advance = parseFloat(document.getElementById('mb-advance')?.value) || 0;
-      const mode = document.getElementById('mb-booking-mode')?.value || 'Offline';
+      const mode = document.getElementById('mb-booking-mode')?.value || 'Offline / Direct';
 
       if (!name) {
         alert("Please enter the guest legal name or booking label.");
@@ -4741,7 +5252,12 @@
       const finalNotes = userNotes ? `${metaLine}\n${userNotes}` : metaLine;
 
       let platformVal = mode;
-      if (mode === 'Offline' || mode === 'Direct Call / WhatsApp') platformVal = 'Direct';
+      const matchedCh = loadedChannels.find(c => c.name.toLowerCase() === mode.toLowerCase());
+      if (matchedCh && matchedCh.type === 'direct') {
+        platformVal = 'Direct';
+      } else if (mode.toLowerCase().includes('offline') || mode.toLowerCase().includes('whatsapp') || mode.toLowerCase().includes('direct')) {
+        platformVal = 'Direct';
+      }
 
       const bookingId = editingBookingId || ('bk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
 
@@ -5076,11 +5592,7 @@
         const total = b._calcAmount || 0;
         const nightly = total > 0 && nights > 0 ? Math.round(total / nights) : 0;
 
-        let modeLabel = b.platform || 'Offline';
-        if (b.notes && b.notes.includes('Booking Mode:')) {
-          const m = b.notes.match(/Booking Mode:\s*([^\n|]+)/i);
-          if (m) modeLabel = m[1].trim();
-        }
+        let modeLabel = getBookingMode(b);
 
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';

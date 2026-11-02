@@ -249,6 +249,49 @@
     },
 
     // --------------------------------------------------------------------------
+    // Channels & Booking Modes (D1 Database)
+    // --------------------------------------------------------------------------
+    getChannels: async function() {
+      try {
+        const res = await this.request('/api/channels');
+        if (res && res.data) {
+          localStorage.setItem('airbnb_channels_cache', JSON.stringify(res.data));
+          return res.data;
+        }
+      } catch (e) {
+        const cached = localStorage.getItem('airbnb_channels_cache');
+        if (cached) return JSON.parse(cached);
+      }
+      return [];
+    },
+
+    addChannel: async function(channelData) {
+      return await this.request('/api/channels', {
+        method: 'POST',
+        body: JSON.stringify(channelData)
+      });
+    },
+
+    updateChannel: async function(id, channelData) {
+      return await this.request(`/api/channels/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(channelData)
+      });
+    },
+
+    toggleChannel: async function(id) {
+      return await this.request(`/api/channels/${encodeURIComponent(id)}/toggle`, {
+        method: 'PUT'
+      });
+    },
+
+    deleteChannel: async function(id, force = false) {
+      return await this.request(`/api/channels/${encodeURIComponent(id)}${force ? '?force=true' : ''}`, {
+        method: 'DELETE'
+      });
+    },
+
+    // --------------------------------------------------------------------------
     // Month-wise Revenue & Expenses Tracker (D1 Database)
     // --------------------------------------------------------------------------
     getExpenses: async function(month = null, property = null) {

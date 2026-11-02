@@ -120,3 +120,18 @@ export interface CheckInPayload {
   signature?: string;         // base64 data URI
   guests: GuestInput[];
 }
+
+export interface Channel {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+  isActive: boolean;
+  is_active?: number;
+  type?: 'direct' | 'ota' | 'custom';
+  isSystem?: boolean;
+  is_system?: number;
+  createdAt?: string;
+  bookingsCount?: number;
+  activeBookingsCount?: number;
+}
