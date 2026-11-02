@@ -2176,6 +2176,9 @@ export function getDashboardHtml(): string {
 
     function lockApp() {
       currentSessionPin = "";
+      try {
+        document.cookie = "auth_pin=; path=/; max-age=0";
+      } catch (e) {}
       localStorage.removeItem(AUTH_PIN_KEY);
       localStorage.removeItem(AUTH_ROLE_KEY);
       localStorage.removeItem(AUTH_MANAGER_KEY);
@@ -2380,6 +2383,9 @@ export function getDashboardHtml(): string {
           } : null;
 
           currentSessionPin = pin;
+          try {
+            document.cookie = "auth_pin=" + encodeURIComponent(pin) + "; path=/; max-age=2592000; SameSite=Lax";
+          } catch (e) {}
           const remember = document.getElementById("rememberMe");
           if (!remember || remember.checked) {
             localStorage.setItem(AUTH_PIN_KEY, pin);
@@ -5958,13 +5964,12 @@ export function getDashboardHtml(): string {
         showToast(\`Processing \${files.length} ID photo(s)...\`);
         for (let i = 0; i < files.length; i++) {
           const dataUrl = await compressImageToDataUrl(files[i]);
-          mgrGuestIdList.push({
-            url: dataUrl,
-            label: \`ID #\${mgrGuestIdList.length + 1}\`
-          });
+          const nextIdx = mgrGuestIdList.length + 1;
+          const uploaded = await uploadGuestIdPhotoToR2(dataUrl, \`ID #\${nextIdx}\`);
+          mgrGuestIdList.push(uploaded);
         }
         updateMgrGuestIdDisplay();
-        showToast(\`\${mgrGuestIdList.length} ID photo(s) attached!\`);
+        showToast(\`\${mgrGuestIdList.length} ID photo(s) stored in R2!\`);
       } catch (err) {
         showToast("Failed to process ID photo: " + err.message);
       } finally {
@@ -6021,7 +6026,8 @@ export function getDashboardHtml(): string {
       const guestName = names.join(", ") || (rawGuest || null);
       const guestsJson = names.length > 0 ? JSON.stringify(names) : null;
       const notes = document.getElementById("mgrBookNotes")?.value?.trim() || "";
-      const guestIdImage = mgrGuestIdList.length > 0 ? JSON.stringify(mgrGuestIdList) : (document.getElementById("mgrGuestIdData")?.value?.trim() || null);
+      const cleanMgrIds = mgrGuestIdList.map(item => ({ url: item.rawUrl || item.url, key: item.key, label: item.label }));
+      const guestIdImage = cleanMgrIds.length > 0 ? JSON.stringify(cleanMgrIds) : (document.getElementById("mgrGuestIdData")?.value?.trim() || null);
 
       if (!propId) return showToast("Error: No property assigned");
       if (!roomId) return showToast("Please select a room");
@@ -8397,10 +8403,51 @@ export function getDashboardHtml(): string {
       });
     }
 
+    function resolveGuestIdUrl(url) {
+      if (!url) return "";
+      if (url.startsWith("/api/guest-ids/file") && !url.includes("&pin=") && !url.includes("?pin=")) {
+        const pin = currentSessionPin || localStorage.getItem(AUTH_PIN_KEY) || "";
+        if (pin) {
+          return url + (url.includes("?") ? "&pin=" : "?pin=") + encodeURIComponent(pin);
+        }
+      }
+      return url;
+    }
+
+    async function uploadGuestIdPhotoToR2(dataUrl, label = "ID") {
+      try {
+        const res = await fetch("/api/guest-ids/upload", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ dataUrl, label })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            return {
+              url: resolveGuestIdUrl(data.url),
+              rawUrl: data.url,
+              key: data.key,
+              label: data.label || label
+            };
+          }
+        }
+      } catch (err) {
+        console.warn("Direct R2 upload error, falling back to local buffer:", err);
+      }
+      return { url: dataUrl, rawUrl: dataUrl, label };
+    }
+
     // Helper: Parse guest ID images from DB (supports JSON array or single legacy data URL string)
     function parseGuestIdImages(raw) {
       if (!raw) return [];
-      if (Array.isArray(raw)) return raw;
+      if (Array.isArray(raw)) {
+        return raw.map((item, idx) => {
+          if (typeof item === "string") return { url: resolveGuestIdUrl(item), rawUrl: item, label: \`ID #\${idx + 1}\` };
+          if (item && item.url) return { url: resolveGuestIdUrl(item.url), rawUrl: item.rawUrl || item.url, key: item.key, label: item.label || \`ID #\${idx + 1}\` };
+          return null;
+        }).filter(Boolean);
+      }
       if (typeof raw === "string") {
         const trimmed = raw.trim();
         if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
@@ -8408,17 +8455,17 @@ export function getDashboardHtml(): string {
             const parsed = JSON.parse(trimmed);
             if (Array.isArray(parsed)) {
               return parsed.map((item, idx) => {
-                if (typeof item === "string") return { url: item, label: \`ID #\${idx + 1}\` };
-                if (item && item.url) return { url: item.url, label: item.label || \`ID #\${idx + 1}\` };
+                if (typeof item === "string") return { url: resolveGuestIdUrl(item), rawUrl: item, label: \`ID #\${idx + 1}\` };
+                if (item && item.url) return { url: resolveGuestIdUrl(item.url), rawUrl: item.rawUrl || item.url, key: item.key, label: item.label || \`ID #\${idx + 1}\` };
                 return null;
               }).filter(Boolean);
             } else if (parsed && parsed.url) {
-              return [parsed];
+              return [{ url: resolveGuestIdUrl(parsed.url), rawUrl: parsed.rawUrl || parsed.url, key: parsed.key, label: parsed.label || "ID #1" }];
             }
           } catch (e) {}
         }
-        if (trimmed.startsWith("data:image/") || trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-          return [{ url: trimmed, label: "ID #1" }];
+        if (trimmed.startsWith("data:image/") || trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/api/")) {
+          return [{ url: resolveGuestIdUrl(trimmed), rawUrl: trimmed, label: "ID #1" }];
         }
       }
       return [];
@@ -8512,7 +8559,7 @@ export function getDashboardHtml(): string {
       const hiddenInput = document.getElementById("modalBookingGuestIdData");
 
       if (hiddenInput) {
-        hiddenInput.value = modalGuestIdList.length > 0 ? JSON.stringify(modalGuestIdList) : "";
+        hiddenInput.value = modalGuestIdList.length > 0 ? JSON.stringify(modalGuestIdList.map(item => ({ url: item.rawUrl || item.url, key: item.key, label: item.label }))) : "";
       }
 
       if (countBadge) {
@@ -8574,7 +8621,7 @@ export function getDashboardHtml(): string {
         modalGuestIdList[idx].label = label || \`ID #\${idx + 1}\`;
         const hiddenInput = document.getElementById("modalBookingGuestIdData");
         if (hiddenInput) {
-          hiddenInput.value = JSON.stringify(modalGuestIdList);
+          hiddenInput.value = JSON.stringify(modalGuestIdList.map(item => ({ url: item.rawUrl || item.url, key: item.key, label: item.label })));
         }
       }
     }
@@ -8601,10 +8648,12 @@ export function getDashboardHtml(): string {
       try {
         showToast("Processing photo from camera...");
         const dataUrl = await compressImageToDataUrl(file);
+        showToast("Uploading ID photo to R2 storage...");
         const nextIdx = modalGuestIdList.length + 1;
-        modalGuestIdList.push({ url: dataUrl, label: \`ID #\${nextIdx}\` });
+        const uploaded = await uploadGuestIdPhotoToR2(dataUrl, \`ID #\${nextIdx}\`);
+        modalGuestIdList.push(uploaded);
         renderModalGuestIdGallery();
-        showToast(\`ID #\${nextIdx} attached! Tap camera to snap next ID or back of card.\`);
+        showToast(\`ID #\${nextIdx} stored in R2! Tap camera to snap next ID.\`);
       } catch (err) {
         showToast("Failed to snap photo: " + err.message);
       } finally {
@@ -8615,16 +8664,17 @@ export function getDashboardHtml(): string {
     async function handleModalGuestIdFilesSelected(e) {
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
-      showToast(\`Processing \${files.length} photo(s)...\`);
+      showToast(\`Processing & uploading \${files.length} photo(s) to R2...\`);
       try {
         for (let i = 0; i < files.length; i++) {
           const f = files[i];
           const dataUrl = await compressImageToDataUrl(f);
           const nextIdx = modalGuestIdList.length + 1;
-          modalGuestIdList.push({ url: dataUrl, label: \`ID #\${nextIdx}\` });
+          const uploaded = await uploadGuestIdPhotoToR2(dataUrl, \`ID #\${nextIdx}\`);
+          modalGuestIdList.push(uploaded);
         }
         renderModalGuestIdGallery();
-        showToast(\`\${files.length} ID photo(s) added!\`);
+        showToast(\`\${files.length} ID photo(s) uploaded to R2!\`);
       } catch (err) {
         showToast("Error processing photo: " + err.message);
       } finally {
@@ -8760,16 +8810,30 @@ export function getDashboardHtml(): string {
       }
     }
 
-    function downloadGuestIdViewer() {
+    async function downloadGuestIdViewer() {
       if (viewerGallery.length === 0) return;
       const current = viewerGallery[viewerCurrentIndex];
-      const a = document.createElement("a");
-      a.href = current.url;
       const cleanName = (viewerGuestName || "Guest").replace(/[^a-zA-Z0-9_-]/g, "_");
-      a.download = \`ID-\${cleanName}-Photo\${viewerCurrentIndex + 1}-\${new Date().toISOString().split("T")[0]}.jpg\`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const filename = \`ID-\${cleanName}-Photo\${viewerCurrentIndex + 1}-\${new Date().toISOString().split("T")[0]}.jpg\`;
+      try {
+        const resp = await fetch(current.url);
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } catch (e) {
+        const a = document.createElement("a");
+        a.href = current.url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
     }
 
     function closeGuestIdViewer() {
@@ -8813,21 +8877,21 @@ export function getDashboardHtml(): string {
       const existingIds = parseGuestIdImages(bk?.guest_id_image);
 
       try {
-        showToast(\`Processing \${files.length} photo(s)...\`);
+        showToast(\`Processing & uploading \${files.length} photo(s) to R2...\`);
         for (let i = 0; i < files.length; i++) {
           const compressed = await compressImageToDataUrl(files[i]);
-          existingIds.push({
-            url: compressed,
-            label: \`ID #\${existingIds.length + 1}\`
-          });
+          const nextIdx = existingIds.length + 1;
+          const uploaded = await uploadGuestIdPhotoToR2(compressed, \`ID #\${nextIdx}\`);
+          existingIds.push(uploaded);
         }
 
-        showToast("Uploading ID photos...");
+        showToast("Saving booking with R2 references...");
+        const cleanList = existingIds.map(item => ({ url: item.rawUrl || item.url, key: item.key, label: item.label }));
         const res = await fetch(\`/api/room-bookings/\${bookingId}\`, {
           method: "PUT",
           headers: getAuthHeaders(),
           body: JSON.stringify({
-            guest_id_image: JSON.stringify(existingIds),
+            guest_id_image: JSON.stringify(cleanList),
             update_entire_group: true
           })
         });
@@ -9002,7 +9066,8 @@ export function getDashboardHtml(): string {
       });
       const guest_name = names.join(", ") || "";
       const guests_json = names.length > 0 ? JSON.stringify(names) : null;
-      const guest_id_image = modalGuestIdList.length > 0 ? JSON.stringify(modalGuestIdList) : (document.getElementById("modalBookingGuestIdData")?.value?.trim() || null);
+      const cleanModalIds = modalGuestIdList.map(item => ({ url: item.rawUrl || item.url, key: item.key, label: item.label }));
+      const guest_id_image = cleanModalIds.length > 0 ? JSON.stringify(cleanModalIds) : (document.getElementById("modalBookingGuestIdData")?.value?.trim() || null);
       const notes = document.getElementById("modalBookingNotes")?.value?.trim() || "";
 
       if (!property_id || !room_id) {

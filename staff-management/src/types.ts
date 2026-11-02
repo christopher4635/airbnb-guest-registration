@@ -2,6 +2,7 @@ export interface Env {
 	DB: D1Database;
 	AIRBNB_DB?: D1Database;
 	AUTH_PIN?: string;
+	GUEST_ID_BUCKET?: R2Bucket;
 }
 
 export interface Property {

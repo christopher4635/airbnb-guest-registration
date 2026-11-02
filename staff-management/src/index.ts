@@ -55,6 +55,13 @@ async function getAuthContext(request: Request, env: Env): Promise<AuthContext> 
 		const queryPin = url.searchParams.get("pin");
 		if (queryPin) token = queryPin.trim();
 	}
+	if (!token) {
+		const cookieHeader = request.headers.get("Cookie");
+		if (cookieHeader) {
+			const match = cookieHeader.match(/(?:^|;\s*)auth_pin=([^;]+)/);
+			if (match) token = decodeURIComponent(match[1]).trim();
+		}
+	}
 
 	if (!token) return { authorized: false };
 
@@ -78,6 +85,115 @@ async function getAuthContext(request: Request, env: Env): Promise<AuthContext> 
 	}
 
 	return { authorized: false };
+}
+
+function parseDataUrl(dataUrl: string): { contentType: string; buffer: Uint8Array } | null {
+	const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+	if (!match) return null;
+	const contentType = match[1] || "image/jpeg";
+	const base64Data = match[2];
+	try {
+		const binaryString = atob(base64Data);
+		const bytes = new Uint8Array(binaryString.length);
+		for (let i = 0; i < binaryString.length; i++) {
+			bytes[i] = binaryString.charCodeAt(i);
+		}
+		return { contentType, buffer: bytes };
+	} catch (e) {
+		return null;
+	}
+}
+
+async function uploadGuestIdToR2(
+	env: Env,
+	dataUrl: string,
+	label?: string
+): Promise<{ url: string; key: string } | null> {
+	if (!env.GUEST_ID_BUCKET) {
+		console.warn("GUEST_ID_BUCKET is not configured in env");
+		return null;
+	}
+	const parsed = parseDataUrl(dataUrl);
+	if (!parsed) return null;
+
+	const ext = parsed.contentType.includes("png") ? "png" : "jpg";
+	const filename = `gid_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+	const key = `GuestID/${filename}`;
+
+	await env.GUEST_ID_BUCKET.put(key, parsed.buffer, {
+		httpMetadata: {
+			contentType: parsed.contentType,
+		},
+		customMetadata: {
+			label: label || "Guest ID",
+			uploaded_at: new Date().toISOString(),
+		},
+	});
+
+	return {
+		key,
+		url: `/api/guest-ids/file?key=${encodeURIComponent(key)}`,
+	};
+}
+
+async function processGuestIdImagesForR2(
+	env: Env,
+	rawInput: string | null
+): Promise<string | null> {
+	if (!rawInput || !rawInput.trim() || !env.GUEST_ID_BUCKET) return rawInput;
+	const trimmed = rawInput.trim();
+
+	try {
+		const parsed = JSON.parse(trimmed);
+		if (Array.isArray(parsed)) {
+			let updated = false;
+			const newItems = [];
+			for (let i = 0; i < parsed.length; i++) {
+				const item = parsed[i];
+				if (typeof item === "object" && item && item.url) {
+					if (typeof item.url === "string" && item.url.startsWith("data:image/")) {
+						const uploaded = await uploadGuestIdToR2(env, item.url, item.label || `ID #${i + 1}`);
+						if (uploaded) {
+							newItems.push({
+								url: uploaded.url,
+								key: uploaded.key,
+								label: item.label || `ID #${i + 1}`,
+							});
+							updated = true;
+							continue;
+						}
+					}
+					newItems.push(item);
+				} else if (typeof item === "string" && item.startsWith("data:image/")) {
+					const uploaded = await uploadGuestIdToR2(env, item, `ID #${i + 1}`);
+					if (uploaded) {
+						newItems.push({
+							url: uploaded.url,
+							key: uploaded.key,
+							label: `ID #${i + 1}`,
+						});
+						updated = true;
+						continue;
+					}
+					newItems.push({ url: item, label: `ID #${i + 1}` });
+				} else if (typeof item === "string") {
+					newItems.push({ url: item, label: `ID #${i + 1}` });
+				}
+			}
+			return updated ? JSON.stringify(newItems) : trimmed;
+		}
+	} catch (e) {
+		// Not JSON, check if single data URL string
+	}
+
+	if (trimmed.startsWith("data:image/")) {
+		const uploaded = await uploadGuestIdToR2(env, trimmed, "ID #1");
+		if (uploaded) {
+			return JSON.stringify([{ url: uploaded.url, key: uploaded.key, label: "ID #1" }]);
+		}
+	}
+
+	return trimmed;
 }
 
 async function syncDailyFinanceLodging(env: Env, propertyId: string, date: string, submittedBy?: string) {
@@ -270,6 +386,7 @@ export default {
 					(path === "/api/staff" && method === "GET") ||
 					(path === "/api/rooms" && method === "GET") ||
 					path.startsWith("/api/room-bookings") ||
+					path.startsWith("/api/guest-ids") ||
 					path.startsWith("/api/sync/airbnb") ||
 					path.startsWith("/api/attendance") || // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
 					(path === "/api/finances" && (method === "GET" || method === "POST")); // GET & POST for their property only
@@ -924,6 +1041,90 @@ export default {
 				return jsonResponse({ success: true });
 			}
 
+			// POST /api/guest-ids/upload (Uploads an ID image to R2 bucket 'xsquareguestid' under 'GuestID/')
+			if (path === "/api/guest-ids/upload" && method === "POST") {
+				if (!env.GUEST_ID_BUCKET) {
+					return jsonResponse({ error: "R2 bucket 'xsquareguestid' is not configured." }, 500);
+				}
+				const body = (await request.json()) as { dataUrl?: string; label?: string };
+				if (!body.dataUrl) {
+					return jsonResponse({ error: "Missing dataUrl in request body." }, 400);
+				}
+				const uploaded = await uploadGuestIdToR2(env, body.dataUrl, body.label);
+				if (!uploaded) {
+					return jsonResponse({ error: "Failed to upload image to R2 storage." }, 500);
+				}
+				return jsonResponse({
+					success: true,
+					url: uploaded.url,
+					key: uploaded.key,
+					label: body.label || "Guest ID"
+				});
+			}
+
+			// GET /api/guest-ids/file?key=GuestID/... (Streams Guest ID photo directly from R2)
+			if ((path === "/api/guest-ids/file" || path.startsWith("/api/guest-ids/GuestID/")) && method === "GET") {
+				if (!env.GUEST_ID_BUCKET) {
+					return new Response("R2 bucket 'xsquareguestid' not configured", { status: 500 });
+				}
+				let key = url.searchParams.get("key");
+				if (!key && path.startsWith("/api/guest-ids/GuestID/")) {
+					key = decodeURIComponent(path.replace("/api/guest-ids/", ""));
+				}
+				if (!key) {
+					return new Response("Missing object key", { status: 400 });
+				}
+				if (!key.startsWith("GuestID/")) {
+					return new Response("Access forbidden: Invalid object key prefix", { status: 403 });
+				}
+
+				const object = await env.GUEST_ID_BUCKET.get(key);
+				if (!object) {
+					return new Response("Guest ID photo not found in R2", { status: 404 });
+				}
+
+				const headers = new Headers();
+				object.writeHttpMetadata(headers);
+				headers.set("etag", object.httpEtag);
+				headers.set("Cache-Control", "public, max-age=31536000, immutable");
+				if (!headers.has("content-type")) {
+					const isPng = key.toLowerCase().endsWith(".png");
+					headers.set("content-type", isPng ? "image/png" : "image/jpeg");
+				}
+				return new Response(object.body, { headers });
+			}
+
+			// POST /api/guest-ids/migrate (Migrates existing base64 ID photos in D1 to R2 bucket 'xsquareguestid')
+			if (path === "/api/guest-ids/migrate" && method === "POST") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only." }, 403);
+				}
+				if (!env.GUEST_ID_BUCKET) {
+					return jsonResponse({ error: "R2 bucket not bound." }, 500);
+				}
+
+				const bookingsWithDataUrl = await env.DB.prepare(`
+					SELECT id, guest_id_image
+					FROM room_bookings
+					WHERE guest_id_image LIKE '%data:image/%'
+				`).all<{ id: string; guest_id_image: string }>();
+
+				let migrated = 0;
+				for (const bk of (bookingsWithDataUrl.results || [])) {
+					const updated = await processGuestIdImagesForR2(env, bk.guest_id_image);
+					if (updated && updated !== bk.guest_id_image) {
+						await env.DB.prepare(`
+							UPDATE room_bookings
+							SET guest_id_image = ?, updated_at = datetime('now')
+							WHERE id = ?
+						`).bind(updated, bk.id).run();
+						migrated++;
+					}
+				}
+
+				return jsonResponse({ success: true, count: migrated });
+			}
+
 			// GET /api/finances (Manager gets their property only, Admin can filter by property/month/date)
 			if (path === "/api/finances" && method === "GET") {
 				let propertyId = url.searchParams.get("property_id") || "";
@@ -1261,7 +1462,8 @@ export default {
 				const paymentMode = body.payment_mode === "cash" ? "cash" : "online";
 				const guestName = body.guest_name?.trim() || null;
 				const guestsJson = body.guests_json ? (typeof body.guests_json === "string" ? body.guests_json.trim() : JSON.stringify(body.guests_json)) : null;
-				const guestIdImage = body.guest_id_image ? (typeof body.guest_id_image === "string" ? body.guest_id_image.trim() : JSON.stringify(body.guest_id_image)) : null;
+				const rawGuestIdImage = body.guest_id_image ? (typeof body.guest_id_image === "string" ? body.guest_id_image.trim() : JSON.stringify(body.guest_id_image)) : null;
+				const guestIdImage = await processGuestIdImagesForR2(env, rawGuestIdImage);
 				const notes = body.notes?.trim() || null;
 
 				if (!propertyId || !roomId) {
@@ -1425,7 +1627,8 @@ export default {
 				const paymentMode = body.payment_mode ? (body.payment_mode === "cash" ? "cash" : "online") : existing.payment_mode;
 				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
 				const guestsJson = body.guests_json !== undefined ? (typeof body.guests_json === "string" ? body.guests_json.trim() : JSON.stringify(body.guests_json)) : (existing as any).guests_json;
-				const guestIdImage = body.guest_id_image !== undefined ? (typeof body.guest_id_image === "string" ? body.guest_id_image?.trim() : JSON.stringify(body.guest_id_image)) : existing.guest_id_image;
+				const rawGuestIdImage = body.guest_id_image !== undefined ? (typeof body.guest_id_image === "string" ? body.guest_id_image?.trim() : JSON.stringify(body.guest_id_image)) : existing.guest_id_image;
+				const guestIdImage = await processGuestIdImagesForR2(env, rawGuestIdImage);
 				const notes = body.notes !== undefined ? (body.notes?.trim() || null) : existing.notes;
 				const updateGroup = (body.update_entire_group === true || url.searchParams.get("update_group") === "true") && !!existing.group_booking_id;
 
