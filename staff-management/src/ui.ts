@@ -2233,13 +2233,14 @@ export function getDashboardHtml(): string {
     }
 
     function getVisibleStaffList() {
+      const activePropIds = new Set(properties.filter(p => p.active !== 0).map(p => p.id));
       if (currentUserRole === "manager" && currentManagerInfo && currentManagerInfo.property_id) {
-        return staffList.filter(s => s.property_id === currentManagerInfo.property_id);
+        return staffList.filter(s => s.property_id === currentManagerInfo.property_id && activePropIds.has(s.property_id));
       }
       if (activePropertyId === 'all') {
-        return staffList;
+        return staffList.filter(s => activePropIds.has(s.property_id));
       }
-      return staffList.filter(s => s.property_id === activePropertyId);
+      return staffList.filter(s => s.property_id === activePropertyId && activePropIds.has(s.property_id));
     }
 
     function toggleManagerPinField() {
@@ -2623,7 +2624,7 @@ export function getDashboardHtml(): string {
       // 2. "All Properties" MUST be at last in sequence
       const totalStaffCount = staffList.filter(s => {
         const p = properties.find(prop => prop.id === s.property_id);
-        return !p || p.active !== 0;
+        return p && p.active !== 0;
       }).length;
 
       html += \`
@@ -4713,7 +4714,7 @@ export function getDashboardHtml(): string {
     function openLeavePolicyModal() {
       const container = document.getElementById("propertyAllowanceList");
       let html = "";
-      properties.forEach(p => {
+      properties.filter(p => p.active !== 0).forEach(p => {
         html += \`
           <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200">
             <div>
@@ -6382,9 +6383,10 @@ export function getDashboardHtml(): string {
     // SUBTAB 1: ADMIN FINANCIAL DASHBOARD
     // -------------------------------------------------------------------------
     function renderAdminFinancialDashboard(container) {
+      const activePropIds = new Set(properties.filter(p => p.active !== 0).map(p => p.id));
       const records = activePropertyId === "all"
-        ? financesList
-        : financesList.filter(f => f.property_id === activePropertyId);
+        ? financesList.filter(f => activePropIds.has(f.property_id))
+        : financesList.filter(f => f.property_id === activePropertyId && activePropIds.has(f.property_id));
 
       let totalLodgingOnline = 0;
       let totalLodgingCash = 0;
@@ -6567,7 +6569,7 @@ export function getDashboardHtml(): string {
           </div>
 
           <!-- Business Performance Comparison (when All Properties selected) -->
-          \${activePropertyId === 'all' && properties.length > 0 ? \`
+          \${activePropertyId === 'all' && properties.filter(p => p.active !== 0).length > 0 ? \`
             <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                 <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
@@ -8929,6 +8931,9 @@ export function getDashboardHtml(): string {
       }
 
       const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
+      if (propId && !activeLodgingProps.some(p => p.id === propId)) {
+        propId = "";
+      }
       const eligibleRooms = propId
         ? roomsList.filter(r => r.property_id === propId)
         : roomsList.filter(r => activeLodgingProps.some(p => p.id === r.property_id));
@@ -9725,9 +9730,10 @@ export function getDashboardHtml(): string {
     }
 
     function exportFinancesCSV() {
+      const activePropIds = new Set(properties.filter(p => p.active !== 0).map(p => p.id));
       const records = (activePropertyId === "all" || !activePropertyId)
-        ? financesList
-        : financesList.filter(f => f.property_id === activePropertyId);
+        ? financesList.filter(f => activePropIds.has(f.property_id))
+        : financesList.filter(f => f.property_id === activePropertyId && activePropIds.has(f.property_id));
 
       if (records.length === 0) {
         showToast("No financial records to export");

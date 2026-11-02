@@ -74,7 +74,7 @@ async function getAuthContext(request: Request, env: Env): Promise<AuthContext> 
 			SELECT s.id, s.name, s.property_id, p.name AS property_name
 			FROM staff s
 			JOIN properties p ON s.property_id = p.id
-			WHERE s.active = 1 AND s.is_manager = 1 AND s.manager_pin = ?
+			WHERE s.active = 1 AND s.is_manager = 1 AND (p.active IS NULL OR p.active = 1) AND s.manager_pin = ?
 		`).bind(token).first<{ id: string; name: string; property_id: string; property_name: string }>();
 
 		if (manager) {
@@ -558,7 +558,7 @@ export default {
 						(SELECT COUNT(*) FROM staff_documents d WHERE d.staff_id = s.id) AS document_count
 					FROM staff s
 					JOIN properties p ON s.property_id = p.id
-					WHERE s.active = 1
+					WHERE s.active = 1 AND (p.active IS NULL OR p.active = 1)
 				`;
 				let results: Staff[] = [];
 				if (propertyId && propertyId !== "all") {
@@ -682,7 +682,8 @@ export default {
 						SELECT a.*
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
-						WHERE a.date LIKE ? AND s.property_id = ? AND s.active = 1
+						JOIN properties p ON s.property_id = p.id
+						WHERE a.date LIKE ? AND s.property_id = ? AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
 						ORDER BY a.date ASC
 					`).bind(`${month}-%`, auth.manager.property_id).all<AttendanceRecord>();
 					records = resRec.results;
@@ -691,21 +692,29 @@ export default {
 						SELECT a.staff_id, COUNT(*) as count
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
-						WHERE a.date < ? AND a.status = 'leave' AND s.property_id = ? AND s.active = 1
+						JOIN properties p ON s.property_id = p.id
+						WHERE a.date < ? AND a.status = 'leave' AND s.property_id = ? AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
 						GROUP BY a.staff_id
 					`).bind(startOfMonthDate, auth.manager.property_id).all<{ staff_id: string; count: number }>();
 					priorLeaves = resPrior.results;
 				} else {
-					const resRec = await env.DB.prepare(
-						"SELECT * FROM attendance WHERE date LIKE ? ORDER BY date ASC"
-					).bind(`${month}-%`).all<AttendanceRecord>();
+					const resRec = await env.DB.prepare(`
+						SELECT a.*
+						FROM attendance a
+						JOIN staff s ON a.staff_id = s.id
+						JOIN properties p ON s.property_id = p.id
+						WHERE a.date LIKE ? AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
+						ORDER BY a.date ASC
+					`).bind(`${month}-%`).all<AttendanceRecord>();
 					records = resRec.results;
 
 					const resPrior = await env.DB.prepare(`
-						SELECT staff_id, COUNT(*) as count
-						FROM attendance
-						WHERE date < ? AND status = 'leave'
-						GROUP BY staff_id
+						SELECT a.staff_id, COUNT(*) as count
+						FROM attendance a
+						JOIN staff s ON a.staff_id = s.id
+						JOIN properties p ON s.property_id = p.id
+						WHERE a.date < ? AND a.status = 'leave' AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
+						GROUP BY a.staff_id
 					`).bind(startOfMonthDate).all<{ staff_id: string; count: number }>();
 					priorLeaves = resPrior.results;
 				}
@@ -808,7 +817,13 @@ export default {
 			if (path === "/api/advances" && method === "GET") {
 				const month = url.searchParams.get("month");
 				const staffId = url.searchParams.get("staff_id");
-				let query = "SELECT a.*, s.name as staff_name FROM salary_advances a JOIN staff s ON a.staff_id = s.id WHERE 1=1";
+				let query = `
+					SELECT a.*, s.name as staff_name
+					FROM salary_advances a
+					JOIN staff s ON a.staff_id = s.id
+					JOIN properties p ON s.property_id = p.id
+					WHERE (p.active IS NULL OR p.active = 1)
+				`;
 				const params: any[] = [];
 				if (month) {
 					query += " AND a.month = ?";
@@ -866,7 +881,13 @@ export default {
 			if (path === "/api/bonuses" && method === "GET") {
 				const month = url.searchParams.get("month");
 				const staffId = url.searchParams.get("staff_id");
-				let query = "SELECT b.*, s.name as staff_name FROM salary_bonuses b JOIN staff s ON b.staff_id = s.id WHERE 1=1";
+				let query = `
+					SELECT b.*, s.name as staff_name
+					FROM salary_bonuses b
+					JOIN staff s ON b.staff_id = s.id
+					JOIN properties p ON s.property_id = p.id
+					WHERE (p.active IS NULL OR p.active = 1)
+				`;
 				const params: any[] = [];
 				if (month) {
 					query += " AND b.month = ?";
@@ -931,7 +952,11 @@ export default {
 					return jsonResponse({ error: "Missing month" }, 400);
 				}
 				const { results } = await env.DB.prepare(`
-					SELECT * FROM salary_payments WHERE month = ?
+					SELECT sp.*
+					FROM salary_payments sp
+					JOIN staff s ON sp.staff_id = s.id
+					JOIN properties p ON s.property_id = p.id
+					WHERE sp.month = ? AND (p.active IS NULL OR p.active = 1)
 				`).bind(month).all<SalaryPayment>();
 				return jsonResponse(results);
 			}
@@ -1141,8 +1166,8 @@ export default {
 				let query = `
 					SELECT f.*, p.name AS property_name
 					FROM daily_finances f
-					LEFT JOIN properties p ON f.property_id = p.id
-					WHERE 1=1
+					JOIN properties p ON f.property_id = p.id
+					WHERE (p.active IS NULL OR p.active = 1)
 				`;
 				const params: any[] = [];
 
@@ -1294,8 +1319,8 @@ export default {
 				let query = `
 					SELECT r.*, p.name AS property_name
 					FROM rooms r
-					LEFT JOIN properties p ON r.property_id = p.id
-					WHERE r.active = 1
+					JOIN properties p ON r.property_id = p.id
+					WHERE r.active = 1 AND (p.active IS NULL OR p.active = 1)
 				`;
 				const params: any[] = [];
 				if (propertyId) {
@@ -1416,8 +1441,8 @@ export default {
 					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
 					FROM room_bookings b
 					JOIN rooms r ON b.room_id = r.id
-					LEFT JOIN properties p ON b.property_id = p.id
-					WHERE 1=1
+					JOIN properties p ON b.property_id = p.id
+					WHERE (p.active IS NULL OR p.active = 1)
 				`;
 				const params: any[] = [];
 				if (propertyId) {
