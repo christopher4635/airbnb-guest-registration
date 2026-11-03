@@ -4332,14 +4332,21 @@
       const monthStartStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-01`;
       const monthEndStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
-      // Active bookings in this month
+      // Active bookings in this month (for occupied nights & room tracks)
       const activeBookings = currentBookings.filter(b => {
         if (b.status === 'Cancelled') return false;
         if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
         return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
       });
 
-      document.getElementById('kpi-bookings-count').textContent = activeBookings.length;
+      // Bookings checking in during this month (strictly for Month Revenue & Month Bookings Count)
+      const checkInBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+        return (b.checkInDate >= monthStartStr && b.checkInDate <= monthEndStr);
+      });
+
+      document.getElementById('kpi-bookings-count').textContent = checkInBookings.length;
 
       // Calculate total nights booked in this month
       let totalNights = 0;
@@ -4360,16 +4367,16 @@
 
       document.getElementById('kpi-nights-count').textContent = `${totalNights} nights booked`;
 
-      // Month Revenue Calculation
+      // Month Revenue Calculation - recognized strictly from check-in amount
       let monthRev = 0;
-      activeBookings.forEach(b => {
+      checkInBookings.forEach(b => {
         monthRev += getBookingRevenue(b);
       });
 
       const revEl = document.getElementById('kpi-month-revenue');
       if (revEl) revEl.textContent = '₹' + monthRev.toLocaleString('en-IN');
       const revSubEl = document.getElementById('kpi-month-revenue-sub');
-      if (revSubEl) revSubEl.textContent = `${activeBookings.length} bookings • ${totalNights} nights`;
+      if (revSubEl) revSubEl.textContent = `${checkInBookings.length} bookings • ${totalNights} nights`;
 
       // Bills & Net profit
       const expEl = document.getElementById('kpi-month-expenses');
@@ -4441,12 +4448,12 @@
       const monthStartStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-01`;
       const monthEndStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
-      // Filter bookings based on scope and selected property filter
+      // Filter bookings based on scope and selected property filter (strictly check-in month for revenue)
       const targetBookings = currentBookings.filter(b => {
         if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
         if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
         if (currentChartScope === 'month') {
-          return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
+          return (b.checkInDate >= monthStartStr && b.checkInDate <= monthEndStr);
         }
         return true;
       });
@@ -5500,15 +5507,16 @@
         console.warn("Could not fetch remote financial summary:", e);
       }
 
-      // Calculate Bookings Revenue for this month from currentBookings
+      // Calculate Bookings Revenue for this month from currentBookings (strictly by check-in date)
       const daysInFinMonth = new Date(currentFinanceYear, currentFinanceMonth + 1, 0).getDate();
       const finMonthStart = `${currentFinanceYear}-${String(currentFinanceMonth + 1).padStart(2, '0')}-01`;
       const finMonthEnd = `${currentFinanceYear}-${String(currentFinanceMonth + 1).padStart(2, '0')}-${String(daysInFinMonth).padStart(2, '0')}`;
 
       const monthBookings = currentBookings.filter(b => {
-        if (b.status === 'Cancelled') return false;
-        return (b.checkInDate <= finMonthEnd && b.checkOutDate >= finMonthStart);
+        if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+        return (b.checkInDate >= finMonthStart && b.checkInDate <= finMonthEnd);
       });
+      monthBookings.sort((a, b) => a.checkInDate.localeCompare(b.checkInDate));
 
       let totalRevenue = 0;
       monthBookings.forEach(b => {

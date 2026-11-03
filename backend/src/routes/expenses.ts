@@ -65,14 +65,14 @@ expensesRoute.get('/summary', async (c) => {
     await ensureExpensesTable(c.env.DB);
     const month = c.req.query('month') || new Date().toISOString().slice(0, 7); // Default YYYY-MM
 
-    // 1. Fetch all non-cancelled bookings for this month
-    // A booking belongs to this month if its check_in or check_out overlaps with the month
+    // 1. Fetch all non-cancelled bookings checking in during this month
+    // Revenue is recognized strictly by check-in date (check-in amount belongs to check-in month)
     const { results: bookingRows } = await c.env.DB.prepare(`
       SELECT id, property, guest_name, payout, check_in_date, check_out_date, nights, platform, notes
       FROM bookings
-      WHERE status != 'Cancelled'
-        AND (strftime('%Y-%m', check_in_date) = ? OR strftime('%Y-%m', check_out_date) = ?)
-    `).bind(month, month).all();
+      WHERE status != 'Cancelled' AND status != 'Blocked' AND platform != 'Blocked'
+        AND strftime('%Y-%m', check_in_date) = ?
+    `).bind(month).all();
 
     let totalRevenue = 0;
     const revenueByProperty: Record<string, number> = {};
