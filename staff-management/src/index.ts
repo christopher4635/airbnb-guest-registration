@@ -329,6 +329,11 @@ export default {
 			});
 		}
 
+		// 1c. Direct Android APK Download Endpoint
+		if (path === "/app.apk" || path === "/download/app" || path === "/download/apk") {
+			return Response.redirect("https://raw.githubusercontent.com/christopher4635/airbnb-guest-registration/main/release/elite-havens-app.apk", 302);
+		}
+
 		// 2. Roles & Appointed Managers Endpoint (for Login User Dropdown - NO SECRETS EXPOSED!)
 		if (path === "/api/auth/roles" && method === "GET") {
 			try {
