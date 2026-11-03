@@ -3,3 +3,12 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Android build artifacts & cache
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.iml
+android/app/*.iml
+android/.idea/

@@ -1,0 +1,9 @@
+<resources>
+    <color name="brand_primary">#4F46E5</color>
+    <color name="brand_primary_dark">#312E81</color>
+    <color name="brand_accent">#6366F1</color>
+    <color name="status_bar_color">#4F46E5</color>
+    <color name="nav_bar_color">#0F172A</color>
+    <color name="background_light">#F8FAFC</color>
+    <color name="white">#FFFFFF</color>
+</resources>

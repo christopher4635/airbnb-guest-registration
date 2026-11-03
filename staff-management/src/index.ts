@@ -272,6 +272,63 @@ export default {
 			});
 		}
 
+		// 1b. Serve Web App Manifest & App Icon for Android / PWA
+		if (path === "/manifest.json") {
+			const manifest = {
+				name: "Elite Havens Management",
+				short_name: "Elite Havens",
+				description: "Staff Attendance, Salary, Sales & Expenses, Room Bookings",
+				start_url: "/",
+				scope: "/",
+				display: "standalone",
+				orientation: "portrait-primary",
+				background_color: "#0f172a",
+				theme_color: "#4f46e5",
+				icons: [
+					{
+						src: "/icon.svg",
+						sizes: "any",
+						type: "image/svg+xml",
+						purpose: "any maskable"
+					}
+				]
+			};
+			return new Response(JSON.stringify(manifest), {
+				headers: {
+					"Content-Type": "application/manifest+json; charset=utf-8",
+					"Cache-Control": "public, max-age=86400"
+				}
+			});
+		}
+
+		if (path === "/icon.svg") {
+			const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+				<defs>
+					<linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+						<stop offset="0%" stop-color="#4f46e5"/>
+						<stop offset="100%" stop-color="#312e81"/>
+					</linearGradient>
+				</defs>
+				<rect width="512" height="512" rx="128" fill="url(#bg)"/>
+				<!-- Modern Hotel / Building Icon -->
+				<path d="M160 384V160c0-17.7 14.3-32 32-32h128c17.7 0 32 14.3 32 32v224h32c8.8 0 16 7.2 16 16s-7.2 16-16 16H128c-8.8 0-16-7.2-16-16s7.2-16 16-16h32z" fill="#ffffff" fill-opacity="0.95"/>
+				<rect x="200" y="176" width="32" height="32" rx="6" fill="#4f46e5"/>
+				<rect x="280" y="176" width="32" height="32" rx="6" fill="#4f46e5"/>
+				<rect x="200" y="240" width="32" height="32" rx="6" fill="#4f46e5"/>
+				<rect x="280" y="240" width="32" height="32" rx="6" fill="#4f46e5"/>
+				<rect x="200" y="304" width="32" height="32" rx="6" fill="#4f46e5"/>
+				<rect x="280" y="304" width="32" height="32" rx="6" fill="#4f46e5"/>
+				<!-- Entrance Door -->
+				<path d="M232 384v-48c0-4.4 3.6-8 8-8h32c4.4 0 8 3.6 8 8v48h-48z" fill="#312e81"/>
+			</svg>`;
+			return new Response(svg, {
+				headers: {
+					"Content-Type": "image/svg+xml",
+					"Cache-Control": "public, max-age=86400"
+				}
+			});
+		}
+
 		// 2. Roles & Appointed Managers Endpoint (for Login User Dropdown - NO SECRETS EXPOSED!)
 		if (path === "/api/auth/roles" && method === "GET") {
 			try {
