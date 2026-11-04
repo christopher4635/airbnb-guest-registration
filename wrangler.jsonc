@@ -20,13 +20,13 @@
     }
   ],
 
-  // 3. Cloudflare R2 Storage (Uncomment once R2 is enabled in Cloudflare Dashboard)
-  // "r2_buckets": [
-  //   {
-  //     "binding": "IMAGES_BUCKET",
-  //     "bucket_name": "airbnb-guest-images"
-  //   }
-  // ],
+  // 3. Cloudflare R2 Storage for Guest ID Documents & Signatures
+  "r2_buckets": [
+    {
+      "binding": "IMAGES_BUCKET",
+      "bucket_name": "xsquareguestid"
+    }
+  ],
 
   // 4. Environment Variables
   "vars": {

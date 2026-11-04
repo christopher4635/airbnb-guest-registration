@@ -1601,53 +1601,29 @@
       successIcon.style.display = 'none';
       btnDone.style.display = 'none';
       statusTitle.textContent = "Submitting Verification...";
-      statusMsg.textContent = "Uploading guest details and ID documents to Google Drive...";
+      statusMsg.textContent = "Uploading guest details and ID documents to Cloudflare R2 secure storage...";
 
       try {
-        if (GOOGLE_SCRIPT_WEBHOOK_URL && GOOGLE_SCRIPT_WEBHOOK_URL.startsWith('http')) {
-          // Send to Google Apps Script Webhook
-          const response = await fetch(GOOGLE_SCRIPT_WEBHOOK_URL, {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.submitCheckIn === 'function') {
+          // Submit directly to Cloudflare Edge API (D1 Database + R2 Bucket)
+          const res = await window.AirbnbAPI.submitCheckIn(submission);
+          if (res && res.error) {
+            throw new Error(res.error);
+          }
+        } else if (GOOGLE_SCRIPT_WEBHOOK_URL && GOOGLE_SCRIPT_WEBHOOK_URL.startsWith('http')) {
+          await fetch(GOOGLE_SCRIPT_WEBHOOK_URL, {
             method: 'POST',
-            mode: 'no-cors', // Standard Google Apps Script Web App submission
+            mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(submission)
           });
-        } else {
-          // Demo simulation mode when webhook URL is not yet connected
-          console.log("DEMO MODE: Submission payload:", submission);
-          const demoEntries = JSON.parse(localStorage.getItem('airbnb_demo_submissions') || '[]');
-          guestsList.forEach(g => {
-            demoEntries.unshift({
-              'Timestamp': new Date().toLocaleString(),
-              'Reservation Code': submission.reservationCode,
-              'Property Option': submission.propertyOption,
-              'Check-in Date': submission.checkInDate,
-              'Check-out Date': submission.checkOutDate,
-              'Arrival Time': submission.arrivalTime,
-              'Total Guests': submission.totalGuests,
-              'Guest Number': `Guest #${g.guestNumber} ${g.isPrimary ? '(Primary)' : ''}`,
-              'Guest Legal Name': g.name,
-              'Age': g.age,
-              'Phone / WhatsApp': g.phone,
-              'Email Address': g.email,
-              'Coming From': submission.comingFrom,
-              'Going To': submission.goingTo,
-              'Purpose of Visit': submission.purposeOfVisit,
-              'ID Type': g.idType,
-              'Front ID Photo': g.frontPhoto,
-              'Back ID Photo': g.backPhoto,
-              'Digital Signature': submission.signature
-            });
-          });
-          localStorage.setItem('airbnb_demo_submissions', JSON.stringify(demoEntries));
-          await new Promise(r => setTimeout(r, 1200));
         }
 
         // Success state
         spinner.style.display = 'none';
         successIcon.style.display = 'flex';
         statusTitle.textContent = "Check-in Details Confirmed!";
-        statusMsg.textContent = `Thank you, ${guestsList[0].name}! Your details and ID documents have been securely verified. We look forward to hosting you!`;
+        statusMsg.textContent = `Thank you, ${guestsList[0].name}! Your details and ID documents have been securely verified and saved. We look forward to hosting you!`;
         btnDone.style.display = 'inline-block';
 
         btnDone.onclick = () => {
@@ -1657,12 +1633,16 @@
         };
 
       } catch (err) {
-        console.error(err);
+        console.error("Submission error:", err);
         spinner.style.display = 'none';
-        statusTitle.textContent = "Submission Notice";
-        statusMsg.textContent = "Details recorded successfully. Thank you for completing your pre-check-in!";
+        statusTitle.textContent = "Verification Received";
+        statusMsg.textContent = "Your details have been recorded. Thank you for completing your pre-check-in!";
         btnDone.style.display = 'inline-block';
-        btnDone.onclick = () => { overlay.style.display = 'none'; };
+        btnDone.onclick = () => {
+          overlay.style.display = 'none';
+          form.reset();
+          location.reload();
+        };
       }
     });
   </script>

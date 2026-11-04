@@ -151,15 +151,39 @@
     getSubmissions: async function() {
       try {
         const res = await this.request('/api/submissions');
-        if (res && res.data) {
-          localStorage.setItem('airbnb_demo_submissions', JSON.stringify(res.data));
+        if (res && Array.isArray(res.data)) {
           return res.data;
         }
       } catch (e) {
-        const local = localStorage.getItem('airbnb_demo_submissions');
-        if (local) return JSON.parse(local);
+        console.warn('Error fetching live submissions from Cloudflare:', e);
       }
       return [];
+    },
+
+    deleteSubmission: async function(id) {
+      return await this.request(`/api/submissions/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+    },
+
+    clearAllSubmissions: async function() {
+      const res = await this.request('/api/submissions', {
+        method: 'DELETE'
+      });
+      localStorage.removeItem('airbnb_demo_submissions');
+      return res;
+    },
+
+    resolveImageUrl: function(urlOrKey) {
+      if (!urlOrKey) return '';
+      if (urlOrKey.startsWith('http://') || urlOrKey.startsWith('https://') || urlOrKey.startsWith('data:')) {
+        return urlOrKey;
+      }
+      const base = this.getBaseUrl();
+      if (urlOrKey.startsWith('/')) {
+        return `${base}${urlOrKey}`;
+      }
+      return `${base}/api/uploads/${urlOrKey}`;
     },
 
     submitCheckIn: async function(checkInData) {
@@ -172,22 +196,8 @@
           body: JSON.stringify(checkInData)
         });
       } catch (e) {
-        console.warn('Backend submission failed, saving locally:', e);
-        const local = JSON.parse(localStorage.getItem('airbnb_demo_submissions') || '[]');
-        local.unshift({
-          'Timestamp': new Date().toISOString().replace('T', ' ').substring(0, 19),
-          'Reservation Code': checkInData.reservationCode || 'DIRECT',
-          'Property Option': checkInData.propertyOption || '1 BHK',
-          'Check-in Date': checkInData.checkInDate || '',
-          'Check-out Date': checkInData.checkOutDate || '',
-          'Arrival Time': checkInData.arrivalTime || '',
-          'Total Guests': checkInData.totalGuests || 1,
-          'Guest Legal Name': (checkInData.guests && checkInData.guests[0] && checkInData.guests[0].name) || 'Guest',
-          'Phone / WhatsApp': (checkInData.guests && checkInData.guests[0] && checkInData.guests[0].phone) || '',
-          'ID Type': (checkInData.guests && checkInData.guests[0] && checkInData.guests[0].idType) || 'Aadhaar Card'
-        });
-        localStorage.setItem('airbnb_demo_submissions', JSON.stringify(local));
-        return { success: true, offline: true, message: 'Saved locally in browser' };
+        console.error('Backend submission failed:', e);
+        throw e;
       }
     },
 

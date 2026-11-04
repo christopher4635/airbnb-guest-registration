@@ -53,7 +53,7 @@ async function saveToR2(
   const parsed = parseBase64DataUrl(dataUri);
   if (!parsed) return null;
 
-  const ext = parsed.contentType.includes('png') ? 'png' : 'jpg';
+  const ext = parsed.contentType.includes('png') ? 'png' : parsed.contentType.includes('pdf') ? 'pdf' : 'jpg';
   const key = `guests/${keyPrefix}/${filenameSuffix}_${Date.now()}.${ext}`;
 
   if (bucket) {
@@ -200,6 +200,60 @@ submissionsRoute.post('/', async (c) => {
     }, 201);
   } catch (err: any) {
     console.error('Submission error:', err);
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// 3. DELETE /api/submissions/:id - Delete an individual submission and clean up R2 images
+submissionsRoute.delete('/:id', async (c) => {
+  try {
+    const id = c.req.param('id');
+    const row = await c.env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(id).first<any>();
+    if (!row) {
+      return c.json({ success: false, error: 'Submission not found' }, 404);
+    }
+
+    if (c.env.IMAGES_BUCKET) {
+      const keys = [row.front_photo_key, row.back_photo_key, row.signature_key].filter(Boolean);
+      for (const k of keys) {
+        if (!k.startsWith('local_')) {
+          await c.env.IMAGES_BUCKET.delete(k).catch(() => {});
+        }
+      }
+    }
+
+    await c.env.DB.prepare('DELETE FROM submissions WHERE id = ?').bind(id).run();
+    return c.json({ success: true, message: 'Submission deleted successfully' });
+  } catch (err: any) {
+    console.error('Delete submission error:', err);
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// 4. DELETE /api/submissions - Purge all submissions and clean up all uploaded R2 images
+submissionsRoute.delete('/', async (c) => {
+  try {
+    if (c.env.IMAGES_BUCKET) {
+      const { results } = await c.env.DB.prepare(
+        'SELECT front_photo_key, back_photo_key, signature_key FROM submissions'
+      ).all<any>();
+
+      if (results && results.length > 0) {
+        for (const row of results) {
+          const keys = [row.front_photo_key, row.back_photo_key, row.signature_key].filter(Boolean);
+          for (const k of keys) {
+            if (!k.startsWith('local_')) {
+              await c.env.IMAGES_BUCKET.delete(k).catch(() => {});
+            }
+          }
+        }
+      }
+    }
+
+    await c.env.DB.prepare('DELETE FROM submissions').run();
+    return c.json({ success: true, message: 'All submissions cleared successfully' });
+  } catch (err: any) {
+    console.error('Purge submissions error:', err);
     return c.json({ success: false, error: err.message }, 500);
   }
 });
