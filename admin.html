@@ -543,6 +543,86 @@
       transition: background 0.12s ease;
     }
     .date-nav-btn:hover { background: #fff; box-shadow: var(--shadow-sm); }
+    /* Standout Green Highlighting for Selected Period & "Today" */
+    .date-nav-btn.is-period-active {
+      background: #10B981 !important;
+      color: #FFFFFF !important;
+      font-weight: 700 !important;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.35) !important;
+      border: 1px solid #059669 !important;
+    }
+    .date-nav-btn.is-period-active:hover {
+      background: #059669 !important;
+      color: #FFFFFF !important;
+    }
+    .period-pill-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .period-pill-btn:hover {
+      background: #F8FAFC;
+      border-color: #CBD5E1;
+    }
+    .period-pill-btn.is-selected-period {
+      background: #10B981 !important;
+      color: #FFFFFF !important;
+      border-color: #059669 !important;
+      font-weight: 700 !important;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35) !important;
+    }
+    .period-pill-btn.is-selected-period:hover {
+      background: #059669 !important;
+      color: #FFFFFF !important;
+    }
+    .period-status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      vertical-align: middle;
+      margin-left: 6px;
+      letter-spacing: 0.2px;
+    }
+    .period-status-badge.is-current {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #10B981;
+    }
+    .period-status-badge.is-selected {
+      background: #F1F5F9;
+      color: #334155;
+      border: 1px solid #CBD5E1;
+    }
+    .period-today-badge {
+      font-size: 10px;
+      font-weight: 800;
+      color: #047857;
+      background: #DCFCE7;
+      border: 1px solid #10B981;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.2px;
+    }
+    #chart-scope-month.active {
+      background: #ECFDF5 !important;
+      color: #065F46 !important;
+      border: 1px solid #10B981 !important;
+      font-weight: 700 !important;
+    }
     .month-display-text {
       font-size: 15px;
       font-weight: 700;
@@ -745,11 +825,12 @@
       background: #F4F4F6;
     }
     .timeline-date-col.is-today {
-      background: #FFF0F2;
-      border-top: 3px solid var(--primary);
+      background: #ECFDF5;
+      border-top: 3px solid #10B981;
     }
     .timeline-date-col.is-today .timeline-day-name {
-      color: var(--primary);
+      color: #047857;
+      font-weight: 800;
     }
     .timeline-day-name {
       font-size: 10px;
@@ -764,7 +845,7 @@
       color: var(--text-main);
     }
     .timeline-date-col.is-today .timeline-day-number {
-      background: var(--primary);
+      background: #10B981;
       color: #fff;
       width: 22px;
       height: 22px;
@@ -772,6 +853,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
     }
 
     .timeline-row-track {
@@ -811,7 +894,9 @@
       background: #FAFAFC;
     }
     .timeline-day-cell.is-today {
-      background: #FFFBFB;
+      background: rgba(16, 185, 129, 0.05);
+      border-left: 1.5px dashed rgba(16, 185, 129, 0.35);
+      border-right: 1.5px dashed rgba(16, 185, 129, 0.35);
     }
 
     /* Floating Booking Bar */
@@ -924,7 +1009,9 @@
       opacity: 0.55;
     }
     .month-grid-day-cell.is-today {
-      background: #FFFBFB;
+      background: #F0FDF4;
+      border: 2px solid #10B981;
+      box-shadow: inset 0 0 0 1px #10B981;
     }
     .mday-top {
       display: flex;
@@ -944,8 +1031,9 @@
       border-radius: 50%;
     }
     .month-grid-day-cell.is-today .mday-num {
-      background: var(--primary);
+      background: #10B981;
       color: #fff;
+      font-weight: 800;
     }
     .mday-pill {
       font-size: 11px;
@@ -1703,10 +1791,10 @@
             <button type="button" class="date-nav-btn" id="btn-cal-prev" title="Previous Month">◀</button>
             <button type="button" class="date-nav-btn" id="btn-cal-today">Today</button>
             <button type="button" class="date-nav-btn" id="btn-cal-next" title="Next Month">▶</button>
-            <span class="month-display-text" id="month-display-label">October 2026</span>
-            <div style="display: inline-flex; gap: 4px; margin-left: 8px;">
-              <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; font-weight: 600;" onclick="jumpToMonth(2026, 9)">📅 Oct 2026</button>
-              <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; font-weight: 600;" onclick="jumpToMonth(2026, 10)">📅 Nov 2026</button>
+            <span class="month-display-text" id="month-display-label">November 2026</span>
+            <div id="cal-quick-month-pills" style="display: inline-flex; gap: 4px; margin-left: 8px; align-items: center;">
+              <button type="button" class="period-pill-btn" onclick="jumpToMonth(2026, 9)">📅 Oct 2026</button>
+              <button type="button" class="period-pill-btn is-selected-period" onclick="jumpToMonth(2026, 10)">✓ 📅 Nov 2026</button>
             </div>
           </div>
 
@@ -2432,12 +2520,12 @@
         <div class="portal-controls-card" style="margin-bottom: 16px;">
           <div class="date-nav-wrapper">
             <button type="button" class="date-nav-btn" onclick="prevFinanceMonth()">◀</button>
-            <button type="button" class="date-nav-btn" onclick="setFinanceMonthToCurrent()">This Month</button>
+            <button type="button" class="date-nav-btn" id="btn-fin-today" onclick="setFinanceMonthToCurrent()">This Month</button>
             <button type="button" class="date-nav-btn" onclick="nextFinanceMonth()">▶</button>
-            <span class="month-display-text" id="finance-month-label">October 2026</span>
-            <div style="display: inline-flex; gap: 4px; margin-left: 8px;">
-              <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; font-weight: 600;" onclick="jumpFinanceMonth(2026, 9)">📅 Oct 2026</button>
-              <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; font-weight: 600;" onclick="jumpFinanceMonth(2026, 10)">📅 Nov 2026</button>
+            <span class="month-display-text" id="finance-month-label">November 2026</span>
+            <div id="finance-quick-month-pills" style="display: inline-flex; gap: 4px; margin-left: 8px; align-items: center;">
+              <button type="button" class="period-pill-btn" onclick="jumpFinanceMonth(2026, 9)">📅 Oct 2026</button>
+              <button type="button" class="period-pill-btn is-selected-period" onclick="jumpFinanceMonth(2026, 10)">✓ 📅 Nov 2026</button>
             </div>
           </div>
 
@@ -4363,7 +4451,61 @@
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
       ];
-      document.getElementById('month-display-label').textContent = `${monthNames[currentCalMonth]} ${currentCalYear}`;
+      const today = new Date();
+      const isCurrentMonth = (currentCalYear === today.getFullYear() && currentCalMonth === today.getMonth());
+      const labelEl = document.getElementById('month-display-label');
+      if (labelEl) {
+        labelEl.innerHTML = `<span>${monthNames[currentCalMonth]} ${currentCalYear}</span>` +
+          (isCurrentMonth ? `<span class="period-status-badge is-current" title="Current Month">● Current</span>` : `<span class="period-status-badge is-selected" title="Selected Month">Selected</span>`);
+      }
+
+      // Highlight "Today" button in green when viewing today's month
+      const btnToday = document.getElementById('btn-cal-today');
+      if (btnToday) {
+        if (isCurrentMonth) {
+          btnToday.classList.add('is-period-active');
+          btnToday.title = "Currently viewing today's month (November 2026)";
+        } else {
+          btnToday.classList.remove('is-period-active');
+          btnToday.title = "Jump to Today (November 2026)";
+        }
+      }
+
+      renderQuickMonthPills('cal');
+    }
+
+    function renderQuickMonthPills(scope) {
+      const isCal = (scope === 'cal');
+      const containerId = isCal ? 'cal-quick-month-pills' : 'finance-quick-month-pills';
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const selYear = isCal ? currentCalYear : currentFinanceYear;
+      const selMonth = isCal ? currentCalMonth : currentFinanceMonth;
+
+      const periods = [
+        { label: 'Oct 2026', year: 2026, month: 9 },
+        { label: 'Nov 2026', year: 2026, month: 10 }
+      ];
+
+      if (!periods.some(p => p.year === selYear && p.month === selMonth)) {
+        const monthShortNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        periods.push({
+          label: `${monthShortNames[selMonth]} ${selYear}`,
+          year: selYear,
+          month: selMonth
+        });
+      }
+
+      container.innerHTML = periods.map(p => {
+        const isSelected = (p.year === selYear && p.month === selMonth);
+        const clickFn = isCal ? `jumpToMonth(${p.year}, ${p.month})` : `jumpFinanceMonth(${p.year}, ${p.month})`;
+        const activeClass = isSelected ? 'is-selected-period' : '';
+        const icon = isSelected ? '✓ ' : '📅 ';
+        return `<button type="button" class="period-pill-btn ${activeClass}" onclick="${clickFn}" title="${isSelected ? 'Selected Period (Active)' : 'Switch to ' + p.label}">
+          <span>${icon}${p.label}</span>
+        </button>`;
+      }).join('');
     }
 
     // Property Filter Pills
@@ -4913,7 +5055,7 @@
         let cellHtml = `
           <div class="mday-top">
             <span class="mday-num">${d}</span>
-            <span style="font-size: 10px; color: var(--text-muted);">${isToday ? 'Today' : ''}</span>
+            ${isToday ? '<span class="period-today-badge">● Today</span>' : ''}
           </div>
         `;
 
@@ -5529,8 +5671,26 @@
 
     function updateFinanceMonthLabel() {
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const today = new Date();
+      const isCurrentMonth = (currentFinanceYear === today.getFullYear() && currentFinanceMonth === today.getMonth());
       const label = document.getElementById('finance-month-label');
-      if (label) label.textContent = `${monthNames[currentFinanceMonth]} ${currentFinanceYear}`;
+      if (label) {
+        label.innerHTML = `<span>${monthNames[currentFinanceMonth]} ${currentFinanceYear}</span>` +
+          (isCurrentMonth ? `<span class="period-status-badge is-current" title="Current Month">● Current</span>` : `<span class="period-status-badge is-selected" title="Selected Month">Selected</span>`);
+      }
+
+      const btnFinToday = document.getElementById('btn-fin-today');
+      if (btnFinToday) {
+        if (isCurrentMonth) {
+          btnFinToday.classList.add('is-period-active');
+          btnFinToday.title = "Viewing Current Month (November 2026)";
+        } else {
+          btnFinToday.classList.remove('is-period-active');
+          btnFinToday.title = "Jump to Current Month (November 2026)";
+        }
+      }
+
+      renderQuickMonthPills('fin');
     }
 
     window.prevFinanceMonth = function() {
