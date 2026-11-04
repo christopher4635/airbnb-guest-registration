@@ -82,7 +82,7 @@ async function sendNotificationEmail(
   payload: CheckInPayload,
   insertedGuests: Submission[],
   reqUrl: string
-): Promise<{ sent: boolean; method?: string; error?: string }> {
+): Promise<{ sent: boolean; method?: string; recipient?: string; error?: string }> {
   const targetEmail = env.NOTIFICATION_EMAIL || 'elitehomeskokrajhar@gmail.com';
   const primaryGuest = insertedGuests[0] || (payload.guests && payload.guests[0]) || { guestName: 'Guest' };
   const guestName = primaryGuest.guestName || (primaryGuest as any).name || 'New Guest';
@@ -200,12 +200,40 @@ async function sendNotificationEmail(
           html: htmlBody
         })
       });
+
       if (res.ok) {
         console.log(`Notification email sent to ${targetEmail} via Resend`);
-        return { sent: true, method: 'resend' };
+        return { sent: true, method: 'resend', recipient: targetEmail };
       }
-      const errText = await res.text();
-      console.warn('Resend send failed:', errText);
+
+      // Check if Resend sandbox restricted the recipient to the account owner
+      const errJson: any = await res.json().catch(() => null);
+      if (errJson && errJson.message && errJson.message.includes('only send testing emails to your own email address')) {
+        const match = errJson.message.match(/\(([^)]+@[^)]+)\)/);
+        const fallbackEmail = match ? match[1] : null;
+        if (fallbackEmail) {
+          console.log(`Resend sandbox restriction: delivering notification to Resend owner email ${fallbackEmail}`);
+          const retryRes = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              from: 'Elite Homes <onboarding@resend.dev>',
+              to: [fallbackEmail],
+              subject: `[For: ${targetEmail}] ${subject}`,
+              html: `<div style="background:#fef3c7; border:1px solid #fde68a; padding:10px 14px; border-radius:6px; margin-bottom:16px; font-size:13px; color:#92400e;">⚠️ <strong>Note:</strong> Delivered to your Resend account email (<code>${fallbackEmail}</code>). To receive directly at <code>${targetEmail}</code> without forwarding, sign up on Resend using your Google account (<code>${targetEmail}</code>) or add your domain at resend.com/domains.</div>` + htmlBody
+            })
+          });
+          if (retryRes.ok) {
+            console.log(`Delivered notification to fallback address ${fallbackEmail}`);
+            return { sent: true, method: 'resend_fallback', recipient: fallbackEmail };
+          }
+        }
+      } else {
+        console.warn('Resend send failed:', errJson || (await res.text().catch(() => '')));
+      }
     } catch (e: any) {
       console.error('Resend error:', e);
     }
