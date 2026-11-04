@@ -106,7 +106,7 @@ async function sendNotificationEmail(
 
     return `
       <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:12px;">
-        <h4 style="margin:0 0 8px; color:#0f172a; font-size:15px;">Guest #${idx + 1}: ${g.guestName} ${g.age ? `(${g.age} yrs)` : ''}</h4>
+        <h4 style="margin:0 0 8px; color:#0f172a; font-size:15px;">Guest #${idx + 1}: ${g.guestName} ${g.age ? `(${g.age} yrs, Born ~${new Date().getFullYear() - Number(g.age)})` : ''}</h4>
         <p style="margin:4px 0; font-size:13px; color:#475569;"><strong>Phone:</strong> ${g.phone || 'N/A'} ${waLink ? ` &bull; <a href="${waLink}" style="color:#059669; font-weight:600; text-decoration:none;">💬 WhatsApp Guest</a>` : ''}</p>
         <p style="margin:4px 0; font-size:13px; color:#475569;"><strong>Email:</strong> ${g.email || 'N/A'}</p>
         <p style="margin:4px 0; font-size:13px; color:#475569;"><strong>ID Type:</strong> ${g.idType || 'Aadhaar Card'}</p>
