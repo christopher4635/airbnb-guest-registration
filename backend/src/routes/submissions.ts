@@ -312,7 +312,9 @@ submissionsRoute.post('/', async (c) => {
     const comingFrom = body.comingFrom || '';
     const goingTo = body.goingTo || '';
     const purposeOfVisit = body.purposeOfVisit || '';
-    const customDetailsStr = body.customDetails ? JSON.stringify(body.customDetails) : '';
+    const groupId = `grp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const customDetailsObj = Object.assign({}, body.customDetails || {}, { groupId });
+    const customDetailsStr = JSON.stringify(customDetailsObj);
 
     // 1. Handle Digital Signature to R2
     let signatureKey = '';
@@ -418,26 +420,33 @@ submissionsRoute.post('/', async (c) => {
   }
 });
 
-// 3. DELETE /api/submissions/:id - Delete an individual submission and clean up R2 images
+// 3. DELETE /api/submissions/:id - Delete an individual submission or comma-separated batch of IDs, and clean up R2 images
 submissionsRoute.delete('/:id', async (c) => {
   try {
-    const id = c.req.param('id');
-    const row = await c.env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(id).first<any>();
-    if (!row) {
-      return c.json({ success: false, error: 'Submission not found' }, 404);
+    const rawId = decodeURIComponent(c.req.param('id') || '');
+    const ids = rawId.split(',').map(s => s.trim()).filter(Boolean);
+    if (ids.length === 0) {
+      return c.json({ success: false, error: 'No submission ID provided' }, 400);
     }
 
-    if (c.env.IMAGES_BUCKET) {
-      const keys = [row.front_photo_key, row.back_photo_key, row.signature_key].filter(Boolean);
-      for (const k of keys) {
-        if (!k.startsWith('local_')) {
-          await c.env.IMAGES_BUCKET.delete(k).catch(() => {});
+    let deletedCount = 0;
+    for (const id of ids) {
+      const row = await c.env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(id).first<any>();
+      if (row) {
+        if (c.env.IMAGES_BUCKET) {
+          const keys = [row.front_photo_key, row.back_photo_key, row.signature_key].filter(Boolean);
+          for (const k of keys) {
+            if (!k.startsWith('local_')) {
+              await c.env.IMAGES_BUCKET.delete(k).catch(() => {});
+            }
+          }
         }
+        await c.env.DB.prepare('DELETE FROM submissions WHERE id = ?').bind(id).run();
+        deletedCount++;
       }
     }
 
-    await c.env.DB.prepare('DELETE FROM submissions WHERE id = ?').bind(id).run();
-    return c.json({ success: true, message: 'Submission deleted successfully' });
+    return c.json({ success: true, message: `Deleted ${deletedCount} submission record(s) successfully` });
   } catch (err: any) {
     console.error('Delete submission error:', err);
     return c.json({ success: false, error: err.message }, 500);

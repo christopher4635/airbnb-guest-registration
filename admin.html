@@ -3102,15 +3102,14 @@
               'Coming From': s.comingFrom || '',
               'Going To': s.goingTo || '',
               'Purpose of Visit': s.purposeOfVisit || '',
+              'customDetails': s.customDetails,
               'ID Type': s.idType || 'Aadhaar Card',
               'ID Number': s.idNumber || '',
               'Front ID Photo': s.frontPhotoUrl || '',
               'Back ID Photo': s.backPhotoUrl || '',
               'Digital Signature': s.signatureUrl || ''
             }));
-            const countBadge = document.getElementById('entries-count-badge');
-            if (countBadge) countBadge.textContent = allSubmissions.length;
-            renderSubmissions(allSubmissions);
+            filterSubmissions();
             return;
           }
         }
@@ -3121,45 +3120,122 @@
       // No entries fallback - clean 0 state without mock records
       allSubmissions = [];
       const countBadge = document.getElementById('entries-count-badge');
-      if (countBadge) countBadge.textContent = 0;
-      renderSubmissions([]);
+      if (countBadge) countBadge.textContent = '0';
+      renderBundledSubmissions([]);
     }
 
-    // Filter Submissions
+    // Helper to group multiple guests belonging to the same booking into one bundled submission
+    function bundleSubmissions(entries) {
+      if (!entries || entries.length === 0) return [];
+      const groups = new Map();
+
+      entries.forEach((item, idx) => {
+        let custom = item.customDetails || {};
+        if (typeof custom === 'string') {
+          try { custom = JSON.parse(custom); } catch(e) {}
+        }
+
+        const groupId = custom.groupId || custom.batchId || '';
+        const resCode = (item['Reservation Code'] || item.reservationCode || '').trim();
+        const checkIn = (item['Check-in Date'] || item.checkInDate || '').trim();
+        const checkOut = (item['Check-out Date'] || item.checkOutDate || '').trim();
+        const prop = (item['Property Option'] || item.propertyOption || '').trim();
+        const time = (item['Timestamp'] || item.createdAt || '').substring(0, 16); // group within minute
+
+        let key = '';
+        if (groupId) {
+          key = `grp_${groupId}`;
+        } else if (resCode && resCode !== 'DIRECT') {
+          key = `res_${resCode}_${checkIn}_${prop}`;
+        } else {
+          key = `stay_${checkIn}_${checkOut}_${prop}_${time}`;
+        }
+
+        if (!groups.has(key)) {
+          groups.set(key, {
+            bundleKey: key,
+            reservationCode: resCode,
+            propertyOption: prop,
+            checkInDate: checkIn,
+            checkOutDate: checkOut,
+            arrivalTime: item['Arrival Time'] || item.arrivalTime || '',
+            totalGuests: Number(item['Total Guests'] || item.totalGuests) || 1,
+            comingFrom: item['Coming From'] || item.comingFrom || '',
+            goingTo: item['Going To'] || item.goingTo || '',
+            purposeOfVisit: item['Purpose of Visit'] || item.purposeOfVisit || '',
+            createdAt: item['Timestamp'] || item.createdAt || '',
+            signatureUrl: item['Digital Signature'] || item.signatureUrl || '',
+            ids: [],
+            guests: []
+          });
+        }
+
+        const bundle = groups.get(key);
+        if (item.id) bundle.ids.push(item.id);
+
+        bundle.guests.push({
+          id: item.id || '',
+          name: item['Guest Legal Name'] || item['Guest Name'] || item.guestName || `Guest #${bundle.guests.length + 1}`,
+          guestNumber: item['Guest #'] || item['Guest Number'] || item.guestNumber || `Guest #${bundle.guests.length + 1}`,
+          age: item['Age'] || item.age || '',
+          phone: item['Phone / WhatsApp'] || item['Phone'] || item.phone || '',
+          email: item['Email Address'] || item['Email'] || item.email || '',
+          idType: item['ID Type'] || item.idType || 'Aadhaar Card',
+          idNumber: item['ID Number'] || item.idNumber || '',
+          frontPhotoUrl: item['Front ID Photo'] || item.frontPhotoUrl || '',
+          backPhotoUrl: item['Back ID Photo'] || item.backPhotoUrl || ''
+        });
+
+        if (bundle.guests.length > bundle.totalGuests) {
+          bundle.totalGuests = bundle.guests.length;
+        }
+      });
+
+      return Array.from(groups.values());
+    }
+
+    // Filter Submissions by Bundled Booking
     function filterSubmissions() {
       const query = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
       const dateFilter = document.getElementById('filter-date')?.value || '';
       const propFilter = document.getElementById('filter-prop')?.value || '';
 
-      const filtered = allSubmissions.filter(entry => {
-        // Query match: Guest Name, Phone, Email, Coming From, Going To, Res Code
-        const guestName = (entry['Guest Legal Name'] || entry['Guest Name'] || '').toLowerCase();
-        const phone = (entry['Phone / WhatsApp'] || entry['Phone'] || '').toLowerCase();
-        const email = (entry['Email Address'] || entry['Email'] || '').toLowerCase();
-        const comingFrom = (entry['Coming From'] || '').toLowerCase();
-        const goingTo = (entry['Going To'] || '').toLowerCase();
-        const resCode = (entry['Reservation Code'] || '').toLowerCase();
+      const bundles = bundleSubmissions(allSubmissions);
 
+      const filtered = bundles.filter(bundle => {
+        // Query match across ANY guest in party, booking code, phone, email, city
         const matchesQuery = !query || 
-          guestName.includes(query) ||
-          phone.includes(query) ||
-          email.includes(query) ||
-          comingFrom.includes(query) ||
-          goingTo.includes(query) ||
-          resCode.includes(query);
+          bundle.reservationCode.toLowerCase().includes(query) ||
+          bundle.comingFrom.toLowerCase().includes(query) ||
+          bundle.goingTo.toLowerCase().includes(query) ||
+          bundle.guests.some(g => 
+            (g.name || '').toLowerCase().includes(query) ||
+            (g.phone || '').toLowerCase().includes(query) ||
+            (g.email || '').toLowerCase().includes(query)
+          );
 
         // Date match: Check-in Date
-        const checkIn = (entry['Check-in Date'] || entry['Check-in'] || '').toString();
-        const matchesDate = !dateFilter || checkIn.startsWith(dateFilter);
+        const matchesDate = !dateFilter || bundle.checkInDate.startsWith(dateFilter);
 
         // Property match
-        const prop = (entry['Property Option'] || entry['Property / Room Type'] || '').toString();
-        const matchesProp = !propFilter || prop === propFilter;
+        const matchesProp = !propFilter || bundle.propertyOption === propFilter;
 
         return matchesQuery && matchesDate && matchesProp;
       });
 
-      renderSubmissions(filtered);
+      const countBadge = document.getElementById('entries-count-badge');
+      if (countBadge) {
+        const totalGuestsCount = filtered.reduce((sum, b) => sum + b.guests.length, 0);
+        if (filtered.length === 0) {
+          countBadge.textContent = '0';
+        } else if (totalGuestsCount > filtered.length) {
+          countBadge.textContent = `${filtered.length} (${totalGuestsCount} guests)`;
+        } else {
+          countBadge.textContent = `${filtered.length}`;
+        }
+      }
+
+      renderBundledSubmissions(filtered);
     }
 
     // Search & Filter Listeners
@@ -3177,18 +3253,18 @@
     });
     document.getElementById('btn-refresh-entries')?.addEventListener('click', fetchSubmissions);
 
-    // Render Submissions Cards
-    function renderSubmissions(entries) {
+    // Render Bundled Submissions (1 card per booking, with all party guests grouped inside)
+    function renderBundledSubmissions(bundles) {
       const container = document.getElementById('submissions-container');
       if (!container) return;
       
-      if (!entries || entries.length === 0) {
+      if (!bundles || bundles.length === 0) {
         container.innerHTML = `
           <div style="text-align: center; padding: 48px 20px; background: #fff; border-radius: var(--radius-md); border: 1px solid var(--border-color); color: var(--text-muted);">
             <div style="font-size: 36px; margin-bottom: 8px;">📋</div>
-            <strong style="color: var(--text-main); font-size: 16px; display: block; margin-bottom: 4px;">No Guest Submissions Found</strong>
+            <strong style="color: var(--text-main); font-size: 16px; display: block; margin-bottom: 4px;">No Guest Check-in Bookings Found</strong>
             <p style="font-size: 13px; max-width: 480px; margin: 0 auto; line-height: 1.5;">
-              As guests complete pre-check-in verification and upload their ID cards, records will be saved to Cloudflare R2 &amp; D1 and displayed here in real time.
+              As guests complete pre-check-in verification and upload their ID cards, records will be saved to Cloudflare R2 &amp; D1 and displayed here bundled by booking in real time.
             </p>
           </div>
         `;
@@ -3197,174 +3273,169 @@
 
       container.innerHTML = '';
 
-      entries.forEach((item, idx) => {
+      bundles.forEach((bundle, bIdx) => {
         const card = document.createElement('div');
         card.className = 'entry-card';
+        card.style.borderLeft = '4px solid var(--primary)';
 
-        const id = item.id || '';
-        const name = item['Guest Legal Name'] || item['Guest Name'] || 'Guest #' + (idx + 1);
-        const checkIn = item['Check-in Date'] || item['Check-in'] || 'N/A';
-        const checkOut = item['Check-out Date'] || item['Check-out'] || 'N/A';
-        const propOption = item['Property Option'] || item['Property / Room Type'] || '';
-        const phone = item['Phone / WhatsApp'] || item['Phone'] || '';
-        const email = item['Email Address'] || item['Email'] || '';
-        const comingFrom = item['Coming From'] || '';
-        const goingTo = item['Going To'] || '';
-        const purpose = item['Purpose of Visit'] || '';
-        const resCode = item['Reservation Code'] || '';
-        const idType = item['ID Type'] || 'Government ID';
-        const age = item['Age'] ? ` (${item['Age']} yrs)` : '';
-        const frontUrl = item['Front ID Photo'] || item['Front ID'] || '';
-        const backUrl = item['Back ID Photo'] || item['Back ID'] || '';
-        const sigUrl = item['Digital Signature'] || item['Signature'] || '';
+        const primaryGuest = bundle.guests[0] || { name: 'Guest' };
+        const partySize = bundle.guests.length;
+        const additionalCount = partySize > 1 ? partySize - 1 : 0;
+        
+        // Primary guest contact
+        const primaryPhone = primaryGuest.phone || '';
+        const cleanPhone = primaryPhone.replace(/[^0-9]/g, '');
+        const primaryWaLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '';
 
-        // Resolve R2 URLs through API client
-        const resolvedFront = window.AirbnbAPI ? window.AirbnbAPI.resolveImageUrl(frontUrl) : frontUrl;
-        const resolvedBack = window.AirbnbAPI ? window.AirbnbAPI.resolveImageUrl(backUrl) : backUrl;
-        const resolvedSig = window.AirbnbAPI ? window.AirbnbAPI.resolveImageUrl(sigUrl) : sigUrl;
+        // Signature URL
+        const resolvedSig = window.AirbnbAPI ? window.AirbnbAPI.resolveImageUrl(bundle.signatureUrl) : bundle.signatureUrl;
 
-        // WhatsApp direct link
-        const cleanPhone = phone.replace(/[^0-9]/g, '');
-        const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '';
+        // Render guests rows
+        const guestsListHtml = bundle.guests.map((g, gIdx) => {
+          const isPrimary = (gIdx === 0);
+          const resFront = window.AirbnbAPI ? window.AirbnbAPI.resolveImageUrl(g.frontPhotoUrl) : g.frontPhotoUrl;
+          const resBack = window.AirbnbAPI ? window.AirbnbAPI.resolveImageUrl(g.backPhotoUrl) : g.backPhotoUrl;
+          const gPhoneClean = (g.phone || '').replace(/[^0-9]/g, '');
+          const gWaLink = gPhoneClean ? `https://wa.me/${gPhoneClean}` : '';
 
-        // Document thumbnails row
-        let thumbsHtml = '';
-        if (resolvedFront || resolvedBack || resolvedSig) {
-          thumbsHtml = `
-            <div style="display: flex; gap: 10px; margin: 12px 0 6px; flex-wrap: wrap; align-items: center;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Attached Documents:</span>
-              ${resolvedFront ? `
-                <div style="cursor: pointer; position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); width: 84px; height: 58px; background: #f8fafc; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
-                     onclick="viewDocument('${encodeURIComponent(resolvedFront)}', 'Front ID - ${encodeURIComponent(name)}', '${encodeURIComponent(name)}')">
-                  <img src="${resolvedFront}" alt="Front ID" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                  <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 10px; color: #0284c7; font-weight: 600; padding: 4px; text-align: center;">📄 Front ID</div>
-                  <span style="position: absolute; bottom: 2px; left: 2px; background: rgba(0,0,0,0.65); color: #fff; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Front ID</span>
+          return `
+            <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
+              <div style="flex: 1; min-width: 220px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <span>${isPrimary ? '👑' : '👤'}</span>
+                  <span>${g.name}</span>
+                  ${g.age ? `<span style="font-size: 12px; color: var(--text-muted); font-weight: 400;">(${g.age} yrs)</span>` : ''}
+                  ${isPrimary ? `<span style="background: #E0E7FF; color: #4338CA; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px;">Primary Guest</span>` : ''}
                 </div>
-              ` : ''}
-              ${resolvedBack ? `
-                <div style="cursor: pointer; position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); width: 84px; height: 58px; background: #f8fafc; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
-                     onclick="viewDocument('${encodeURIComponent(resolvedBack)}', 'Back ID - ${encodeURIComponent(name)}', '${encodeURIComponent(name)}')">
-                  <img src="${resolvedBack}" alt="Back ID" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                  <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 10px; color: #0284c7; font-weight: 600; padding: 4px; text-align: center;">📄 Back ID</div>
-                  <span style="position: absolute; bottom: 2px; left: 2px; background: rgba(0,0,0,0.65); color: #fff; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Back ID</span>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 12px;">
+                  <span><strong>ID:</strong> ${g.idType || 'Aadhaar Card'}</span>
+                  ${g.phone ? `<span><strong>Phone:</strong> ${g.phone}</span>` : ''}
+                  ${g.email ? `<span><strong>Email:</strong> ${g.email}</span>` : ''}
                 </div>
-              ` : ''}
-              ${resolvedSig ? `
-                <div style="cursor: pointer; position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); width: 84px; height: 58px; background: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.06);"
-                     onclick="viewDocument('${encodeURIComponent(resolvedSig)}', 'Digital Signature - ${encodeURIComponent(name)}', '${encodeURIComponent(name)}')">
-                  <img src="${resolvedSig}" alt="Signature" style="max-width: 90%; max-height: 90%; object-fit: contain;">
-                  <span style="position: absolute; bottom: 2px; left: 2px; background: rgba(0,0,0,0.65); color: #fff; font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: 600;">Signature</span>
-                </div>
-              ` : ''}
+              </div>
+
+              <!-- Document Thumbnails & Buttons for this guest -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                ${resFront ? `
+                  <div style="cursor: pointer; position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); width: 68px; height: 48px; background: #f8fafc; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.06);"
+                       onclick="viewDocument('${encodeURIComponent(resFront)}', 'Front ID - ${encodeURIComponent(g.name)}', '${encodeURIComponent(g.name)}')">
+                    <img src="${resFront}" alt="Front ID" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 9px; color: #0284c7; font-weight: 600;">📄 Front</div>
+                    <span style="position: absolute; bottom: 1px; left: 1px; background: rgba(0,0,0,0.65); color: #fff; font-size: 8px; padding: 1px 3px; border-radius: 2px;">Front</span>
+                  </div>
+                  <button type="button" class="btn-action-pill" style="color:#0369A1; background:#E0F2FE; font-size:11px; padding:4px 8px;"
+                          onclick="viewDocument('${encodeURIComponent(resFront)}', 'Front ID - ${encodeURIComponent(g.name)}', '${encodeURIComponent(g.name)}')">
+                    🪪 Front ID
+                  </button>
+                ` : ''}
+
+                ${resBack ? `
+                  <div style="cursor: pointer; position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); width: 68px; height: 48px; background: #f8fafc; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.06);"
+                       onclick="viewDocument('${encodeURIComponent(resBack)}', 'Back ID - ${encodeURIComponent(g.name)}', '${encodeURIComponent(g.name)}')">
+                    <img src="${resBack}" alt="Back ID" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 9px; color: #0284c7; font-weight: 600;">📄 Back</div>
+                    <span style="position: absolute; bottom: 1px; left: 1px; background: rgba(0,0,0,0.65); color: #fff; font-size: 8px; padding: 1px 3px; border-radius: 2px;">Back</span>
+                  </div>
+                  <button type="button" class="btn-action-pill" style="color:#0369A1; background:#E0F2FE; font-size:11px; padding:4px 8px;"
+                          onclick="viewDocument('${encodeURIComponent(resBack)}', 'Back ID - ${encodeURIComponent(g.name)}', '${encodeURIComponent(g.name)}')">
+                    🪪 Back ID
+                  </button>
+                ` : ''}
+
+                ${gWaLink ? `
+                  <a href="${gWaLink}" target="_blank" class="btn-action-pill" style="color:#059669; background:#ECFDF5; font-size:11px; padding:4px 8px;">
+                    💬 WhatsApp
+                  </a>
+                ` : ''}
+              </div>
             </div>
           `;
-        }
-
-        // Action pills
-        let actionsHtml = '';
-        if (resolvedFront) {
-          actionsHtml += `
-            <button type="button" class="btn-action-pill" style="color:#0369A1; background:#E0F2FE; border-color:#BAE6FD;"
-                    onclick="viewDocument('${encodeURIComponent(resolvedFront)}', 'Front ID - ${encodeURIComponent(name)}', '${encodeURIComponent(name)}')">
-              🪪 View Front ID
-            </button>
-          `;
-        }
-        if (resolvedBack) {
-          actionsHtml += `
-            <button type="button" class="btn-action-pill" style="color:#0369A1; background:#E0F2FE; border-color:#BAE6FD;"
-                    onclick="viewDocument('${encodeURIComponent(resolvedBack)}', 'Back ID - ${encodeURIComponent(name)}', '${encodeURIComponent(name)}')">
-              🪪 View Back ID
-            </button>
-          `;
-        }
-        if (resolvedSig) {
-          actionsHtml += `
-            <button type="button" class="btn-action-pill" style="color:#4338CA; background:#EEF2FF; border-color:#C7D2FE;"
-                    onclick="viewDocument('${encodeURIComponent(resolvedSig)}', 'Signature - ${encodeURIComponent(name)}', '${encodeURIComponent(name)}')">
-              ✍️ View Signature
-            </button>
-          `;
-        }
-        if (waLink) {
-          actionsHtml += `
-            <a href="${waLink}" target="_blank" class="btn-action-pill" style="color:#059669; background:#ECFDF5; border-color:#A7F3D0;">
-              💬 WhatsApp
-            </a>
-          `;
-        }
-        if (phone) {
-          actionsHtml += `
-            <a href="tel:${phone.replace(/[^0-9+]/g, '')}" class="btn-action-pill">
-              📞 Call
-            </a>
-          `;
-        }
-        if (id) {
-          actionsHtml += `
-            <button type="button" class="btn-action-pill" style="color:#DC2626; background:#FEF2F2; border-color:#FECACA; margin-left: auto;"
-                    onclick="deleteSubmissionEntry('${id}', '${encodeURIComponent(name)}')">
-              🗑️ Delete
-            </button>
-          `;
-        }
+        }).join('');
 
         card.innerHTML = `
+          <!-- Booking Header -->
           <div class="entry-header">
             <div>
-              <div class="entry-guest-name">${name}${age}</div>
+              <div class="entry-guest-name" style="font-size: 16px;">
+                ${primaryGuest.name}
+                ${additionalCount > 0 ? `<span style="font-size: 13px; font-weight: 500; color: var(--text-muted); margin-left: 6px;">(+${additionalCount} additional guest${additionalCount > 1 ? 's' : ''})</span>` : ''}
+              </div>
               <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                ${item['Guest #'] || ''} ${resCode ? `&bull; Booking Code: <strong>${resCode}</strong>` : ''}
+                ${bundle.reservationCode ? `Booking Code: <strong>${bundle.reservationCode}</strong> &bull; ` : ''}
+                Submitted: ${bundle.createdAt ? bundle.createdAt.substring(0, 16).replace('T', ' ') : 'Recently'}
               </div>
             </div>
             <div class="entry-badges">
-              <span class="badge-pill date-badge">📅 ${checkIn} ➔ ${checkOut}</span>
-              ${propOption ? `<span class="badge-pill prop-badge">🏠 ${propOption}</span>` : ''}
-              ${item['Total Guests'] ? `<span class="badge-pill">👥 ${item['Total Guests']} Guests</span>` : ''}
+              <span class="badge-pill date-badge">📅 ${bundle.checkInDate || 'N/A'} ➔ ${bundle.checkOutDate || 'N/A'}</span>
+              ${bundle.propertyOption ? `<span class="badge-pill prop-badge">🏠 ${bundle.propertyOption}</span>` : ''}
+              <span class="badge-pill" style="background:#EEF2FF; color:#4338CA; font-weight:700;">👥 ${partySize} Guest${partySize > 1 ? 's' : ''}</span>
+              ${bundle.arrivalTime ? `<span class="badge-pill">🕒 ${bundle.arrivalTime}</span>` : ''}
             </div>
           </div>
 
-          <div class="entry-grid">
-            ${phone ? `
-              <div>
-                <span class="entry-label">Phone / WhatsApp</span>
-                <span class="entry-value">${phone}</span>
-              </div>
-            ` : ''}
-            ${email ? `
-              <div>
-                <span class="entry-label">Email</span>
-                <span class="entry-value">${email}</span>
-              </div>
-            ` : ''}
-            ${comingFrom ? `
-              <div>
-                <span class="entry-label">Coming From</span>
-                <span class="entry-value">${comingFrom}</span>
-              </div>
-            ` : ''}
-            ${goingTo ? `
-              <div>
-                <span class="entry-label">Going To</span>
-                <span class="entry-value">${goingTo}</span>
-              </div>
-            ` : ''}
-            ${purpose ? `
-              <div>
-                <span class="entry-label">Purpose</span>
-                <span class="entry-value">${purpose}</span>
-              </div>
-            ` : ''}
-            <div>
-              <span class="entry-label">ID Type</span>
-              <span class="entry-value">${idType}</span>
+          <!-- Shared Details Grid -->
+          ${(bundle.comingFrom || bundle.goingTo || bundle.purposeOfVisit || primaryPhone) ? `
+            <div class="entry-grid" style="margin: 10px 0; background: #f8fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+              ${primaryPhone ? `
+                <div>
+                  <span class="entry-label">Primary Contact</span>
+                  <span class="entry-value">${primaryPhone}</span>
+                </div>
+              ` : ''}
+              ${bundle.comingFrom ? `
+                <div>
+                  <span class="entry-label">Coming From</span>
+                  <span class="entry-value">${bundle.comingFrom}</span>
+                </div>
+              ` : ''}
+              ${bundle.goingTo ? `
+                <div>
+                  <span class="entry-label">Going To</span>
+                  <span class="entry-value">${bundle.goingTo}</span>
+                </div>
+              ` : ''}
+              ${bundle.purposeOfVisit ? `
+                <div>
+                  <span class="entry-label">Purpose of Visit</span>
+                  <span class="entry-value">${bundle.purposeOfVisit}</span>
+                </div>
+              ` : ''}
             </div>
+          ` : ''}
+
+          <!-- Registered Guests List (Bundled) -->
+          <div style="margin-top: 12px;">
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+              👥 Party Members &amp; ID Documents (${partySize}):
+            </div>
+            ${guestsListHtml}
           </div>
 
-          ${thumbsHtml}
+          <!-- Bottom Actions Bar -->
+          <div class="entry-actions" style="margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              ${resolvedSig ? `
+                <button type="button" class="btn-action-pill" style="color:#4338CA; background:#EEF2FF; border-color:#C7D2FE;"
+                        onclick="viewDocument('${encodeURIComponent(resolvedSig)}', 'Signature - ${encodeURIComponent(primaryGuest.name)}', '${encodeURIComponent(primaryGuest.name)}')">
+                  ✍️ Digital Signature
+                </button>
+              ` : ''}
+              ${primaryWaLink ? `
+                <a href="${primaryWaLink}" target="_blank" class="btn-action-pill" style="color:#059669; background:#ECFDF5; border-color:#A7F3D0;">
+                  💬 WhatsApp Primary Guest
+                </a>
+              ` : ''}
+              ${primaryPhone ? `
+                <a href="tel:${primaryPhone.replace(/[^0-9+]/g, '')}" class="btn-action-pill">
+                  📞 Call Primary Guest
+                </a>
+              ` : ''}
+            </div>
 
-          <div class="entry-actions">
-            ${actionsHtml}
+            <button type="button" class="btn-action-pill" style="color:#DC2626; background:#FEF2F2; border-color:#FECACA;"
+                    onclick="deleteSubmissionBundle('${bundle.ids.join(',')}', '${encodeURIComponent(primaryGuest.name)}')">
+              🗑️ Delete Booking (${partySize} guest${partySize > 1 ? 's' : ''})
+            </button>
           </div>
         `;
 
@@ -3409,20 +3480,21 @@
       if (viewer) viewer.innerHTML = '';
     }
 
-    // Delete single submission entry
-    async function deleteSubmissionEntry(id, encodedName) {
-      const name = decodeURIComponent(encodedName || 'this guest');
-      if (!confirm(`Are you sure you want to permanently delete check-in record for "${name}"?\nUploaded ID documents in Cloudflare R2 will also be deleted.`)) {
+    // Delete entire submission bundle (all guests in party)
+    async function deleteSubmissionBundle(idsStr, encodedPrimaryName) {
+      const name = decodeURIComponent(encodedPrimaryName || 'this booking');
+      const count = idsStr.split(',').length;
+      if (!confirm(`Are you sure you want to permanently delete this booking submission for "${name}" (${count} guest record${count > 1 ? 's' : ''})?\n\nAll uploaded ID documents for these guests in Cloudflare R2 will also be deleted.`)) {
         return;
       }
       try {
         if (window.AirbnbAPI && typeof window.AirbnbAPI.deleteSubmission === 'function') {
-          await window.AirbnbAPI.deleteSubmission(id);
-          showToast("Entry deleted successfully");
+          await window.AirbnbAPI.deleteSubmission(idsStr);
+          showToast(`Booking for ${name} deleted successfully`);
         }
         await fetchSubmissions();
       } catch (err) {
-        alert("Failed to delete entry: " + (err.message || err));
+        alert("Failed to delete booking: " + (err.message || err));
       }
     }
 
