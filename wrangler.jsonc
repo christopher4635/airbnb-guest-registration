@@ -31,7 +31,8 @@
   // 4. Environment Variables
   "vars": {
     "ADMIN_PIN": "4635",
-    "ENVIRONMENT": "production"
+    "ENVIRONMENT": "production",
+    "NOTIFICATION_EMAIL": "elitehomeskokrajhar@gmail.com"
   },
 
   "observability": {

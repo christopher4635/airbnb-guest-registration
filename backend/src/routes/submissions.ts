@@ -76,6 +76,185 @@ async function saveToR2(
   };
 }
 
+// Helper to format and send email notification to host
+async function sendNotificationEmail(
+  env: Bindings,
+  payload: CheckInPayload,
+  insertedGuests: Submission[],
+  reqUrl: string
+): Promise<{ sent: boolean; method?: string; error?: string }> {
+  const targetEmail = env.NOTIFICATION_EMAIL || 'elitehomeskokrajhar@gmail.com';
+  const primaryGuest = insertedGuests[0] || (payload.guests && payload.guests[0]) || { guestName: 'Guest' };
+  const guestName = primaryGuest.guestName || (primaryGuest as any).name || 'New Guest';
+  const reservationCode = payload.reservationCode || 'DIRECT';
+  const propertyOption = payload.propertyOption || 'Property';
+
+  let baseUrl = 'https://airbnb-management.elitehomes-portal.workers.dev';
+  try {
+    const urlObj = new URL(reqUrl);
+    baseUrl = urlObj.origin;
+  } catch (e) {}
+
+  const portalUrl = 'https://airbnb-portal.pages.dev/admin.html';
+
+  // Build guests HTML list with direct links to R2 documents
+  const guestsListHtml = insertedGuests.map((g, idx) => {
+    const frontLink = g.frontPhotoUrl ? (g.frontPhotoUrl.startsWith('http') ? g.frontPhotoUrl : `${baseUrl}${g.frontPhotoUrl}`) : '';
+    const backLink = g.backPhotoUrl ? (g.backPhotoUrl.startsWith('http') ? g.backPhotoUrl : `${baseUrl}${g.backPhotoUrl}`) : '';
+    const phoneClean = (g.phone || '').replace(/[^0-9]/g, '');
+    const waLink = phoneClean ? `https://wa.me/${phoneClean}` : '';
+
+    return `
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px; margin-bottom:12px;">
+        <h4 style="margin:0 0 8px; color:#0f172a; font-size:15px;">Guest #${idx + 1}: ${g.guestName} ${g.age ? `(${g.age} yrs)` : ''}</h4>
+        <p style="margin:4px 0; font-size:13px; color:#475569;"><strong>Phone:</strong> ${g.phone || 'N/A'} ${waLink ? ` &bull; <a href="${waLink}" style="color:#059669; font-weight:600; text-decoration:none;">💬 WhatsApp Guest</a>` : ''}</p>
+        <p style="margin:4px 0; font-size:13px; color:#475569;"><strong>Email:</strong> ${g.email || 'N/A'}</p>
+        <p style="margin:4px 0; font-size:13px; color:#475569;"><strong>ID Type:</strong> ${g.idType || 'Aadhaar Card'}</p>
+        <div style="margin-top:10px; display:flex; gap:10px;">
+          ${frontLink ? `<a href="${frontLink}" target="_blank" style="display:inline-block; background:#0284c7; color:#ffffff; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🪪 View Front ID</a>` : ''}
+          ${backLink ? `<a href="${backLink}" target="_blank" style="display:inline-block; background:#0284c7; color:#ffffff; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; text-decoration:none;">🪪 View Back ID</a>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const sigUrl = insertedGuests[0]?.signatureUrl
+    ? (insertedGuests[0].signatureUrl.startsWith('http') ? insertedGuests[0].signatureUrl : `${baseUrl}${insertedGuests[0].signatureUrl}`)
+    : '';
+
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color:#f1f5f9; padding:24px; margin:0;">
+      <div style="max-width:620px; margin:0 auto; background:#ffffff; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+        
+        <!-- Header -->
+        <div style="background:#FF385C; padding:20px 24px; color:#ffffff;">
+          <h2 style="margin:0; font-size:20px; font-weight:700;">🛎️ New Guest Pre-Check-in Submission</h2>
+          <p style="margin:4px 0 0; font-size:13px; opacity:0.9;">Elite Homes &bull; Kokrajhar Guest Verification</p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:24px;">
+          <div style="background:#eff6ff; border-left:4px solid #3b82f6; padding:12px 16px; margin-bottom:20px; border-radius:4px;">
+            <p style="margin:0; font-size:14px; color:#1e40af;">
+              <strong>${guestName}</strong> has completed pre-check-in verification for <strong>${propertyOption}</strong>. ID documents are safely stored in Cloudflare R2 bucket <code>xsquareguestid</code>.
+            </p>
+          </div>
+
+          <h3 style="margin:0 0 12px; font-size:16px; color:#0f172a; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">Stay Details</h3>
+          <table style="width:100%; font-size:13px; color:#334155; margin-bottom:20px; border-collapse:collapse;">
+            <tr><td style="padding:6px 0; width:140px; font-weight:600;">Booking Code:</td><td><strong style="color:#0f172a;">${reservationCode}</strong></td></tr>
+            <tr><td style="padding:6px 0; font-weight:600;">Room / Property:</td><td>${propertyOption}</td></tr>
+            <tr><td style="padding:6px 0; font-weight:600;">Dates:</td><td>📅 ${payload.checkInDate || 'N/A'} ➔ ${payload.checkOutDate || 'N/A'}</td></tr>
+            <tr><td style="padding:6px 0; font-weight:600;">Arrival Time:</td><td>🕒 ${payload.arrivalTime || 'N/A'}</td></tr>
+            <tr><td style="padding:6px 0; font-weight:600;">Total Guests:</td><td>👥 ${payload.totalGuests || insertedGuests.length}</td></tr>
+            ${payload.comingFrom ? `<tr><td style="padding:6px 0; font-weight:600;">Coming From:</td><td>${payload.comingFrom}</td></tr>` : ''}
+            ${payload.goingTo ? `<tr><td style="padding:6px 0; font-weight:600;">Going To:</td><td>${payload.goingTo}</td></tr>` : ''}
+            ${payload.purposeOfVisit ? `<tr><td style="padding:6px 0; font-weight:600;">Purpose:</td><td>${payload.purposeOfVisit}</td></tr>` : ''}
+          </table>
+
+          <h3 style="margin:0 0 12px; font-size:16px; color:#0f172a; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">Guest Information &amp; ID Documents</h3>
+          ${guestsListHtml}
+
+          ${sigUrl ? `
+            <div style="margin-top:16px; padding:12px; background:#fafafa; border:1px solid #e5e7eb; border-radius:8px;">
+              <span style="display:block; font-size:12px; font-weight:600; color:#374151; margin-bottom:6px;">Guest Signature:</span>
+              <img src="${sigUrl}" alt="Signature" style="max-height:60px; background:#fff; padding:4px; border:1px solid #d1d5db; border-radius:4px;">
+            </div>
+          ` : ''}
+
+          <div style="margin-top:24px; text-align:center;">
+            <a href="${portalUrl}" target="_blank" style="display:inline-block; background:#FF385C; color:#ffffff; font-weight:600; padding:12px 24px; border-radius:8px; text-decoration:none; font-size:14px;">
+              Open Admin Portal
+            </a>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background:#f8fafc; border-top:1px solid #e2e8f0; padding:14px 24px; text-align:center; font-size:12px; color:#64748b;">
+          Automated notification delivered by Cloudflare Worker &bull; Elite Homes Kokrajhar
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `;
+
+  const subject = `🛎️ New Check-in: ${guestName} — ${propertyOption} (${reservationCode})`;
+
+  // 1. Send via Resend API if API Key is configured
+  if (env.RESEND_API_KEY) {
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'Elite Homes <onboarding@resend.dev>',
+          to: [targetEmail],
+          subject: subject,
+          html: htmlBody
+        })
+      });
+      if (res.ok) {
+        console.log(`Notification email sent to ${targetEmail} via Resend`);
+        return { sent: true, method: 'resend' };
+      }
+      const errText = await res.text();
+      console.warn('Resend send failed:', errText);
+    } catch (e: any) {
+      console.error('Resend error:', e);
+    }
+  }
+
+  // 2. Send via Webhook (Google Apps Script / Gmail) if configured
+  if (env.EMAIL_WEBHOOK_URL) {
+    try {
+      const res = await fetch(env.EMAIL_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: targetEmail,
+          subject,
+          html: htmlBody
+        })
+      });
+      if (res.ok) {
+        console.log(`Notification email sent to ${targetEmail} via Webhook`);
+        return { sent: true, method: 'webhook' };
+      }
+    } catch (e: any) {
+      console.error('Webhook send error:', e);
+    }
+  }
+
+  // 3. Send via Cloudflare Native SEND_EMAIL binding if configured
+  if (env.SEND_EMAIL && typeof env.SEND_EMAIL.send === 'function') {
+    try {
+      await env.SEND_EMAIL.send({
+        from: { email: 'checkin@elitehomes.in', name: 'Elite Homes' },
+        to: [{ email: targetEmail }],
+        subject,
+        content: [
+          { type: 'text/html', value: htmlBody },
+          { type: 'text/plain', value: `Guest Check-in: ${guestName} - ${propertyOption} (${reservationCode})` }
+        ]
+      });
+      console.log(`Notification email sent to ${targetEmail} via Cloudflare SEND_EMAIL`);
+      return { sent: true, method: 'cloudflare_send_email' };
+    } catch (e: any) {
+      console.error('Cloudflare send_email error:', e);
+    }
+  }
+
+  console.log(`Email notification prepared for ${targetEmail} (awaiting provider credentials: RESEND_API_KEY, EMAIL_WEBHOOK_URL, or SEND_EMAIL binding)`);
+  return { sent: false, error: 'No active email provider credential set' };
+}
+
 // 1. GET /api/submissions - List all guest check-in submissions
 submissionsRoute.get('/', async (c) => {
   try {
@@ -190,6 +369,13 @@ submissionsRoute.post('/', async (c) => {
         backPhotoUrl: backUrl,
         signatureUrl
       });
+    }
+
+    // Send automated email notification to host (elitehomeskokrajhar@gmail.com)
+    try {
+      await sendNotificationEmail(c.env, body, insertedRows, c.req.url);
+    } catch (mailErr) {
+      console.error('Email notification background error:', mailErr);
     }
 
     return c.json({

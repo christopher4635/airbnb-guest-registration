@@ -8,6 +8,10 @@ export type Bindings = {
   ADMIN_PIN?: string;
   CORS_ORIGIN?: string;
   ENVIRONMENT?: string;
+  NOTIFICATION_EMAIL?: string;
+  RESEND_API_KEY?: string;
+  EMAIL_WEBHOOK_URL?: string;
+  SEND_EMAIL?: any;
 };
 
 export interface Booking {
