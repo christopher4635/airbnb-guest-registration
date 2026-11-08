@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Guest Registration & ID Verification</title>
+  <title>Elite Homes | Guest Registration & ID Verification</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -70,25 +70,25 @@
       background: linear-gradient(90deg, #FF385C, #E00B41, #FF5A5F);
     }
 
-    .badge-airbnb {
+    .badge-property {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: var(--primary-light);
-      color: var(--primary);
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #10B981;
       font-size: 12px;
       font-weight: 700;
-      padding: 4px 10px;
+      padding: 4px 12px;
       border-radius: 20px;
       margin-bottom: 12px;
       letter-spacing: 0.5px;
       text-transform: uppercase;
     }
 
-    .badge-airbnb svg {
-      width: 14px;
-      height: 14px;
-      fill: currentColor;
+    .badge-property svg {
+      width: 15px;
+      height: 15px;
     }
 
     h1 {
@@ -724,15 +724,15 @@
     
     <!-- Header -->
     <header class="header-card">
-      <div class="badge-airbnb">
-        <svg viewBox="0 0 32 32">
-          <path d="M16 1c2.008 0 3.463.963 4.751 3.269l.533 1.025c1.954 3.83 4.62 9.098 5.759 12.186 1.405 3.81 1.458 6.471.161 8.354-1.258 1.826-3.483 2.666-6.204 2.666-2.585 0-4.665-.774-6.384-2.459-1.719 1.685-3.799 2.459-6.384 2.459-2.721 0-4.946-.84-6.204-2.666-1.297-1.883-1.244-4.544.161-8.354 1.139-3.088 3.805-8.356 5.759-12.186l.533-1.025C9.722 1.963 11.177 1 13.185 1H16zm0 3c-1.077 0-1.897.458-2.85 2.158l-.513.987C10.73 10.87 8.1 16.071 7.026 18.986c-1.127 3.056-1.059 4.887-.19 6.148.775 1.125 2.193 1.616 4.164 1.616 2.072 0 3.73-.655 5.076-2.022.253-.258.498-.539.734-.843.236.304.481.585.734.843 1.346 1.367 3.004 2.022 5.076 2.022 1.971 0 3.389-.491 4.164-1.616.869-1.261.937-3.092-.19-6.148-1.074-2.915-3.704-8.116-5.611-11.841l-.513-.987C19.082 4.458 18.262 4 17.185 4H16z"/>
+      <div class="badge-property">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
         </svg>
-        Guest Pre-Check-in
+        Elite Homes &bull; Guest Pre-Check-in
       </div>
-      <h1 id="property-title">Guest Registration & ID Form</h1>
+      <h1 id="property-title">Guest Registration &amp; ID Form</h1>
       <p class="header-desc">
-        Welcome! As required by local hospitality and security regulations, please confirm your travel details and upload government-issued ID for all staying guests before arrival.
+        Welcome to Elite Homes! As required by local hospitality and security regulations, please confirm your travel details and upload government-issued ID for all staying guests before arrival.
       </p>
 
       <!-- Host Contact & Social Box -->
@@ -838,7 +838,7 @@
 
         <div class="form-row">
           <div class="form-group" id="field-wrap-reservationCode">
-            <label for="reservationCode">Airbnb Reservation Code</label>
+            <label for="reservationCode">Booking / Reservation Code (Airbnb / Direct / OTA)</label>
             <input type="text" id="reservationCode" name="reservationCode" placeholder="e.g. HM34XZ891 (Optional)">
           </div>
           <div class="form-group" id="field-wrap-arrivalTime">
@@ -899,7 +899,7 @@
     </form>
 
     <footer style="margin-top: 36px; text-align: center; font-size: 12px; color: var(--text-muted);">
-      <span>Airbnb Host Registration Portal</span> &bull; 
+      <span>Elite Homes Guest Portal</span> &bull; <span>Secure Encrypted Submission</span> &bull; 
       <a href="admin.html" style="color: var(--text-muted); text-decoration: underline;">Host Admin (Edit Fields)</a>
     </footer>
 
@@ -959,7 +959,7 @@
         { id: "purposeOfVisit", label: "Purpose of Visit", required: true, enabled: true },
         { id: "checkInDate", label: "Check-in Date", required: true, enabled: true },
         { id: "checkOutDate", label: "Check-out Date", required: true, enabled: true },
-        { id: "reservationCode", label: "Airbnb Reservation Code", required: false, enabled: true },
+        { id: "reservationCode", label: "Booking / Reservation Code", required: false, enabled: true },
         { id: "arrivalTime", label: "Estimated Arrival Time", required: false, enabled: true }
       ],
       customFields: [],

@@ -75,7 +75,7 @@
     },
     {
       "id": "reservationCode",
-      "label": "Airbnb Reservation Code",
+      "label": "Booking / Reservation Code",
       "type": "text",
       "placeholder": "e.g. HM34XZ891 (Optional)",
       "required": false,
