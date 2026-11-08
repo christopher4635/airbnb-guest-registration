@@ -1734,10 +1734,10 @@ export function getDashboardHtml(): string {
   <input type="file" id="globalGuestIdFileInput" accept="image/*" multiple class="hidden" onchange="handleGlobalGuestIdPicked(event)" />
 
   <!-- Guest ID Lightbox Viewer Modal -->
-  <div id="guestIdViewerModal" class="fixed inset-0 z-60 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+  <div id="guestIdViewerModal" style="z-index: 99999;" onclick="if (event.target === this) closeGuestIdViewer()" class="fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-md hidden items-center justify-center p-2 sm:p-5 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto">
       <!-- Header -->
-      <div class="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-white">
+      <div class="px-5 py-3.5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between text-white">
         <div class="flex items-center gap-2.5">
           <div class="w-8 h-8 rounded-xl bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
             <i data-lucide="id-card" class="w-4 h-4"></i>
@@ -1780,7 +1780,7 @@ export function getDashboardHtml(): string {
       </div>
 
       <!-- Viewer Body with Prev / Next Navigation -->
-      <div class="relative p-3 sm:p-5 bg-slate-950 flex flex-col items-center justify-center min-h-[340px] max-h-[75vh] select-none">
+      <div class="relative p-3 sm:p-5 bg-slate-950 flex flex-col items-center justify-center min-h-[360px] max-h-[78vh] select-none">
         <button
           type="button"
           id="btnViewerPrev"
@@ -1795,7 +1795,7 @@ export function getDashboardHtml(): string {
           id="guestIdViewerImg"
           src=""
           alt="Guest ID Photo"
-          class="max-h-[60vh] max-w-full rounded-xl object-contain shadow-2xl transition-transform duration-200"
+          class="max-h-[70vh] max-w-full rounded-xl object-contain shadow-2xl transition-transform duration-200"
         />
 
         <button
@@ -8729,6 +8729,7 @@ export function getDashboardHtml(): string {
     let viewerRotation = 0;
     let viewerGuestName = "";
     let viewerSubtitle = "";
+    let viewerPreviousModalIds = []; // Stores IDs of background modals hidden when viewer opens
 
     function openGuestIdViewer(bookingId, startIndex = 0) {
       const bk = roomBookingsList.find(b => b.id === bookingId);
@@ -8750,6 +8751,28 @@ export function getDashboardHtml(): string {
       viewerRotation = 0;
       viewerGuestName = guestName;
       viewerSubtitle = infoText;
+
+      // Identify any currently open background modals (bookings, day details, forms) and temporarily hide them
+      const backgroundModalIds = [
+        "roomDayDetailModal",
+        "roomBookingModal",
+        "manageRoomModal",
+        "financeModal",
+        "businessConfigModal",
+        "staffModal",
+        "documentsModal"
+      ];
+      viewerPreviousModalIds = backgroundModalIds.filter(id => {
+        const el = document.getElementById(id);
+        return el && !el.classList.contains("hidden");
+      });
+      viewerPreviousModalIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add("hidden");
+          el.classList.remove("flex");
+        }
+      });
 
       const modal = document.getElementById("guestIdViewerModal");
       if (modal) {
@@ -8877,10 +8900,41 @@ export function getDashboardHtml(): string {
         modal.classList.add("hidden");
         modal.classList.remove("flex");
       }
+
+      // Restore previously open modals so user returns right back to their bookings page seamlessly
+      if (viewerPreviousModalIds && viewerPreviousModalIds.length > 0) {
+        viewerPreviousModalIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.remove("hidden");
+            el.classList.add("flex");
+          }
+        });
+        viewerPreviousModalIds = [];
+      }
+
       viewerGallery = [];
       viewerCurrentIndex = 0;
       viewerRotation = 0;
+      refreshIcons();
     }
+
+    // Keyboard navigation for ID viewer (ESC to close, Left/Right arrow to browse photos)
+    window.addEventListener("keydown", function(e) {
+      const modal = document.getElementById("guestIdViewerModal");
+      if (modal && !modal.classList.contains("hidden")) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeGuestIdViewer();
+        } else if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          prevViewerPhoto();
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          nextViewerPhoto();
+        }
+      }
+    });
 
     // Quick ID Upload directly from card rows (appends to existing)
     let pendingQuickUploadBookingId = null;
