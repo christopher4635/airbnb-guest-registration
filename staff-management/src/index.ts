@@ -735,7 +735,7 @@ export default {
 				}
 
 				let records: AttendanceRecord[] = [];
-				let priorLeaves: { staff_id: string; count: number }[] = [];
+				let priorLeaves: { staff_id: string; ym: string; count: number }[] = [];
 				const startOfMonthDate = `${month}-01`;
 
 				if (auth.role === "manager" && auth.manager?.property_id) {
@@ -751,13 +751,13 @@ export default {
 					records = resRec.results;
 
 					const resPrior = await env.DB.prepare(`
-						SELECT a.staff_id, COUNT(*) as count
+						SELECT a.staff_id, strftime('%Y-%m', a.date) as ym, COUNT(*) as count
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
 						JOIN properties p ON s.property_id = p.id
 						WHERE a.date < ? AND a.status = 'leave' AND s.property_id = ? AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
-						GROUP BY a.staff_id
-					`).bind(startOfMonthDate, auth.manager.property_id).all<{ staff_id: string; count: number }>();
+						GROUP BY a.staff_id, ym
+					`).bind(startOfMonthDate, auth.manager.property_id).all<{ staff_id: string; ym: string; count: number }>();
 					priorLeaves = resPrior.results;
 				} else {
 					const resRec = await env.DB.prepare(`
@@ -771,24 +771,30 @@ export default {
 					records = resRec.results;
 
 					const resPrior = await env.DB.prepare(`
-						SELECT a.staff_id, COUNT(*) as count
+						SELECT a.staff_id, strftime('%Y-%m', a.date) as ym, COUNT(*) as count
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
 						JOIN properties p ON s.property_id = p.id
 						WHERE a.date < ? AND a.status = 'leave' AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
-						GROUP BY a.staff_id
-					`).bind(startOfMonthDate).all<{ staff_id: string; count: number }>();
+						GROUP BY a.staff_id, ym
+					`).bind(startOfMonthDate).all<{ staff_id: string; ym: string; count: number }>();
 					priorLeaves = resPrior.results;
 				}
 
 				const priorMap: Record<string, number> = {};
+				const priorByMonthMap: Record<string, Record<string, number>> = {};
 				priorLeaves.forEach((c) => {
-					priorMap[c.staff_id] = c.count;
+					priorMap[c.staff_id] = (priorMap[c.staff_id] || 0) + c.count;
+					if (c.ym) {
+						if (!priorByMonthMap[c.staff_id]) priorByMonthMap[c.staff_id] = {};
+						priorByMonthMap[c.staff_id][c.ym] = c.count;
+					}
 				});
 
 				return jsonResponse({
 					records,
 					prior_taken: priorMap,
+					prior_by_month: priorByMonthMap,
 				});
 			}
 

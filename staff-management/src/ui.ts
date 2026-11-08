@@ -379,7 +379,7 @@ export function getDashboardHtml(): string {
         <div class="flex items-center gap-2 flex-wrap">
           <div id="propertyAllowanceBanner" class="text-xs font-medium px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1.5">
             <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600"></i>
-            <span>Leave Allowance: <strong id="currentAllowanceText">2.0 days</strong></span>
+            <span>Leave Allowance: <strong id="currentAllowanceText">3.0 days</strong></span>
           </div>
           
           <button id="btnMarkAllPresent" onclick="markAllTodayPresent()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition">
@@ -2060,6 +2060,7 @@ export function getDashboardHtml(): string {
     let staffList = [];
     let attendanceMap = {}; // { [staff_id_YYYY-MM-DD]: "present" | "absent" | "day_off" | "leave" }
     let priorLeavesMap = {}; // { [staff_id]: number } leaves taken before current month
+    let priorLeavesByMonthMap = {}; // { [staff_id]: { [YYYY-MM]: number } } prior leaves grouped by month
     let advancesList = []; // Array of advance records for current month
     let bonusesList = []; // Array of salary bonus records for current month
     let paymentsList = []; // Array of salary payment records for current month
@@ -2539,32 +2540,106 @@ export function getDashboardHtml(): string {
       attendanceMap = {};
       const records = Array.isArray(data) ? data : (data.records || []);
       priorLeavesMap = (!Array.isArray(data) && data.prior_taken) ? data.prior_taken : {};
+      priorLeavesByMonthMap = (!Array.isArray(data) && data.prior_by_month) ? data.prior_by_month : {};
       records.forEach(item => {
         attendanceMap[\`\${item.staff_id}_\${item.date}\`] = item.status;
       });
     }
 
-    // Carry-forward leave balance calculator (updates dynamically on every leave mark)
+    // Carry-forward leave balance calculator:
+    // Every employee renews by +3 (or custom/property allowance) each month.
+    // Unused leave balance carries forward: Available This Month = Allowance (3) + Carry Forward Balance.
+    // Leaves taken in current month are deducted from Available.
     function calculateStaffLeaveDetails(staff, year, month) {
-      const prop = properties.find(p => p.id === staff.property_id) || { monthly_leave_allowance: 2 };
+      const prop = properties.find(p => p.id === staff.property_id) || { monthly_leave_allowance: 3 };
       const monthlyAllowance = (staff.custom_leave_allowance !== null && staff.custom_leave_allowance !== undefined)
-        ? staff.custom_leave_allowance
-        : prop.monthly_leave_allowance;
+        ? parseFloat(staff.custom_leave_allowance)
+        : (parseFloat(prop.monthly_leave_allowance) || 3);
 
-      // Months elapsed from joining date up to current viewed month
-      let monthsElapsed = 1;
-      if (staff.joining_date) {
-        const parts = staff.joining_date.split('-');
-        const jY = parseInt(parts[0], 10);
-        const jM = parseInt(parts[1], 10);
-        if (!isNaN(jY) && !isNaN(jM)) {
-          monthsElapsed = (year - jY) * 12 + (month + 1 - jM);
-          if (monthsElapsed < 1) monthsElapsed = 1;
-        }
+      const viewYear = year;
+      const viewMonthNum = month + 1; // 1-12
+      const currentYM = \`\${viewYear}-\${String(viewMonthNum).padStart(2, "0")}\`;
+
+      // Determine joining year and month
+      const effectiveJoinDate = staff.joining_date || (staff.created_at ? staff.created_at.split(' ')[0] : '2026-10-01');
+      const parts = effectiveJoinDate.split('-');
+      let jY = parseInt(parts[0], 10) || viewYear;
+      let jM = parseInt(parts[1], 10) || viewMonthNum;
+
+      // If staff has prior leaves recorded in an earlier month than jY-jM, adjust to the earliest month
+      if (priorLeavesByMonthMap && priorLeavesByMonthMap[staff.id]) {
+        Object.keys(priorLeavesByMonthMap[staff.id]).forEach(ym => {
+          const pParts = ym.split('-');
+          const pY = parseInt(pParts[0], 10);
+          const pM = parseInt(pParts[1], 10);
+          if (pY < jY || (pY === jY && pM < jM)) {
+            jY = pY;
+            jM = pM;
+          }
+        });
       }
 
+      const joinYM = \`\${jY}-\${String(jM).padStart(2, "0")}\`;
       const openingBalance = parseFloat(staff.opening_leave_balance) || 0;
-      const totalAccrued = openingBalance + (monthsElapsed * monthlyAllowance);
+
+      // If the viewed month is strictly before the staff member joined:
+      if (currentYM < joinYM) {
+        return {
+          monthlyAllowance: 0,
+          monthsElapsed: 0,
+          openingBalance: 0,
+          carryForwardBalance: 0,
+          availableThisMonth: 0,
+          currentMonthLeaves: 0,
+          priorTaken: 0,
+          totalTaken: 0,
+          totalAccrued: 0,
+          leaveBalance: 0
+        };
+      }
+
+      // Calculate carry-forward balance month by month from joining month up to prior month
+      let carryForwardBalance = openingBalance;
+      let mY = jY;
+      let mM = jM;
+      let monthsElapsed = 0;
+
+      while (true) {
+        const ymStr = \`\${mY}-\${String(mM).padStart(2, "0")}\`;
+        if (ymStr >= currentYM) {
+          // Reached current month: stop carrying forward
+          monthsElapsed++;
+          break;
+        }
+
+        monthsElapsed++;
+        let takenInMonth = 0;
+        if (priorLeavesByMonthMap && priorLeavesByMonthMap[staff.id] && priorLeavesByMonthMap[staff.id][ymStr] !== undefined) {
+          takenInMonth = priorLeavesByMonthMap[staff.id][ymStr];
+        }
+
+        // Each prior month renewed by +monthlyAllowance
+        // Unused leaves carry forward; if overdrawn, that month's salary was already deducted in payroll (min 0)
+        carryForwardBalance = Math.max(0, carryForwardBalance + monthlyAllowance - takenInMonth);
+
+        mM++;
+        if (mM > 12) {
+          mM = 1;
+          mY++;
+        }
+        if (mY > viewYear + 5) break; // Infinite loop safety
+      }
+
+      // Fallback if priorLeavesByMonthMap had no data but total priorLeavesMap was provided
+      if ((!priorLeavesByMonthMap || !priorLeavesByMonthMap[staff.id] || Object.keys(priorLeavesByMonthMap[staff.id]).length === 0) && priorLeavesMap && priorLeavesMap[staff.id]) {
+        const priorMonths = Math.max(0, monthsElapsed - 1);
+        const priorAccrued = openingBalance + (priorMonths * monthlyAllowance);
+        const priorTakenTotal = priorLeavesMap[staff.id] || 0;
+        carryForwardBalance = Math.max(0, priorAccrued - priorTakenTotal);
+      }
+
+      // Renewal for current month: Monthly Allowance (3) + Carry Forward Balance
+      const availableThisMonth = monthlyAllowance + carryForwardBalance;
 
       // Count leaves taken in the current month directly from real-time attendanceMap
       const daysCount = getDaysInMonth(year, month);
@@ -2576,16 +2651,23 @@ export function getDashboardHtml(): string {
         }
       }
 
-      const priorTaken = priorLeavesMap[staff.id] || 0;
+      const priorTaken = (priorLeavesMap && priorLeavesMap[staff.id]) || 0;
       const totalTaken = priorTaken + currentMonthLeaves;
-      const leaveBalance = totalAccrued - totalTaken; // Deducted dynamically!
+      const totalAccrued = openingBalance + (monthsElapsed * monthlyAllowance);
+
+      // Remaining leave balance for current month: Available - Current Month Leaves
+      const leaveBalance = availableThisMonth - currentMonthLeaves;
 
       return {
         monthlyAllowance,
         monthsElapsed,
         openingBalance,
-        totalAccrued,
+        carryForwardBalance,
+        availableThisMonth,
+        currentMonthLeaves,
+        priorTaken,
         totalTaken,
+        totalAccrued,
         leaveBalance
       };
     }
@@ -2699,7 +2781,7 @@ export function getDashboardHtml(): string {
         text.innerText = "Configured separately per property";
       } else {
         const prop = properties.find(p => p.id === activePropertyId);
-        text.innerText = (prop ? prop.monthly_leave_allowance : 2) + " days / month";
+        text.innerText = (prop ? prop.monthly_leave_allowance : 3) + " days / month";
       }
     }
 
@@ -2890,7 +2972,7 @@ export function getDashboardHtml(): string {
       const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0 is Sun
 
       filteredStaff.forEach(staff => {
-        const prop = properties.find(p => p.id === staff.property_id) || { name: staff.property_name || 'General', monthly_leave_allowance: 2 };
+        const prop = properties.find(p => p.id === staff.property_id) || { name: staff.property_name || 'General', monthly_leave_allowance: 3 };
 
         let countP = 0, countDO = 0, countA = 0, countL = 0;
         let rowCells = "";
@@ -2980,7 +3062,7 @@ export function getDashboardHtml(): string {
             <td class="py-2 px-1 text-center font-bold text-rose-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countA}</td>
             <td class="py-2 px-1 text-center font-bold text-amber-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countL}</td>
             <td class="py-2 px-2 text-center bg-white group-hover:bg-slate-50 border-l border-slate-200">
-              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Carried Leave Balance: \${leaveRemaining.toFixed(1)} days | Accrued: \${leaveDetails.totalAccrued} | Used: \${leaveDetails.totalTaken}">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${leaveRemaining.toFixed(1)} Bal">
                 \${balanceText}
               </span>
             </td>
@@ -3002,7 +3084,7 @@ export function getDashboardHtml(): string {
                   \${staff.role ? \`<span>•</span><span>\${escapeHtml(staff.role)}</span>\` : ''}
                 </div>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Carried Leave Balance: Accrued \${leaveDetails.totalAccrued} - Taken \${leaveDetails.totalTaken}">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${leaveRemaining.toFixed(1)} Bal">
                 \${balanceText}
               </span>
             </div>
@@ -3206,7 +3288,7 @@ export function getDashboardHtml(): string {
                   <span class="text-indigo-600 font-semibold">\${escapeHtml(prop.name)}</span>
                   \${staff.role ? \`<span>•</span><span>\${escapeHtml(staff.role)}</span>\` : ''}
                   <span>•</span>
-                  <span class="px-1.5 py-0.2 rounded-md font-bold text-[10px] border \${balClass}" title="Total Carried Leave Balance: Accrued \${leaveDetails.totalAccrued} - Taken \${leaveDetails.totalTaken}">
+                  <span class="px-1.5 py-0.2 rounded-md font-bold text-[10px] border \${balClass}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${bal.toFixed(1)} Bal">
                     \${bal > 0 ? '+' : ''}\${bal.toFixed(1)} Bal
                   </span>
                 </div>
@@ -3392,7 +3474,7 @@ export function getDashboardHtml(): string {
               </div>
             </td>
             <td class="py-3 px-3 text-center">
-              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border \${balance >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}" title="Total Accrued: \${leaveDetails.totalAccrued} | Used: \${leaveDetails.totalTaken}">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border \${balance >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${balance.toFixed(1)} Bal">
                 \${balance > 0 ? '+' : ''}\${balance.toFixed(1)} Bal
               </span>
             </td>
@@ -4063,8 +4145,13 @@ export function getDashboardHtml(): string {
                   <td class="p-2.5 text-right font-mono text-slate-600">₹\${Math.round(dailyRate).toLocaleString('en-IN')}/day</td>
                 </tr>
                 <tr>
-                  <td class="p-2.5 font-medium">Carried Leave Balance</td>
-                  <td class="p-2.5 text-right text-slate-500">Total Accrued: \${leaveDetails.totalAccrued} | Used: \${leaveDetails.totalTaken}</td>
+                  <td class="p-2.5 font-medium">Monthly Leave Allowance</td>
+                  <td class="p-2.5 text-right text-slate-500">Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)}</td>
+                  <td class="p-2.5 text-right font-mono font-bold text-slate-700">\${leaveDetails.availableThisMonth.toFixed(1)} Days Available</td>
+                </tr>
+                <tr>
+                  <td class="p-2.5 font-medium">Leaves Taken & Balance</td>
+                  <td class="p-2.5 text-right text-slate-500">Taken this month: \${leaveDetails.currentMonthLeaves} day(s)</td>
                   <td class="p-2.5 text-right font-mono font-bold \${balance >= 0 ? 'text-emerald-700' : 'text-rose-700'}">\${balance > 0 ? '+' : ''}\${balance.toFixed(1)} Days</td>
                 </tr>
                 <tr>
@@ -4245,10 +4332,9 @@ export function getDashboardHtml(): string {
       csv += "Present,Day Off,Absent,Leave Taken,Leave Allowed,Leave Remaining\\n";
 
       filteredStaff.forEach(staff => {
-        const prop = properties.find(p => p.id === staff.property_id) || { name: staff.property_name || '', monthly_leave_allowance: 2 };
-        const allowedLeaves = (staff.custom_leave_allowance !== null && staff.custom_leave_allowance !== undefined)
-          ? staff.custom_leave_allowance
-          : prop.monthly_leave_allowance;
+        const prop = properties.find(p => p.id === staff.property_id) || { name: staff.property_name || '', monthly_leave_allowance: 3 };
+        const leaveDetails = calculateStaffLeaveDetails(staff, currentYear, currentMonth);
+        const allowedLeaves = leaveDetails.availableThisMonth;
 
         let countP = 0, countDO = 0, countA = 0, countL = 0;
         let dayVals = "";
@@ -4265,8 +4351,8 @@ export function getDashboardHtml(): string {
           dayVals += \`\${shortCode},\`;
         }
 
-        const rem = allowedLeaves - countL;
-        csv += \`"\${staff.name}","\${prop.name}","\${staff.role || ''}",\${dayVals}\${countP},\${countDO},\${countA},\${countL},\${allowedLeaves},\${rem}\\n\`;
+        const rem = leaveDetails.leaveBalance;
+        csv += \`"\${staff.name}","\${prop.name}","\${staff.role || ''}",\${dayVals}\${countP},\${countDO},\${countA},\${countL},\${allowedLeaves},\${rem.toFixed(1)}\\n\`;
       });
 
       downloadCsvFile(csv, \`Staff_Attendance_\${MONTH_NAMES[currentMonth]}_\${currentYear}.csv\`);
@@ -8009,7 +8095,7 @@ export function getDashboardHtml(): string {
                   </div>
 
                   <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span>Leave Allowance: \${p.monthly_leave_allowance || 2} days/mo</span>
+                    <span>Leave Allowance: \${p.monthly_leave_allowance || 3} days/mo</span>
                     <button
                       type="button"
                       onclick="openBusinessConfigModal('\${p.id}')"
