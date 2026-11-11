@@ -391,6 +391,11 @@ export function getDashboardHtml(): string {
             <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
             <span>Export</span>
           </button>
+
+          <button type="button" onclick="toggleShowFormerStaff()" class="former-staff-toggle-btn hidden inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer" title="Show or hide staff who left">
+            <i data-lucide="history" class="w-3.5 h-3.5"></i>
+            <span class="former-staff-toggle-label">Show Left Staff</span>
+          </button>
         </div>
 
       </div>
@@ -518,9 +523,15 @@ export function getDashboardHtml(): string {
         </div>
 
         <!-- Mobile Quick All Present Bar -->
-        <div class="sm:hidden flex items-center justify-between px-1">
-          <span class="text-xs font-bold text-slate-600">Daily Roll Call</span>
-          <button onclick="markAllTodayPresent()" class="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-bold px-2.5 py-1 rounded-xl transition cursor-pointer">
+        <div class="flex items-center justify-between px-1 gap-2 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="sm:hidden text-xs font-bold text-slate-600">Daily Roll Call</span>
+            <button type="button" onclick="toggleShowFormerStaff()" class="former-staff-toggle-btn hidden inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2.5 py-1 rounded-xl transition cursor-pointer" title="Show or hide staff who left">
+              <i data-lucide="history" class="w-3.5 h-3.5"></i>
+              <span class="former-staff-toggle-label">Show Left Staff</span>
+            </button>
+          </div>
+          <button onclick="markAllTodayPresent()" class="sm:hidden inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-bold px-2.5 py-1 rounded-xl transition cursor-pointer">
             <i data-lucide="check-check" class="w-3.5 h-3.5"></i>
             <span>Mark All Present</span>
           </button>
@@ -638,10 +649,16 @@ export function getDashboardHtml(): string {
             <h3 class="text-base font-bold text-slate-900">Staff Directory & Documents</h3>
             <p class="text-xs text-slate-500">Contact numbers, addresses, salaries and uploaded identity documents</p>
           </div>
-          <button onclick="openStaffModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition">
-            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-            <span>Add New Staff</span>
-          </button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="toggleShowFormerStaff()" class="former-staff-toggle-btn hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer" title="Show or hide staff who left">
+              <i data-lucide="history" class="w-3.5 h-3.5"></i>
+              <span class="former-staff-toggle-label">Show Left Staff</span>
+            </button>
+            <button onclick="openStaffModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+              <span>Add New Staff</span>
+            </button>
+          </div>
         </div>
 
         <!-- Staff Cards Grid -->
@@ -683,6 +700,20 @@ export function getDashboardHtml(): string {
 
       <form id="staffForm" onsubmit="handleSaveStaff(event)" class="mt-4 space-y-3.5">
         <input type="hidden" id="staffId">
+
+        <!-- Former / Left Staff Banner (shown when viewing an archived/left staff profile) -->
+        <div id="staffLeftBanner" class="hidden p-3 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-2">
+          <div class="text-xs text-amber-900">
+            <div class="font-bold flex items-center gap-1.5">
+              <i data-lucide="archive" class="w-3.5 h-3.5 text-amber-600"></i>
+              <span>Former Staff (History Preserved)</span>
+            </div>
+            <div id="staffLeftBannerText" class="text-[11px] text-amber-700 mt-0.5">Left on —</div>
+          </div>
+          <button type="button" onclick="handleRestoreStaff()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition shrink-0 cursor-pointer">
+            Restore Active
+          </button>
+        </div>
         
         <div>
           <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name *</label>
@@ -738,6 +769,12 @@ export function getDashboardHtml(): string {
             <input type="number" step="0.5" id="staffOpeningLeave" placeholder="0" class="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
             <p class="text-[10px] text-slate-400 mt-0.5">Initial carried-over leaves on onboarding</p>
           </div>
+        </div>
+
+        <div id="staffLeftDateContainer" class="hidden p-3 rounded-2xl bg-slate-50 border border-slate-200">
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Leaving / Exit Date</label>
+          <input type="date" id="staffLeftDate" class="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+          <p class="text-[10px] text-slate-500 mt-1">All attendance, leaves, and salary history prior to this month stays visible automatically.</p>
         </div>
 
         <!-- Bank & UPI Payment Details -->
@@ -829,8 +866,8 @@ export function getDashboardHtml(): string {
         </div>
 
         <div class="pt-3 flex items-center justify-between border-t border-slate-100">
-          <button type="button" id="btnDeleteStaff" onclick="handleDeleteStaff()" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-700 px-3 py-2 rounded-xl hover:bg-rose-50 transition">
-            Delete Staff
+          <button type="button" id="btnDeleteStaff" onclick="handleDeleteStaff()" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-700 px-3 py-2 rounded-xl hover:bg-rose-50 transition cursor-pointer">
+            Mark Left / Remove
           </button>
           <div class="flex items-center gap-2 ml-auto">
             <button type="button" onclick="closeStaffModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
@@ -842,6 +879,47 @@ export function getDashboardHtml(): string {
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: MARK STAFF AS LEFT (PRESERVES FULL HISTORY)                        -->
+  <!-- ========================================================================= -->
+  <div id="markLeftModal" class="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-start justify-between gap-2 pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+            <i data-lucide="user-minus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Mark Staff as Left</h3>
+            <p id="markLeftStaffName" class="text-xs text-slate-500 font-semibold">Staff Name</p>
+          </div>
+        </div>
+        <button onclick="closeMarkLeftModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed">
+        <strong>History 100% Preserved:</strong> Past attendance, leave balances, salary slips, advances, and payment records will <strong>NOT</strong> be deleted. They stay visible automatically in prior months and via "Show Left Staff".
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Leaving / Exit Date *</label>
+        <input type="date" id="markLeftDateInput" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+        <p class="text-[11px] text-slate-400 mt-1">Staff will be removed from Today's Roll Call and active payroll from this date onward.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button type="button" onclick="closeMarkLeftModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+          Cancel
+        </button>
+        <button type="button" onclick="confirmMarkStaffLeft()" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition cursor-pointer">
+          Confirm Mark as Left
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2058,6 +2136,7 @@ export function getDashboardHtml(): string {
 
     let properties = [];
     let staffList = [];
+    let showFormerStaff = false; // Toggle to include staff who left in current/future views
     let attendanceMap = {}; // { [staff_id_YYYY-MM-DD]: "present" | "absent" | "day_off" | "leave" }
     let priorLeavesMap = {}; // { [staff_id]: number } leaves taken before current month
     let priorLeavesByMonthMap = {}; // { [staff_id]: { [YYYY-MM]: number } } prior leaves grouped by month
@@ -2266,7 +2345,7 @@ export function getDashboardHtml(): string {
       refreshIcons();
     }
 
-    function getVisibleStaffList() {
+    function getScopedStaffList() {
       const activePropIds = new Set(properties.filter(p => p.active !== 0).map(p => p.id));
       if (currentUserRole === "manager" && currentManagerInfo && currentManagerInfo.property_id) {
         return staffList.filter(s => s.property_id === currentManagerInfo.property_id && activePropIds.has(s.property_id));
@@ -2275,6 +2354,114 @@ export function getDashboardHtml(): string {
         return staffList.filter(s => activePropIds.has(s.property_id));
       }
       return staffList.filter(s => s.property_id === activePropertyId && activePropIds.has(s.property_id));
+    }
+
+    function getStaffJoinYM(staff) {
+      const d = staff.joining_date || (staff.created_at ? staff.created_at.split(' ')[0] : '2026-10-01');
+      return d.slice(0, 7);
+    }
+
+    function staffHasAttendanceInMonth(staffId, ym) {
+      const prefix = staffId + "_" + ym + "-";
+      return Object.keys(attendanceMap).some(k => k.startsWith(prefix));
+    }
+
+    function staffHasFinancialInMonth(staffId) {
+      return paymentsList.some(p => p.staff_id === staffId) ||
+             advancesList.some(a => a.staff_id === staffId) ||
+             bonusesList.some(b => b.staff_id === staffId);
+    }
+
+    function isStaffVisibleForMonth(staff, year, month) {
+      if (staff.active !== 0) return true;
+      const viewYM = \`\${year}-\${String(month + 1).padStart(2, "0")}\`;
+      const leftDate = staff.left_date || "";
+      const leftYM = leftDate ? leftDate.slice(0, 7) : "";
+      const joinYM = getStaffJoinYM(staff);
+      const hasFinancial = staffHasFinancialInMonth(staff.id);
+      const hasActivity = hasFinancial || staffHasAttendanceInMonth(staff.id, viewYM);
+
+      // Automatically preserve full history for any past month strictly before their leaving month
+      if (leftYM && viewYM < leftYM && (viewYM >= joinYM || hasActivity)) {
+        return true;
+      }
+      // Keep visible if they had salary payments/advances/bonuses recorded in this viewed month
+      if (hasFinancial) {
+        return true;
+      }
+      // Otherwise show only when the "Show Left Staff" toggle is enabled
+      if (showFormerStaff && (viewYM >= joinYM || hasActivity || viewYM === leftYM)) {
+        return true;
+      }
+      return false;
+    }
+
+    function isStaffVisibleForDailyDate(staff, dateStr) {
+      if (staff.active !== 0) return true;
+      if (showFormerStaff) return true;
+      const leftDate = staff.left_date || "";
+      const joinYM = getStaffJoinYM(staff);
+      const hasRecord = attendanceMap[\`\${staff.id}_\${dateStr}\`] !== undefined;
+      if (leftDate && dateStr < leftDate && (dateStr.slice(0, 7) >= joinYM || hasRecord)) {
+        return true;
+      }
+      return false;
+    }
+
+    function getVisibleStaffList(mode = "month", dateStrOverride = null) {
+      const scoped = getScopedStaffList();
+      if (mode === "active_only") {
+        return scoped.filter(s => s.active !== 0);
+      }
+      if (mode === "daily") {
+        const dStr = dateStrOverride || formatIsoDate(dailyDate);
+        return scoped.filter(s => isStaffVisibleForDailyDate(s, dStr));
+      }
+      if (mode === "directory") {
+        return showFormerStaff ? scoped : scoped.filter(s => s.active !== 0);
+      }
+      return scoped.filter(s => isStaffVisibleForMonth(s, currentYear, currentMonth));
+    }
+
+    function formatShortLeftDate(dateStr) {
+      if (!dateStr) return "";
+      const parts = dateStr.split("-");
+      if (parts.length < 3) return dateStr;
+      const mIdx = parseInt(parts[1], 10) - 1;
+      const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const d = parseInt(parts[2], 10);
+      return \`\${d} \${MONTHS_SHORT[mIdx] || parts[1]}\`;
+    }
+
+    function renderLeftBadge(staff) {
+      if (!staff || staff.active !== 0) return "";
+      const label = staff.left_date ? \`Left \${formatShortLeftDate(staff.left_date)}\` : "Left";
+      return \`<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-slate-200 text-slate-700 border border-slate-300" title="Former staff (History preserved)">\${label}</span>\`;
+    }
+
+    function toggleShowFormerStaff() {
+      showFormerStaff = !showFormerStaff;
+      renderActiveView();
+    }
+
+    function updateFormerStaffToggleUI() {
+      const formerCount = getScopedStaffList().filter(s => s.active === 0).length;
+      const btns = document.querySelectorAll(".former-staff-toggle-btn");
+      btns.forEach(btn => {
+        const labelEl = btn.querySelector(".former-staff-toggle-label");
+        if (formerCount === 0 && !showFormerStaff) {
+          btn.classList.add("hidden");
+          return;
+        }
+        btn.classList.remove("hidden");
+        if (showFormerStaff) {
+          btn.className = "former-staff-toggle-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 border border-slate-800 rounded-xl transition cursor-pointer";
+          if (labelEl) labelEl.innerText = \`Showing Left Staff (\${formerCount})\`;
+        } else {
+          btn.className = "former-staff-toggle-btn inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer";
+          if (labelEl) labelEl.innerText = \`Show Left Staff (\${formerCount})\`;
+        }
+      });
     }
 
     function toggleManagerPinField() {
@@ -2704,7 +2891,7 @@ export function getDashboardHtml(): string {
           id: currentManagerInfo.property_id,
           name: currentManagerInfo.property_name || "Assigned Property"
         };
-        const count = staffList.filter(s => s.property_id === assignedProp.id).length;
+        const count = staffList.filter(s => s.active !== 0 && s.property_id === assignedProp.id).length;
         container.innerHTML = \`
           <div class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs flex items-center gap-2 shrink-0">
             <i data-lucide="building" class="w-4 h-4"></i>
@@ -2727,7 +2914,7 @@ export function getDashboardHtml(): string {
       // 1. Individual active businesses rendered first
       activeProps.forEach(prop => {
         const isSelected = activePropertyId === prop.id;
-        const count = staffList.filter(s => s.property_id === prop.id).length;
+        const count = staffList.filter(s => s.active !== 0 && s.property_id === prop.id).length;
         html += \`
           <button onclick="selectProperty('\${prop.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer'}">
             <span>\${escapeHtml(prop.name)}</span>
@@ -2739,7 +2926,7 @@ export function getDashboardHtml(): string {
       // 2. "All Properties" MUST be at last in sequence
       const totalStaffCount = staffList.filter(s => {
         const p = properties.find(prop => prop.id === s.property_id);
-        return p && p.active !== 0;
+        return s.active !== 0 && p && p.active !== 0;
       }).length;
 
       html += \`
@@ -2831,9 +3018,7 @@ export function getDashboardHtml(): string {
       dailyDate = new Date();
       currentMonth = dailyDate.getMonth();
       currentYear = dailyDate.getFullYear();
-      document.getElementById("currentMonthLabel").innerText = \`\${MONTH_NAMES[currentMonth]} \${currentYear}\`;
-      await fetchAttendance();
-      renderDailyView();
+      await onMonthUpdated();
     }
 
     function switchView(view) {
@@ -2927,7 +3112,8 @@ export function getDashboardHtml(): string {
       const daysCount = getDaysInMonth(currentYear, currentMonth);
       const todayStr = formatIsoDate(new Date());
 
-      const filteredStaff = getVisibleStaffList();
+      const filteredStaff = getVisibleStaffList("month");
+      updateFormerStaffToggleUI();
 
       if (filteredStaff.length === 0) {
         if (thead) thead.innerHTML = "";
@@ -3040,12 +3226,13 @@ export function getDashboardHtml(): string {
 
         // Desktop Table Row (Summary columns without sticky-summary overlap bug)
         bodyHtml += \`
-          <tr class="hover:bg-slate-50/60 transition group">
-            <td class="sticky-col py-2.5 px-3.5 bg-white group-hover:bg-slate-50 border-r border-slate-200">
+          <tr class="hover:bg-slate-50/60 transition group \${staff.active === 0 ? 'opacity-85' : ''}">
+            <td class="sticky-col py-2.5 px-3.5 \${staff.active === 0 ? 'bg-slate-50/90' : 'bg-white'} group-hover:bg-slate-50 border-r border-slate-200">
               <div class="flex items-center justify-between">
                 <div>
-                  <div class="font-bold text-slate-800 hover:text-indigo-600 cursor-pointer flex items-center gap-1.5" onclick="handleStaffNameClick('\${staff.id}')">
+                  <div class="font-bold text-slate-800 hover:text-indigo-600 cursor-pointer flex items-center gap-1.5 flex-wrap" onclick="handleStaffNameClick('\${staff.id}')">
                     <span>\${escapeHtml(staff.name)}</span>
+                    \${renderLeftBadge(staff)}
                     \${staff.is_manager ? '<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-violet-100 text-violet-800">Manager</span>' : ''}
                     \${currentUserRole === 'admin' ? '<i data-lucide="edit-2" class="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition"></i>' : ''}
                   </div>
@@ -3072,11 +3259,12 @@ export function getDashboardHtml(): string {
         // Mobile Card with 7-column Calendar Accordion
         const isOpen = openStaffCalendars.has(staff.id);
         mobileCardsHtml += \`
-          <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-xs space-y-3">
+          <div class="bg-white rounded-2xl border \${staff.active === 0 ? 'border-slate-300 bg-slate-50/40' : 'border-slate-200/90'} p-3.5 sm:p-4 shadow-xs space-y-3">
             <div class="flex items-start justify-between gap-2">
               <div>
-                <div class="font-bold text-slate-900 text-sm flex items-center gap-1.5 cursor-pointer" onclick="handleStaffNameClick('\${staff.id}')">
+                <div class="font-bold text-slate-900 text-sm flex items-center gap-1.5 flex-wrap cursor-pointer" onclick="handleStaffNameClick('\${staff.id}')">
                   <span>\${escapeHtml(staff.name)}</span>
+                  \${renderLeftBadge(staff)}
                   \${staff.is_manager ? '<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-violet-100 text-violet-800">Manager</span>' : ''}
                 </div>
                 <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
@@ -3206,7 +3394,7 @@ export function getDashboardHtml(): string {
 
     async function markAllTodayPresent() {
       const todayStr = formatIsoDate(new Date());
-      const filteredStaff = getVisibleStaffList();
+      const filteredStaff = getVisibleStaffList("active_only");
 
       if (filteredStaff.length === 0) return;
 
@@ -3243,8 +3431,8 @@ export function getDashboardHtml(): string {
       if (dailyDate.getMonth() !== prevM || dailyDate.getFullYear() !== prevY) {
         currentMonth = dailyDate.getMonth();
         currentYear = dailyDate.getFullYear();
-        document.getElementById("currentMonthLabel").innerText = \`\${MONTH_NAMES[currentMonth]} \${currentYear}\`;
-        await fetchAttendance();
+        await onMonthUpdated();
+        return;
       }
       renderDailyView();
     }
@@ -3257,7 +3445,8 @@ export function getDashboardHtml(): string {
       const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
       title.innerText = dailyDate.toLocaleDateString('en-US', options);
 
-      const filteredStaff = getVisibleStaffList();
+      const filteredStaff = getVisibleStaffList("daily");
+      updateFormerStaffToggleUI();
 
       if (filteredStaff.length === 0) {
         container.innerHTML = \`<div class="col-span-full p-8 text-center text-slate-400">No staff found for this property.</div>\`;
@@ -3277,11 +3466,12 @@ export function getDashboardHtml(): string {
         else if (bal === 0) balClass = "bg-amber-50 text-amber-700 border-amber-200";
 
         html += \`
-          <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+          <div class="bg-white rounded-2xl p-4 border \${staff.active === 0 ? 'border-slate-300 bg-slate-50/50' : 'border-slate-200'} shadow-xs flex flex-col justify-between gap-3">
             <div class="flex items-center justify-between">
               <div>
-                <div class="flex items-center gap-1.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
                   <h4 class="font-bold text-slate-900 text-sm">\${escapeHtml(staff.name)}</h4>
+                  \${renderLeftBadge(staff)}
                   \${staff.is_manager ? '<span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-violet-100 text-violet-800">Manager</span>' : ''}
                 </div>
                 <div class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
@@ -3332,7 +3522,8 @@ export function getDashboardHtml(): string {
       const tbody = document.getElementById("payrollTableBody");
       const daysCount = getDaysInMonth(currentYear, currentMonth);
 
-      const filteredStaff = getVisibleStaffList();
+      const filteredStaff = getVisibleStaffList("month");
+      updateFormerStaffToggleUI();
 
       let totalBase = 0;
       let totalDeductions = 0;
@@ -3446,8 +3637,11 @@ export function getDashboardHtml(): string {
 
         html += \`
           <tr class="hover:bg-slate-50/70 transition">
-            <td class="sticky-col py-3 px-3.5 bg-white border-r border-slate-200">
-              <div class="font-bold text-slate-900">\${escapeHtml(staff.name)}</div>
+            <td class="sticky-col py-3 px-3.5 \${staff.active === 0 ? 'bg-slate-50/90' : 'bg-white'} border-r border-slate-200">
+              <div class="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                <span>\${escapeHtml(staff.name)}</span>
+                \${renderLeftBadge(staff)}
+              </div>
               <div class="text-[11px] text-slate-400">
                 <span class="text-indigo-600 font-semibold">\${escapeHtml(prop.name)}</span>
                 \${staff.role ? \`<span>•</span><span>\${escapeHtml(staff.role)}</span>\` : ''}
@@ -3553,7 +3747,8 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     function renderDirectoryView() {
       const grid = document.getElementById("directoryStaffGrid");
-      const filteredStaff = getVisibleStaffList();
+      const filteredStaff = getVisibleStaffList("directory");
+      updateFormerStaffToggleUI();
 
       if (filteredStaff.length === 0) {
         grid.innerHTML = \`<div class="col-span-full p-12 text-center text-slate-400">No staff members found for this property.</div>\`;
@@ -3567,14 +3762,15 @@ export function getDashboardHtml(): string {
         const docCount = staff.document_count || 0;
 
         html += \`
-          <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs flex flex-col justify-between gap-4 hover:shadow-md transition">
+          <div class="bg-white rounded-2xl p-5 border \${staff.active === 0 ? 'border-slate-300 bg-slate-50/40' : 'border-slate-200/90'} shadow-xs flex flex-col justify-between gap-4 hover:shadow-md transition">
             
             <div>
               <!-- Header -->
               <div class="flex items-start justify-between">
                 <div>
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <h4 class="font-bold text-slate-900 text-base">\${escapeHtml(staff.name)}</h4>
+                    \${renderLeftBadge(staff)}
                     \${staff.is_manager ? \`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200"><i data-lucide="shield-check" class="w-3 h-3 text-violet-600"></i> Manager</span>\` : ''}
                   </div>
                   <div class="text-xs text-indigo-600 font-semibold mt-0.5">\${escapeHtml(prop.name)}</div>
@@ -3642,16 +3838,24 @@ export function getDashboardHtml(): string {
               \`}
             </div>
 
-            <!-- Documents Button -->
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <!-- Documents & Restore Actions -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
               <div class="text-xs text-slate-500 flex items-center gap-1.5">
                 <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-400"></i>
                 <span>\${docCount} \${docCount === 1 ? 'Document' : 'Documents'}</span>
               </div>
-              <button onclick="openDocumentsModal('\${staff.id}')" class="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition flex items-center gap-1.5">
-                <i data-lucide="folder-open" class="w-3.5 h-3.5"></i>
-                <span>Manage Docs</span>
-              </button>
+              <div class="flex items-center gap-1.5">
+                \${staff.active === 0 && currentUserRole === 'admin' ? \`
+                  <button onclick="handleRestoreStaffById('\${staff.id}')" class="px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition flex items-center gap-1 cursor-pointer" title="Restore staff back to active roster">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>Restore</span>
+                  </button>
+                \` : ''}
+                <button onclick="openDocumentsModal('\${staff.id}')" class="px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition flex items-center gap-1.5">
+                  <i data-lucide="folder-open" class="w-3.5 h-3.5"></i>
+                  <span>Manage Docs</span>
+                </button>
+              </div>
             </div>
 
           </div>
@@ -4275,7 +4479,8 @@ export function getDashboardHtml(): string {
 
     function exportPayrollCSV() {
       const daysCount = getDaysInMonth(currentYear, currentMonth);
-      const filteredStaff = getVisibleStaffList();
+      const filteredStaff = getVisibleStaffList("month");
+      updateFormerStaffToggleUI();
 
       let csv = "Staff Name,Property,Role,Phone,Base Salary,Total Days,Daily Rate,Present,Day Off,Leaves,Absent,Total Leave Balance,Unpaid Deduction,Gross Earned,Advance Deducted,Bonus Amount,Bonus Comments,Net Payout,Bank Name,Account Number,IFSC,UPI ID,Payment Status,Paid Amount,Payment Date,Payment Mode,Reference No\\n";
 
@@ -4323,7 +4528,8 @@ export function getDashboardHtml(): string {
 
     function exportAttendanceCSV() {
       const daysCount = getDaysInMonth(currentYear, currentMonth);
-      const filteredStaff = getVisibleStaffList();
+      const filteredStaff = getVisibleStaffList("month");
+      updateFormerStaffToggleUI();
 
       let csv = "Staff Name,Property,Role,";
       for (let day = 1; day <= daysCount; day++) {
@@ -4391,6 +4597,10 @@ export function getDashboardHtml(): string {
       const propSelect = document.getElementById("staffProperty");
 
       const staff = staffId ? staffList.find(s => s.id === staffId) : null;
+      const leftBanner = document.getElementById("staffLeftBanner");
+      const leftBannerText = document.getElementById("staffLeftBannerText");
+      const leftDateContainer = document.getElementById("staffLeftDateContainer");
+      const leftDateInput = document.getElementById("staffLeftDate");
       const allowedProps = properties.filter(p => p.active !== 0 || (staff && staff.property_id === p.id));
       propSelect.innerHTML = allowedProps.map(p => \`
         <option value="\${p.id}">\${escapeHtml(p.name)}\${p.active === 0 ? ' (Inactive)' : ''}</option>
@@ -4438,9 +4648,23 @@ export function getDashboardHtml(): string {
           btnRemove.classList.add("hidden");
         }
 
-        btnDelete.classList.remove("hidden");
+        if (staff.active === 0) {
+          if (leftBanner) leftBanner.classList.remove("hidden");
+          if (leftBannerText) leftBannerText.innerText = "Left on " + (staff.left_date || "archived date");
+          if (leftDateContainer) leftDateContainer.classList.remove("hidden");
+          if (leftDateInput) leftDateInput.value = staff.left_date || formatIsoDate(new Date());
+          btnDelete.classList.add("hidden");
+        } else {
+          if (leftBanner) leftBanner.classList.add("hidden");
+          if (leftDateContainer) leftDateContainer.classList.add("hidden");
+          if (leftDateInput) leftDateInput.value = "";
+          btnDelete.classList.remove("hidden");
+        }
       } else {
         title.innerText = "Add Staff Member";
+        if (leftBanner) leftBanner.classList.add("hidden");
+        if (leftDateContainer) leftDateContainer.classList.add("hidden");
+        if (leftDateInput) leftDateInput.value = "";
         document.getElementById("staffId").value = "";
         document.getElementById("staffName").value = "";
         document.getElementById("staffProperty").value = activePropertyId !== 'all' ? activePropertyId : (properties[0] ? properties[0].id : "");
@@ -4538,6 +4762,11 @@ export function getDashboardHtml(): string {
         is_manager,
         manager_pin
       };
+      const leftDateContainer = document.getElementById("staffLeftDateContainer");
+      if (id && leftDateContainer && !leftDateContainer.classList.contains("hidden")) {
+        const leftDateVal = document.getElementById("staffLeftDate").value;
+        if (leftDateVal) payload.left_date = leftDateVal;
+      }
       const url = id ? \`/api/staff/\${id}\` : "/api/staff";
       const method = id ? "PUT" : "POST";
 
@@ -4561,23 +4790,78 @@ export function getDashboardHtml(): string {
       }
     }
 
-    async function handleDeleteStaff() {
+    function handleDeleteStaff() {
       const id = document.getElementById("staffId").value;
-      if (!id || !confirm("Are you sure you want to remove this staff member?")) return;
+      if (!id) return;
+      const staff = staffList.find(s => s.id === id);
+      const nameEl = document.getElementById("markLeftStaffName");
+      const dateInput = document.getElementById("markLeftDateInput");
+      if (nameEl) nameEl.innerText = staff ? staff.name : "Staff Member";
+      if (dateInput) dateInput.value = formatIsoDate(new Date());
+      const modal = document.getElementById("markLeftModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+        refreshIcons();
+      }
+    }
+
+    function closeMarkLeftModal() {
+      const modal = document.getElementById("markLeftModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    async function confirmMarkStaffLeft() {
+      const id = document.getElementById("staffId").value;
+      if (!id) return;
+      const leftDate = document.getElementById("markLeftDateInput").value || formatIsoDate(new Date());
 
       try {
-        const res = await fetch(\`/api/staff/\${id}\`, {
+        const res = await fetch(\`/api/staff/\${id}?left_date=\${encodeURIComponent(leftDate)}\`, {
           method: "DELETE",
           headers: getAuthHeaders()
         });
         if (res.status === 401) return lockApp();
+        closeMarkLeftModal();
         closeStaffModal();
         await fetchStaff();
         renderPropertyTabs();
         renderActiveView();
-        showToast("Staff member removed");
+        showToast("Staff marked as left (past history preserved)");
       } catch (err) {
-        showToast("Error deleting staff: " + err.message);
+        showToast("Error marking staff left: " + err.message);
+      }
+    }
+
+    function handleRestoreStaff() {
+      const id = document.getElementById("staffId").value;
+      if (id) handleRestoreStaffById(id, true);
+    }
+
+    async function handleRestoreStaffById(staffId, fromModal = false) {
+      if (!staffId) return;
+      const staff = staffList.find(s => s.id === staffId);
+      const staffName = staff ? staff.name : "this staff member";
+      if (!confirm(\`Restore \${staffName} back to the active staff list?\`)) return;
+
+      try {
+        const res = await fetch(\`/api/staff/\${staffId}/restore\`, {
+          method: "POST",
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || "Restore failed");
+        if (fromModal) closeStaffModal();
+        await fetchStaff();
+        renderPropertyTabs();
+        renderActiveView();
+        showToast(staffName + " restored to active staff");
+      } catch (err) {
+        showToast("Error restoring staff: " + err.message);
       }
     }
 

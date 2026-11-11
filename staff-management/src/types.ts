@@ -31,6 +31,7 @@ export interface Staff {
 	active: number;
 	custom_leave_allowance: number | null;
 	joining_date?: string | null;
+	left_date?: string | null;
 	opening_leave_balance?: number;
 	bank_account_name?: string | null;
 	bank_name?: string | null;

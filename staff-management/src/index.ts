@@ -610,6 +610,7 @@ export default {
 			// GET /api/staff
 			if (path === "/api/staff" && method === "GET") {
 				let propertyId = url.searchParams.get("property_id");
+				const activeOnly = url.searchParams.get("active_only") === "1";
 				// Manager access is strictly locked to their assigned property only
 				if (auth.role === "manager" && auth.manager?.property_id) {
 					propertyId = auth.manager.property_id;
@@ -620,17 +621,20 @@ export default {
 						(SELECT COUNT(*) FROM staff_documents d WHERE d.staff_id = s.id) AS document_count
 					FROM staff s
 					JOIN properties p ON s.property_id = p.id
-					WHERE s.active = 1 AND (p.active IS NULL OR p.active = 1)
+					WHERE (p.active IS NULL OR p.active = 1)
 				`;
+				if (activeOnly) {
+					query += " AND s.active = 1";
+				}
 				let results: Staff[] = [];
 				if (propertyId && propertyId !== "all") {
 					query += " AND s.property_id = ?";
-					const res = await env.DB.prepare(query + " ORDER BY s.name ASC")
+					const res = await env.DB.prepare(query + " ORDER BY s.active DESC, s.name ASC")
 						.bind(propertyId)
 						.all<Staff>();
 					results = res.results;
 				} else {
-					const res = await env.DB.prepare(query + " ORDER BY s.name ASC").all<Staff>();
+					const res = await env.DB.prepare(query + " ORDER BY s.active DESC, s.name ASC").all<Staff>();
 					results = res.results;
 				}
 
@@ -657,11 +661,11 @@ export default {
 				await env.DB.prepare(`
 					INSERT INTO staff (
 						id, property_id, name, role, phone, address, salary, active,
-						custom_leave_allowance, joining_date, opening_leave_balance,
+						custom_leave_allowance, joining_date, left_date, opening_leave_balance,
 						bank_account_name, bank_name, bank_account_number, bank_ifsc, bank_upi_id, bank_qr_code,
 						is_manager, manager_pin
 					)
-					VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+					VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 				`).bind(
 					id,
 					body.property_id,
@@ -685,8 +689,18 @@ export default {
 				return jsonResponse({ success: true, id });
 			}
 
+			// POST /api/staff/:id/restore (restore a left/inactive staff back to active)
+			if (path.startsWith("/api/staff/") && path.endsWith("/restore") && method === "POST") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only." }, 403);
+				}
+				const id = path.split("/")[3];
+				await env.DB.prepare("UPDATE staff SET active = 1, left_date = NULL WHERE id = ?").bind(id).run();
+				return jsonResponse({ success: true });
+			}
+
 			// PUT /api/staff/:id
-			if (path.startsWith("/api/staff/") && method === "PUT" && !path.includes("/documents")) {
+			if (path.startsWith("/api/staff/") && method === "PUT" && !path.includes("/documents") && !path.endsWith("/restore")) {
 				const id = path.split("/")[3];
 				const body = (await request.json()) as any;
 				await env.DB.prepare(`
@@ -717,14 +731,32 @@ export default {
 					body.manager_pin || null,
 					id
 				).run();
+
+				if (body.active !== undefined) {
+					const newActive = body.active ? 1 : 0;
+					const newLeftDate = newActive === 1 ? null : (body.left_date || new Date().toISOString().split("T")[0]);
+					await env.DB.prepare("UPDATE staff SET active = ?, left_date = ? WHERE id = ?")
+						.bind(newActive, newLeftDate, id).run();
+				} else if (body.left_date !== undefined) {
+					await env.DB.prepare("UPDATE staff SET left_date = ? WHERE id = ?")
+						.bind(body.left_date || null, id).run();
+				}
+
 				return jsonResponse({ success: true });
 			}
 
-			// DELETE /api/staff/:id (soft delete)
-			if (path.startsWith("/api/staff/") && method === "DELETE" && !path.includes("/documents")) {
+			// DELETE /api/staff/:id (soft delete with left_date, preserves all historical data)
+			if (path.startsWith("/api/staff/") && method === "DELETE" && !path.includes("/documents") && !path.endsWith("/restore")) {
 				const id = path.split("/")[3];
-				await env.DB.prepare("UPDATE staff SET active = 0 WHERE id = ?").bind(id).run();
-				return jsonResponse({ success: true });
+				const leftDateParam = url.searchParams.get("left_date");
+				let bodyLeftDate: string | undefined;
+				try {
+					const txt = await request.clone().text();
+					if (txt) bodyLeftDate = (JSON.parse(txt) as any).left_date;
+				} catch {}
+				const leftDate = leftDateParam || bodyLeftDate || new Date().toISOString().split("T")[0];
+				await env.DB.prepare("UPDATE staff SET active = 0, left_date = ? WHERE id = ?").bind(leftDate, id).run();
+				return jsonResponse({ success: true, left_date: leftDate });
 			}
 
 			// GET /api/attendance?month=YYYY-MM
@@ -739,13 +771,13 @@ export default {
 				const startOfMonthDate = `${month}-01`;
 
 				if (auth.role === "manager" && auth.manager?.property_id) {
-					// Manager only gets attendance for staff at their assigned property
+					// Manager gets attendance for all staff (including former staff) at their assigned property so history stays intact
 					const resRec = await env.DB.prepare(`
 						SELECT a.*
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
 						JOIN properties p ON s.property_id = p.id
-						WHERE a.date LIKE ? AND s.property_id = ? AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
+						WHERE a.date LIKE ? AND s.property_id = ? AND (p.active IS NULL OR p.active = 1)
 						ORDER BY a.date ASC
 					`).bind(`${month}-%`, auth.manager.property_id).all<AttendanceRecord>();
 					records = resRec.results;
@@ -755,7 +787,7 @@ export default {
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
 						JOIN properties p ON s.property_id = p.id
-						WHERE a.date < ? AND a.status = 'leave' AND s.property_id = ? AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
+						WHERE a.date < ? AND a.status = 'leave' AND s.property_id = ? AND (p.active IS NULL OR p.active = 1)
 						GROUP BY a.staff_id, ym
 					`).bind(startOfMonthDate, auth.manager.property_id).all<{ staff_id: string; ym: string; count: number }>();
 					priorLeaves = resPrior.results;
@@ -765,7 +797,7 @@ export default {
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
 						JOIN properties p ON s.property_id = p.id
-						WHERE a.date LIKE ? AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
+						WHERE a.date LIKE ? AND (p.active IS NULL OR p.active = 1)
 						ORDER BY a.date ASC
 					`).bind(`${month}-%`).all<AttendanceRecord>();
 					records = resRec.results;
@@ -775,7 +807,7 @@ export default {
 						FROM attendance a
 						JOIN staff s ON a.staff_id = s.id
 						JOIN properties p ON s.property_id = p.id
-						WHERE a.date < ? AND a.status = 'leave' AND s.active = 1 AND (p.active IS NULL OR p.active = 1)
+						WHERE a.date < ? AND a.status = 'leave' AND (p.active IS NULL OR p.active = 1)
 						GROUP BY a.staff_id, ym
 					`).bind(startOfMonthDate).all<{ staff_id: string; ym: string; count: number }>();
 					priorLeaves = resPrior.results;
