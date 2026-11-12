@@ -1,6 +1,7 @@
 import { getDashboardHtml } from "./ui";
 import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance, Room, RoomBooking } from "./types";
 import { syncAirbnbBookingsToStaffSync, pushBookingToAirbnbPortal } from "./airbnbSync";
+import { handleAiBookingChat, type CreateRoomBookingInput, type CreateRoomBookingResult } from "./aiBooking";
 
 function jsonResponse(data: any, status = 200): Response {
 	return new Response(JSON.stringify(data), {
@@ -1569,57 +1570,64 @@ export default {
 				return jsonResponse(results || []);
 			}
 
-			// POST /api/room-bookings (Manager or Admin records a room booking; supports single date or multi-day date range)
-			if (path === "/api/room-bookings" && method === "POST") {
-				const body = await request.json() as any;
-				let propertyId = body.property_id?.trim() || "";
+			// Shared helper to create single-day or multi-day room booking records
+			const createRoomBookingRecords = async (bookingInput: CreateRoomBookingInput & Record<string, any>): Promise<CreateRoomBookingResult> => {
+				let propertyId = bookingInput.property_id?.trim() || "";
 				let submittedBy = "Admin";
 
 				if (auth.role === "manager") {
 					if (!auth.manager?.property_id) {
-						return jsonResponse({ error: "Manager has no assigned property" }, 403);
+						throw Object.assign(new Error("Manager has no assigned property"), { statusCode: 403 });
 					}
 					propertyId = auth.manager.property_id;
 					submittedBy = `Manager: ${auth.manager.name}`;
 				}
 
-				const roomId = body.room_id?.trim() || "";
-				const paymentMode = body.payment_mode === "cash" ? "cash" : "online";
-				const guestName = body.guest_name?.trim() || null;
-				const guestsJson = body.guests_json ? (typeof body.guests_json === "string" ? body.guests_json.trim() : JSON.stringify(body.guests_json)) : null;
-				const rawGuestIdImage = body.guest_id_image ? (typeof body.guest_id_image === "string" ? body.guest_id_image.trim() : JSON.stringify(body.guest_id_image)) : null;
+				const roomId = bookingInput.room_id?.trim() || "";
+				const paymentMode = bookingInput.payment_mode === "cash" ? "cash" : "online";
+				const guestName = bookingInput.guest_name?.trim() || null;
+				const guestsJson = bookingInput.guests_json ? (typeof bookingInput.guests_json === "string" ? bookingInput.guests_json.trim() : JSON.stringify(bookingInput.guests_json)) : null;
+				let parsedNamesCount = 0;
+				if (guestsJson) {
+					try {
+						const arr = JSON.parse(guestsJson);
+						if (Array.isArray(arr)) parsedNamesCount = arr.filter(Boolean).length;
+					} catch {}
+				}
+				const guestCount = Math.max(1, Math.round(Number(bookingInput.guest_count) || parsedNamesCount || 1));
+				const rawGuestIdImage = bookingInput.guest_id_image ? (typeof bookingInput.guest_id_image === "string" ? bookingInput.guest_id_image.trim() : JSON.stringify(bookingInput.guest_id_image)) : null;
 				const guestIdImage = await processGuestIdImagesForR2(env, rawGuestIdImage);
-				const notes = body.notes?.trim() || null;
+				const notes = bookingInput.notes?.trim() || null;
 
 				if (!propertyId || !roomId) {
-					return jsonResponse({ error: "Property and room are required." }, 400);
+					throw Object.assign(new Error("Property and room are required."), { statusCode: 400 });
 				}
 
 				// Verify room belongs to property
 				const room = await env.DB.prepare("SELECT * FROM rooms WHERE id = ? AND property_id = ?").bind(roomId, propertyId).first<Room>();
 				if (!room) {
-					return jsonResponse({ error: "Invalid room selected for this property." }, 400);
+					throw Object.assign(new Error("Invalid room selected for this property."), { statusCode: 400 });
 				}
 
-				const isRange = body.is_range === true || body.booking_type === "range";
-				const checkInDate = (body.check_in_date || body.start_date || body.date || "").trim();
-				const checkOutDate = (body.check_out_date || body.end_date || body.date || "").trim();
+				const isRange = bookingInput.is_range === true || bookingInput.booking_type === "range";
+				const checkInDate = (bookingInput.check_in_date || bookingInput.start_date || bookingInput.date || "").trim();
+				const checkOutDate = (bookingInput.check_out_date || bookingInput.end_date || bookingInput.date || "").trim();
 
 				if (!checkInDate || !/^\d{4}-\d{2}-\d{2}$/.test(checkInDate)) {
-					return jsonResponse({ error: "Valid check-in date (YYYY-MM-DD) is required." }, 400);
+					throw Object.assign(new Error("Valid check-in date (YYYY-MM-DD) is required."), { statusCode: 400 });
 				}
 
 				// Build list of dates for the stay
 				const dates: string[] = [];
 				if (isRange && checkOutDate && checkOutDate !== checkInDate) {
 					if (!/^\d{4}-\d{2}-\d{2}$/.test(checkOutDate)) {
-						return jsonResponse({ error: "Valid check-out date (YYYY-MM-DD) is required." }, 400);
+						throw Object.assign(new Error("Valid check-out date (YYYY-MM-DD) is required."), { statusCode: 400 });
 					}
 					if (checkInDate > checkOutDate) {
-						return jsonResponse({ error: "Check-out date must be after check-in date." }, 400);
+						throw Object.assign(new Error("Check-out date must be after check-in date."), { statusCode: 400 });
 					}
 
-					const includeCheckoutDay = body.include_checkout_day === true;
+					const includeCheckoutDay = bookingInput.include_checkout_day === true;
 					const cur = new Date(checkInDate + "T00:00:00Z");
 					const end = new Date(checkOutDate + "T00:00:00Z");
 
@@ -1642,12 +1650,12 @@ export default {
 				}
 
 				if (dates.length > 90) {
-					return jsonResponse({ error: "Stay duration exceeds maximum 90 days." }, 400);
+					throw Object.assign(new Error("Stay duration exceeds maximum 90 days."), { statusCode: 400 });
 				}
 
 				// Determine daily amount and total stay amount
-				const rawAmount = Math.max(0, Math.round(Number(body.amount) || 0));
-				const rawRatePerDay = body.rate_per_day !== undefined ? Math.max(0, Math.round(Number(body.rate_per_day) || 0)) : null;
+				const rawAmount = Math.max(0, Math.round(Number(bookingInput.amount) || 0));
+				const rawRatePerDay = bookingInput.rate_per_day !== undefined ? Math.max(0, Math.round(Number(bookingInput.rate_per_day) || 0)) : null;
 
 				let totalStayAmount = rawAmount;
 				let dailyRate = rawRatePerDay !== null ? rawRatePerDay : Math.floor(rawAmount / dates.length);
@@ -1681,12 +1689,12 @@ export default {
 
 					await env.DB.prepare(`
 						INSERT INTO room_bookings (
-							id, property_id, room_id, date, amount, payment_mode, guest_name, guests_json, guest_id_image, notes, slot_number,
+							id, property_id, room_id, date, amount, payment_mode, guest_name, guest_count, guests_json, guest_id_image, notes, slot_number,
 							group_booking_id, check_in_date, check_out_date, total_stay_amount, platform, created_by, created_at, updated_at
-						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					`).bind(
-						id, propertyId, roomId, stayDate, dayAmount, paymentMode, guestName, guestsJson, guestIdImage, notes, slotNumber,
-						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, body.platform || "Direct", submittedBy
+						id, propertyId, roomId, stayDate, dayAmount, paymentMode, guestName, guestCount, guestsJson, guestIdImage, notes, slotNumber,
+						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, bookingInput.platform || "Direct", submittedBy
 					).run();
 
 					// Sync lodging revenue in daily_finances for each date
@@ -1724,7 +1732,7 @@ export default {
 					}
 				}
 
-				return jsonResponse({
+				return {
 					success: true,
 					isMultiDay,
 					nights: dates.length,
@@ -1732,7 +1740,25 @@ export default {
 					total_stay_amount: totalStayAmount,
 					booking: createdBookings[0],
 					bookings: createdBookings
-				});
+				};
+			};
+
+			// POST /api/room-bookings/ai-chat (AI chatbox endpoint to parse & create room bookings from natural text)
+			if (path === "/api/room-bookings/ai-chat" && method === "POST") {
+				const body = await request.json() as any;
+				const aiResult = await handleAiBookingChat(env, auth, body, createRoomBookingRecords);
+				return jsonResponse(aiResult.payload, aiResult.statusCode);
+			}
+
+			// POST /api/room-bookings (Manager or Admin records a room booking; supports single date or multi-day date range)
+			if (path === "/api/room-bookings" && method === "POST") {
+				const body = await request.json() as any;
+				try {
+					const created = await createRoomBookingRecords(body);
+					return jsonResponse(created);
+				} catch (err: any) {
+					return jsonResponse({ error: err.message || "Failed to create booking" }, err.statusCode || 400);
+				}
 			}
 
 			// PUT /api/room-bookings/:id (Update a booking)
@@ -1751,6 +1777,7 @@ export default {
 				const amount = body.amount !== undefined ? Math.max(0, Math.round(Number(body.amount) || 0)) : existing.amount;
 				const paymentMode = body.payment_mode ? (body.payment_mode === "cash" ? "cash" : "online") : existing.payment_mode;
 				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
+				const guestCount = body.guest_count !== undefined ? Math.max(1, Math.round(Number(body.guest_count) || 1)) : (existing.guest_count || 1);
 				const guestsJson = body.guests_json !== undefined ? (typeof body.guests_json === "string" ? body.guests_json.trim() : JSON.stringify(body.guests_json)) : (existing as any).guests_json;
 				const rawGuestIdImage = body.guest_id_image !== undefined ? (typeof body.guest_id_image === "string" ? body.guest_id_image?.trim() : JSON.stringify(body.guest_id_image)) : existing.guest_id_image;
 				const guestIdImage = await processGuestIdImagesForR2(env, rawGuestIdImage);
@@ -1760,9 +1787,9 @@ export default {
 				if (updateGroup && existing.group_booking_id) {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET payment_mode = ?, guest_name = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET payment_mode = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE group_booking_id = ?
-					`).bind(paymentMode, guestName, guestsJson, guestIdImage, notes, existing.group_booking_id).run();
+					`).bind(paymentMode, guestName, guestCount, guestsJson, guestIdImage, notes, existing.group_booking_id).run();
 
 					// Re-sync lodging across all affected dates
 					const groupBookings = await env.DB.prepare("SELECT DISTINCT property_id, date FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ property_id: string; date: string }>();
@@ -1772,9 +1799,9 @@ export default {
 				} else {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET amount = ?, payment_mode = ?, guest_name = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET amount = ?, payment_mode = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE id = ?
-					`).bind(amount, paymentMode, guestName, guestsJson, guestIdImage, notes, bookingId).run();
+					`).bind(amount, paymentMode, guestName, guestCount, guestsJson, guestIdImage, notes, bookingId).run();
 
 					// Re-sync lodging in daily_finances
 					await syncDailyFinanceLodging(env, existing.property_id, existing.date);

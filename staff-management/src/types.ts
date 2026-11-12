@@ -3,6 +3,7 @@ export interface Env {
 	AIRBNB_DB?: D1Database;
 	AUTH_PIN?: string;
 	GUEST_ID_BUCKET?: R2Bucket;
+	AI?: Ai;
 }
 
 export interface Property {
@@ -141,6 +142,7 @@ export interface RoomBooking {
 	amount: number;
 	payment_mode: "online" | "cash";
 	guest_name?: string | null;
+	guest_count?: number | null;
 	guests_json?: string | null;
 	guest_id_image?: string | null;
 	notes?: string | null;

@@ -1685,21 +1685,27 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
-        <!-- Guest Names (Supports multiple guests) -->
+        <!-- Guest Names (Supports multiple guests) & Total Persons -->
         <div>
-          <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center justify-between mb-1.5 gap-2">
             <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
               <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-600"></i>
               <span>Guests (<span id="modalGuestCountLabel">1</span>)</span>
             </label>
-            <button
-              type="button"
-              onclick="addModalGuestNameRow()"
-              class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition"
-            >
-              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-              <span>+ Add Guest</span>
-            </button>
+            <div class="flex items-center gap-2">
+              <label class="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-600">
+                <span>Persons:</span>
+                <input type="number" id="modalBookingGuestCount" min="1" max="30" value="1" class="w-12 px-1.5 py-0.5 text-xs font-bold text-center rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500" />
+              </label>
+              <button
+                type="button"
+                onclick="addModalGuestNameRow()"
+                class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer transition"
+              >
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                <span>+ Add Guest</span>
+              </button>
+            </div>
           </div>
           <div id="modalGuestNamesList" class="space-y-1.5">
             <!-- Dynamically populated rows -->
@@ -2109,9 +2115,120 @@ export function getDashboardHtml(): string {
   </div>
 
   <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform translate-y-16 opacity-0 transition-all duration-200">
+  <div id="toast" class="fixed bottom-20 right-4 sm:right-5 z-[60] bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform translate-y-16 opacity-0 transition-all duration-200 pointer-events-none">
     <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
     <span id="toastMsg">Action completed</span>
+  </div>
+
+  <!-- AI Room Booking Chatbox Floating Launcher & Drawer -->
+  <div id="aiBookingChatRoot" class="hidden">
+    <!-- Floating Action Button -->
+    <button
+      type="button"
+      id="aiChatFab"
+      onclick="openAiBookingChat()"
+      class="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs sm:text-sm font-bold shadow-xl shadow-indigo-500/30 active:scale-95 transition cursor-pointer"
+    >
+      <i data-lucide="sparkles" class="w-4 h-4"></i>
+      <span>AI Book Room</span>
+    </button>
+
+    <!-- Chat Drawer -->
+    <div
+      id="aiBookingChatDrawer"
+      class="fixed inset-x-2 bottom-2 sm:inset-auto sm:bottom-5 sm:right-5 sm:w-[410px] z-40 hidden flex-col bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden max-h-[84vh] sm:max-h-[600px]"
+    >
+      <!-- Header -->
+      <div class="px-4 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white flex items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
+          </div>
+          <div class="min-w-0">
+            <h3 class="text-sm font-bold leading-tight truncate">AI Booking Assistant</h3>
+            <p id="aiChatPropertySubtitle" class="text-[11px] text-indigo-100 truncate">Type name, room no. & persons to book</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onclick="fillAiBookingTemplate()"
+            title="Insert 3-line booking template"
+            class="px-2 py-1 rounded-lg bg-white/15 hover:bg-white/25 text-[11px] font-semibold transition cursor-pointer"
+          >
+            Template
+          </button>
+          <button
+            type="button"
+            onclick="resetAiBookingChat()"
+            title="Clear conversation"
+            class="p-1.5 rounded-lg hover:bg-white/15 text-indigo-100 hover:text-white transition cursor-pointer"
+          >
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          </button>
+          <button
+            type="button"
+            onclick="closeAiBookingChat()"
+            title="Close chatbox"
+            class="p-1.5 rounded-lg hover:bg-white/15 text-indigo-100 hover:text-white transition cursor-pointer"
+          >
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Action Bar -->
+      <div class="px-3 py-2 bg-slate-50 border-b border-slate-200/80 flex items-center gap-1.5 overflow-x-auto shrink-0">
+        <button
+          type="button"
+          onclick="fillAiBookingTemplate()"
+          class="px-2.5 py-1 rounded-full bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] font-semibold whitespace-nowrap transition cursor-pointer"
+        >
+          📝 Use Booking Format
+        </button>
+        <button
+          type="button"
+          onclick="sendQuickAiMessage('Which rooms are available today?')"
+          class="px-2.5 py-1 rounded-full bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold whitespace-nowrap transition cursor-pointer"
+        >
+          🛏️ Available Rooms
+        </button>
+        <button
+          type="button"
+          onclick="sendQuickAiMessage('cancel')"
+          class="px-2.5 py-1 rounded-full bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-semibold whitespace-nowrap transition cursor-pointer"
+        >
+          Reset Draft
+        </button>
+      </div>
+
+      <!-- Messages List -->
+      <div id="aiChatMessages" class="flex-1 overflow-y-auto p-3.5 space-y-3 bg-slate-50/50 min-h-[220px]">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Input Composer -->
+      <form onsubmit="handleAiChatSubmit(event)" class="p-3 bg-white border-t border-slate-200 shrink-0 space-y-2">
+        <textarea
+          id="aiChatInput"
+          rows="3"
+          onkeydown="handleAiChatKeydown(event)"
+          placeholder="Customer Name: Rahul Sharma&#10;Room No. 101&#10;Number of person: 2"
+          class="w-full px-3 py-2 text-xs sm:text-sm rounded-2xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none bg-slate-50/40 font-medium text-slate-900 placeholder:text-slate-400"
+        ></textarea>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-[10px] text-slate-400">Optional: Cash/Online, Amount, Tomorrow, Nights</span>
+          <button
+            type="submit"
+            id="aiChatSendBtn"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-xs transition cursor-pointer shrink-0"
+          >
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            <span id="aiChatSendLabel">Send &amp; Book</span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- ========================================================================= -->
@@ -2284,6 +2401,9 @@ export function getDashboardHtml(): string {
       if (eyeIcon) eyeIcon.setAttribute("data-lucide", "eye");
       const err = document.getElementById("pinError");
       if (err) err.innerText = "";
+      const chatRoot = document.getElementById("aiBookingChatRoot");
+      if (chatRoot) chatRoot.classList.add("hidden");
+      if (typeof closeAiBookingChat === "function") closeAiBookingChat();
       refreshIcons();
     }
 
@@ -2341,6 +2461,21 @@ export function getDashboardHtml(): string {
         if (btnAddStaff) btnAddStaff.style.display = "";
         if (tabPayroll) tabPayroll.style.display = "";
         if (tabDirectory) tabDirectory.style.display = "";
+      }
+
+      const chatRoot = document.getElementById("aiBookingChatRoot");
+      if (chatRoot) {
+        if (currentSessionPin) {
+          chatRoot.classList.remove("hidden");
+          const sub = document.getElementById("aiChatPropertySubtitle");
+          if (sub) {
+            sub.innerText = currentUserRole === "manager" && currentManagerInfo?.property_name
+              ? \`\${currentManagerInfo.property_name} · Quick Room Booking\`
+              : "Type name, room no. & persons to book";
+          }
+        } else {
+          chatRoot.classList.add("hidden");
+        }
       }
       refreshIcons();
     }
@@ -5625,7 +5760,17 @@ export function getDashboardHtml(): string {
                   <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
                   Quick Room Booking (Supports Multiple Bookings per Room / Day)
                 </h4>
-                <span class="text-[11px] text-indigo-600 font-medium">Click room above or select below</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onclick="openAiBookingChat()"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-2xs transition cursor-pointer"
+                  >
+                    <i data-lucide="sparkles" class="w-3 h-3"></i>
+                    <span>AI Chat Book</span>
+                  </button>
+                  <span class="text-[11px] text-indigo-600 font-medium hidden sm:inline">Click room above or select below</span>
+                </div>
               </div>
 
               <!-- Stay Duration Type Segment -->
@@ -5875,7 +6020,7 @@ export function getDashboardHtml(): string {
                         </div>
 
                         <div class="flex items-center justify-between text-xs">
-                          <span class="text-slate-500 truncate max-w-[150px]">\${escapeHtml(b.guest_name || 'Guest')}</span>
+                          <span class="text-slate-500 truncate max-w-[175px]">\${escapeHtml(b.guest_name || 'Guest')}\${(b.guest_count && b.guest_count > 1) ? \` · \${b.guest_count} persons\` : (b.guest_count === 1 ? ' · 1 person' : '')}</span>
                           <span class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
                             ₹\${formatCurrency(b.amount)}
                           </span>
@@ -7396,6 +7541,15 @@ export function getDashboardHtml(): string {
 
                 <button
                   type="button"
+                  onclick="openAiBookingChat()"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl shadow-xs transition cursor-pointer"
+                >
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                  <span>AI Chat Book</span>
+                </button>
+
+                <button
+                  type="button"
                   onclick="openRoomBookingModal(null, null, null)"
                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
                 >
@@ -7560,6 +7714,15 @@ export function getDashboardHtml(): string {
                   <span class="airbnb-sync-text">Sync Airbnb Portal</span>
                 </button>
               \` : ''}
+
+              <button
+                type="button"
+                onclick="openAiBookingChat()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl shadow-xs transition cursor-pointer"
+              >
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>AI Chat Book</span>
+              </button>
 
               <button
                 type="button"
@@ -9435,6 +9598,8 @@ export function getDashboardHtml(): string {
           const names = parseGuestNames(bk.guest_name, bk.guests_json);
           modalGuestNameRows = names.length > 0 ? names : [""];
           renderModalGuestNameRows();
+          const guestCountInput = document.getElementById("modalBookingGuestCount");
+          if (guestCountInput) guestCountInput.value = Math.max(1, Number(bk.guest_count) || names.length || 1);
 
           modalGuestIdList = parseGuestIdImages(bk.guest_id_image);
           renderModalGuestIdGallery();
@@ -9483,6 +9648,8 @@ export function getDashboardHtml(): string {
         if (notesInput) notesInput.value = "";
         modalGuestNameRows = [""];
         renderModalGuestNameRows();
+        const guestCountInput = document.getElementById("modalBookingGuestCount");
+        if (guestCountInput) guestCountInput.value = 1;
         clearModalGuestIds();
         const r = document.getElementById("modalBookingModeOnline");
         if (r) r.checked = true;
@@ -9528,6 +9695,8 @@ export function getDashboardHtml(): string {
       });
       const guest_name = names.join(", ") || "";
       const guests_json = names.length > 0 ? JSON.stringify(names) : null;
+      const guestCountEl = document.getElementById("modalBookingGuestCount");
+      const guest_count = Math.max(1, parseInt(guestCountEl?.value || "1", 10) || names.length || 1);
       const cleanModalIds = modalGuestIdList.map(item => ({ url: item.rawUrl || item.url, key: item.key, label: item.label }));
       const guest_id_image = cleanModalIds.length > 0 ? JSON.stringify(cleanModalIds) : (document.getElementById("modalBookingGuestIdData")?.value?.trim() || null);
       const notes = document.getElementById("modalBookingNotes")?.value?.trim() || "";
@@ -9541,6 +9710,7 @@ export function getDashboardHtml(): string {
         room_id,
         payment_mode,
         guest_name,
+        guest_count,
         guests_json,
         guest_id_image,
         notes
@@ -9677,7 +9847,7 @@ export function getDashboardHtml(): string {
                     \` : ''}
                   </div>
                   <div class="text-[11px] text-slate-500 mt-0.5">
-                    Guest: \${escapeHtml(b.guest_name || 'Walk-in')}
+                    Guest: \${escapeHtml(b.guest_name || 'Walk-in')}\${b.guest_count ? \` · \${b.guest_count} person\${b.guest_count > 1 ? 's' : ''}\` : ''}
                     \${b.notes ? \` · \${escapeHtml(b.notes)}\` : ''}
                   </div>
                   <div class="text-[10px] text-slate-400 mt-0.5">
@@ -10277,6 +10447,234 @@ export function getDashboardHtml(): string {
         t.classList.add("translate-y-16", "opacity-0");
       }, 3000);
       refreshIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // AI ROOM BOOKING CHATBOX
+    // -------------------------------------------------------------------------
+    let aiChatMessages = [];
+    let aiChatPendingDraft = null;
+    let aiChatIsSending = false;
+
+    function getDefaultAiChatMessages() {
+      return [
+        {
+          role: "assistant",
+          text: "Hi! Type booking details below to create a room booking instantly:\\n\\nCustomer Name: Rahul Sharma\\nRoom No. 101\\nNumber of person: 2\\n\\nYou can also add optional details like Cash/Online, ₹2500, Tomorrow, or 2 nights.",
+          booking: null
+        }
+      ];
+    }
+
+    function openAiBookingChat() {
+      const fab = document.getElementById("aiChatFab");
+      const drawer = document.getElementById("aiBookingChatDrawer");
+      if (fab) fab.classList.add("hidden");
+      if (drawer) {
+        drawer.classList.remove("hidden");
+        drawer.classList.add("flex");
+      }
+      if (aiChatMessages.length === 0) {
+        aiChatMessages = getDefaultAiChatMessages();
+      }
+      renderAiChatMessages();
+      refreshIcons();
+      setTimeout(() => {
+        const inp = document.getElementById("aiChatInput");
+        if (inp) inp.focus();
+      }, 80);
+    }
+
+    function closeAiBookingChat() {
+      const fab = document.getElementById("aiChatFab");
+      const drawer = document.getElementById("aiBookingChatDrawer");
+      if (drawer) {
+        drawer.classList.add("hidden");
+        drawer.classList.remove("flex");
+      }
+      if (fab) fab.classList.remove("hidden");
+    }
+
+    function resetAiBookingChat() {
+      aiChatPendingDraft = null;
+      aiChatMessages = getDefaultAiChatMessages();
+      renderAiChatMessages();
+      refreshIcons();
+    }
+
+    function fillAiBookingTemplate() {
+      const inp = document.getElementById("aiChatInput");
+      if (!inp) return;
+      const sampleRoom = (roomsList.find(r => activePropertyId === "all" || !activePropertyId || r.property_id === activePropertyId)?.room_number) || "";
+      inp.value = "Customer Name: \\nRoom No. " + sampleRoom + "\\nNumber of person: ";
+      inp.focus();
+      const firstLineEnd = "Customer Name: ".length;
+      try {
+        inp.setSelectionRange(firstLineEnd, firstLineEnd);
+      } catch (e) {}
+    }
+
+    function sendQuickAiMessage(msg) {
+      const inp = document.getElementById("aiChatInput");
+      if (inp) inp.value = msg;
+      submitAiChatMessage(msg);
+    }
+
+    function handleAiChatKeydown(e) {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleAiChatSubmit(e);
+      }
+    }
+
+    function renderAiChatMessages() {
+      const container = document.getElementById("aiChatMessages");
+      if (!container) return;
+
+      container.innerHTML = aiChatMessages.map(m => {
+        const isUser = m.role === "user";
+        const formattedText = escapeHtml(m.text || "").replace(/\\n/g, "<br>");
+        const bk = m.booking || null;
+        const bkCard = bk ? \`
+          <div class="mt-2 p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+                Room \${escapeHtml(bk.room_number || "")} Confirmed
+              </span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800">
+                \${(bk.guest_count || 1)} person\${(bk.guest_count || 1) > 1 ? "s" : ""}
+              </span>
+            </div>
+            <div class="text-xs font-bold text-slate-900">\${escapeHtml(bk.guest_name || "Guest")}</div>
+            <div class="text-[11px] text-slate-600 flex items-center justify-between">
+              <span>\${escapeHtml(bk.check_in_date || bk.date || "")}\${bk.check_out_date && bk.check_out_date !== (bk.check_in_date || bk.date) ? \` → \${escapeHtml(bk.check_out_date)}\` : ""}</span>
+              <span class="font-mono font-bold text-slate-900">₹\${formatCurrency(bk.total_stay_amount || bk.amount || 0)} (\${escapeHtml((bk.payment_mode || "online").toUpperCase())})</span>
+            </div>
+            <div class="flex items-center gap-1.5 pt-1">
+              <button
+                type="button"
+                onclick="triggerQuickIdUpload('\${bk.id}')"
+                class="flex-1 py-1.5 px-2 rounded-xl bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] font-bold transition cursor-pointer flex items-center justify-center gap-1"
+              >
+                <i data-lucide="camera" class="w-3 h-3"></i>
+                <span>Attach ID Photo</span>
+              </button>
+              <button
+                type="button"
+                onclick="openEditBookingModal('\${bk.id}')"
+                class="py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-semibold transition cursor-pointer"
+              >
+                Edit
+              </button>
+            </div>
+          </div>
+        \` : "";
+
+        return \`
+          <div class="flex \${isUser ? "justify-end" : "justify-start"}">
+            <div class="max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-2xs \${isUser ? "bg-indigo-600 text-white rounded-br-sm" : "bg-white text-slate-800 border border-slate-200 rounded-bl-sm"}">
+              <div>\${formattedText}</div>
+              \${bkCard}
+            </div>
+          </div>
+        \`;
+      }).join("") + (aiChatIsSending ? \`
+        <div class="flex justify-start">
+          <div class="rounded-2xl rounded-bl-sm px-3.5 py-2 bg-white border border-slate-200 text-xs text-slate-500 flex items-center gap-2 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce"></span>
+            <span>Checking room &amp; creating booking...</span>
+          </div>
+        </div>
+      \` : "");
+
+      container.scrollTop = container.scrollHeight;
+      refreshIcons();
+    }
+
+    async function handleAiChatSubmit(e) {
+      if (e) e.preventDefault();
+      const inp = document.getElementById("aiChatInput");
+      if (!inp) return;
+      const text = inp.value.trim();
+      if (!text || aiChatIsSending) return;
+      inp.value = "";
+      await submitAiChatMessage(text);
+    }
+
+    async function submitAiChatMessage(text) {
+      const clean = (text || "").trim();
+      if (!clean || aiChatIsSending) return;
+
+      const historySnapshot = aiChatMessages
+        .filter(m => m.role === "user" || m.role === "assistant")
+        .slice(-6)
+        .map(m => ({ role: m.role, content: m.text || "" }));
+
+      aiChatMessages.push({ role: "user", text: clean, booking: null });
+      aiChatIsSending = true;
+      const sendBtn = document.getElementById("aiChatSendBtn");
+      if (sendBtn) sendBtn.disabled = true;
+      renderAiChatMessages();
+
+      try {
+        const propertyId = currentUserRole === "manager"
+          ? (currentManagerInfo?.property_id || "")
+          : (activePropertyId !== "all" ? activePropertyId : "");
+        const defaultDate = managerFinanceDate || formatIsoDate(new Date());
+
+        const res = await fetch("/api/room-bookings/ai-chat", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            message: clean,
+            messages: historySnapshot,
+            pendingDraft: aiChatPendingDraft,
+            property_id: propertyId,
+            default_date: defaultDate
+          })
+        });
+
+        if (res.status === 401) {
+          aiChatIsSending = false;
+          if (sendBtn) sendBtn.disabled = false;
+          return lockApp();
+        }
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          aiChatMessages.push({
+            role: "assistant",
+            text: data.error || "Sorry, I couldn't process that booking request. Please try again.",
+            booking: null
+          });
+        } else {
+          aiChatPendingDraft = data.pendingDraft || null;
+          aiChatMessages.push({
+            role: "assistant",
+            text: data.reply || "Done.",
+            booking: data.status === "created" ? data.booking : null
+          });
+
+          if (data.status === "created") {
+            showToast("Room " + (data.booking?.room_number || "") + " booked for " + (data.booking?.guest_name || "Guest") + "!");
+            await Promise.all([fetchRoomBookings(), fetchFinances()]);
+            if (currentView === "finances") {
+              renderFinancesView();
+            }
+          }
+        }
+      } catch (err) {
+        aiChatMessages.push({
+          role: "assistant",
+          text: "Network error while booking room: " + err.message,
+          booking: null
+        });
+      } finally {
+        aiChatIsSending = false;
+        if (sendBtn) sendBtn.disabled = false;
+        renderAiChatMessages();
+      }
     }
 
     window.addEventListener("DOMContentLoaded", () => {
