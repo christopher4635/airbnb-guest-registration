@@ -5711,7 +5711,7 @@ export function getDashboardHtml(): string {
                   <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
                   Rooms Status for \${managerFinanceDate}
                 </label>
-                <span class="text-[11px] text-slate-400">\${propRooms.length} Active Rooms</span>
+                <span class="text-[11px] font-bold \${todayBookings.length > propRooms.length ? 'text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200' : (todayBookings.length > 0 ? 'text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200' : 'text-slate-500')}">\${todayBookings.length}/\${propRooms.length} rooms booked</span>
               </div>
 
               \${propRooms.length === 0 ? \`
@@ -7933,18 +7933,19 @@ export function getDashboardHtml(): string {
               const isToday = dateStr === todayIso;
               const dateBookings = monthBookings.filter(b => b.date === dateStr);
               const totalDay = dateBookings.reduce((s, b) => s + (b.amount || 0), 0);
-              const bookedRoomsCount = new Set(dateBookings.map(b => b.room_id)).size;
+              const bookedRoomsCount = dateBookings.length;
+              const totalRooms = propRooms.length;
 
               return \`
                 <div
                   onclick="setManagerFinanceDate('\${dateStr}'); setAdminFinanceSubTab('dashboard');"
                   class="min-h-[90px] p-2 rounded-2xl border transition flex flex-col justify-between cursor-pointer \${isToday ? 'bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200' : 'bg-slate-50/50 hover:bg-white border-slate-200'}"
                 >
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center justify-between gap-1 flex-wrap">
                     <span class="text-xs font-bold \${isToday ? 'text-indigo-600 font-black' : 'text-slate-800'}">\${d}</span>
                     \${dateBookings.length > 0 ? \`
-                      <span class="text-[9px] px-1.5 py-0.2 rounded-md font-bold bg-indigo-100 text-indigo-800">
-                        \${bookedRoomsCount}/\${propRooms.length}
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap \${bookedRoomsCount > totalRooms ? 'bg-purple-100 text-purple-900 border border-purple-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200'}" title="\${bookedRoomsCount} booking\${bookedRoomsCount > 1 ? 's' : ''} across \${totalRooms} room\${totalRooms > 1 ? 's' : ''}">
+                        \${bookedRoomsCount}/\${totalRooms} rooms
                       </span>
                     \` : ''}
                   </div>
