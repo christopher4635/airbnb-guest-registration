@@ -899,70 +899,182 @@
       border-right: 1.5px dashed rgba(16, 185, 129, 0.35);
     }
 
-    /* Floating Booking Bar */
+    /* Floating Booking Bar - Modern Minimal Style */
     .timeline-booking-bar {
       position: absolute;
-      top: 14px;
-      height: 58px;
-      border-radius: 10px;
-      padding: 6px 10px;
+      border-radius: 8px;
+      padding: 4px 8px;
       cursor: pointer;
       z-index: 10;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-      border: 1px solid transparent;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      border: 1px solid #E2E8F0;
+      border-left: 4px solid var(--primary);
+      box-sizing: border-box;
+      background: #FFFFFF;
     }
     .timeline-booking-bar:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
-      filter: brightness(0.97);
-      z-index: 20;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      z-index: 30;
+      filter: brightness(0.98);
     }
-    .tbar-header {
+    .timeline-booking-bar.is-overlap {
+      border: 1.5px dashed #F59E0B !important;
+      border-left: 4px solid #D97706 !important;
+      background: #FFFDF5 !important;
+      box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3), 0 2px 8px rgba(245, 158, 11, 0.15) !important;
+    }
+    .timeline-booking-bar.is-missing-amount {
+      box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);
+    }
+    .tbar-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      line-height: 1.2;
+    }
+    .tbar-guest-name {
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      color: var(--text-main);
+    }
+    .tbar-row-bot {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 4px;
-      line-height: 1;
+      font-size: 10px;
+      line-height: 1.2;
     }
-    .tbar-platform {
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      border-radius: 4px;
-      padding: 2px 5px;
+    .tbar-badges {
       display: inline-flex;
       align-items: center;
       gap: 3px;
     }
-    .tbar-nights {
-      font-size: 10px;
-      font-weight: 700;
-      opacity: 0.85;
-    }
-    .tbar-guest {
-      font-size: 12px;
-      font-weight: 700;
+    .tbar-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 4px;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      letter-spacing: 0.2px;
       line-height: 1.2;
     }
-    .tbar-meta {
-      font-size: 10px;
-      opacity: 0.85;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .tbar-badge.is-multi {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #93C5FD;
     }
+    .tbar-badge.is-conflict {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #F59E0B;
+    }
+    .tbar-payout-missing {
+      background: #FEF3C7;
+      color: #B45309;
+      border: 1px solid #FCD34D;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 9px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+    }
+    .tbar-payout-missing:hover {
+      background: #FDE68A;
+      color: #78350F;
+      border-color: #F59E0B;
+      transform: scale(1.05);
+    }
+    .tbar-payout-valid {
+      font-size: 10px;
+      font-weight: 800;
+      color: #065F46;
+      white-space: nowrap;
+    }
+    .cal-filter-pill {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      background: #FFFFFF;
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .cal-filter-pill:hover {
+      background: #F8FAFC;
+      border-color: #CBD5E1;
+    }
+    .cal-filter-pill.active {
+      background: #0F172A !important;
+      color: #FFFFFF !important;
+      border-color: #0F172A !important;
+      font-weight: 700;
+    }
+    .cal-filter-pill.is-warning {
+      color: #B45309;
+      background: #FFFBEB;
+      border-color: #FDE68A;
+    }
+    .cal-filter-pill.is-warning.active {
+      background: #F59E0B !important;
+      color: #FFFFFF !important;
+      border-color: #D97706 !important;
+    }
+    .cal-filter-pill.is-danger {
+      color: #92400E;
+      background: #FEF3C7;
+      border-color: #FCD34D;
+    }
+    .cal-filter-pill.is-danger.active {
+      background: #D97706 !important;
+      color: #FFFFFF !important;
+      border-color: #B45309 !important;
+    }
+    .mday-pill.is-overlap {
+      border: 1px dashed #F59E0B !important;
+      background: #FFFBEB !important;
+      color: #92400E !important;
+      font-weight: 700;
+    }
+    .mday-pill.is-missing-amount {
+      border-bottom: 2px solid #F59E0B;
+    }
+    .mday-add-payout {
+      background: #FEF3C7;
+      color: #B45309;
+      border: 1px solid #FCD34D;
+      border-radius: 3px;
+      padding: 0 3px;
+      font-size: 9px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .mday-add-payout:hover {
+      background: #FDE68A;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .is-spinning { display: inline-block; animation: spin 0.8s linear infinite; }
 
     /* ==========================================================================
        VIEW 2: MONTH GRID VIEW
@@ -1820,10 +1932,23 @@
             </button>
           </div>
 
+          <!-- Quick Issue Filters (All, Overlaps, Missing Amount) -->
+          <div class="cal-quick-filters" style="display: inline-flex; gap: 5px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="cal-filter-pill active" id="btn-filter-all" data-filter="all" onclick="setCalendarFilter('all')">
+              All (<span id="badge-total-bookings">0</span>)
+            </button>
+            <button type="button" class="cal-filter-pill is-warning" id="btn-filter-overlaps" data-filter="overlaps" onclick="setCalendarFilter('overlaps')" title="Show multi-channel synced &amp; overlapping bookings">
+              ⚠️ Overlaps (<span id="badge-overlap-count">0</span>)
+            </button>
+            <button type="button" class="cal-filter-pill is-danger" id="btn-filter-missing-payout" data-filter="missing_payout" onclick="setCalendarFilter('missing_payout')" title="Highlight bookings missing amount so you can add">
+              💰 Missing Amount (<span id="badge-missing-payout-count">0</span>)
+            </button>
+          </div>
+
           <!-- Action Buttons -->
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button type="button" class="btn btn-outline" onclick="forceSyncServerBookings()" style="background:#ECFDF5; border-color:#10B981; color:#065F46; font-weight:600;" title="Reload live confirmed bookings">
-              <span>🔄 Refresh Data</span>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="btn btn-outline" id="btn-sync-all-ical" onclick="syncAllIcalFeeds()" style="background:#EFF6FF; border-color:#3B82F6; color:#1D4ED8; font-weight:700;" title="Instantly sync Airbnb &amp; Booking.com calendars">
+              <span id="sync-ical-icon">🔄</span> <span id="sync-ical-text">Sync Calendars</span>
             </button>
             <button type="button" class="btn btn-primary" id="btn-open-add-booking" onclick="openAddBookingModal()" style="display: inline-flex; align-items: center; gap: 5px;">
               <span>➕ Add Booking</span>
@@ -1837,10 +1962,10 @@
             <button type="button" class="btn btn-outline" id="btn-open-manage-channels" onclick="openChannelSettingsShortcut()" title="Add, remove, or deactivate booking channels">
               <span>📡 Channels</span>
             </button>
-            <button type="button" class="btn btn-outline" id="btn-open-ical-sync" onclick="openIcalSyncModal()" style="background:#EFF6FF; border-color:#3B82F6; color:#1D4ED8; font-weight:600;" title="Two-Way iCal Sync with Airbnb & Booking.com">
-              <span>🔄 Sync Channels</span>
+            <button type="button" class="btn btn-outline" id="btn-open-ical-sync" onclick="openIcalSyncModal()" style="background:#F8FAFC; border-color:#CBD5E1; color:#334155; font-weight:600;" title="Two-Way iCal Feeds &amp; Export Links">
+              <span>⚙️ iCal Links</span>
             </button>
-            <button type="button" class="btn btn-outline" id="btn-open-backup-export" onclick="openBackupModal()" title="Backup & Export Bookings">
+            <button type="button" class="btn btn-outline" id="btn-open-backup-export" onclick="openBackupModal()" title="Backup &amp; Export Bookings">
               <span>💾 Backup</span>
             </button>
           </div>
@@ -1918,6 +2043,60 @@
            MODALS
            ==================================================================== -->
       
+      <!-- MODAL: Quick Add / Edit Payout Modal -->
+      <div class="modal-backdrop" id="modal-quick-payout" style="display: none; align-items: center; justify-content: center; z-index: 1050;">
+        <div class="modal-dialog" style="max-width: 440px; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+          <div class="modal-header" style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 14px 18px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">💰</span>
+              <div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-main);">Add Payout / Amount</h3>
+                <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Quickly record revenue for this stay</p>
+              </div>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeQuickPayoutModal()">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 18px;">
+            <input type="hidden" id="qp-booking-id">
+            
+            <div style="background: #F1F5F9; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <strong id="qp-guest-name" style="font-size: 14px; color: var(--text-main);">Guest Name</strong>
+                <span id="qp-platform-badge" class="tbar-badge" style="background: #0F172A; color: #fff;">Platform</span>
+              </div>
+              <div id="qp-prop-name" style="color: var(--text-muted); font-size: 12px;">Property &bull; Dates</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label for="qp-amount-input" style="font-size: 13px; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 6px;">
+                Booking Payout Amount (₹) <span style="color: var(--primary);">*</span>
+              </label>
+              <div style="position: relative;">
+                <span style="position: absolute; left: 14px; top: 12px; font-size: 16px; font-weight: 700; color: #047857;">₹</span>
+                <input type="number" id="qp-amount-input" placeholder="e.g. 4500" style="padding-left: 32px; font-size: 18px; font-weight: 700; height: 46px; border: 2px solid #CBD5E1; border-radius: 8px; width: 100%; box-sizing: border-box;" onkeydown="if(event.key==='Enter') saveQuickPayout()">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 8px;">
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Quick Presets:</span>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; font-weight: 700;" onclick="setQpAmount(2000)">₹2,000</button>
+                <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; font-weight: 700;" onclick="setQpAmount(2700)">₹2,700</button>
+                <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; font-weight: 700;" onclick="setQpAmount(3500)">₹3,500</button>
+                <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; font-weight: 700;" onclick="setQpAmount(4000)">₹4,000</button>
+                <button type="button" class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; font-weight: 700;" onclick="setQpAmount(5000)">₹5,000</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="padding: 12px 18px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" class="btn btn-outline" onclick="closeQuickPayoutModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-save-quick-payout" onclick="saveQuickPayout()" style="background: #10B981; border-color: #10B981; font-weight: 700;">
+              <span>💾 Save Payout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- MODAL 1: Add / Edit Booking Modal -->
       <div class="modal-backdrop" id="modal-booking">
         <div class="modal-dialog">
@@ -4575,6 +4754,17 @@
 
       document.getElementById('kpi-bookings-count').textContent = checkInBookings.length;
 
+      // Update quick calendar filter badge counts for the active view
+      const totalOverlapCount = activeBookings.filter(b => typeof isBookingOverlapping === 'function' && isBookingOverlapping(b, currentBookings)).length;
+      const totalMissingCount = activeBookings.filter(b => typeof isMissingPayout === 'function' && isMissingPayout(b)).length;
+
+      const badgeAll = document.getElementById('badge-total-bookings');
+      if (badgeAll) badgeAll.textContent = activeBookings.length;
+      const badgeOver = document.getElementById('badge-overlap-count');
+      if (badgeOver) badgeOver.textContent = totalOverlapCount;
+      const badgeMiss = document.getElementById('badge-missing-payout-count');
+      if (badgeMiss) badgeMiss.textContent = totalMissingCount;
+
       // Calculate total nights booked in this month
       let totalNights = 0;
       let bookedDaySet = new Set(); // prop + date
@@ -4843,6 +5033,211 @@
     };
 
     // =========================================================================
+    // CALENDAR ENHANCEMENTS: OVERLAP DETECTION, MISSING PAYOUT & QUICK FILTERS
+    // =========================================================================
+    var currentCalendarFilter = 'all'; // 'all' | 'overlaps' | 'missing_payout'
+
+    window.setCalendarFilter = function(filter) {
+      currentCalendarFilter = filter || 'all';
+
+      document.querySelectorAll('.cal-filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-filter') === currentCalendarFilter);
+      });
+
+      if (currentCalView === 'timeline') {
+        renderTimelineView();
+      } else if (currentCalView === 'month') {
+        renderMonthGridView();
+      } else {
+        renderBookingsListView();
+      }
+    };
+
+    function isMissingPayout(b) {
+      if (!b) return false;
+      if (b.status === 'Cancelled') return false;
+      if (b.platform === 'Blocked' || b.status === 'Blocked') return false;
+      const rev = getBookingRevenue(b);
+      return rev <= 0;
+    }
+
+    function isBookingOverlapping(b, allBookings) {
+      if (!b || b.status === 'Cancelled') return false;
+      if (b.platform && (b.platform.includes(' + ') || b.platform.includes(' & '))) return true;
+      if (b.notes && /synced via|merged|dual-channel/i.test(b.notes)) return true;
+
+      const list = allBookings || currentBookings || [];
+      return list.some(other => {
+        if (!other || other.id === b.id) return false;
+        if (other.status === 'Cancelled') return false;
+        if (!matchesProperty(other.property, b.property)) return false;
+        return (b.checkInDate < other.checkOutDate && b.checkOutDate > other.checkInDate);
+      });
+    }
+
+    function isMultiChannel(b) {
+      if (!b) return false;
+      return (b.platform && (b.platform.includes('+') || b.platform.includes('&'))) ||
+             (b.notes && /synced via/i.test(b.notes));
+    }
+
+    function getPlatformBadgeStyle(platform) {
+      const p = (platform || '').toLowerCase();
+      if (p.includes('+') || p.includes('&')) {
+        return { bg: 'linear-gradient(135deg, #FF385C 0%, #003580 100%)', text: '#ffffff', label: platform || 'Multi-Channel' };
+      }
+      if (p.includes('booking')) {
+        return { bg: '#003580', text: '#ffffff', label: 'Booking.com' };
+      }
+      if (p.includes('airbnb')) {
+        return { bg: '#FF385C', text: '#ffffff', label: 'Airbnb' };
+      }
+      if (p.includes('direct') || p.includes('walk-in') || p.includes('manual')) {
+        return { bg: '#0D9488', text: '#ffffff', label: 'Direct' };
+      }
+      if (p.includes('block')) {
+        return { bg: '#64748B', text: '#ffffff', label: 'Blocked' };
+      }
+      return { bg: '#475569', text: '#ffffff', label: platform || 'OTA' };
+    }
+
+    // Quick Payout Modal Handlers
+    let quickPayoutTargetBooking = null;
+
+    window.quickAddPayout = function(bookingId) {
+      const b = currentBookings.find(x => x.id === bookingId);
+      if (!b) return;
+      quickPayoutTargetBooking = b;
+
+      const idInput = document.getElementById('qp-booking-id');
+      if (idInput) idInput.value = b.id;
+
+      const guestEl = document.getElementById('qp-guest-name');
+      if (guestEl) guestEl.textContent = b.guestName || 'Guest Stay';
+
+      const platBadge = document.getElementById('qp-platform-badge');
+      if (platBadge) {
+        const pStyle = getPlatformBadgeStyle(b.platform);
+        platBadge.textContent = pStyle.label;
+        platBadge.style.background = pStyle.bg;
+        platBadge.style.color = pStyle.text;
+      }
+
+      const propMeta = document.getElementById('qp-prop-name');
+      if (propMeta) {
+        propMeta.textContent = `${b.property} • 📅 ${b.checkInDate} → ${b.checkOutDate} (${b.nights || 1} nights)`;
+      }
+
+      const existingRev = getBookingRevenue(b);
+      const amtInput = document.getElementById('qp-amount-input');
+      if (amtInput) {
+        amtInput.value = existingRev > 0 ? existingRev : '';
+      }
+
+      const modal = document.getElementById('modal-quick-payout');
+      if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => amtInput?.focus(), 80);
+      }
+    };
+
+    window.closeQuickPayoutModal = function() {
+      const modal = document.getElementById('modal-quick-payout');
+      if (modal) modal.style.display = 'none';
+      quickPayoutTargetBooking = null;
+    };
+
+    window.setQpAmount = function(val) {
+      const amtInput = document.getElementById('qp-amount-input');
+      if (amtInput) amtInput.value = val;
+    };
+
+    window.saveQuickPayout = async function() {
+      const bId = document.getElementById('qp-booking-id')?.value;
+      const amtInput = document.getElementById('qp-amount-input');
+      const val = parseFloat(amtInput?.value);
+
+      if (isNaN(val) || val <= 0) {
+        alert("Please enter a valid payout amount (e.g. 3500)");
+        return;
+      }
+
+      const saveBtn = document.getElementById('btn-save-quick-payout');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+      }
+
+      try {
+        const formattedPayout = '₹' + Math.round(val).toLocaleString('en-IN');
+        const b = currentBookings.find(x => x.id === bId);
+        if (!b) throw new Error("Booking not found");
+
+        b.payout = formattedPayout;
+        if (!b.notes || !b.notes.includes('Total:')) {
+          b.notes = (b.notes ? b.notes + ' | ' : '') + `Total: ${formattedPayout}`;
+        }
+
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.updateBooking === 'function') {
+          await window.AirbnbAPI.updateBooking(bId, {
+            payout: formattedPayout,
+            notes: b.notes,
+            paymentStatus: 'Paid in Full'
+          });
+        }
+
+        localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+        closeQuickPayoutModal();
+        renderBookingsPortal();
+        showToast(`💰 Payout of ${formattedPayout} recorded for ${b.guestName}!`);
+      } catch (err) {
+        console.error('saveQuickPayout error:', err);
+        alert("Failed to save payout: " + err.message);
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<span>💾 Save Payout</span>';
+        }
+      }
+    };
+
+    window.syncAllIcalFeeds = async function() {
+      const icon = document.getElementById('sync-ical-icon');
+      const text = document.getElementById('sync-ical-text');
+      const btn = document.getElementById('btn-sync-all-ical');
+
+      if (btn) btn.disabled = true;
+      if (icon) icon.classList.add('is-spinning');
+      if (text) text.textContent = 'Syncing...';
+
+      try {
+        if (!window.AirbnbAPI || typeof window.AirbnbAPI.syncIcalChannels !== 'function') {
+          throw new Error("Channel sync API client not available.");
+        }
+        const res = await window.AirbnbAPI.syncIcalChannels();
+        if (res && res.success) {
+          const fresh = await window.AirbnbAPI.getBookings();
+          if (Array.isArray(fresh)) {
+            currentBookings = fresh;
+            localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+          }
+          await fetchProperties();
+          renderBookingsPortal();
+          showToast(`⚡ Calendars Synced! ${res.stats?.totalImported || 0} imported, ${res.stats?.totalUpdated || 0} updated, deduplicated cleanly.`);
+        } else {
+          throw new Error(res?.error || 'Sync request failed');
+        }
+      } catch (err) {
+        console.error('syncAllIcalFeeds error:', err);
+        showToast(`❌ Sync Error: ${err.message}`);
+      } finally {
+        if (icon) icon.classList.remove('is-spinning');
+        if (text) text.textContent = 'Sync Calendars';
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    // =========================================================================
     // 1. TIMELINE (CHANNEL MANAGER) VIEW RENDERER
     // =========================================================================
     function renderTimelineView() {
@@ -4874,11 +5269,11 @@
           <div class="timeline-prop-name-box">
             <div class="timeline-prop-accent" style="background:${theme.color};"></div>
             <div>
-              <div class="timeline-prop-title" title="${prop}">${prop}</div>
-              <div class="timeline-prop-meta">Airbnb Listing</div>
+              <div class="timeline-prop-title" title="${escapeHtml(prop)}">${escapeHtml(prop)}</div>
+              <div class="timeline-prop-meta">Elite Homes Listing</div>
             </div>
           </div>
-          <button type="button" class="timeline-quick-add-btn" onclick="openAddBookingModal('${prop}')" title="Add booking for ${prop}">+</button>
+          <button type="button" class="timeline-quick-add-btn" onclick="openAddBookingModal('${escapeHtml(prop)}')" title="Add booking for ${escapeHtml(prop)}">+</button>
         `;
         sidebar.appendChild(row);
       });
@@ -4912,11 +5307,64 @@
       const monthStartStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-01`;
       const monthEndStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
-      visibleProps.forEach(prop => {
+      const sidebarRows = sidebar.getElementsByClassName('timeline-sidebar-row');
+
+      visibleProps.forEach((prop, propIdx) => {
         const theme = getPropertyTheme(prop);
+
+        // Active bookings on this property for the month
+        let propBookings = currentBookings.filter(b => {
+          if (!matchesProperty(b.property, prop)) return false;
+          if (b.status === 'Cancelled') return false;
+          return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
+        });
+
+        // Apply quick issue filter if selected
+        if (currentCalendarFilter === 'overlaps') {
+          propBookings = propBookings.filter(b => isBookingOverlapping(b, currentBookings));
+        } else if (currentCalendarFilter === 'missing_payout') {
+          propBookings = propBookings.filter(b => isMissingPayout(b));
+        }
+
+        // Multi-lane packing to prevent visual collisions when bookings overlap
+        propBookings.sort((a, b) => {
+          const c = a.checkInDate.localeCompare(b.checkInDate);
+          if (c !== 0) return c;
+          return b.checkOutDate.localeCompare(a.checkOutDate);
+        });
+
+        const lanes = []; // array of end dates per lane
+        propBookings.forEach(booking => {
+          let placedLane = -1;
+          for (let i = 0; i < lanes.length; i++) {
+            if (lanes[i] <= booking.checkInDate) {
+              placedLane = i;
+              lanes[i] = booking.checkOutDate;
+              break;
+            }
+          }
+          if (placedLane === -1) {
+            placedLane = lanes.length;
+            lanes.push(booking.checkOutDate);
+          }
+          booking._lane = placedLane;
+        });
+
+        const totalLanes = Math.max(1, lanes.length);
+        const laneHeight = totalLanes === 1 ? 58 : 40;
+        const laneGap = 4;
+        const trackPaddingTop = 8;
+        const trackHeight = Math.max(86, trackPaddingTop * 2 + totalLanes * laneHeight + (totalLanes - 1) * laneGap);
+
+        // Align matching sidebar row height
+        if (sidebarRows[propIdx]) {
+          sidebarRows[propIdx].style.minHeight = sidebarRows[propIdx].style.height = `${trackHeight}px`;
+        }
+
         const track = document.createElement('div');
         track.className = 'timeline-row-track';
         track.style.width = `${daysInMonth * cellWidth}px`;
+        track.style.height = `${trackHeight}px`;
 
         // Day cells in the track (clickable for adding bookings)
         for (let d = 1; d <= daysInMonth; d++) {
@@ -4935,12 +5383,6 @@
         }
 
         // Floating Booking Ribbons on this track
-        const propBookings = currentBookings.filter(b => {
-          if (!matchesProperty(b.property, prop)) return false;
-          if (b.status === 'Cancelled') return false;
-          return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
-        });
-
         propBookings.forEach(booking => {
           let startDay;
           let isFromPrev = false;
@@ -4966,35 +5408,83 @@
           let width = Math.max(endPx - startPx, cellWidth - 8);
 
           const isBlocked = booking.platform === 'Blocked' || booking.status === 'Blocked';
-          const bTheme = isBlocked ? { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' } : theme;
+          const hasOverlap = isBookingOverlapping(booking, currentBookings);
+          const missingPayout = isMissingPayout(booking);
+          const multiChan = isMultiChannel(booking);
+          const pBadge = getPlatformBadgeStyle(booking.platform);
+
+          const bTop = trackPaddingTop + (booking._lane || 0) * (laneHeight + laneGap);
 
           const ribbon = document.createElement('div');
-          ribbon.className = 'timeline-booking-bar';
+          ribbon.className = `timeline-booking-bar ${hasOverlap ? 'is-overlap' : ''} ${missingPayout ? 'has-missing-payout' : ''}`;
+          ribbon.style.position = 'absolute';
           ribbon.style.left = `${startPx}px`;
+          ribbon.style.top = `${bTop}px`;
           ribbon.style.width = `${width}px`;
+          ribbon.style.height = `${laneHeight}px`;
+
+          const bTheme = isBlocked 
+            ? { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' } 
+            : (hasOverlap 
+                ? { color: '#B45309', bg: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)', border: '#F59E0B', text: '#78350F' }
+                : theme);
+
           ribbon.style.background = bTheme.bg;
           ribbon.style.borderColor = bTheme.border;
           ribbon.style.color = bTheme.text;
-          ribbon.title = `${booking.guestName} (${booking.checkInDate} to ${booking.checkOutDate}, ${booking.nights || 1} nights)`;
+          ribbon.title = `${booking.guestName} (${booking.checkInDate} to ${booking.checkOutDate}, ${booking.nights || 1} nights)${hasOverlap ? ' [⚠️ Overlapping / Synced across channels]' : ''}${missingPayout ? ' [⚠️ Missing amount]' : ''}`;
 
-          let platformBadgeBg = '#FF385C';
-          if (booking.platform === 'Booking.com') platformBadgeBg = '#003580';
-          else if (booking.platform === 'Direct') platformBadgeBg = '#0D9488';
-          else if (booking.platform === 'Blocked') platformBadgeBg = '#64748B';
-
-          ribbon.innerHTML = `
-            <div class="tbar-header">
-              <span class="tbar-platform" style="background:${platformBadgeBg}; color:#fff;">
-                ${isFromPrev ? '◀ ' : ''}${booking.platform || 'Airbnb'}${isToNext ? ' ▶' : ''}
+          let payoutHtml = '';
+          if (isBlocked) {
+            payoutHtml = '<span style="font-size:11px; opacity:0.8;">🔒 Blocked</span>';
+          } else if (missingPayout) {
+            payoutHtml = `
+              <button type="button" class="tbar-payout-missing" onclick="event.stopPropagation(); quickAddPayout('${booking.id}')" title="Click to add payout amount">
+                ⚠️ + Add ₹
+              </button>
+            `;
+          } else {
+            payoutHtml = `
+              <span class="tbar-payout-valid" onclick="event.stopPropagation(); quickAddPayout('${booking.id}')" title="Click to edit payout">
+                ${escapeHtml(booking.payout)}
               </span>
-              <span class="tbar-nights">${booking.nights || 1} nts</span>
-            </div>
-            <div class="tbar-guest">${booking.guestName}</div>
-            <div class="tbar-meta">
-              <span>${booking.reservationCode || booking.status || 'Confirmed'}</span>
-              <span>${booking.payout ? booking.payout : ''}</span>
-            </div>
-          `;
+            `;
+          }
+
+          if (totalLanes > 1) {
+            ribbon.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 6px; height: 100%; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;">
+                  <span class="tbar-platform" style="background:${pBadge.bg}; color:${pBadge.text}; font-size: 9px; padding: 1px 5px; flex-shrink: 0;">
+                    ${multiChan ? '🔄 ' : ''}${escapeHtml(pBadge.label)}
+                  </span>
+                  ${hasOverlap ? `<span class="tbar-overlap-badge" style="font-size: 9px; padding: 1px 4px; flex-shrink: 0;">⚠️ Overlap</span>` : ''}
+                  <strong style="color: inherit; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(booking.guestName)}</strong>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                  <span style="font-size: 10px; opacity: 0.85;">${booking.nights || 1}n</span>
+                  ${payoutHtml}
+                </div>
+              </div>
+            `;
+          } else {
+            ribbon.innerHTML = `
+              <div class="tbar-header">
+                <div style="display: flex; align-items: center; gap: 4px; overflow: hidden;">
+                  <span class="tbar-platform" style="background:${pBadge.bg}; color:${pBadge.text};">
+                    ${multiChan ? '🔄 ' : ''}${isFromPrev ? '◀ ' : ''}${escapeHtml(pBadge.label)}${isToNext ? ' ▶' : ''}
+                  </span>
+                  ${hasOverlap ? `<span class="tbar-overlap-badge" title="Calendar synced across multiple platforms / Overlapping dates">⚠️ Overlap</span>` : ''}
+                </div>
+                <span class="tbar-nights">${booking.nights || 1} nts</span>
+              </div>
+              <div class="tbar-guest">${escapeHtml(booking.guestName)}</div>
+              <div class="tbar-meta">
+                <span>${escapeHtml(booking.reservationCode || booking.status || 'Confirmed')}</span>
+                ${payoutHtml}
+              </div>
+            `;
+          }
 
           ribbon.onclick = (e) => {
             e.stopPropagation();
@@ -5064,23 +5554,46 @@
         `;
 
         // Find bookings active on this date
-        const dayBookings = currentBookings.filter(b => {
+        let dayBookings = currentBookings.filter(b => {
           if (b.status === 'Cancelled') return false;
           if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
           return (b.checkInDate <= dateStr && b.checkOutDate >= dateStr);
         });
 
+        // Apply quick filter if active
+        if (currentCalendarFilter === 'overlaps') {
+          dayBookings = dayBookings.filter(b => isBookingOverlapping(b, currentBookings));
+        } else if (currentCalendarFilter === 'missing_payout') {
+          dayBookings = dayBookings.filter(b => isMissingPayout(b));
+        }
+
         dayBookings.forEach(b => {
           const theme = getPropertyTheme(b.property);
           const isCheckIn = (b.checkInDate === dateStr);
           const isCheckOut = (b.checkOutDate === dateStr);
+          const hasOverlap = isBookingOverlapping(b, currentBookings);
+          const missingPayout = isMissingPayout(b);
+
           let tag = '';
           if (isCheckIn) tag = '▶ In: ';
           else if (isCheckOut) tag = '◀ Out: ';
 
+          const pillBg = hasOverlap ? '#FEF3C7' : theme.bg;
+          const pillBorder = hasOverlap ? '#F59E0B' : theme.border;
+          const pillText = hasOverlap ? '#92400E' : theme.text;
+
           cellHtml += `
-            <div class="mday-pill" style="background:${theme.bg}; color:${theme.text}; border-color:${theme.border};" onclick="event.stopPropagation(); openEditBookingModal('${b.id}')" title="${b.property}: ${b.guestName} (${b.checkInDate} to ${b.checkOutDate})">
-              <span>${tag}${b.guestName}</span>
+            <div class="mday-pill" style="background:${pillBg}; color:${pillText}; border-color:${pillBorder};" onclick="event.stopPropagation(); openEditBookingModal('${b.id}')" title="${escapeHtml(b.property)}: ${escapeHtml(b.guestName)} (${b.checkInDate} to ${b.checkOutDate})${hasOverlap ? ' [⚠️ Overlap]' : ''}${missingPayout ? ' [⚠️ Missing Amount]' : ''}">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  ${hasOverlap ? '⚠️ ' : ''}${tag}${escapeHtml(b.guestName)}
+                </span>
+                ${missingPayout ? `
+                  <button type="button" onclick="event.stopPropagation(); quickAddPayout('${b.id}')" style="background: #F59E0B; color: #fff; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 0 4px; cursor: pointer; flex-shrink: 0;" title="Add payout">
+                    +₹
+                  </button>
+                ` : ''}
+              </div>
             </div>
           `;
         });
@@ -5114,6 +5627,9 @@
         if (propFilter && !matchesProperty(b.property, propFilter)) return false;
         if (statusFilter && b.status !== statusFilter) return false;
         if (selectedPropFilter !== 'ALL' && !propFilter && !matchesProperty(b.property, selectedPropFilter)) return false;
+
+        if (currentCalendarFilter === 'overlaps' && !isBookingOverlapping(b, currentBookings)) return false;
+        if (currentCalendarFilter === 'missing_payout' && !isMissingPayout(b)) return false;
 
         if (q) {
           const matchName = (b.guestName || '').toLowerCase().includes(q);
@@ -5149,34 +5665,50 @@
         const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
         const waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(b.guestName)},%20looking%20forward%20to%20hosting%20you%20at%20${encodeURIComponent(b.property)}!` : '';
         const checkinFormLink = `index.html?prop=${encodeURIComponent(b.property)}&code=${encodeURIComponent(b.reservationCode || '')}&name=${encodeURIComponent(b.guestName || '')}`;
+        const hasOverlap = isBookingOverlapping(b, currentBookings);
+        const missingPayout = isMissingPayout(b);
 
         tr.innerHTML = `
           <td>
             <span class="badge-pill" style="background:${theme.bg}; color:${theme.text}; border: 1px solid ${theme.border};">
-              🏠 ${b.property}
+              🏠 ${escapeHtml(b.property)}
             </span>
           </td>
           <td>
-            <strong style="color: var(--text-main); font-size: 14px;">${b.guestName}</strong>
+            <strong style="color: var(--text-main); font-size: 14px;">${escapeHtml(b.guestName)}</strong>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-              ${b.phone ? `📞 ${b.phone}` : ''} ${b.email ? `&bull; ✉️ ${b.email}` : ''}
+              ${b.phone ? `📞 ${escapeHtml(b.phone)}` : ''} ${b.email ? `&bull; ✉️ ${escapeHtml(b.email)}` : ''}
             </div>
           </td>
           <td>
-            <div style="font-weight: 600;">📅 ${b.checkInDate} &rarr; ${b.checkOutDate}</div>
+            <div style="font-weight: 600;">📅 ${escapeHtml(b.checkInDate)} &rarr; ${escapeHtml(b.checkOutDate)}</div>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">🌙 ${b.nights || 1} nights</div>
           </td>
           <td>
-            <span class="badge-pill" style="background: #F1F1F4;">${escapeHtml(getBookingMode(b))}</span>
-            ${b.reservationCode ? `<div style="font-size: 11px; font-family: monospace; color: var(--text-muted); margin-top: 4px;">#${b.reservationCode}</div>` : ''}
+            <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+              <span class="badge-pill" style="background: #F1F1F4;">${escapeHtml(getBookingMode(b))}</span>
+              ${hasOverlap ? `<span class="tbar-overlap-badge" style="font-size: 9px; padding: 1px 4px;">⚠️ Overlap</span>` : ''}
+            </div>
+            ${b.reservationCode ? `<div style="font-size: 11px; font-family: monospace; color: var(--text-muted); margin-top: 4px;">#${escapeHtml(b.reservationCode)}</div>` : ''}
           </td>
           <td>
-            <div style="font-weight: 700; color: var(--text-main);">${b.payout || '—'}</div>
-            <div style="font-size: 11px; color: var(--text-muted);">👥 ${b.guestsCount || 1} Guests &bull; ${b.paymentStatus || 'Paid'}</div>
+            ${missingPayout ? `
+              <div>
+                <button type="button" class="btn-action-pill" onclick="quickAddPayout('${b.id}')" style="background: #FEF3C7; color: #B45309; border: 1px dashed #F59E0B; font-weight: 700; cursor: pointer;" title="Click to add payout amount">
+                  ⚠️ + Add Amount
+                </button>
+              </div>
+            ` : `
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-weight: 700; color: #047857; font-size: 14px;">${escapeHtml(b.payout)}</span>
+                <button type="button" onclick="quickAddPayout('${b.id}')" style="background: none; border: none; cursor: pointer; font-size: 12px; opacity: 0.6; padding: 0;" title="Edit amount">✏️</button>
+              </div>
+            `}
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">👥 ${b.guestsCount || 1} Guests &bull; ${b.paymentStatus || (missingPayout ? 'Pending Payout' : 'Paid')}</div>
           </td>
           <td>
             <span class="badge-pill" style="background: ${b.status === 'Checked In' ? '#DCFCE7; color: #15803D;' : (b.status === 'Blocked' ? '#F1F5F9; color:#475569;' : '#E0F2FE; color:#0369A1;')}">
-              ${b.status || 'Confirmed'}
+              ${escapeHtml(b.status || 'Confirmed')}
             </span>
           </td>
           <td style="text-align: right;">

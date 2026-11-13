@@ -272,6 +272,13 @@ icalRoute.post('/sync', async (c) => {
 
             const nights = calculateNights(checkIn, checkOut);
 
+            // Filter out remote OTA calendar window closures (> 45 nights of generic unavailable blocks)
+            const isRollingBlock = nights > 45 && /not available|closed|blocked/i.test(summary);
+            if (isRollingBlock) {
+              totalSkipped++;
+              continue;
+            }
+
             // Clean guest name from SUMMARY
             let guestName = summary;
             if (/airbnb|not available|reserved|closed|blocked/i.test(guestName)) {
@@ -290,56 +297,83 @@ icalRoute.post('/sync', async (c) => {
 
             const bookingStatus = eventStatus === 'CANCELLED' ? 'Cancelled' : 'Confirmed';
 
-            // Check if booking already exists with this external UID
-            const existing = await c.env.DB.prepare(`
-              SELECT id, status, check_in_date, check_out_date FROM bookings WHERE external_uid = ?
+            // 1. Check if booking already exists with this exact external UID
+            const existingByUid = await c.env.DB.prepare(`
+              SELECT * FROM bookings WHERE external_uid = ?
             `).bind(uid).first();
 
-            if (existing) {
+            if (existingByUid) {
               // Update existing synced booking
               await c.env.DB.prepare(`
                 UPDATE bookings SET
                   property = ?, guest_name = ?, check_in_date = ?, check_out_date = ?,
                   nights = ?, status = ?, updated_at = datetime('now')
                 WHERE id = ?
-              `).bind(prop.name, guestName, checkIn, checkOut, nights, bookingStatus, existing.id).run();
+              `).bind(prop.name, guestName, checkIn, checkOut, nights, bookingStatus, existingByUid.id).run();
               totalUpdated++;
-            } else {
-              // Check if manual booking exists with same property and matching check-in
-              const conflictManual = await c.env.DB.prepare(`
-                SELECT id FROM bookings 
-                WHERE property = ? 
-                  AND check_in_date = ? 
-                  AND check_out_date = ?
-                  AND status != 'Cancelled'
-                  AND external_uid IS NULL
-              `).bind(prop.name, checkIn, checkOut).first();
-
-              if (conflictManual) {
-                // Link external UID to existing manual booking to prevent duplicate
-                await c.env.DB.prepare(`
-                  UPDATE bookings SET external_uid = ?, platform = ?, updated_at = datetime('now')
-                  WHERE id = ?
-                `).bind(uid, feed.platform, conflictManual.id).run();
-                totalUpdated++;
-              } else {
-                // Insert new imported booking
-                const newId = `bk_ical_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-                await c.env.DB.prepare(`
-                  INSERT INTO bookings (
-                    id, property, guest_name, phone, email,
-                    check_in_date, check_out_date, nights, guests_count,
-                    platform, reservation_code, external_uid, payout, payment_status,
-                    status, notes, created_at, updated_at
-                  ) VALUES (?, ?, ?, '', '', ?, ?, ?, 1, ?, ?, ?, '', 'Paid via Channel', ?, ?, datetime('now'), datetime('now'))
-                `).bind(
-                  newId, prop.name, guestName, checkIn, checkOut, nights,
-                  feed.platform, uid.slice(0, 30), uid, bookingStatus,
-                  `Imported via ${feed.platform} iCal sync on ${new Date().toLocaleDateString()}`
-                ).run();
-                totalImported++;
-              }
+              continue;
             }
+
+            // 2. Cross-Channel Duplicate & Overlap Prevention:
+            // Check if an active booking already exists on this property with overlapping dates
+            const overlapping = await c.env.DB.prepare(`
+              SELECT * FROM bookings 
+              WHERE property = ? 
+                AND status != 'Cancelled'
+                AND check_in_date < ? 
+                AND check_out_date > ?
+              ORDER BY (check_in_date = ?) DESC, created_at ASC
+            `).bind(prop.name, checkOut, checkIn, checkIn).first();
+
+            if (overlapping) {
+              // Existing booking covers these dates across channels (e.g. Airbnb & Booking.com sync)
+              // DO NOT create duplicate booking! Link the channels and highlight.
+              const curPlatform = (overlapping.platform as string) || '';
+              let combinedPlatform = curPlatform;
+              if (!curPlatform.toLowerCase().includes(feed.platform.toLowerCase())) {
+                combinedPlatform = curPlatform ? `${curPlatform} + ${feed.platform}` : feed.platform;
+              }
+
+              // Prefer real guest name over placeholder
+              let bestName = (overlapping.guest_name as string) || '';
+              const isCurrentGeneric = /guest|not available|closed|reserved|blocked/i.test(bestName);
+              const isIncomingGeneric = /guest|not available|closed|reserved|blocked/i.test(guestName);
+              if (isCurrentGeneric && !isIncomingGeneric) {
+                bestName = guestName;
+              }
+
+              const oldNotes = (overlapping.notes as string) || '';
+              const syncNote = `[Synced via ${feed.platform}]`;
+              const newNotes = oldNotes.includes(syncNote) ? oldNotes : `${oldNotes} ${syncNote}`.trim();
+
+              await c.env.DB.prepare(`
+                UPDATE bookings SET
+                  platform = ?,
+                  guest_name = ?,
+                  notes = ?,
+                  updated_at = datetime('now')
+                WHERE id = ?
+              `).bind(combinedPlatform, bestName, newNotes, overlapping.id).run();
+
+              totalUpdated++;
+              continue;
+            }
+
+            // 3. Clean fresh booking insert
+            const newId = `bk_ical_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            await c.env.DB.prepare(`
+              INSERT INTO bookings (
+                id, property, guest_name, phone, email,
+                check_in_date, check_out_date, nights, guests_count,
+                platform, reservation_code, external_uid, payout, payment_status,
+                status, notes, created_at, updated_at
+              ) VALUES (?, ?, ?, '', '', ?, ?, ?, 1, ?, ?, ?, '', 'Paid via Channel', ?, ?, datetime('now'), datetime('now'))
+            `).bind(
+              newId, prop.name, guestName, checkIn, checkOut, nights,
+              feed.platform, uid.slice(0, 30), uid, bookingStatus,
+              `Imported via ${feed.platform} iCal sync on ${new Date().toLocaleDateString()}`
+            ).run();
+            totalImported++;
           }
 
           syncLogs.push(`Successfully synced ${feed.platform} for ${prop.name}`);
