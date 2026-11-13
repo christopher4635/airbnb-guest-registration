@@ -2508,39 +2508,70 @@ export function getDashboardHtml(): string {
     }
 
     function isStaffVisibleForMonth(staff, year, month) {
-      if (staff.active !== 0) return true;
       const viewYM = \`\${year}-\${String(month + 1).padStart(2, "0")}\`;
-      const leftDate = staff.left_date || "";
-      const leftYM = leftDate ? leftDate.slice(0, 7) : "";
       const joinYM = getStaffJoinYM(staff);
       const hasFinancial = staffHasFinancialInMonth(staff.id);
-      const hasActivity = hasFinancial || staffHasAttendanceInMonth(staff.id, viewYM);
+      const hasAttendance = staffHasAttendanceInMonth(staff.id, viewYM);
+      const hasActivity = hasFinancial || hasAttendance;
 
-      // Automatically preserve full history for any past month strictly before their leaving month
-      if (leftYM && viewYM < leftYM && (viewYM >= joinYM || hasActivity)) {
-        return true;
+      if (staff.active !== 0) {
+        return viewYM >= joinYM || hasActivity;
       }
-      // Keep visible if they had salary payments/advances/bonuses recorded in this viewed month
-      if (hasFinancial) {
-        return true;
+
+      const leftDate = staff.left_date || (staff.updated_at ? staff.updated_at.split(' ')[0] : "");
+      const leftYM = leftDate ? leftDate.slice(0, 7) : "";
+
+      if (leftYM) {
+        // Automatically preserve full history for any past month strictly before their leaving month
+        if (viewYM < leftYM) {
+          return viewYM >= joinYM || hasActivity;
+        }
+        // Do NOT show staff who left in prior months (e.g. left in October when viewing November),
+        // unless they have a salary payment / advance / bonus record in this viewed month
+        if (viewYM > leftYM) {
+          return hasFinancial;
+        }
+        // In their departure month (viewYM === leftYM): keep visible if financial record exists,
+        // or when "Show Left Staff" toggle is enabled
+        if (hasFinancial) return true;
+        return showFormerStaff;
       }
-      // Otherwise show only when the "Show Left Staff" toggle is enabled
-      if (showFormerStaff && (viewYM >= joinYM || hasActivity || viewYM === leftYM)) {
-        return true;
-      }
+
+      // Fallback if left_date is missing
+      if (hasFinancial) return true;
+      if (showFormerStaff && (hasAttendance || viewYM === joinYM)) return true;
       return false;
     }
 
     function isStaffVisibleForDailyDate(staff, dateStr) {
       if (staff.active !== 0) return true;
-      if (showFormerStaff) return true;
-      const leftDate = staff.left_date || "";
+      const leftDate = staff.left_date || (staff.updated_at ? staff.updated_at.split(' ')[0] : "");
+      const leftYM = leftDate ? leftDate.slice(0, 7) : "";
+      const dateYM = dateStr.slice(0, 7);
       const joinYM = getStaffJoinYM(staff);
       const hasRecord = attendanceMap[\`\${staff.id}_\${dateStr}\`] !== undefined;
-      if (leftDate && dateStr < leftDate && (dateStr.slice(0, 7) >= joinYM || hasRecord)) {
+
+      // Keep visible if there is an explicit attendance record on this date
+      if (hasRecord) return true;
+
+      if (leftDate) {
+        // If viewing a date strictly before their departure date, they were active then
+        if (dateStr < leftDate && (dateYM >= joinYM || hasRecord)) {
+          return true;
+        }
+        // If they left in a previous month (e.g. left in October, date is in November),
+        // never show them in subsequent months even if "Show Left Staff" is toggled
+        if (leftYM < dateYM) {
+          return false;
+        }
+        // In the month they left: show only if "Show Left Staff" is toggled ON
+        if (leftYM === dateYM) {
+          return showFormerStaff;
+        }
         return true;
       }
-      return false;
+
+      return showFormerStaff;
     }
 
     function getVisibleStaffList(mode = "month", dateStrOverride = null) {
@@ -2553,7 +2584,16 @@ export function getDashboardHtml(): string {
         return scoped.filter(s => isStaffVisibleForDailyDate(s, dStr));
       }
       if (mode === "directory") {
-        return showFormerStaff ? scoped : scoped.filter(s => s.active !== 0);
+        if (!showFormerStaff) {
+          return scoped.filter(s => s.active !== 0);
+        }
+        const viewYM = \`\${currentYear}-\${String(currentMonth + 1).padStart(2, "0")}\`;
+        return scoped.filter(s => {
+          if (s.active !== 0) return true;
+          const leftDate = s.left_date || (s.updated_at ? s.updated_at.split(' ')[0] : "");
+          const leftYM = leftDate ? leftDate.slice(0, 7) : "";
+          return leftYM === viewYM;
+        });
       }
       return scoped.filter(s => isStaffVisibleForMonth(s, currentYear, currentMonth));
     }
@@ -2580,7 +2620,16 @@ export function getDashboardHtml(): string {
     }
 
     function updateFormerStaffToggleUI() {
-      const formerCount = getScopedStaffList().filter(s => s.active === 0).length;
+      const viewYM = currentView === "daily"
+        ? formatIsoDate(dailyDate).slice(0, 7)
+        : \`\${currentYear}-\${String(currentMonth + 1).padStart(2, "0")}\`;
+      const formerInMonth = getScopedStaffList().filter(s => {
+        if (s.active !== 0) return false;
+        const leftDate = s.left_date || (s.updated_at ? s.updated_at.split(' ')[0] : "");
+        const leftYM = leftDate ? leftDate.slice(0, 7) : "";
+        return leftYM === viewYM;
+      });
+      const formerCount = formerInMonth.length;
       const btns = document.querySelectorAll(".former-staff-toggle-btn");
       btns.forEach(btn => {
         const labelEl = btn.querySelector(".former-staff-toggle-label");
@@ -7804,7 +7853,7 @@ export function getDashboardHtml(): string {
             <table class="w-full border-collapse text-left text-xs">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
-                  <th class="py-3 px-3.5 sticky left-0 z-20 bg-slate-100 min-w-[130px] shadow-xs">Room</th>
+                  <th class="py-2.5 sm:py-3 px-2 sm:px-3.5 sticky left-0 z-20 bg-slate-100 min-w-[76px] sm:min-w-[130px] shadow-xs text-xs font-bold text-slate-700">Room</th>
                   \${days.map(d => {
                     const dayStr = String(d).padStart(2, "0");
                     const dateStr = \`\${currentMonthPrefix}-\${dayStr}\`;
@@ -7824,12 +7873,12 @@ export function getDashboardHtml(): string {
                 \${propRooms.map(rm => {
                   return \`
                     <tr class="hover:bg-slate-50/70 transition">
-                      <td class="py-2.5 px-3.5 sticky left-0 z-10 bg-white shadow-xs font-bold text-slate-900 whitespace-nowrap">
-                        <div class="flex items-center gap-1.5">
-                          <i data-lucide="door-closed" class="w-3.5 h-3.5 text-indigo-600"></i>
+                      <td class="py-2 sm:py-2.5 px-2 sm:px-3.5 sticky left-0 z-10 bg-white shadow-xs font-bold text-slate-900 whitespace-nowrap text-xs">
+                        <div class="flex items-center gap-1 sm:gap-1.5">
+                          <i data-lucide="door-closed" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
                           <span>Room \${escapeHtml(rm.room_number)}</span>
                         </div>
-                        <div class="text-[10px] text-slate-400 font-normal">
+                        <div class="hidden sm:block text-[10px] text-slate-400 font-normal">
                           \${activePropertyId === 'all' ? \`<span class="font-bold text-indigo-600 mr-1">\${escapeHtml(properties.find(p => p.id === rm.property_id)?.name || '')} ·</span>\` : ''}\${escapeHtml(rm.room_type || 'Standard')} · ₹\${formatCurrency(rm.base_price || 0)}
                         </div>
                       </td>
