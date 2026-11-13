@@ -53,54 +53,77 @@ export interface UnifiedWeekRecord {
 	profitMargin: number;
 	staffRevenue: number;
 	staffExpenses: number;
-	staffProfit: number;
 	airbnbRevenue: number;
 	airbnbExpenses: number;
-	airbnbProfit: number;
 	daysCount: number;
-	days: UnifiedDayRecord[];
 }
 
 export interface UnifiedMonthRecord {
-	month: string; // YYYY-MM
-	monthLabel: string; // "November 2026"
+	month: string;
+	monthLabel: string;
 	totalRevenue: number;
 	totalExpenses: number;
 	netProfit: number;
 	profitMargin: number;
 	staffRevenue: number;
 	staffExpenses: number;
-	staffProfit: number;
 	airbnbRevenue: number;
 	airbnbExpenses: number;
-	airbnbProfit: number;
-	bookingsCount: number;
-	expensesCount: number;
+	daysCount: number;
 }
 
-export interface UnifiedEarningsPayload {
+export interface UnifiedDashboardData {
 	success: boolean;
 	generatedAt: string;
-	currentDate: string;
 	selectedMonth: string;
 	availableMonths: string[];
-	properties: {
-		id: string;
-		name: string;
-		category: "staff" | "airbnb";
-	}[];
+	currentDate: string;
 	kpis: {
-		today: { revenue: number; expenses: number; profit: number; margin: number; staffRev: number; airbnbRev: number; staffExp: number; airbnbExp: number };
-		yesterday: { revenue: number; expenses: number; profit: number; margin: number };
-		thisWeek: { revenue: number; expenses: number; profit: number; margin: number; staffRev: number; airbnbRev: number; staffExp: number; airbnbExp: number };
-		selectedMonth: { revenue: number; expenses: number; profit: number; margin: number; staffRev: number; airbnbRev: number; staffExp: number; airbnbExp: number };
-		allTime: { revenue: number; expenses: number; profit: number; margin: number };
+		today: {
+			revenue: number;
+			expenses: number;
+			profit: number;
+			margin: number;
+			staffRev: number;
+			airbnbRev: number;
+			staffExp: number;
+			airbnbExp: number;
+		};
+		thisWeek: {
+			revenue: number;
+			expenses: number;
+			profit: number;
+			margin: number;
+			staffRev: number;
+			airbnbRev: number;
+			staffExp: number;
+			airbnbExp: number;
+		};
+		selectedMonth: {
+			revenue: number;
+			expenses: number;
+			profit: number;
+			margin: number;
+			staffRev: number;
+			airbnbRev: number;
+			staffExp: number;
+			airbnbExp: number;
+		};
+		allTime: {
+			revenue: number;
+			expenses: number;
+			profit: number;
+			margin: number;
+			staffRev: number;
+			airbnbRev: number;
+			staffExp: number;
+			airbnbExp: number;
+		};
 	};
 	daily: UnifiedDayRecord[];
 	weekly: UnifiedWeekRecord[];
 	monthly: UnifiedMonthRecord[];
 	breakdowns: {
-		revenueByProperty: Record<string, number>;
 		revenueByCategory: {
 			lodging: number;
 			fooding: number;
@@ -108,189 +131,171 @@ export interface UnifiedEarningsPayload {
 			airbnbHomestays: number;
 			other: number;
 		};
-		expensesByCategory: Record<string, number>;
+		expensesByCategory: {
+			staffHotel: number;
+			airbnbSupplies: number;
+			airbnbUtilities: number;
+			airbnbMaintenance: number;
+			airbnbCleaning: number;
+			airbnbOther: number;
+		};
+		properties: {
+			staffHotel: {
+				name: string;
+				revenue: number;
+				expenses: number;
+				profit: number;
+				margin: number;
+			};
+			airbnbHost: {
+				name: string;
+				revenue: number;
+				expenses: number;
+				profit: number;
+				margin: number;
+				bookingsCount: number;
+			};
+		};
 	};
 	recentTransactions: {
 		id: string;
-		type: "staff_sales" | "staff_expense" | "airbnb_booking" | "airbnb_expense";
-		date: string;
 		source: "Staff Management" | "Airbnb Host Portal";
-		property: string;
+		date: string;
 		title: string;
+		details?: string;
 		amount: number;
 		flow: "income" | "expense";
-		details?: string;
+		property: string;
 	}[];
+	error?: string;
 }
 
-// Payout parser consistent with Airbnb Host Portal & Staff Management logic
-function parseAirbnbPayout(payoutStr: any, notes: string | null | undefined, nights: number): number {
-	let amount = 0;
-	if (payoutStr) {
-		const clean = String(payoutStr).replace(/[^0-9.]/g, "");
-		const num = parseFloat(clean);
-		if (!isNaN(num) && num > 0) amount = num;
-	}
-	if (amount === 0 && notes) {
-		const totMatch = String(notes).match(/Total:\s*₹?\s*([0-9,.]+)/i);
-		if (totMatch) {
-			const num = parseFloat(totMatch[1].replace(/,/g, ""));
-			if (!isNaN(num) && num > 0) amount = num;
-		} else {
-			const m = String(notes).match(/(?:Booked Rate|Rate):\s*₹?\s*([0-9,.]+)/i);
-			if (m) {
-				const rate = parseFloat(m[1].replace(/,/g, ""));
-				if (!isNaN(rate) && rate > 0) {
-					amount = rate * (nights > 0 ? nights : 1);
-				}
-			}
-		}
-	}
-	return Math.round(amount);
+function getWeekNumber(dateStr: string): number {
+	const d = new Date(dateStr + "T00:00:00Z");
+	d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+	const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+	return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
-function getWeekNumber(d: Date): number {
-	const target = new Date(d.valueOf());
-	const dayNr = (d.getDay() + 6) % 7;
-	target.setDate(target.getDate() - dayNr + 3);
-	const firstThursday = target.valueOf();
-	target.setMonth(0, 1);
-	if (target.getDay() !== 4) {
-		target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+function getWeekDateRange(year: number, week: number): { startDate: string; endDate: string } {
+	const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+	const dow = simple.getUTCDay();
+	const ISOweekStart = simple;
+	if (dow <= 4) {
+		ISOweekStart.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
+	} else {
+		ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - simple.getUTCDay());
 	}
-	return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
-}
+	const ISOweekEnd = new Date(ISOweekStart);
+	ISOweekEnd.setUTCDate(ISOweekEnd.getUTCDate() + 6);
 
-function formatMonthLabel(monthKey: string): string {
-	const [yStr, mStr] = monthKey.split("-");
-	const y = parseInt(yStr, 10);
-	const m = parseInt(mStr, 10) - 1;
-	const date = new Date(y, m, 1);
-	return date.toLocaleString("en-US", { month: "long", year: "numeric" });
+	const fmt = (dt: Date) => dt.toISOString().split("T")[0];
+	return {
+		startDate: fmt(ISOweekStart),
+		endDate: fmt(ISOweekEnd)
+	};
 }
 
 export async function fetchUnifiedEarningsData(
 	env: Env,
-	selectedMonthInput?: string
-): Promise<UnifiedEarningsPayload> {
+	requestedMonth?: string
+): Promise<UnifiedDashboardData> {
 	const now = new Date();
-	const todayStr = now.toISOString().slice(0, 10);
-	const currentMonthStr = todayStr.slice(0, 7);
-	const selectedMonth = (selectedMonthInput && /^\d{4}-\d{2}$/.test(selectedMonthInput))
-		? selectedMonthInput
-		: currentMonthStr;
+	const todayStr = now.toISOString().split("T")[0];
+	const currentMonth = todayStr.slice(0, 7);
+	const targetMonth = requestedMonth || currentMonth;
 
-	// 1. Fetch active properties from Staff DB
-	let staffProperties: { id: string; name: string }[] = [];
-	try {
-		const { results } = await env.DB.prepare(
-			"SELECT id, name FROM properties WHERE active IS NULL OR active = 1"
-		).all<{ id: string; name: string }>();
-		staffProperties = results || [];
-	} catch (e) {
-		console.error("Error fetching staff properties:", e);
-	}
+	const staffDb = env.DB;
+	const airbnbDb = env.AIRBNB_DB;
 
-	// 2. Fetch all daily finances from Staff DB
-	let staffFinances: any[] = [];
-	try {
-		const { results } = await env.DB.prepare(`
-			SELECT f.*, p.name AS property_name
-			FROM daily_finances f
-			JOIN properties p ON f.property_id = p.id
-			WHERE (p.active IS NULL OR p.active = 1)
-			ORDER BY f.date DESC
-		`).all();
-		staffFinances = results || [];
-	} catch (e) {
-		console.error("Error fetching staff daily finances:", e);
-	}
+	const staffMonthsRes = await staffDb
+		.prepare("SELECT DISTINCT substr(date, 1, 7) as month FROM daily_finances ORDER BY month DESC")
+		.all<{ month: string }>();
+	const airbnbMonthsRes = await airbnbDb
+		.prepare("SELECT DISTINCT substr(check_in_date, 1, 7) as month FROM bookings WHERE check_in_date IS NOT NULL ORDER BY month DESC")
+		.all<{ month: string }>();
 
-	// 3. Fetch Airbnb Bookings & Expenses from AIRBNB_DB
-	let airbnbBookings: any[] = [];
-	let airbnbExpenses: any[] = [];
-	let airbnbUnits: { id: string; name: string }[] = [];
-
-	if (env.AIRBNB_DB) {
-		try {
-			const { results: bResults } = await env.AIRBNB_DB.prepare(`
-				SELECT id, property, guest_name, check_in_date, check_out_date, nights, payout, notes, platform, status
-				FROM bookings
-				WHERE status NOT IN ('Cancelled', 'Blocked') AND platform != 'Blocked'
-				ORDER BY check_in_date DESC
-			`).all();
-			airbnbBookings = bResults || [];
-		} catch (e) {
-			console.error("Error fetching airbnb bookings:", e);
-		}
-
-		try {
-			const { results: eResults } = await env.AIRBNB_DB.prepare(`
-				SELECT id, title, amount, category, date, property, notes
-				FROM expenses
-				ORDER BY date DESC
-			`).all();
-			airbnbExpenses = eResults || [];
-		} catch (e) {
-			console.error("Error fetching airbnb expenses:", e);
-		}
-
-		try {
-			const { results: pResults } = await env.AIRBNB_DB.prepare(`
-				SELECT id, name FROM properties ORDER BY name ASC
-			`).all<{ id: string; name: string }>();
-			airbnbUnits = pResults || [];
-		} catch (e) {
-			console.error("Error fetching airbnb properties:", e);
+	const monthSet = new Set<string>();
+	monthSet.add(currentMonth);
+	if (staffMonthsRes.results) {
+		for (const row of staffMonthsRes.results) {
+			if (row.month && row.month.length === 7) monthSet.add(row.month);
 		}
 	}
-
-	// Build Property List
-	const propertyList: { id: string; name: string; category: "staff" | "airbnb" }[] = [];
-	staffProperties.forEach(p => propertyList.push({ id: p.id, name: p.name, category: "staff" }));
-	if (airbnbUnits.length > 0) {
-		airbnbUnits.forEach(p => propertyList.push({ id: p.id, name: p.name, category: "airbnb" }));
-	} else {
-		// Fallbacks from distinct bookings
-		const distinctProps = Array.from(new Set(airbnbBookings.map(b => b.property || "Airbnb Unit")));
-		distinctProps.forEach(pName => propertyList.push({ id: pName, name: pName, category: "airbnb" }));
+	if (airbnbMonthsRes.results) {
+		for (const row of airbnbMonthsRes.results) {
+			if (row.month && row.month.length === 7) monthSet.add(row.month);
+		}
 	}
+	const availableMonths = Array.from(monthSet).sort().reverse();
 
-	// Determine all available months
-	const allMonthKeys = new Set<string>();
-	allMonthKeys.add(currentMonthStr);
-	allMonthKeys.add(selectedMonth);
+	const staffDailyRes = await staffDb
+		.prepare(
+			`SELECT * FROM daily_finances 
+       WHERE date LIKE ? 
+       ORDER BY date DESC`
+		)
+		.bind(`${targetMonth}%`)
+		.all<any>();
 
-	staffFinances.forEach(f => {
-		if (f.date && f.date.length >= 7) allMonthKeys.add(f.date.slice(0, 7));
-	});
-	airbnbBookings.forEach(b => {
-		if (b.check_in_date && b.check_in_date.length >= 7) allMonthKeys.add(b.check_in_date.slice(0, 7));
-	});
-	airbnbExpenses.forEach(e => {
-		if (e.date && e.date.length >= 7) allMonthKeys.add(e.date.slice(0, 7));
-	});
+	const staffAllDailyRes = await staffDb
+		.prepare("SELECT * FROM daily_finances ORDER BY date DESC")
+		.all<any>();
 
-	const availableMonths = Array.from(allMonthKeys).sort().reverse();
+	const airbnbBookingsRes = await airbnbDb
+		.prepare(
+			`SELECT * FROM bookings 
+       WHERE (check_in_date LIKE ? OR check_out_date LIKE ?)
+         AND status NOT IN ('Cancelled', 'Blocked')
+       ORDER BY check_in_date DESC`
+		)
+		.bind(`${targetMonth}%`, `${targetMonth}%`)
+		.all<any>();
 
-	// 4. Group data by Day (for selected month)
-	// Build map of all dates in selected month
-	const [selYear, selMonthNum] = selectedMonth.split("-").map(n => parseInt(n, 10));
-	const daysInSelectedMonth = new Date(selYear, selMonthNum, 0).getDate();
+	const airbnbAllBookingsRes = await airbnbDb
+		.prepare(
+			`SELECT * FROM bookings 
+       WHERE status NOT IN ('Cancelled', 'Blocked')
+       ORDER BY check_in_date DESC`
+		)
+		.all<any>();
+
+	const airbnbExpensesRes = await airbnbDb
+		.prepare(
+			`SELECT * FROM expenses 
+       WHERE date LIKE ? 
+       ORDER BY date DESC`
+		)
+		.bind(`${targetMonth}%`)
+		.all<any>();
+
+	const airbnbAllExpensesRes = await airbnbDb
+		.prepare("SELECT * FROM expenses ORDER BY date DESC")
+		.all<any>();
+
+	const [yearStr, monthNumStr] = targetMonth.split("-");
+	const year = parseInt(yearStr, 10);
+	const monthNum = parseInt(monthNumStr, 10);
+	const daysInMonth = new Date(year, monthNum, 0).getDate();
 
 	const dailyMap = new Map<string, UnifiedDayRecord>();
 
-	for (let day = 1; day <= daysInSelectedMonth; day++) {
-		const dayStr = String(day).padStart(2, "0");
-		const dateKey = `${selectedMonth}-${dayStr}`;
-		const dateObj = new Date(selYear, selMonthNum - 1, day);
-		const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
-		const formatted = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+	for (let d = daysInMonth; d >= 1; d--) {
+		const dayStr = d < 10 ? `0${d}` : `${d}`;
+		const date = `${targetMonth}-${dayStr}`;
+		const dtObj = new Date(`${date}T00:00:00Z`);
+		const dayOfWeek = dtObj.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+		const formattedDate = dtObj.toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+			timeZone: "UTC"
+		});
 
-		dailyMap.set(dateKey, {
-			date: dateKey,
-			dayOfWeek: dayName,
-			formattedDate: formatted,
+		dailyMap.set(date, {
+			date,
+			dayOfWeek,
+			formattedDate,
 			totalRevenue: 0,
 			totalExpenses: 0,
 			netProfit: 0,
@@ -312,406 +317,576 @@ export async function fetchUnifiedEarningsData(
 		});
 	}
 
-	// Populate Staff Data into Daily Map
-	staffFinances.forEach(f => {
-		const dKey = f.date;
-		if (dailyMap.has(dKey)) {
-			const entry = dailyMap.get(dKey)!;
-			const lodging = (Number(f.lodging_online) || 0) + (Number(f.lodging_cash ?? f.lodging_offline) || 0);
-			const fooding = (Number(f.fooding_online) || 0) + (Number(f.fooding_cash ?? f.fooding_offline) || 0);
-			const services = (Number(f.services_online) || 0) + (Number(f.services_cash) || 0);
-			const other = Number(f.other_sales) || 0;
-			const totalSales = Number(f.total_sales) || (lodging + fooding + services + other);
-			const expTotal = Number(f.expenses_total) || 0;
+	if (staffDailyRes.results) {
+		for (const row of staffDailyRes.results) {
+			const date = row.date;
+			let rec = dailyMap.get(date);
+			if (!rec) {
+				const dtObj = new Date(`${date}T00:00:00Z`);
+				rec = {
+					date,
+					dayOfWeek: dtObj.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+					formattedDate: dtObj.toLocaleDateString("en-US", {
+						month: "short",
+						day: "numeric",
+						year: "numeric",
+						timeZone: "UTC"
+					}),
+					totalRevenue: 0,
+					totalExpenses: 0,
+					netProfit: 0,
+					profitMargin: 0,
+					staffRevenue: 0,
+					staffExpenses: 0,
+					staffProfit: 0,
+					staffLodging: 0,
+					staffFooding: 0,
+					staffServices: 0,
+					staffOther: 0,
+					staffExpenseNotes: [],
+					airbnbRevenue: 0,
+					airbnbExpenses: 0,
+					airbnbProfit: 0,
+					airbnbBookingsCount: 0,
+					airbnbBookings: [],
+					airbnbExpenseItems: []
+				};
+				dailyMap.set(date, rec);
+			}
 
-			entry.staffRevenue += totalSales;
-			entry.staffExpenses += expTotal;
-			entry.staffLodging += lodging;
-			entry.staffFooding += fooding;
-			entry.staffServices += services;
-			entry.staffOther += other;
-			if (f.expense_notes && f.expense_notes.trim()) {
-				entry.staffExpenseNotes.push(`${f.property_name || "Hotel"}: ${f.expense_notes.trim()}`);
+			const lodging = Number(row.lodging_sales || 0);
+			const fooding = Number(row.fooding_sales || 0);
+			const services = Number(row.services_sales || 0);
+			const other = Number(row.other_sales || 0);
+			const staffRev = lodging + fooding + services + other;
+			const staffExp = Number(row.expenses || 0);
+
+			rec.staffLodging += lodging;
+			rec.staffFooding += fooding;
+			rec.staffServices += services;
+			rec.staffOther += other;
+			rec.staffRevenue += staffRev;
+			rec.staffExpenses += staffExp;
+			rec.staffProfit = rec.staffRevenue - rec.staffExpenses;
+
+			if (row.expense_notes) {
+				rec.staffExpenseNotes.push(row.expense_notes);
 			}
 		}
-	});
+	}
 
-	// Populate Airbnb Bookings into Daily Map (Recognized strictly by check-in date)
-	airbnbBookings.forEach(b => {
-		const dKey = b.check_in_date;
-		const payout = parseAirbnbPayout(b.payout, b.notes, b.nights || 1);
-		if (dailyMap.has(dKey)) {
-			const entry = dailyMap.get(dKey)!;
-			entry.airbnbRevenue += payout;
-			entry.airbnbBookingsCount += 1;
-			entry.airbnbBookings.push({
-				id: b.id,
-				property: b.property || "Homestay",
-				guestName: b.guest_name || "Guest",
-				platform: b.platform || "Airbnb",
-				checkInDate: b.check_in_date,
-				checkOutDate: b.check_out_date,
-				nights: b.nights || 1,
-				payout: payout
-			});
+	if (airbnbBookingsRes.results) {
+		for (const row of airbnbBookingsRes.results) {
+			const checkIn = row.check_in_date;
+			if (!checkIn) continue;
+			let rec = dailyMap.get(checkIn);
+			if (!rec && checkIn.startsWith(targetMonth)) {
+				const dtObj = new Date(`${checkIn}T00:00:00Z`);
+				rec = {
+					date: checkIn,
+					dayOfWeek: dtObj.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+					formattedDate: dtObj.toLocaleDateString("en-US", {
+						month: "short",
+						day: "numeric",
+						year: "numeric",
+						timeZone: "UTC"
+					}),
+					totalRevenue: 0,
+					totalExpenses: 0,
+					netProfit: 0,
+					profitMargin: 0,
+					staffRevenue: 0,
+					staffExpenses: 0,
+					staffProfit: 0,
+					staffLodging: 0,
+					staffFooding: 0,
+					staffServices: 0,
+					staffOther: 0,
+					staffExpenseNotes: [],
+					airbnbRevenue: 0,
+					airbnbExpenses: 0,
+					airbnbProfit: 0,
+					airbnbBookingsCount: 0,
+					airbnbBookings: [],
+					airbnbExpenseItems: []
+				};
+				dailyMap.set(checkIn, rec);
+			}
+
+			if (rec) {
+				const payout = Number(row.total_payout || 0);
+				rec.airbnbRevenue += payout;
+				rec.airbnbBookingsCount += 1;
+				rec.airbnbProfit = rec.airbnbRevenue - rec.airbnbExpenses;
+				rec.airbnbBookings.push({
+					id: row.id || "",
+					property: row.property || "Airbnb Property",
+					guestName: row.guest_name || "Guest",
+					platform: row.platform || "Airbnb",
+					checkInDate: row.check_in_date,
+					checkOutDate: row.check_out_date,
+					nights: Number(row.nights || 1),
+					payout
+				});
+			}
 		}
-	});
+	}
 
-	// Populate Airbnb Expenses into Daily Map
-	airbnbExpenses.forEach(e => {
-		const dKey = e.date;
-		const amt = Number(e.amount) || 0;
-		if (dailyMap.has(dKey)) {
-			const entry = dailyMap.get(dKey)!;
-			entry.airbnbExpenses += amt;
-			entry.airbnbExpenseItems.push({
-				id: e.id,
-				title: e.title || "Expense",
-				amount: amt,
-				category: e.category || "General",
-				property: e.property || "All Units"
-			});
+	if (airbnbExpensesRes.results) {
+		for (const row of airbnbExpensesRes.results) {
+			const date = row.date;
+			if (!date) continue;
+			let rec = dailyMap.get(date);
+			if (!rec && date.startsWith(targetMonth)) {
+				const dtObj = new Date(`${date}T00:00:00Z`);
+				rec = {
+					date,
+					dayOfWeek: dtObj.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+					formattedDate: dtObj.toLocaleDateString("en-US", {
+						month: "short",
+						day: "numeric",
+						year: "numeric",
+						timeZone: "UTC"
+					}),
+					totalRevenue: 0,
+					totalExpenses: 0,
+					netProfit: 0,
+					profitMargin: 0,
+					staffRevenue: 0,
+					staffExpenses: 0,
+					staffProfit: 0,
+					staffLodging: 0,
+					staffFooding: 0,
+					staffServices: 0,
+					staffOther: 0,
+					staffExpenseNotes: [],
+					airbnbRevenue: 0,
+					airbnbExpenses: 0,
+					airbnbProfit: 0,
+					airbnbBookingsCount: 0,
+					airbnbBookings: [],
+					airbnbExpenseItems: []
+				};
+				dailyMap.set(date, rec);
+			}
+
+			if (rec) {
+				const amount = Number(row.amount || 0);
+				rec.airbnbExpenses += amount;
+				rec.airbnbProfit = rec.airbnbRevenue - rec.airbnbExpenses;
+				rec.airbnbExpenseItems.push({
+					id: row.id || "",
+					title: row.title || "Expense",
+					amount,
+					category: row.category || "General",
+					property: row.property || "Airbnb Property"
+				});
+			}
 		}
-	});
+	}
 
-	// Calculate totals and profits for each day
-	const dailyRecords: UnifiedDayRecord[] = Array.from(dailyMap.values()).map(d => {
-		d.staffProfit = d.staffRevenue - d.staffExpenses;
-		d.airbnbProfit = d.airbnbRevenue - d.airbnbExpenses;
-		d.totalRevenue = d.staffRevenue + d.airbnbRevenue;
-		d.totalExpenses = d.staffExpenses + d.airbnbExpenses;
-		d.netProfit = d.totalRevenue - d.totalExpenses;
-		d.profitMargin = d.totalRevenue > 0 ? Math.round((d.netProfit / d.totalRevenue) * 100) : 0;
-		return d;
-	});
+	for (const rec of dailyMap.values()) {
+		rec.totalRevenue = rec.staffRevenue + rec.airbnbRevenue;
+		rec.totalExpenses = rec.staffExpenses + rec.airbnbExpenses;
+		rec.netProfit = rec.totalRevenue - rec.totalExpenses;
+		rec.profitMargin =
+			rec.totalRevenue > 0 ? Math.round((rec.netProfit / rec.totalRevenue) * 100) : 0;
+	}
 
-	// Sort daily descending (newest first)
-	dailyRecords.sort((a, b) => b.date.localeCompare(a.date));
+	const dailyRecords = Array.from(dailyMap.values()).sort((a, b) => b.date.localeCompare(a.date));
 
-	// 5. Aggregate into Weekly View (Group days by ISO week or Mon-Sun weeks)
-	const weekMap = new Map<number, UnifiedWeekRecord>();
-
-	dailyRecords.forEach(day => {
-		const [y, m, d] = day.date.split("-").map(n => parseInt(n, 10));
-		const dateObj = new Date(y, m - 1, d);
-		const weekNum = getWeekNumber(dateObj);
-
-		if (!weekMap.has(weekNum)) {
-			// Find start (Monday) and end (Sunday) of this week
-			const dayOfWeek = (dateObj.getDay() + 6) % 7; // 0 = Mon, 6 = Sun
-			const mon = new Date(dateObj);
-			mon.setDate(dateObj.getDate() - dayOfWeek);
-			const sun = new Date(mon);
-			sun.setDate(mon.getDate() + 6);
-
-			const startLabel = mon.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-			const endLabel = sun.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-			weekMap.set(weekNum, {
+	const weeklyMap = new Map<number, UnifiedWeekRecord>();
+	for (const rec of dailyRecords) {
+		const weekNum = getWeekNumber(rec.date);
+		let wRec = weeklyMap.get(weekNum);
+		if (!wRec) {
+			const range = getWeekDateRange(year, weekNum);
+			wRec = {
 				weekNumber: weekNum,
-				weekLabel: `Week ${weekNum} (${startLabel} – ${endLabel})`,
-				startDate: mon.toISOString().slice(0, 10),
-				endDate: sun.toISOString().slice(0, 10),
+				weekLabel: `Week ${weekNum}`,
+				startDate: range.startDate,
+				endDate: range.endDate,
 				totalRevenue: 0,
 				totalExpenses: 0,
 				netProfit: 0,
 				profitMargin: 0,
 				staffRevenue: 0,
 				staffExpenses: 0,
-				staffProfit: 0,
 				airbnbRevenue: 0,
 				airbnbExpenses: 0,
-				airbnbProfit: 0,
-				daysCount: 0,
-				days: []
-			});
+				daysCount: 0
+			};
+			weeklyMap.set(weekNum, wRec);
 		}
 
-		const week = weekMap.get(weekNum)!;
-		week.days.push(day);
-		week.daysCount += 1;
-		week.staffRevenue += day.staffRevenue;
-		week.staffExpenses += day.staffExpenses;
-		week.airbnbRevenue += day.airbnbRevenue;
-		week.airbnbExpenses += day.airbnbExpenses;
-		week.totalRevenue += day.totalRevenue;
-		week.totalExpenses += day.totalExpenses;
-	});
-
-	const weeklyRecords: UnifiedWeekRecord[] = Array.from(weekMap.values()).map(w => {
-		w.staffProfit = w.staffRevenue - w.staffExpenses;
-		w.airbnbProfit = w.airbnbRevenue - w.airbnbExpenses;
-		w.netProfit = w.totalRevenue - w.totalExpenses;
-		w.profitMargin = w.totalRevenue > 0 ? Math.round((w.netProfit / w.totalRevenue) * 100) : 0;
-		// Sort days in week ascending
-		w.days.sort((a, b) => a.date.localeCompare(b.date));
-		return w;
-	});
-	weeklyRecords.sort((a, b) => b.weekNumber - a.weekNumber);
-
-	// 6. Aggregate into Monthly View (All Available Months)
-	const monthMap = new Map<string, UnifiedMonthRecord>();
-
-	availableMonths.forEach(mKey => {
-		monthMap.set(mKey, {
-			month: mKey,
-			monthLabel: formatMonthLabel(mKey),
-			totalRevenue: 0,
-			totalExpenses: 0,
-			netProfit: 0,
-			profitMargin: 0,
-			staffRevenue: 0,
-			staffExpenses: 0,
-			staffProfit: 0,
-			airbnbRevenue: 0,
-			airbnbExpenses: 0,
-			airbnbProfit: 0,
-			bookingsCount: 0,
-			expensesCount: 0
-		});
-	});
-
-	// All staff finances into monthly
-	staffFinances.forEach(f => {
-		if (f.date && f.date.length >= 7) {
-			const mKey = f.date.slice(0, 7);
-			if (monthMap.has(mKey)) {
-				const mObj = monthMap.get(mKey)!;
-				const lodging = (Number(f.lodging_online) || 0) + (Number(f.lodging_cash ?? f.lodging_offline) || 0);
-				const fooding = (Number(f.fooding_online) || 0) + (Number(f.fooding_cash ?? f.fooding_offline) || 0);
-				const services = (Number(f.services_online) || 0) + (Number(f.services_cash) || 0);
-				const other = Number(f.other_sales) || 0;
-				const totalSales = Number(f.total_sales) || (lodging + fooding + services + other);
-				const expTotal = Number(f.expenses_total) || 0;
-
-				mObj.staffRevenue += totalSales;
-				mObj.staffExpenses += expTotal;
-				if (expTotal > 0) mObj.expensesCount += 1;
-			}
-		}
-	});
-
-	// All airbnb bookings into monthly
-	airbnbBookings.forEach(b => {
-		if (b.check_in_date && b.check_in_date.length >= 7) {
-			const mKey = b.check_in_date.slice(0, 7);
-			if (monthMap.has(mKey)) {
-				const mObj = monthMap.get(mKey)!;
-				const payout = parseAirbnbPayout(b.payout, b.notes, b.nights || 1);
-				mObj.airbnbRevenue += payout;
-				mObj.bookingsCount += 1;
-			}
-		}
-	});
-
-	// All airbnb expenses into monthly
-	airbnbExpenses.forEach(e => {
-		if (e.date && e.date.length >= 7) {
-			const mKey = e.date.slice(0, 7);
-			if (monthMap.has(mKey)) {
-				const mObj = monthMap.get(mKey)!;
-				const amt = Number(e.amount) || 0;
-				mObj.airbnbExpenses += amt;
-				mObj.expensesCount += 1;
-			}
-		}
-	});
-
-	const monthlyRecords: UnifiedMonthRecord[] = Array.from(monthMap.values()).map(m => {
-		m.staffProfit = m.staffRevenue - m.staffExpenses;
-		m.airbnbProfit = m.airbnbRevenue - m.airbnbExpenses;
-		m.totalRevenue = m.staffRevenue + m.airbnbRevenue;
-		m.totalExpenses = m.staffExpenses + m.airbnbExpenses;
-		m.netProfit = m.totalRevenue - m.totalExpenses;
-		m.profitMargin = m.totalRevenue > 0 ? Math.round((m.netProfit / m.totalRevenue) * 100) : 0;
-		return m;
-	});
-	monthlyRecords.sort((a, b) => b.month.localeCompare(a.month));
-
-	// 7. Calculate Breakdown Totals for the Selected Month
-	const revenueByProperty: Record<string, number> = {};
-	const expensesByCategory: Record<string, number> = {};
-	const revenueByCategory = {
-		lodging: 0,
-		fooding: 0,
-		services: 0,
-		airbnbHomestays: 0,
-		other: 0
-	};
-
-	// Selected month daily records breakdown
-	dailyRecords.forEach(d => {
-		revenueByCategory.lodging += d.staffLodging;
-		revenueByCategory.fooding += d.staffFooding;
-		revenueByCategory.services += d.staffServices;
-		revenueByCategory.other += d.staffOther;
-		revenueByCategory.airbnbHomestays += d.airbnbRevenue;
-
-		d.airbnbBookings.forEach(b => {
-			const propName = b.property || "Airbnb Unit";
-			revenueByProperty[propName] = (revenueByProperty[propName] || 0) + b.payout;
-		});
-
-		d.airbnbExpenseItems.forEach(exp => {
-			const cat = exp.category || "General";
-			expensesByCategory[cat] = (expensesByCategory[cat] || 0) + exp.amount;
-		});
-	});
-
-	// Add staff management property revenues
-	staffProperties.forEach(p => {
-		const propSales = staffFinances
-			.filter(f => f.property_id === p.id && f.date.startsWith(selectedMonth))
-			.reduce((sum, f) => sum + (Number(f.total_sales) || 0), 0);
-		if (propSales > 0) {
-			revenueByProperty[p.name] = (revenueByProperty[p.name] || 0) + propSales;
-		}
-	});
-
-	// Add staff expenses category
-	const staffExpSum = dailyRecords.reduce((sum, d) => sum + d.staffExpenses, 0);
-	if (staffExpSum > 0) {
-		expensesByCategory["Staff & Hotel Ops"] = (expensesByCategory["Staff & Hotel Ops"] || 0) + staffExpSum;
+		wRec.staffRevenue += rec.staffRevenue;
+		wRec.staffExpenses += rec.staffExpenses;
+		wRec.airbnbRevenue += rec.airbnbRevenue;
+		wRec.airbnbExpenses += rec.airbnbExpenses;
+		wRec.totalRevenue += rec.totalRevenue;
+		wRec.totalExpenses += rec.totalExpenses;
+		wRec.daysCount += 1;
 	}
 
-	// 8. Calculate KPI Summary Numbers
-	const todayRecord = dailyRecords.find(d => d.date === todayStr);
-	const yesterdayObj = new Date(now);
-	yesterdayObj.setDate(now.getDate() - 1);
-	const yesterdayStr = yesterdayObj.toISOString().slice(0, 10);
-	const yesterdayRecord = dailyRecords.find(d => d.date === yesterdayStr);
+	for (const wRec of weeklyMap.values()) {
+		wRec.netProfit = wRec.totalRevenue - wRec.totalExpenses;
+		wRec.profitMargin =
+			wRec.totalRevenue > 0 ? Math.round((wRec.netProfit / wRec.totalRevenue) * 100) : 0;
+	}
 
-	const thisWeekRecord = weeklyRecords.find(w => todayStr >= w.startDate && todayStr <= w.endDate) || weeklyRecords[0] || { totalRevenue: 0, totalExpenses: 0, netProfit: 0, profitMargin: 0, staffRevenue: 0, airbnbRevenue: 0, staffExpenses: 0, airbnbExpenses: 0 };
-	const selectedMonthRecord = monthlyRecords.find(m => m.month === selectedMonth) || { totalRevenue: 0, totalExpenses: 0, netProfit: 0, profitMargin: 0, staffRevenue: 0, airbnbRevenue: 0, staffExpenses: 0, airbnbExpenses: 0 };
+	const weeklyRecords = Array.from(weeklyMap.values()).sort(
+		(a, b) => b.weekNumber - a.weekNumber
+	);
 
-	const allTimeRevenue = monthlyRecords.reduce((s, m) => s + m.totalRevenue, 0);
-	const allTimeExpenses = monthlyRecords.reduce((s, m) => s + m.totalExpenses, 0);
-	const allTimeProfit = allTimeRevenue - allTimeExpenses;
-	const allTimeMargin = allTimeRevenue > 0 ? Math.round((allTimeProfit / allTimeRevenue) * 100) : 0;
+	const monthlyMap = new Map<string, UnifiedMonthRecord>();
 
-	// 9. Build Unified Recent Transactions Stream (Latest 25)
-	const recentTx: any[] = [];
+	if (staffAllDailyRes.results) {
+		for (const row of staffAllDailyRes.results) {
+			const m = row.date ? row.date.slice(0, 7) : null;
+			if (!m || m.length !== 7) continue;
+			let mRec = monthlyMap.get(m);
+			if (!mRec) {
+				const [y, mm] = m.split("-");
+				const dt = new Date(parseInt(y, 10), parseInt(mm, 10) - 1, 1);
+				mRec = {
+					month: m,
+					monthLabel: dt.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+					totalRevenue: 0,
+					totalExpenses: 0,
+					netProfit: 0,
+					profitMargin: 0,
+					staffRevenue: 0,
+					staffExpenses: 0,
+					airbnbRevenue: 0,
+					airbnbExpenses: 0,
+					daysCount: 0
+				};
+				monthlyMap.set(m, mRec);
+			}
 
-	staffFinances.slice(0, 20).forEach(f => {
-		const totalSales = Number(f.total_sales) || 0;
-		const totalExp = Number(f.expenses_total) || 0;
-		if (totalSales > 0) {
-			recentTx.push({
-				id: `sf_rev_${f.id}`,
-				type: "staff_sales",
-				date: f.date,
-				source: "Staff Management",
-				property: f.property_name || "Xsquare Hotel",
-				title: `Daily Sales (Lodging: ₹${f.lodging_online || 0 + f.lodging_cash || 0}, Fooding: ₹${f.fooding_online || 0 + f.fooding_cash || 0})`,
-				amount: totalSales,
-				flow: "income",
-				details: f.submitted_by ? `Logged by: ${f.submitted_by}` : undefined
-			});
+			const lodging = Number(row.lodging_sales || 0);
+			const fooding = Number(row.fooding_sales || 0);
+			const services = Number(row.services_sales || 0);
+			const other = Number(row.other_sales || 0);
+			const rev = lodging + fooding + services + other;
+			const exp = Number(row.expenses || 0);
+
+			mRec.staffRevenue += rev;
+			mRec.staffExpenses += exp;
+			mRec.daysCount += 1;
 		}
-		if (totalExp > 0) {
-			recentTx.push({
-				id: `sf_exp_${f.id}`,
-				type: "staff_expense",
-				date: f.date,
-				source: "Staff Management",
-				property: f.property_name || "Xsquare Hotel",
-				title: f.expense_notes ? `Expenses: ${f.expense_notes}` : "Daily Operational Expenses",
-				amount: totalExp,
-				flow: "expense",
-				details: f.submitted_by ? `Logged by: ${f.submitted_by}` : undefined
-			});
+	}
+
+	if (airbnbAllBookingsRes.results) {
+		for (const row of airbnbAllBookingsRes.results) {
+			const m = row.check_in_date ? row.check_in_date.slice(0, 7) : null;
+			if (!m || m.length !== 7) continue;
+			let mRec = monthlyMap.get(m);
+			if (!mRec) {
+				const [y, mm] = m.split("-");
+				const dt = new Date(parseInt(y, 10), parseInt(mm, 10) - 1, 1);
+				mRec = {
+					month: m,
+					monthLabel: dt.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+					totalRevenue: 0,
+					totalExpenses: 0,
+					netProfit: 0,
+					profitMargin: 0,
+					staffRevenue: 0,
+					staffExpenses: 0,
+					airbnbRevenue: 0,
+					airbnbExpenses: 0,
+					daysCount: 0
+				};
+				monthlyMap.set(m, mRec);
+			}
+
+			const payout = Number(row.total_payout || 0);
+			mRec.airbnbRevenue += payout;
 		}
-	});
+	}
 
-	airbnbBookings.slice(0, 25).forEach(b => {
-		const payout = parseAirbnbPayout(b.payout, b.notes, b.nights || 1);
-		recentTx.push({
-			id: `ab_bk_${b.id}`,
-			type: "airbnb_booking",
-			date: b.check_in_date,
-			source: "Airbnb Host Portal",
-			property: b.property || "Homestay",
-			title: `Booking: ${b.guestName || b.guest_name || "Guest"} (${b.platform || "Airbnb"})`,
-			amount: payout,
-			flow: "income",
-			details: `${b.nights || 1} night(s) | Check-in: ${b.check_in_date} → ${b.check_out_date}`
-		});
-	});
+	if (airbnbAllExpensesRes.results) {
+		for (const row of airbnbAllExpensesRes.results) {
+			const m = row.date ? row.date.slice(0, 7) : null;
+			if (!m || m.length !== 7) continue;
+			let mRec = monthlyMap.get(m);
+			if (!mRec) {
+				const [y, mm] = m.split("-");
+				const dt = new Date(parseInt(y, 10), parseInt(mm, 10) - 1, 1);
+				mRec = {
+					month: m,
+					monthLabel: dt.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+					totalRevenue: 0,
+					totalExpenses: 0,
+					netProfit: 0,
+					profitMargin: 0,
+					staffRevenue: 0,
+					staffExpenses: 0,
+					airbnbRevenue: 0,
+					airbnbExpenses: 0,
+					daysCount: 0
+				};
+				monthlyMap.set(m, mRec);
+			}
 
-	airbnbExpenses.slice(0, 15).forEach(e => {
-		recentTx.push({
-			id: `ab_exp_${e.id}`,
-			type: "airbnb_expense",
-			date: e.date,
-			source: "Airbnb Host Portal",
-			property: e.property || "All Units",
-			title: `${e.category || "Expense"}: ${e.title}`,
-			amount: Number(e.amount) || 0,
-			flow: "expense",
-			details: e.notes || undefined
-		});
-	});
+			const amt = Number(row.amount || 0);
+			mRec.airbnbExpenses += amt;
+		}
+	}
+
+	for (const mRec of monthlyMap.values()) {
+		mRec.totalRevenue = mRec.staffRevenue + mRec.airbnbRevenue;
+		mRec.totalExpenses = mRec.staffExpenses + mRec.airbnbExpenses;
+		mRec.netProfit = mRec.totalRevenue - mRec.totalExpenses;
+		mRec.profitMargin =
+			mRec.totalRevenue > 0 ? Math.round((mRec.netProfit / mRec.totalRevenue) * 100) : 0;
+	}
+
+	const monthlyRecords = Array.from(monthlyMap.values()).sort((a, b) =>
+		b.month.localeCompare(a.month)
+	);
+
+	const todayRecord = dailyRecords.find((r) => r.date === todayStr);
+	const todayKPI = {
+		revenue: todayRecord ? todayRecord.totalRevenue : 0,
+		expenses: todayRecord ? todayRecord.totalExpenses : 0,
+		profit: todayRecord ? todayRecord.netProfit : 0,
+		margin: todayRecord ? todayRecord.profitMargin : 0,
+		staffRev: todayRecord ? todayRecord.staffRevenue : 0,
+		airbnbRev: todayRecord ? todayRecord.airbnbRevenue : 0,
+		staffExp: todayRecord ? todayRecord.staffExpenses : 0,
+		airbnbExp: todayRecord ? todayRecord.airbnbExpenses : 0
+	};
+
+	const currentWeekNum = getWeekNumber(todayStr);
+	const thisWeekRecord =
+		weeklyRecords.find((w) => w.weekNumber === currentWeekNum) ||
+		weeklyRecords.find((w) => todayStr >= w.startDate && todayStr <= w.endDate) ||
+		weeklyRecords[0];
+
+	const thisWeekKPI = {
+		revenue: thisWeekRecord ? thisWeekRecord.totalRevenue : 0,
+		expenses: thisWeekRecord ? thisWeekRecord.totalExpenses : 0,
+		profit: thisWeekRecord ? thisWeekRecord.netProfit : 0,
+		margin: thisWeekRecord ? thisWeekRecord.profitMargin : 0,
+		staffRev: thisWeekRecord ? thisWeekRecord.staffRevenue : 0,
+		airbnbRev: thisWeekRecord ? thisWeekRecord.airbnbRevenue : 0,
+		staffExp: thisWeekRecord ? thisWeekRecord.staffExpenses : 0,
+		airbnbExp: thisWeekRecord ? thisWeekRecord.airbnbExpenses : 0
+	};
+
+	const selectedMonthRecord = monthlyRecords.find((m) => m.month === targetMonth);
+	let selMonthRev = 0;
+	let selMonthExp = 0;
+	let selStaffRev = 0;
+	let selAirbnbRev = 0;
+	let selStaffExp = 0;
+	let selAirbnbExp = 0;
+
+	for (const r of dailyRecords) {
+		selStaffRev += r.staffRevenue;
+		selAirbnbRev += r.airbnbRevenue;
+		selStaffExp += r.staffExpenses;
+		selAirbnbExp += r.airbnbExpenses;
+		selMonthRev += r.totalRevenue;
+		selMonthExp += r.totalExpenses;
+	}
+
+	const selMonthProfit = selMonthRev - selMonthExp;
+	const selectedMonthKPI = {
+		revenue: selMonthRev,
+		expenses: selMonthExp,
+		profit: selMonthProfit,
+		margin: selMonthRev > 0 ? Math.round((selMonthProfit / selMonthRev) * 100) : 0,
+		staffRev: selStaffRev,
+		airbnbRev: selAirbnbRev,
+		staffExp: selStaffExp,
+		airbnbExp: selAirbnbExp
+	};
+
+	let allTimeRev = 0;
+	let allTimeExp = 0;
+	let allStaffRev = 0;
+	let allAirbnbRev = 0;
+	let allStaffExp = 0;
+	let allAirbnbExp = 0;
+
+	for (const m of monthlyRecords) {
+		allTimeRev += m.totalRevenue;
+		allTimeExp += m.totalExpenses;
+		allStaffRev += m.staffRevenue;
+		allAirbnbRev += m.airbnbRevenue;
+		allStaffExp += m.staffExpenses;
+		allAirbnbExp += m.airbnbExpenses;
+	}
+	const allTimeProfit = allTimeRev - allTimeExp;
+	const allTimeKPI = {
+		revenue: allTimeRev,
+		expenses: allTimeExp,
+		profit: allTimeProfit,
+		margin: allTimeRev > 0 ? Math.round((allTimeProfit / allTimeRev) * 100) : 0,
+		staffRev: allStaffRev,
+		airbnbRev: allAirbnbRev,
+		staffExp: allStaffExp,
+		airbnbExp: allAirbnbExp
+	};
+
+	let catLodging = 0;
+	let catFooding = 0;
+	let catServices = 0;
+	let catOther = 0;
+	let catAirbnbHomestays = 0;
+	let catStaffHotelExp = selStaffExp;
+
+	let catAirbnbSupplies = 0;
+	let catAirbnbUtilities = 0;
+	let catAirbnbMaint = 0;
+	let catAirbnbClean = 0;
+	let catAirbnbOtherExp = 0;
+
+	for (const r of dailyRecords) {
+		catLodging += r.staffLodging;
+		catFooding += r.staffFooding;
+		catServices += r.staffServices;
+		catOther += r.staffOther;
+		catAirbnbHomestays += r.airbnbRevenue;
+
+		for (const e of r.airbnbExpenseItems) {
+			const c = (e.category || "").toLowerCase();
+			if (c.includes("suppl") || c.includes("inventory")) catAirbnbSupplies += e.amount;
+			else if (c.includes("util") || c.includes("bill") || c.includes("wifi") || c.includes("power"))
+				catAirbnbUtilities += e.amount;
+			else if (c.includes("maint") || c.includes("repair")) catAirbnbMaint += e.amount;
+			else if (c.includes("clean") || c.includes("laundry")) catAirbnbClean += e.amount;
+			else catAirbnbOtherExp += e.amount;
+		}
+	}
+
+	const recentTx: UnifiedDashboardData["recentTransactions"] = [];
+
+	if (airbnbBookingsRes.results) {
+		for (const b of airbnbBookingsRes.results.slice(0, 20)) {
+			if (b.check_in_date && b.total_payout) {
+				recentTx.push({
+					id: `ab-b-${b.id}`,
+					source: "Airbnb Host Portal",
+					date: b.check_in_date,
+					title: `${b.guest_name || "Guest"} Check-in (${b.nights || 1} nights)`,
+					details: `${b.property || "Airbnb"} &bull; ${b.platform || "Direct"}`,
+					amount: Number(b.total_payout),
+					flow: "income",
+					property: b.property || "Airbnb Property"
+				});
+			}
+		}
+	}
+
+	if (airbnbExpensesRes.results) {
+		for (const e of airbnbExpensesRes.results.slice(0, 15)) {
+			if (e.date && e.amount) {
+				recentTx.push({
+					id: `ab-e-${e.id}`,
+					source: "Airbnb Host Portal",
+					date: e.date,
+					title: e.title || "Expense",
+					details: `${e.category || "General"} &bull; ${e.property || "Property"}`,
+					amount: Number(e.amount),
+					flow: "expense",
+					property: e.property || "Airbnb Property"
+				});
+			}
+		}
+	}
+
+	if (staffDailyRes.results) {
+		for (const s of staffDailyRes.results.slice(0, 15)) {
+			const sRev =
+				Number(s.lodging_sales || 0) +
+				Number(s.fooding_sales || 0) +
+				Number(s.services_sales || 0) +
+				Number(s.other_sales || 0);
+			if (sRev > 0) {
+				recentTx.push({
+					id: `st-r-${s.id || s.date}`,
+					source: "Staff Management",
+					date: s.date,
+					title: "Daily Operations Revenue",
+					details: `Hotel Lodging: ₹${s.lodging_sales || 0}, Food: ₹${s.fooding_sales || 0}`,
+					amount: sRev,
+					flow: "income",
+					property: s.property_id || "Hotel"
+				});
+			}
+			if (Number(s.expenses || 0) > 0) {
+				recentTx.push({
+					id: `st-e-${s.id || s.date}`,
+					source: "Staff Management",
+					date: s.date,
+					title: "Operational Daily Expenses",
+					details: s.expense_notes || "Daily running expense",
+					amount: Number(s.expenses),
+					flow: "expense",
+					property: s.property_id || "Hotel"
+				});
+			}
+		}
+	}
 
 	recentTx.sort((a, b) => b.date.localeCompare(a.date));
 
 	return {
 		success: true,
 		generatedAt: new Date().toISOString(),
-		currentDate: todayStr,
-		selectedMonth,
+		selectedMonth: targetMonth,
 		availableMonths,
-		properties: propertyList,
+		currentDate: todayStr,
 		kpis: {
-			today: {
-				revenue: todayRecord ? todayRecord.totalRevenue : 0,
-				expenses: todayRecord ? todayRecord.totalExpenses : 0,
-				profit: todayRecord ? todayRecord.netProfit : 0,
-				margin: todayRecord ? todayRecord.profitMargin : 0,
-				staffRev: todayRecord ? todayRecord.staffRevenue : 0,
-				airbnbRev: todayRecord ? todayRecord.airbnbRevenue : 0,
-				staffExp: todayRecord ? todayRecord.staffExpenses : 0,
-				airbnbExp: todayRecord ? todayRecord.airbnbExpenses : 0
-			},
-			yesterday: {
-				revenue: yesterdayRecord ? yesterdayRecord.totalRevenue : 0,
-				expenses: yesterdayRecord ? yesterdayRecord.totalExpenses : 0,
-				profit: yesterdayRecord ? yesterdayRecord.netProfit : 0,
-				margin: yesterdayRecord ? yesterdayRecord.profitMargin : 0
-			},
-			thisWeek: {
-				revenue: thisWeekRecord.totalRevenue,
-				expenses: thisWeekRecord.totalExpenses,
-				profit: thisWeekRecord.netProfit,
-				margin: thisWeekRecord.profitMargin,
-				staffRev: thisWeekRecord.staffRevenue,
-				airbnbRev: thisWeekRecord.airbnbRevenue,
-				staffExp: thisWeekRecord.staffExpenses,
-				airbnbExp: thisWeekRecord.airbnbExpenses
-			},
-			selectedMonth: {
-				revenue: selectedMonthRecord.totalRevenue,
-				expenses: selectedMonthRecord.totalExpenses,
-				profit: selectedMonthRecord.netProfit,
-				margin: selectedMonthRecord.profitMargin,
-				staffRev: selectedMonthRecord.staffRevenue,
-				airbnbRev: selectedMonthRecord.airbnbRevenue,
-				staffExp: selectedMonthRecord.staffExpenses,
-				airbnbExp: selectedMonthRecord.airbnbExpenses
-			},
-			allTime: {
-				revenue: allTimeRevenue,
-				expenses: allTimeExpenses,
-				profit: allTimeProfit,
-				margin: allTimeMargin
-			}
+			today: todayKPI,
+			thisWeek: thisWeekKPI,
+			selectedMonth: selectedMonthKPI,
+			allTime: allTimeKPI
 		},
 		daily: dailyRecords,
 		weekly: weeklyRecords,
 		monthly: monthlyRecords,
 		breakdowns: {
-			revenueByProperty,
-			revenueByCategory,
-			expensesByCategory
+			revenueByCategory: {
+				lodging: catLodging,
+				fooding: catFooding,
+				services: catServices,
+				airbnbHomestays: catAirbnbHomestays,
+				other: catOther
+			},
+			expensesByCategory: {
+				staffHotel: catStaffHotelExp,
+				airbnbSupplies: catAirbnbSupplies,
+				airbnbUtilities: catAirbnbUtilities,
+				airbnbMaintenance: catAirbnbMaint,
+				airbnbCleaning: catAirbnbClean,
+				airbnbOther: catAirbnbOtherExp
+			},
+			properties: {
+				staffHotel: {
+					name: "Staff Management (Hotel Operations)",
+					revenue: selStaffRev,
+					expenses: selStaffExp,
+					profit: selStaffRev - selStaffExp,
+					margin:
+						selStaffRev > 0 ? Math.round(((selStaffRev - selStaffExp) / selStaffRev) * 100) : 0
+				},
+				airbnbHost: {
+					name: "Airbnb Host Portal (Short-term Homestays)",
+					revenue: selAirbnbRev,
+					expenses: selAirbnbExp,
+					profit: selAirbnbRev - selAirbnbExp,
+					margin:
+						selAirbnbRev > 0
+							? Math.round(((selAirbnbRev - selAirbnbExp) / selAirbnbRev) * 100)
+							: 0,
+					bookingsCount: airbnbBookingsRes.results ? airbnbBookingsRes.results.length : 0
+				}
+			}
 		},
 		recentTransactions: recentTx.slice(0, 30)
 	};
@@ -723,20 +898,20 @@ export function getUnifiedDashboardHtml(): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Unified Earnings & Profit Dashboard | Staff Management & Airbnb Portal</title>
+  <title>Portfolio Financial Overview | Elite Homes & Hospitality</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .font-mono {
       font-family: 'JetBrains Mono', monospace;
+      font-feature-settings: "tnum" 1, "zero" 1;
     }
-    /* Hide scrollbars for clean UI */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     @media print {
@@ -744,96 +919,67 @@ export function getUnifiedDashboardHtml(): string {
       .no-print { display: none !important; }
       .print-expand { display: block !important; }
     }
-    .badge-glow {
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
-    }
   </style>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
-              900: '#1e1b4b',
-            },
-            airbnb: {
-              50: '#fff1f2',
-              500: '#ff385c',
-              600: '#e00b41',
-              700: '#be123c',
-            }
-          }
-        }
-      }
-    }
-  </script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+<body class="bg-[#090A0F] text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-zinc-700 selection:text-white">
 
-  <!-- Top Executive Header -->
-  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-lg px-4 sm:px-6 py-3.5">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+  <!-- Executive Top Bar -->
+  <header class="sticky top-0 z-40 bg-[#090A0F]/90 backdrop-blur-md border-b border-white/[0.08] px-4 sm:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
       
-      <!-- Brand & Status -->
+      <!-- Monogram & Title -->
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-rose-500 flex items-center justify-center shadow-md shadow-indigo-500/20 ring-1 ring-white/20">
-            <i data-lucide="layout-dashboard" class="w-5 h-5 text-white"></i>
+        <div class="flex items-center gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center text-zinc-200 shadow-inner shrink-0">
+            <i data-lucide="building-2" class="w-4 h-4 text-zinc-300"></i>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5">
-                Executive Earnings Hub
-              </h1>
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                LIVE D1 EDGE
+              <span class="text-[10px] font-semibold tracking-widest uppercase text-zinc-400">Elite Homes & Hospitality</span>
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono text-zinc-400 bg-white/[0.04] border border-white/[0.08]">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                D1 Edge Active
               </span>
             </div>
-            <p class="text-xs text-slate-400 font-medium">
-              Consolidated: <span class="text-indigo-300 font-semibold">Staff Management</span> &bull; <span class="text-rose-300 font-semibold">Airbnb Host Portal</span>
-            </p>
+            <h1 class="text-base sm:text-lg font-semibold tracking-tight text-white mt-0.5">
+              Portfolio Earnings & Performance
+            </h1>
           </div>
         </div>
 
-        <!-- Mobile Quick Refresh -->
+        <!-- Mobile Sync Button -->
         <div class="flex md:hidden items-center gap-1.5">
-          <button onclick="refreshData()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Refresh Data">
+          <button onclick="refreshData()" class="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/10 transition" title="Refresh Data">
             <i data-lucide="refresh-cw" id="mobileRefreshIcon" class="w-4 h-4"></i>
           </button>
         </div>
       </div>
 
-      <!-- Action & View Controls -->
-      <div class="flex items-center flex-wrap gap-2.5 justify-between md:justify-end">
+      <!-- Action & Cross-Portal Links -->
+      <div class="flex items-center flex-wrap gap-2 justify-between md:justify-end">
         
-        <!-- Cross-Site Navigation Links -->
-        <div class="flex items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/80">
-          <a href="/" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/80 transition flex items-center gap-1.5" title="Open Staff Management Portal">
-            <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-400"></i>
+        <!-- Portal Quick Links -->
+        <div class="flex items-center gap-1.5 bg-zinc-900/90 p-1 rounded-xl border border-white/[0.08]">
+          <a href="/" target="_blank" class="px-2.5 py-1 text-xs font-medium rounded-lg text-zinc-300 hover:text-white hover:bg-white/[0.05] transition flex items-center gap-1.5" title="Staff Management">
+            <i data-lucide="hotel" class="w-3.5 h-3.5 text-zinc-400"></i>
             <span>Staff Sync</span>
           </a>
-          <a href="https://airbnb-management.elitehomes-portal.workers.dev/admin.html" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/80 transition flex items-center gap-1.5" title="Open Airbnb Host Portal">
-            <i data-lucide="home" class="w-3.5 h-3.5 text-rose-400"></i>
+          <a href="https://airbnb-management.elitehomes-portal.workers.dev/admin.html" target="_blank" class="px-2.5 py-1 text-xs font-medium rounded-lg text-zinc-300 hover:text-white hover:bg-white/[0.05] transition flex items-center gap-1.5" title="Airbnb Host Portal">
+            <i data-lucide="home" class="w-3.5 h-3.5 text-zinc-400"></i>
             <span>Airbnb Portal</span>
           </a>
         </div>
 
-        <!-- Sync Button -->
-        <button onclick="refreshData()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 flex items-center gap-1.5 shadow-sm transition active:scale-95">
-          <i data-lucide="refresh-cw" id="desktopRefreshIcon" class="w-3.5 h-3.5 text-indigo-400"></i>
+        <!-- Refresh Button -->
+        <button onclick="refreshData()" class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-medium border border-white/10 flex items-center gap-1.5 transition">
+          <i data-lucide="refresh-cw" id="desktopRefreshIcon" class="w-3.5 h-3.5 text-zinc-400"></i>
           <span class="hidden sm:inline">Live Refresh</span>
         </button>
 
         <!-- Print / PDF -->
-        <button onclick="window.print()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 flex items-center gap-1.5 shadow-sm transition active:scale-95 no-print" title="Print or Save PDF report">
-          <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-400"></i>
-          <span class="hidden sm:inline">Export / Print</span>
+        <button onclick="window.print()" class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-medium border border-white/10 flex items-center gap-1.5 transition no-print" title="Export / Print">
+          <i data-lucide="printer" class="w-3.5 h-3.5 text-zinc-400"></i>
+          <span class="hidden sm:inline">Export</span>
         </button>
 
       </div>
@@ -841,54 +987,54 @@ export function getUnifiedDashboardHtml(): string {
   </header>
 
   <!-- Filter & Granularity Control Bar -->
-  <section class="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3">
+  <section class="bg-[#090A0F] border-b border-white/[0.06] px-4 sm:px-8 py-3">
     <div class="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-3">
       
-      <!-- Property Scope Filter (All vs Staff vs Airbnb) -->
-      <div class="flex items-center gap-1 bg-slate-800/90 p-1 rounded-xl border border-slate-700/70 overflow-x-auto no-scrollbar">
-        <button id="scopeAll" onclick="setPropertyScope('all')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap bg-indigo-600 text-white shadow-xs">
+      <!-- Scope Selector -->
+      <div class="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-white/[0.08] overflow-x-auto no-scrollbar">
+        <button id="scopeAll" onclick="setPropertyScope('all')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap bg-zinc-800 text-white shadow-xs border border-white/10">
           <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-          <span>All Properties (Consolidated)</span>
+          <span>Consolidated Portfolio</span>
         </button>
-        <button id="scopeStaff" onclick="setPropertyScope('staff')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-slate-400 hover:text-white">
-          <i data-lucide="building" class="w-3.5 h-3.5 text-indigo-400"></i>
+        <button id="scopeStaff" onclick="setPropertyScope('staff')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap text-zinc-400 hover:text-zinc-200">
+          <i data-lucide="hotel" class="w-3.5 h-3.5"></i>
           <span>Staff Management (Hotel)</span>
         </button>
-        <button id="scopeAirbnb" onclick="setPropertyScope('airbnb')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-slate-400 hover:text-white">
-          <i data-lucide="home" class="w-3.5 h-3.5 text-rose-400"></i>
-          <span>Airbnb Host Portal (Homestays)</span>
+        <button id="scopeAirbnb" onclick="setPropertyScope('airbnb')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap text-zinc-400 hover:text-zinc-200">
+          <i data-lucide="home" class="w-3.5 h-3.5"></i>
+          <span>Airbnb Host Portal</span>
         </button>
       </div>
 
-      <!-- Time Granularity Tabs (Daily, Weekly, Monthly) & Month Navigator -->
-      <div class="flex items-center flex-wrap gap-2.5 justify-between lg:justify-end">
+      <!-- Time Granularity Tabs & Month Navigator -->
+      <div class="flex items-center flex-wrap gap-2 justify-between lg:justify-end">
         
         <!-- View Tabs -->
-        <div class="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700/70">
-          <button id="tabDaily" onclick="setTimeView('daily')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-xs">
+        <div class="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-white/[0.08]">
+          <button id="tabDaily" onclick="setTimeView('daily')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-zinc-800 text-white shadow-xs border border-white/10">
             <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i>
-            <span>Daily View</span>
+            <span>Daily</span>
           </button>
-          <button id="tabWeekly" onclick="setTimeView('weekly')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+          <button id="tabWeekly" onclick="setTimeView('weekly')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200">
             <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
-            <span>Weekly View</span>
+            <span>Weekly</span>
           </button>
-          <button id="tabMonthly" onclick="setTimeView('monthly')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
+          <button id="tabMonthly" onclick="setTimeView('monthly')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200">
             <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-            <span>Monthly View</span>
+            <span>Monthly</span>
           </button>
         </div>
 
-        <!-- Month Selector Dropdown & Today Button -->
+        <!-- Month Dropdown -->
         <div class="flex items-center gap-1.5">
-          <div class="flex items-center bg-slate-800 rounded-xl px-2.5 py-1 border border-slate-700">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400 mr-2"></i>
-            <select id="monthSelect" onchange="onMonthSelectChange(this.value)" class="bg-transparent text-xs font-bold text-slate-200 outline-none cursor-pointer">
+          <div class="flex items-center bg-zinc-900 rounded-xl px-2.5 py-1.5 border border-white/[0.08]">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-zinc-400 mr-2"></i>
+            <select id="monthSelect" onchange="onMonthSelectChange(this.value)" class="bg-transparent text-xs font-medium text-zinc-200 outline-none cursor-pointer">
               <!-- Rendered via JS -->
             </select>
           </div>
-          <button onclick="goToCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-xl text-indigo-400 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-800/50 transition">
-            Current Month
+          <button onclick="goToCurrentMonth()" class="text-xs font-medium px-3 py-1.5 rounded-xl text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/[0.08] transition">
+            Current
           </button>
         </div>
 
@@ -898,193 +1044,191 @@ export function getUnifiedDashboardHtml(): string {
   </section>
 
   <!-- Main Dashboard Content -->
-  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col gap-6">
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-8 py-7 flex-1 flex flex-col gap-6">
 
     <!-- KPI Summary Overview Cards -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       
       <!-- 1. Total Revenue Card -->
-      <div class="bg-slate-800/90 rounded-2xl p-5 border border-slate-700/80 shadow-md relative overflow-hidden group hover:border-slate-600 transition">
-        <div class="absolute -right-3 -top-3 w-20 h-20 bg-indigo-500/10 rounded-full blur-xl pointer-events-none"></div>
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="arrow-down-left" class="w-3.5 h-3.5 text-indigo-400"></i>
-            Total Revenue
-          </span>
-          <span id="kpiRevPeriodBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/80 text-slate-300">
-            This Month
-          </span>
+      <div class="bg-[#11141C] rounded-2xl p-5 border border-white/[0.07] flex flex-col justify-between hover:border-white/[0.12] transition">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-medium uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              Gross Revenue
+            </span>
+            <span id="kpiRevPeriodBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-zinc-400 border border-white/[0.06]">
+              This Month
+            </span>
+          </div>
+          <div class="flex items-baseline gap-1.5 my-2">
+            <span class="text-xs text-zinc-400 font-medium">₹</span>
+            <span id="kpiTotalRevenue" class="text-2xl sm:text-3xl font-semibold tracking-tight text-white font-mono">0</span>
+          </div>
         </div>
-        <div class="flex items-baseline gap-2 mb-2">
-          <span class="text-xs text-indigo-400 font-bold">₹</span>
-          <span id="kpiTotalRevenue" class="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">0</span>
-        </div>
-        <div class="pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
-          <span class="flex items-center gap-1 truncate">
-            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-            Staff: <span id="kpiStaffRev" class="font-bold text-slate-200">₹0</span>
+        <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400">
+          <span class="flex items-center gap-1.5 truncate">
+            <span class="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+            Hotel: <span id="kpiStaffRev" class="font-medium text-zinc-200 font-mono">₹0</span>
           </span>
-          <span class="flex items-center gap-1 truncate">
-            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-            Airbnb: <span id="kpiAirbnbRev" class="font-bold text-slate-200">₹0</span>
+          <span class="flex items-center gap-1.5 truncate">
+            <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+            Airbnb: <span id="kpiAirbnbRev" class="font-medium text-zinc-200 font-mono">₹0</span>
           </span>
         </div>
       </div>
 
       <!-- 2. Total Expenses Card -->
-      <div class="bg-slate-800/90 rounded-2xl p-5 border border-slate-700/80 shadow-md relative overflow-hidden group hover:border-slate-600 transition">
-        <div class="absolute -right-3 -top-3 w-20 h-20 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-amber-400"></i>
-            Total Expenses
-          </span>
-          <span id="kpiExpPeriodBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/80 text-slate-300">
-            This Month
-          </span>
+      <div class="bg-[#11141C] rounded-2xl p-5 border border-white/[0.07] flex flex-col justify-between hover:border-white/[0.12] transition">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-medium uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              Operating Expenses
+            </span>
+            <span id="kpiExpPeriodBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-zinc-400 border border-white/[0.06]">
+              This Month
+            </span>
+          </div>
+          <div class="flex items-baseline gap-1.5 my-2">
+            <span class="text-xs text-zinc-400 font-medium">₹</span>
+            <span id="kpiTotalExpenses" class="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-200 font-mono">0</span>
+          </div>
         </div>
-        <div class="flex items-baseline gap-2 mb-2">
-          <span class="text-xs text-amber-400 font-bold">₹</span>
-          <span id="kpiTotalExpenses" class="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">0</span>
-        </div>
-        <div class="pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
-          <span class="flex items-center gap-1 truncate">
-            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-            Staff: <span id="kpiStaffExp" class="font-bold text-slate-200">₹0</span>
+        <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400">
+          <span class="flex items-center gap-1.5 truncate">
+            <span class="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+            Hotel: <span id="kpiStaffExp" class="font-medium text-zinc-200 font-mono">₹0</span>
           </span>
-          <span class="flex items-center gap-1 truncate">
-            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
-            Airbnb: <span id="kpiAirbnbExp" class="font-bold text-slate-200">₹0</span>
+          <span class="flex items-center gap-1.5 truncate">
+            <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+            Airbnb: <span id="kpiAirbnbExp" class="font-medium text-zinc-200 font-mono">₹0</span>
           </span>
         </div>
       </div>
 
       <!-- 3. Net Profit Card -->
-      <div class="bg-gradient-to-br from-slate-800 via-slate-800 to-emerald-950/40 rounded-2xl p-5 border border-emerald-500/30 shadow-md relative overflow-hidden group hover:border-emerald-500/50 transition">
-        <div class="absolute -right-3 -top-3 w-24 h-24 bg-emerald-500/15 rounded-full blur-xl pointer-events-none"></div>
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-            <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i>
-            Net Profit
-          </span>
-          <span id="kpiProfitBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            Earnings
-          </span>
+      <div class="bg-[#11141C] rounded-2xl p-5 border border-white/[0.07] flex flex-col justify-between hover:border-white/[0.12] transition">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-medium uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              Net Operating Profit
+            </span>
+            <span id="kpiProfitBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Net Earning
+            </span>
+          </div>
+          <div class="flex items-baseline gap-1.5 my-2">
+            <span class="text-xs text-emerald-400/80 font-medium">₹</span>
+            <span id="kpiNetProfit" class="text-2xl sm:text-3xl font-semibold tracking-tight text-emerald-400 font-mono">0</span>
+          </div>
         </div>
-        <div class="flex items-baseline gap-2 mb-2">
-          <span class="text-xs text-emerald-400 font-bold">₹</span>
-          <span id="kpiNetProfit" class="text-2xl sm:text-3xl font-black tracking-tight text-emerald-300 font-mono">0</span>
-        </div>
-        <div class="pt-2.5 border-t border-emerald-500/20 flex items-center justify-between text-xs text-slate-400">
-          <span>Profit Margin</span>
-          <span id="kpiProfitMargin" class="font-bold text-emerald-400 text-sm">0%</span>
+        <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400">
+          <span>Operating Margin</span>
+          <span id="kpiProfitMargin" class="font-medium text-emerald-400 font-mono">0%</span>
         </div>
       </div>
 
-      <!-- 4. Daily / Period Run Rate -->
-      <div class="bg-slate-800/90 rounded-2xl p-5 border border-slate-700/80 shadow-md relative overflow-hidden group hover:border-slate-600 transition">
-        <div class="absolute -right-3 -top-3 w-20 h-20 bg-sky-500/10 rounded-full blur-xl pointer-events-none"></div>
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="zap" class="w-3.5 h-3.5 text-sky-400"></i>
-            Today's Snapshot
-          </span>
-          <span id="todayDateLabel" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/80 text-sky-300 font-mono">
-            Today
-          </span>
+      <!-- 4. Today's Run Rate -->
+      <div class="bg-[#11141C] rounded-2xl p-5 border border-white/[0.07] flex flex-col justify-between hover:border-white/[0.12] transition">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-medium uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              Today's Performance
+            </span>
+            <span id="todayDateLabel" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.04] text-zinc-400 border border-white/[0.06]">
+              Today
+            </span>
+          </div>
+          <div class="flex items-baseline gap-1.5 my-2">
+            <span class="text-xs text-zinc-400 font-medium">₹</span>
+            <span id="kpiTodayRevenue" class="text-2xl sm:text-3xl font-semibold tracking-tight text-white font-mono">0</span>
+          </div>
         </div>
-        <div class="flex items-baseline gap-2 mb-2">
-          <span class="text-xs text-sky-400 font-bold">₹</span>
-          <span id="kpiTodayRevenue" class="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">0</span>
-        </div>
-        <div class="pt-2.5 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+        <div class="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400">
           <span>Today's Profit</span>
-          <span id="kpiTodayProfit" class="font-bold text-emerald-400">₹0</span>
+          <span id="kpiTodayProfit" class="font-medium text-emerald-400 font-mono">₹0</span>
         </div>
       </div>
 
     </section>
 
-    <!-- Visual Interactive Chart & Revenue Composition -->
+    <!-- Visual Performance Chart & Composition -->
     <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Main Visual Performance Chart (SVG/CSS High Performance) -->
-      <div class="lg:col-span-2 bg-slate-800/90 rounded-2xl p-5 border border-slate-700/80 shadow-md flex flex-col justify-between">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+      <!-- Performance Trajectory Chart -->
+      <div class="lg:col-span-2 bg-[#11141C] rounded-2xl p-6 border border-white/[0.07] flex flex-col justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
-            <h2 id="chartTitle" class="text-sm font-bold text-white flex items-center gap-2">
-              <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i>
-              Revenue vs Expenses vs Profit
+            <h2 id="chartTitle" class="text-sm font-semibold text-white flex items-center gap-2">
+              Financial Performance
             </h2>
-            <p id="chartSubtitle" class="text-xs text-slate-400 mt-0.5">Performance breakdown across periods</p>
+            <p id="chartSubtitle" class="text-xs text-zinc-400 mt-0.5">Chronological revenue, expenses, and net profit</p>
           </div>
-          <div class="flex items-center gap-3 text-xs">
-            <span class="flex items-center gap-1.5 text-slate-300">
-              <span class="w-3 h-3 rounded-sm bg-indigo-500"></span> Revenue
+          <div class="flex items-center gap-4 text-xs text-zinc-400">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-xs bg-zinc-300"></span> Revenue
             </span>
-            <span class="flex items-center gap-1.5 text-slate-300">
-              <span class="w-3 h-3 rounded-sm bg-amber-500"></span> Expenses
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-xs bg-zinc-600"></span> Expenses
             </span>
-            <span class="flex items-center gap-1.5 text-slate-300">
-              <span class="w-3 h-3 rounded-sm bg-emerald-500"></span> Profit
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-xs bg-emerald-500"></span> Net Profit
             </span>
           </div>
         </div>
 
         <!-- Chart Container -->
-        <div id="chartContainer" class="w-full h-64 flex items-end gap-1.5 sm:gap-2 pt-6 pb-2 px-1 overflow-x-auto no-scrollbar">
+        <div id="chartContainer" class="w-full h-60 flex items-end gap-1.5 sm:gap-2 pt-6 pb-2 px-1 overflow-x-auto no-scrollbar border-b border-white/[0.06]">
           <!-- Rendered dynamically via JS -->
         </div>
 
-        <div id="chartAxisLabels" class="flex justify-between items-center text-[10px] text-slate-400 pt-2 border-t border-slate-700/70">
+        <div id="chartAxisLabels" class="flex justify-between items-center text-[10px] text-zinc-400 pt-3">
           <span>Oldest</span>
-          <span id="chartRangeLabel" class="font-mono text-slate-300">--</span>
-          <span>Newest</span>
+          <span id="chartRangeLabel" class="font-mono text-zinc-400">--</span>
+          <span>Latest</span>
         </div>
       </div>
 
-      <!-- Property & Revenue Source Split -->
-      <div class="bg-slate-800/90 rounded-2xl p-5 border border-slate-700/80 shadow-md flex flex-col justify-between">
+      <!-- Entity Mix & Categorical Composition -->
+      <div class="bg-[#11141C] rounded-2xl p-6 border border-white/[0.07] flex flex-col justify-between">
         <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2 mb-1">
-            <i data-lucide="pie-chart" class="w-4 h-4 text-rose-400"></i>
-            Revenue Share by Entity
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2 mb-1">
+            Revenue Contribution
           </h2>
-          <p class="text-xs text-slate-400 mb-4">Contribution ratio between both properties</p>
+          <p class="text-xs text-zinc-400 mb-5">Portfolio split between hotel & homestays</p>
 
           <!-- Split Progress Bar -->
-          <div class="w-full h-3 rounded-full bg-slate-700 overflow-hidden flex mb-3">
-            <div id="barStaffShare" class="h-full bg-indigo-500 transition-all duration-500" style="width: 50%" title="Staff Management"></div>
-            <div id="barAirbnbShare" class="h-full bg-rose-500 transition-all duration-500" style="width: 50%" title="Airbnb Host Portal"></div>
+          <div class="w-full h-2 rounded-full bg-zinc-800 overflow-hidden flex mb-4">
+            <div id="barStaffShare" class="h-full bg-zinc-300 transition-all duration-500" style="width: 50%" title="Staff Management"></div>
+            <div id="barAirbnbShare" class="h-full bg-zinc-600 transition-all duration-500" style="width: 50%" title="Airbnb Host Portal"></div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="p-3 rounded-xl bg-slate-900/60 border border-indigo-900/40">
-              <div class="flex items-center gap-1.5 text-xs text-indigo-400 font-bold mb-1">
-                <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Staff Sync
+          <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="p-3.5 rounded-xl bg-[#0D1017] border border-white/[0.06]">
+              <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-medium mb-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-zinc-300"></span> Hotel Sync
               </div>
-              <div id="pctStaffShare" class="text-lg font-black text-white font-mono">50%</div>
-              <div id="valStaffShare" class="text-xs text-slate-400 font-mono">₹0</div>
+              <div id="pctStaffShare" class="text-lg font-semibold text-white font-mono">50%</div>
+              <div id="valStaffShare" class="text-xs text-zinc-400 font-mono mt-0.5">₹0</div>
             </div>
-            <div class="p-3 rounded-xl bg-slate-900/60 border border-rose-900/40">
-              <div class="flex items-center gap-1.5 text-xs text-rose-400 font-bold mb-1">
-                <span class="w-2 h-2 rounded-full bg-rose-400"></span> Airbnb Portal
+            <div class="p-3.5 rounded-xl bg-[#0D1017] border border-white/[0.06]">
+              <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-medium mb-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Airbnb Portal
               </div>
-              <div id="pctAirbnbShare" class="text-lg font-black text-white font-mono">50%</div>
-              <div id="valAirbnbShare" class="text-xs text-slate-400 font-mono">₹0</div>
+              <div id="pctAirbnbShare" class="text-lg font-semibold text-white font-mono">50%</div>
+              <div id="valAirbnbShare" class="text-xs text-zinc-400 font-mono mt-0.5">₹0</div>
             </div>
           </div>
 
           <!-- Category Breakdown List -->
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Category Highlights</h3>
-          <div id="categoryBreakdownList" class="flex flex-col gap-2 text-xs">
+          <h3 class="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 mb-2">Category Highlights</h3>
+          <div id="categoryBreakdownList" class="flex flex-col gap-1.5 text-xs">
             <!-- Rendered by JS -->
           </div>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
-          <span>Profitability Health</span>
-          <span id="healthBadge" class="px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+        <div class="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between text-xs text-zinc-400">
+          <span>Profitability Status</span>
+          <span id="healthBadge" class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             Healthy
           </span>
         </div>
@@ -1093,66 +1237,64 @@ export function getUnifiedDashboardHtml(): string {
     </section>
 
     <!-- Main Data Table: Daily / Weekly / Monthly View -->
-    <section class="bg-slate-800/90 rounded-2xl border border-slate-700/80 shadow-md overflow-hidden">
+    <section class="bg-[#11141C] rounded-2xl border border-white/[0.07] overflow-hidden">
       
       <!-- Table Header Bar -->
-      <div class="p-4 sm:p-5 border-b border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="p-5 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 id="tableSectionTitle" class="text-base font-bold text-white flex items-center gap-2">
-            <i data-lucide="table" class="w-4 h-4 text-indigo-400"></i>
-            <span>Daily Ledger & Breakdown</span>
+          <h2 id="tableSectionTitle" class="text-sm font-semibold text-white flex items-center gap-2">
+            Consolidated Financial Ledger
           </h2>
-          <p id="tableSectionSubtitle" class="text-xs text-slate-400 mt-0.5">Click any row to expand full details and guest/expense line items</p>
+          <p id="tableSectionSubtitle" class="text-xs text-zinc-400 mt-0.5">Click any row to view itemized room nights, guest records, and expense items</p>
         </div>
 
-        <!-- Quick Search / Filter Input -->
+        <!-- Search / Filter Input -->
         <div class="flex items-center gap-2">
           <div class="relative">
-            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-            <input type="text" id="tableFilterInput" onkeyup="filterTable(this.value)" placeholder="Search date / note..." class="bg-slate-900 border border-slate-700 text-xs rounded-xl pl-8 pr-3 py-1.5 text-slate-200 placeholder-slate-500 outline-none focus:border-indigo-500 transition w-44 sm:w-56">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="tableFilterInput" onkeyup="filterTable(this.value)" placeholder="Filter by date or note..." class="bg-[#0D1017] border border-white/[0.08] text-xs rounded-xl pl-8 pr-3 py-1.5 text-zinc-200 placeholder-zinc-500 outline-none focus:border-white/20 transition w-44 sm:w-60">
           </div>
         </div>
       </div>
 
       <!-- Responsive Table -->
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-900/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-700/80 select-none">
+        <table class="w-full text-left text-xs text-zinc-300">
+          <thead class="bg-[#0D1017] text-[10px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-white/[0.06] select-none">
             <tr>
               <th class="py-3 px-4">Period / Date</th>
-              <th class="py-3 px-4 text-right">Staff Revenue</th>
-              <th class="py-3 px-4 text-right">Airbnb Revenue</th>
-              <th class="py-3 px-4 text-right font-black text-indigo-300">Total Revenue</th>
-              <th class="py-3 px-4 text-right text-amber-300">Total Expenses</th>
-              <th class="py-3 px-4 text-right font-black text-emerald-400">Net Profit</th>
+              <th class="py-3 px-4 text-right">Hotel Rev</th>
+              <th class="py-3 px-4 text-right">Airbnb Rev</th>
+              <th class="py-3 px-4 text-right font-medium text-white">Gross Revenue</th>
+              <th class="py-3 px-4 text-right">Operating Exp</th>
+              <th class="py-3 px-4 text-right font-medium text-emerald-400">Net Profit</th>
               <th class="py-3 px-4 text-center">Margin</th>
-              <th class="py-3 px-3 text-center no-print">Action</th>
+              <th class="py-3 px-3 text-center no-print"></th>
             </tr>
           </thead>
-          <tbody id="earningsTableBody" class="divide-y divide-slate-700/60 font-mono">
+          <tbody id="earningsTableBody" class="divide-y divide-white/[0.04] font-mono">
             <!-- Rendered by JS -->
           </tbody>
         </table>
       </div>
 
       <!-- Empty State -->
-      <div id="tableEmptyState" class="hidden p-8 text-center text-slate-400">
-        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-        <p class="font-bold text-sm">No records found for this period</p>
-        <p class="text-xs text-slate-500">Try selecting another month or clearing search filters.</p>
+      <div id="tableEmptyState" class="hidden p-10 text-center text-zinc-400">
+        <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+        <p class="font-medium text-sm text-zinc-300">No records found for this period</p>
+        <p class="text-xs text-zinc-400 mt-1">Try selecting another month or clearing search filters.</p>
       </div>
 
     </section>
 
-    <!-- Recent Transactions & Logs Stream -->
-    <section class="bg-slate-800/90 rounded-2xl p-5 border border-slate-700/80 shadow-md">
+    <!-- Recent Activity Stream -->
+    <section class="bg-[#11141C] rounded-2xl p-6 border border-white/[0.07]">
       <div class="flex items-center justify-between mb-4">
         <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <i data-lucide="receipt" class="w-4 h-4 text-indigo-400"></i>
-            Live Activity Stream (Latest Bookings & Expenses)
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            Recent Activity Stream
           </h2>
-          <p class="text-xs text-slate-400">Recent revenue arrivals and expense records from both Cloudflare D1 databases</p>
+          <p class="text-xs text-zinc-400">Latest guest bookings, room payouts, and operating expenses across Cloudflare D1</p>
         </div>
       </div>
 
@@ -1163,32 +1305,32 @@ export function getUnifiedDashboardHtml(): string {
 
   </main>
 
-  <!-- Footer -->
-  <footer class="mt-auto border-t border-slate-800 bg-slate-900/80 py-4 px-4 sm:px-6 text-center text-xs text-slate-500">
+  <!-- Clean Institutional Footer -->
+  <footer class="mt-auto border-t border-white/[0.06] bg-[#090A0F] py-4 px-4 sm:px-8 text-center text-xs text-zinc-400">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-      <p>Cloudflare Edge Unified Dashboard &bull; Multi-Property Architecture</p>
-      <p class="font-mono text-[11px] text-slate-400" id="lastUpdatedLabel">Connected to Cloudflare D1</p>
+      <p>Elite Homes & Hospitality &bull; Cloudflare D1 Edge Infrastructure</p>
+      <p class="font-mono text-[11px] text-zinc-400" id="lastUpdatedLabel">Connected to Cloudflare D1</p>
     </div>
   </footer>
 
   <!-- Detail Modal -->
-  <div id="detailModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-800 rounded-2xl border border-slate-700 max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      <div class="p-4 sm:p-5 border-b border-slate-700 flex items-center justify-between">
+  <div id="detailModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0D1017] rounded-2xl border border-white/[0.1] max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 border-b border-white/[0.06] flex items-center justify-between">
         <div>
-          <h3 id="modalTitle" class="text-base font-bold text-white">Period Breakdown</h3>
-          <p id="modalSubtitle" class="text-xs text-slate-400">Itemized line items</p>
+          <h3 id="modalTitle" class="text-base font-semibold text-white">Period Breakdown</h3>
+          <p id="modalSubtitle" class="text-xs text-zinc-400 mt-0.5">Itemized line items</p>
         </div>
-        <button onclick="closeModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700">
-          <i data-lucide="x" class="w-5 h-5"></i>
+        <button onclick="closeModal()" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.05] transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <div id="modalContent" class="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs text-slate-300">
+      <div id="modalContent" class="p-5 overflow-y-auto space-y-4 text-xs text-zinc-300">
         <!-- Rendered by JS -->
       </div>
-      <div class="p-4 border-t border-slate-700 flex justify-end">
-        <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition">
-          Close
+      <div class="p-4 border-t border-white/[0.06] flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-medium transition">
+          Dismiss
         </button>
       </div>
     </div>
@@ -1201,7 +1343,6 @@ export function getUnifiedDashboardHtml(): string {
     let activePropertyScope = 'all'; // 'all' | 'staff' | 'airbnb'
     let activeMonth = '';
 
-    // Currency Formatter
     function formatINR(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
       return Math.round(num).toLocaleString('en-IN');
@@ -1217,7 +1358,6 @@ export function getUnifiedDashboardHtml(): string {
         
         let res = await fetch(url);
         if (!res.ok) {
-          // Fallback to cross-origin staff worker if hosted statically on airbnb domain
           const fallbackUrl = 'https://staff-management.elitehomes-portal.workers.dev/api/dashboard/earnings' + (monthParam ? '?month=' + encodeURIComponent(monthParam) : '');
           res = await fetch(fallbackUrl);
         }
@@ -1235,7 +1375,6 @@ export function getUnifiedDashboardHtml(): string {
         }
       } catch (err) {
         console.error('Fetch error:', err);
-        // If local preview without backend, show mock or error
         alert('Could not connect to Cloudflare D1. Please check connection.');
       } finally {
         setLoading(false);
@@ -1264,7 +1403,7 @@ export function getUnifiedDashboardHtml(): string {
       renderRecentTransactions();
       const updatedEl = document.getElementById('lastUpdatedLabel');
       if (updatedEl) {
-        updatedEl.innerText = 'Last updated: ' + new Date().toLocaleTimeString() + ' (Cloudflare Edge D1)';
+        updatedEl.innerText = 'Synchronized at ' + new Date().toLocaleTimeString() + ' (Cloudflare Edge D1)';
       }
       lucide.createIcons();
     }
@@ -1303,13 +1442,13 @@ export function getUnifiedDashboardHtml(): string {
       ['scopeAll', 'scopeStaff', 'scopeAirbnb'].forEach(id => {
         const btn = document.getElementById(id);
         if (!btn) return;
-        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-slate-400 hover:text-white';
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap text-zinc-400 hover:text-zinc-200';
       });
 
       const activeBtnId = scope === 'all' ? 'scopeAll' : (scope === 'staff' ? 'scopeStaff' : 'scopeAirbnb');
       const activeBtn = document.getElementById(activeBtnId);
       if (activeBtn) {
-        activeBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap bg-indigo-600 text-white shadow-xs';
+        activeBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 whitespace-nowrap bg-zinc-800 text-white shadow-xs border border-white/10';
       }
 
       renderKPIs();
@@ -1323,13 +1462,13 @@ export function getUnifiedDashboardHtml(): string {
       ['tabDaily', 'tabWeekly', 'tabMonthly'].forEach(id => {
         const btn = document.getElementById(id);
         if (!btn) return;
-        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-400 hover:text-white';
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200';
       });
 
       const activeTabId = view === 'daily' ? 'tabDaily' : (view === 'weekly' ? 'tabWeekly' : 'tabMonthly');
       const activeTab = document.getElementById(activeTabId);
       if (activeTab) {
-        activeTab.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-xs';
+        activeTab.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-zinc-800 text-white shadow-xs border border-white/10';
       }
 
       renderChart();
@@ -1388,12 +1527,11 @@ export function getUnifiedDashboardHtml(): string {
         document.getElementById('todayDateLabel').innerText = rawPayload.currentDate;
       }
 
-      // Profit Styling
       const netProfitEl = document.getElementById('kpiNetProfit');
       if (profit < 0) {
-        netProfitEl.className = 'text-2xl sm:text-3xl font-black tracking-tight text-rose-400 font-mono';
+        netProfitEl.className = 'text-2xl sm:text-3xl font-semibold tracking-tight text-rose-400 font-mono';
       } else {
-        netProfitEl.className = 'text-2xl sm:text-3xl font-black tracking-tight text-emerald-300 font-mono';
+        netProfitEl.className = 'text-2xl sm:text-3xl font-semibold tracking-tight text-emerald-400 font-mono';
       }
     }
 
@@ -1416,26 +1554,25 @@ export function getUnifiedDashboardHtml(): string {
       document.getElementById('pctAirbnbShare').innerText = aPct + '%';
       document.getElementById('valAirbnbShare').innerText = '₹' + formatINR(aRev);
 
-      // Category breakdown list
       const catList = document.getElementById('categoryBreakdownList');
       if (catList && rawPayload.breakdowns) {
         const revCat = rawPayload.breakdowns.revenueByCategory || {};
         catList.innerHTML = \`
-          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/40">
-            <span class="text-slate-300 flex items-center gap-1.5"><i data-lucide="bed" class="w-3.5 h-3.5 text-indigo-400"></i> Hotel Lodging</span>
-            <span class="font-mono font-bold text-slate-200">₹\${formatINR(revCat.lodging || 0)}</span>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#0D1017] border border-white/[0.05]">
+            <span class="text-zinc-300 flex items-center gap-2"><i data-lucide="bed" class="w-3.5 h-3.5 text-zinc-400"></i> Hotel Lodging</span>
+            <span class="font-mono font-medium text-white">₹\${formatINR(revCat.lodging || 0)}</span>
           </div>
-          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/40">
-            <span class="text-slate-300 flex items-center gap-1.5"><i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-400"></i> Food & Restaurant</span>
-            <span class="font-mono font-bold text-slate-200">₹\${formatINR(revCat.fooding || 0)}</span>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#0D1017] border border-white/[0.05]">
+            <span class="text-zinc-300 flex items-center gap-2"><i data-lucide="utensils" class="w-3.5 h-3.5 text-zinc-400"></i> Food & Beverage</span>
+            <span class="font-mono font-medium text-white">₹\${formatINR(revCat.fooding || 0)}</span>
           </div>
-          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/40">
-            <span class="text-slate-300 flex items-center gap-1.5"><i data-lucide="home" class="w-3.5 h-3.5 text-rose-400"></i> Airbnb Homestays</span>
-            <span class="font-mono font-bold text-slate-200">₹\${formatINR(revCat.airbnbHomestays || 0)}</span>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#0D1017] border border-white/[0.05]">
+            <span class="text-zinc-300 flex items-center gap-2"><i data-lucide="home" class="w-3.5 h-3.5 text-zinc-400"></i> Airbnb Homestays</span>
+            <span class="font-mono font-medium text-white">₹\${formatINR(revCat.airbnbHomestays || 0)}</span>
           </div>
-          <div class="flex items-center justify-between p-2 rounded-lg bg-slate-900/40">
-            <span class="text-slate-300 flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-400"></i> Services & Salon</span>
-            <span class="font-mono font-bold text-slate-200">₹\${formatINR(revCat.services || 0)}</span>
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#0D1017] border border-white/[0.05]">
+            <span class="text-zinc-300 flex items-center gap-2"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-zinc-400"></i> Services & Amenities</span>
+            <span class="font-mono font-medium text-white">₹\${formatINR(revCat.services || 0)}</span>
           </div>
         \`;
       }
@@ -1447,32 +1584,26 @@ export function getUnifiedDashboardHtml(): string {
       if (!container) return;
 
       let items = [];
-      let labelPrefix = '';
 
       if (activeTimeView === 'daily') {
-        // Daily records reversed to show chronological order (oldest to newest)
         items = [...rawPayload.daily].reverse();
-        labelPrefix = 'Day ';
-        document.getElementById('chartTitle').innerHTML = '<i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i> Daily Performance Trend (' + activeMonth + ')';
-        document.getElementById('chartSubtitle').innerText = 'Day-by-day revenue, expenses, and net earnings';
+        document.getElementById('chartTitle').innerText = 'Daily Trajectory (' + activeMonth + ')';
+        document.getElementById('chartSubtitle').innerText = 'Chronological daily revenue, expenses, and net earnings';
       } else if (activeTimeView === 'weekly') {
         items = [...rawPayload.weekly].reverse();
-        labelPrefix = 'W';
-        document.getElementById('chartTitle').innerHTML = '<i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i> Weekly Performance Overview';
-        document.getElementById('chartSubtitle').innerText = 'Aggregated performance week-over-week';
+        document.getElementById('chartTitle').innerText = 'Weekly Performance Overview';
+        document.getElementById('chartSubtitle').innerText = 'Aggregated weekly performance progression';
       } else {
         items = [...rawPayload.monthly].reverse();
-        labelPrefix = '';
-        document.getElementById('chartTitle').innerHTML = '<i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-400"></i> Monthly Financial Trajectory';
-        document.getElementById('chartSubtitle').innerText = 'Historical monthly comparison across all available records';
+        document.getElementById('chartTitle').innerText = 'Monthly Performance Archive';
+        document.getElementById('chartSubtitle').innerText = 'Historical monthly comparison across all properties';
       }
 
       if (items.length === 0) {
-        container.innerHTML = '<div class="m-auto text-xs text-slate-500">No chart data available for this selection</div>';
+        container.innerHTML = '<div class="m-auto text-xs text-zinc-500">No chart data available for this selection</div>';
         return;
       }
 
-      // Find max value for scaling
       let maxVal = 1000;
       items.forEach(it => {
         let rev = it.totalRevenue;
@@ -1488,7 +1619,7 @@ export function getUnifiedDashboardHtml(): string {
         if (exp > maxVal) maxVal = exp;
       });
 
-      const barsHtml = items.map((it, idx) => {
+      const barsHtml = items.map((it) => {
         let rev = it.totalRevenue;
         let exp = it.totalExpenses;
         if (activePropertyScope === 'staff') {
@@ -1500,9 +1631,9 @@ export function getUnifiedDashboardHtml(): string {
         }
         const profit = rev - exp;
 
-        const revHeight = Math.max(4, Math.round((rev / maxVal) * 200));
-        const expHeight = Math.max(4, Math.round((exp / maxVal) * 200));
-        const profitHeight = Math.max(4, Math.round((Math.max(0, profit) / maxVal) * 200));
+        const revHeight = Math.max(3, Math.round((rev / maxVal) * 190));
+        const expHeight = Math.max(3, Math.round((exp / maxVal) * 190));
+        const profitHeight = Math.max(3, Math.round((Math.max(0, profit) / maxVal) * 190));
 
         let shortLabel = '';
         if (activeTimeView === 'daily') {
@@ -1516,15 +1647,13 @@ export function getUnifiedDashboardHtml(): string {
         const tooltip = (it.formattedDate || it.weekLabel || it.monthLabel) + ' | Rev: ₹' + formatINR(rev) + ' | Exp: ₹' + formatINR(exp) + ' | Net: ₹' + formatINR(profit);
 
         return \`
-          <div class="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer min-w-[20px] max-w-[42px]" title="\${tooltip}">
-            <!-- Bar Group -->
-            <div class="w-full flex items-end justify-center gap-0.5">
-              <div class="w-2 sm:w-2.5 bg-indigo-500 hover:bg-indigo-400 rounded-t-sm transition-all" style="height: \${revHeight}px"></div>
-              <div class="w-2 sm:w-2.5 bg-amber-500 hover:bg-amber-400 rounded-t-sm transition-all" style="height: \${expHeight}px"></div>
-              <div class="w-2 sm:w-2.5 \${profit >= 0 ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-rose-500 hover:bg-rose-400'} rounded-t-sm transition-all" style="height: \${profitHeight}px"></div>
+          <div class="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer min-w-[16px] max-w-[36px]" title="\${tooltip}">
+            <div class="w-full flex items-end justify-center gap-0.5 sm:gap-1">
+              <div class="w-1.5 sm:w-2 bg-zinc-300/90 group-hover:bg-white rounded-t-xs transition-all" style="height: \${revHeight}px"></div>
+              <div class="w-1.5 sm:w-2 bg-zinc-600 group-hover:bg-zinc-500 rounded-t-xs transition-all" style="height: \${expHeight}px"></div>
+              <div class="w-1.5 sm:w-2 \${profit >= 0 ? 'bg-emerald-500/80 group-hover:bg-emerald-400' : 'bg-rose-500/80 group-hover:bg-rose-400'} rounded-t-xs transition-all" style="height: \${profitHeight}px"></div>
             </div>
-            <!-- Axis Label -->
-            <span class="text-[9px] font-mono text-slate-500 mt-1.5 truncate group-hover:text-slate-200 transition select-none">
+            <span class="text-[9px] font-mono text-zinc-400 mt-2 truncate group-hover:text-zinc-200 transition select-none">
               \${shortLabel}
             </span>
           </div>
@@ -1550,16 +1679,16 @@ export function getUnifiedDashboardHtml(): string {
 
       if (activeTimeView === 'daily') {
         records = rawPayload.daily;
-        if (titleEl) titleEl.innerHTML = '<i data-lucide="calendar-days" class="w-4 h-4 text-indigo-400"></i> Daily Ledger (' + activeMonth + ')';
-        if (subEl) subEl.innerText = 'Detailed day-by-day record of sales, room bookings, payouts and expenses';
+        if (titleEl) titleEl.innerText = 'Consolidated Daily Ledger (' + activeMonth + ')';
+        if (subEl) subEl.innerText = 'Itemized day-by-day record of sales, guest bookings, payouts and expenses';
       } else if (activeTimeView === 'weekly') {
         records = rawPayload.weekly;
-        if (titleEl) titleEl.innerHTML = '<i data-lucide="calendar-range" class="w-4 h-4 text-indigo-400"></i> Weekly Summary';
-        if (subEl) subEl.innerText = 'Consolidated weekly earnings progression and totals';
+        if (titleEl) titleEl.innerText = 'Weekly Performance Ledger';
+        if (subEl) subEl.innerText = 'Consolidated weekly earnings progression and cumulative totals';
       } else {
         records = rawPayload.monthly;
-        if (titleEl) titleEl.innerHTML = '<i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> Month-by-Month Archive';
-        if (subEl) subEl.innerText = 'Full historical monthly performance metrics across all properties';
+        if (titleEl) titleEl.innerText = 'Monthly Performance Archive';
+        if (subEl) subEl.innerText = 'Historical month-over-month ledger across all portfolio properties';
       }
 
       if (records.length === 0) {
@@ -1593,47 +1722,44 @@ export function getUnifiedDashboardHtml(): string {
           const isToday = r.date === rawPayload.currentDate;
           periodLabel = \`
             <div class="flex items-center gap-2">
-              <span class="w-7 text-slate-400 font-sans font-bold text-[10px] uppercase">\${r.dayOfWeek}</span>
-              <span class="font-bold text-white">\${r.date}</span>
-              \${isToday ? '<span class="px-1.5 py-0.2 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-sans font-bold border border-emerald-500/30">TODAY</span>' : ''}
+              <span class="w-7 text-zinc-400 font-sans text-[10px] uppercase">\${r.dayOfWeek}</span>
+              <span class="font-medium text-white">\${r.date}</span>
+              \${isToday ? '<span class="px-1.5 py-0.2 rounded-md bg-white/[0.08] text-white text-[10px] font-sans font-medium border border-white/20">TODAY</span>' : ''}
             </div>
           \`;
         } else if (activeTimeView === 'weekly') {
           periodLabel = \`
             <div>
-              <span class="font-bold text-white font-sans">\${r.weekLabel}</span>
-              <span class="text-[10px] text-slate-400 block font-mono">\${r.startDate} to \${r.endDate}</span>
+              <span class="font-medium text-white font-sans">\${r.weekLabel}</span>
+              <span class="text-[10px] text-zinc-400 block font-mono">\${r.startDate} &rarr; \${r.endDate}</span>
             </div>
           \`;
         } else {
           periodLabel = \`
             <div class="flex items-center gap-2">
-              <span class="font-bold text-white font-sans text-sm">\${r.monthLabel}</span>
-              <span class="text-[10px] font-mono text-slate-400">(\${r.month})</span>
+              <span class="font-medium text-white font-sans text-sm">\${r.monthLabel}</span>
+              <span class="text-[10px] font-mono text-zinc-400">(\${r.month})</span>
             </div>
           \`;
         }
 
-        const profitClass = netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
-        const marginClass = margin >= 30 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : (margin >= 0 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30');
+        const profitClass = netProfit >= 0 ? 'text-emerald-400 font-medium' : 'text-rose-400 font-medium';
 
         return \`
-          <tr class="hover:bg-slate-700/40 transition group cursor-pointer" onclick="showDetailModal('\${activeTimeView}', \${idx})">
+          <tr class="hover:bg-white/[0.03] transition-colors group cursor-pointer" onclick="showDetailModal('\${activeTimeView}', \${idx})">
             <td class="py-3 px-4 whitespace-nowrap">\${periodLabel}</td>
-            <td class="py-3 px-4 text-right text-indigo-300">₹\${formatINR(staffRev)}</td>
-            <td class="py-3 px-4 text-right text-rose-300">₹\${formatINR(airbnbRev)}</td>
-            <td class="py-3 px-4 text-right font-black text-white">₹\${formatINR(totRev)}</td>
-            <td class="py-3 px-4 text-right text-amber-300">₹\${formatINR(totExp)}</td>
+            <td class="py-3 px-4 text-right text-zinc-300">₹\${formatINR(staffRev)}</td>
+            <td class="py-3 px-4 text-right text-zinc-300">₹\${formatINR(airbnbRev)}</td>
+            <td class="py-3 px-4 text-right font-medium text-white">₹\${formatINR(totRev)}</td>
+            <td class="py-3 px-4 text-right text-zinc-400">₹\${formatINR(totExp)}</td>
             <td class="py-3 px-4 text-right \${profitClass}">₹\${formatINR(netProfit)}</td>
             <td class="py-3 px-4 text-center">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold font-sans \${marginClass}">
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-white/[0.04] text-zinc-300 border border-white/[0.08]">
                 \${margin}%
               </span>
             </td>
             <td class="py-3 px-3 text-center no-print">
-              <button class="p-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 group-hover:text-white transition">
-                <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-              </button>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 transition mx-auto"></i>
             </td>
           </tr>
         \`;
@@ -1662,7 +1788,7 @@ export function getUnifiedDashboardHtml(): string {
 
       const txs = rawPayload.recentTransactions || [];
       if (txs.length === 0) {
-        container.innerHTML = '<div class="col-span-full text-center text-xs text-slate-500 py-4">No recent activity</div>';
+        container.innerHTML = '<div class="col-span-full text-center text-xs text-zinc-500 py-4">No recent activity</div>';
         return;
       }
 
@@ -1670,26 +1796,25 @@ export function getUnifiedDashboardHtml(): string {
         const isIncome = tx.flow === 'income';
         const isAirbnb = tx.source === 'Airbnb Host Portal';
         const icon = isIncome ? (isAirbnb ? 'home' : 'arrow-down-left') : 'arrow-up-right';
-        const iconBg = isIncome ? (isAirbnb ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30') : 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
-        const amountColor = isIncome ? 'text-emerald-400' : 'text-amber-400';
+        const amountColor = isIncome ? 'text-emerald-400' : 'text-zinc-400';
 
         return \`
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700/70 flex items-start gap-3 hover:border-slate-600 transition">
-            <div class="w-8 h-8 rounded-lg \${iconBg} flex items-center justify-center shrink-0 mt-0.5">
-              <i data-lucide="\${icon}" class="w-4 h-4"></i>
+          <div class="p-3.5 rounded-xl bg-[#0D1017] border border-white/[0.06] flex items-start gap-3 hover:border-white/[0.12] transition">
+            <div class="w-7 h-7 rounded-lg bg-zinc-800 text-zinc-400 border border-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
+              <i data-lucide="\${icon}" class="w-3.5 h-3.5"></i>
             </div>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-1 mb-0.5">
-                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md \${isAirbnb ? 'bg-rose-950/60 text-rose-300' : 'bg-indigo-950/60 text-indigo-300'} font-sans truncate">
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <span class="text-[10px] font-medium px-1.5 py-0.2 rounded bg-white/[0.05] text-zinc-300 border border-white/[0.08] font-sans truncate">
                   \${tx.property}
                 </span>
-                <span class="text-[10px] text-slate-400 font-mono shrink-0">\${tx.date}</span>
+                <span class="text-[10px] text-zinc-400 font-mono shrink-0">\${tx.date}</span>
               </div>
-              <p class="text-xs font-semibold text-white truncate" title="\${tx.title}">\${tx.title}</p>
-              \${tx.details ? \`<p class="text-[11px] text-slate-400 truncate">\${tx.details}</p>\` : ''}
-              <div class="mt-1 flex items-center justify-between">
-                <span class="text-[10px] text-slate-400">\${tx.source}</span>
-                <span class="text-xs font-black font-mono \${amountColor}">
+              <p class="text-xs font-medium text-white truncate" title="\${tx.title}">\${tx.title}</p>
+              \${tx.details ? \`<p class="text-[11px] text-zinc-400 truncate mt-0.5">\${tx.details}</p>\` : ''}
+              <div class="mt-2 flex items-center justify-between pt-1.5 border-t border-white/[0.04]">
+                <span class="text-[10px] text-zinc-400">\${tx.source}</span>
+                <span class="text-xs font-semibold font-mono \${amountColor}">
                   \${isIncome ? '+' : '-'}₹\${formatINR(tx.amount)}
                 </span>
               </div>
@@ -1721,37 +1846,37 @@ export function getUnifiedDashboardHtml(): string {
         let airbnbItemsHtml = '';
         if (record.airbnbBookings && record.airbnbBookings.length > 0) {
           airbnbItemsHtml = record.airbnbBookings.map(b => \`
-            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-between gap-2">
+            <div class="p-2.5 rounded-xl bg-[#11141C] border border-white/[0.06] flex items-center justify-between gap-2">
               <div>
-                <span class="font-bold text-white text-xs block">\${b.guestName}</span>
-                <span class="text-[11px] text-slate-400">\${b.property} &bull; \${b.platform} &bull; \${b.nights} night(s)</span>
+                <span class="font-medium text-white text-xs block">\${b.guestName}</span>
+                <span class="text-[11px] text-zinc-400">\${b.property} &bull; \${b.platform} &bull; \${b.nights} night(s)</span>
               </div>
-              <span class="text-xs font-black font-mono text-emerald-400">+₹\${formatINR(b.payout)}</span>
+              <span class="text-xs font-medium font-mono text-emerald-400">+₹\${formatINR(b.payout)}</span>
             </div>
           \`).join('');
         } else {
-          airbnbItemsHtml = '<p class="text-xs text-slate-500 italic">No Airbnb check-in bookings on this day.</p>';
+          airbnbItemsHtml = '<p class="text-xs text-zinc-500 italic">No Airbnb check-in bookings on this day.</p>';
         }
 
         let airbnbExpHtml = '';
         if (record.airbnbExpenseItems && record.airbnbExpenseItems.length > 0) {
           airbnbExpHtml = record.airbnbExpenseItems.map(e => \`
-            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-between gap-2">
+            <div class="p-2.5 rounded-xl bg-[#11141C] border border-white/[0.06] flex items-center justify-between gap-2">
               <div>
-                <span class="font-bold text-white text-xs block">\${e.title}</span>
-                <span class="text-[11px] text-slate-400">\${e.category} &bull; \${e.property}</span>
+                <span class="font-medium text-white text-xs block">\${e.title}</span>
+                <span class="text-[11px] text-zinc-400">\${e.category} &bull; \${e.property}</span>
               </div>
-              <span class="text-xs font-black font-mono text-amber-400">-₹\${formatINR(e.amount)}</span>
+              <span class="text-xs font-medium font-mono text-zinc-300">-₹\${formatINR(e.amount)}</span>
             </div>
           \`).join('');
         } else {
-          airbnbExpHtml = '<p class="text-xs text-slate-500 italic">No Airbnb expenses on this day.</p>';
+          airbnbExpHtml = '<p class="text-xs text-zinc-500 italic">No Airbnb expenses on this day.</p>';
         }
 
         let staffNotesHtml = '';
         if (record.staffExpenseNotes && record.staffExpenseNotes.length > 0) {
           staffNotesHtml = record.staffExpenseNotes.map(n => \`
-            <div class="p-2 rounded-lg bg-slate-900/60 border border-slate-700 text-xs text-slate-300">
+            <div class="p-2.5 rounded-lg bg-[#11141C] border border-white/[0.06] text-xs text-zinc-300">
               \${n}
             </div>
           \`).join('');
@@ -1759,42 +1884,42 @@ export function getUnifiedDashboardHtml(): string {
 
         content.innerHTML = \`
           <!-- Financial Snapshot -->
-          <div class="grid grid-cols-3 gap-2 text-center p-3 rounded-xl bg-slate-900 border border-slate-700">
+          <div class="grid grid-cols-3 gap-2 text-center p-3 rounded-xl bg-[#11141C] border border-white/[0.06]">
             <div>
-              <span class="text-[10px] text-slate-400 block uppercase">Total Revenue</span>
-              <span class="text-sm font-black text-white font-mono">₹\${formatINR(record.totalRevenue)}</span>
+              <span class="text-[10px] text-zinc-400 block uppercase">Total Revenue</span>
+              <span class="text-sm font-semibold text-white font-mono">₹\${formatINR(record.totalRevenue)}</span>
             </div>
             <div>
-              <span class="text-[10px] text-slate-400 block uppercase">Total Expenses</span>
-              <span class="text-sm font-black text-amber-400 font-mono">₹\${formatINR(record.totalExpenses)}</span>
+              <span class="text-[10px] text-zinc-400 block uppercase">Total Expenses</span>
+              <span class="text-sm font-semibold text-zinc-300 font-mono">₹\${formatINR(record.totalExpenses)}</span>
             </div>
             <div>
-              <span class="text-[10px] text-slate-400 block uppercase">Net Profit</span>
-              <span class="text-sm font-black \${record.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-mono">₹\${formatINR(record.netProfit)}</span>
+              <span class="text-[10px] text-zinc-400 block uppercase">Net Profit</span>
+              <span class="text-sm font-semibold \${record.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-mono">₹\${formatINR(record.netProfit)}</span>
             </div>
           </div>
 
           <!-- Staff Management Section -->
           <div>
-            <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <i data-lucide="building" class="w-3.5 h-3.5"></i> Staff Management Operations
+            <h4 class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <i data-lucide="hotel" class="w-3.5 h-3.5"></i> Hotel Operations
             </h4>
             <div class="grid grid-cols-2 gap-2 text-xs mb-2">
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-700 flex justify-between">
-                <span class="text-slate-400">Lodging Sales:</span>
-                <span class="font-bold text-slate-200 font-mono">₹\${formatINR(record.staffLodging)}</span>
+              <div class="p-2.5 rounded-xl bg-[#11141C] border border-white/[0.06] flex justify-between">
+                <span class="text-zinc-400">Lodging Sales:</span>
+                <span class="font-medium text-zinc-200 font-mono">₹\${formatINR(record.staffLodging)}</span>
               </div>
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-700 flex justify-between">
-                <span class="text-slate-400">Food & Restaurant:</span>
-                <span class="font-bold text-slate-200 font-mono">₹\${formatINR(record.staffFooding)}</span>
+              <div class="p-2.5 rounded-xl bg-[#11141C] border border-white/[0.06] flex justify-between">
+                <span class="text-zinc-400">Food & Beverage:</span>
+                <span class="font-medium text-zinc-200 font-mono">₹\${formatINR(record.staffFooding)}</span>
               </div>
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-700 flex justify-between">
-                <span class="text-slate-400">Services & Salon:</span>
-                <span class="font-bold text-slate-200 font-mono">₹\${formatINR(record.staffServices)}</span>
+              <div class="p-2.5 rounded-xl bg-[#11141C] border border-white/[0.06] flex justify-between">
+                <span class="text-zinc-400">Services & Salon:</span>
+                <span class="font-medium text-zinc-200 font-mono">₹\${formatINR(record.staffServices)}</span>
               </div>
-              <div class="p-2 rounded-lg bg-slate-900 border border-slate-700 flex justify-between">
-                <span class="text-slate-400">Operational Exp:</span>
-                <span class="font-bold text-amber-400 font-mono">₹\${formatINR(record.staffExpenses)}</span>
+              <div class="p-2.5 rounded-xl bg-[#11141C] border border-white/[0.06] flex justify-between">
+                <span class="text-zinc-400">Operational Exp:</span>
+                <span class="font-medium text-zinc-300 font-mono">₹\${formatINR(record.staffExpenses)}</span>
               </div>
             </div>
             \${staffNotesHtml}
@@ -1802,14 +1927,14 @@ export function getUnifiedDashboardHtml(): string {
 
           <!-- Airbnb Section -->
           <div>
-            <h4 class="text-xs font-bold text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <i data-lucide="home" class="w-3.5 h-3.5"></i> Airbnb Host Portal Bookings
             </h4>
             <div class="space-y-1.5 mb-3">
               \${airbnbItemsHtml}
             </div>
 
-            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <h4 class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Airbnb Property Expenses
             </h4>
             <div class="space-y-1.5">
@@ -1822,27 +1947,27 @@ export function getUnifiedDashboardHtml(): string {
         subtitle.innerText = 'Period aggregate breakdown';
         content.innerHTML = \`
           <div class="grid grid-cols-2 gap-3 text-xs">
-            <div class="p-3 rounded-xl bg-slate-900 border border-slate-700">
-              <span class="text-slate-400 block mb-1">Staff Management Revenue:</span>
-              <span class="text-base font-bold text-indigo-400 font-mono">₹\${formatINR(record.staffRevenue)}</span>
+            <div class="p-3 rounded-xl bg-[#11141C] border border-white/[0.06]">
+              <span class="text-zinc-400 block mb-1">Hotel Operations Rev:</span>
+              <span class="text-base font-semibold text-white font-mono">₹\${formatINR(record.staffRevenue)}</span>
             </div>
-            <div class="p-3 rounded-xl bg-slate-900 border border-slate-700">
-              <span class="text-slate-400 block mb-1">Airbnb Host Revenue:</span>
-              <span class="text-base font-bold text-rose-400 font-mono">₹\${formatINR(record.airbnbRevenue)}</span>
+            <div class="p-3 rounded-xl bg-[#11141C] border border-white/[0.06]">
+              <span class="text-zinc-400 block mb-1">Airbnb Host Rev:</span>
+              <span class="text-base font-semibold text-white font-mono">₹\${formatINR(record.airbnbRevenue)}</span>
             </div>
-            <div class="p-3 rounded-xl bg-slate-900 border border-slate-700">
-              <span class="text-slate-400 block mb-1">Staff Management Expenses:</span>
-              <span class="text-base font-bold text-amber-400 font-mono">₹\${formatINR(record.staffExpenses)}</span>
+            <div class="p-3 rounded-xl bg-[#11141C] border border-white/[0.06]">
+              <span class="text-zinc-400 block mb-1">Hotel Expenses:</span>
+              <span class="text-base font-semibold text-zinc-300 font-mono">₹\${formatINR(record.staffExpenses)}</span>
             </div>
-            <div class="p-3 rounded-xl bg-slate-900 border border-slate-700">
-              <span class="text-slate-400 block mb-1">Airbnb Host Expenses:</span>
-              <span class="text-base font-bold text-amber-400 font-mono">₹\${formatINR(record.airbnbExpenses)}</span>
+            <div class="p-3 rounded-xl bg-[#11141C] border border-white/[0.06]">
+              <span class="text-zinc-400 block mb-1">Airbnb Expenses:</span>
+              <span class="text-base font-semibold text-zinc-300 font-mono">₹\${formatINR(record.airbnbExpenses)}</span>
             </div>
           </div>
-          <div class="p-4 rounded-xl bg-slate-900 border border-emerald-500/40 text-center">
-            <span class="text-xs text-slate-400 block mb-1 uppercase tracking-wider">Total Net Profit</span>
-            <span class="text-2xl font-black text-emerald-400 font-mono">₹\${formatINR(record.netProfit)}</span>
-            <span class="text-xs text-emerald-300 block mt-1 font-bold">Profit Margin: \${record.profitMargin}%</span>
+          <div class="p-4 rounded-xl bg-[#11141C] border border-white/[0.1] text-center">
+            <span class="text-xs text-zinc-400 block mb-1 uppercase tracking-wider">Total Net Profit</span>
+            <span class="text-2xl font-semibold text-emerald-400 font-mono">₹\${formatINR(record.netProfit)}</span>
+            <span class="text-xs text-zinc-300 block mt-1 font-mono">Operating Margin: \${record.profitMargin}%</span>
           </div>
         \`;
       }
@@ -1856,7 +1981,6 @@ export function getUnifiedDashboardHtml(): string {
       if (modal) modal.classList.add('hidden');
     }
 
-    // Initialize on window load
     window.addEventListener('DOMContentLoaded', () => {
       loadData();
     });
