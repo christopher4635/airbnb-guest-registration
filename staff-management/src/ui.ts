@@ -1665,23 +1665,71 @@ export function getDashboardHtml(): string {
           </p>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Payment Method *</label>
+        <!-- Payment Breakdown (Cash & Online) -->
+        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="wallet" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Payment Breakdown (Cash &amp; Online) *</span>
+            </label>
+            <button
+              type="button"
+              onclick="modalSetPaymentSplit('split')"
+              class="text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-lg transition cursor-pointer"
+            >
+              ⚡ Split Half-Half (50/50)
+            </button>
+          </div>
+
           <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/60 cursor-pointer hover:bg-indigo-50 transition">
-              <input type="radio" name="modalBookingPaymentMode" value="online" id="modalBookingModeOnline" checked class="text-indigo-600 focus:ring-indigo-500" />
-              <div>
-                <div class="text-xs font-bold text-indigo-950">Online Payment</div>
-                <div class="text-[10px] text-indigo-700/80">UPI / Card / OTA</div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-semibold text-amber-900 flex items-center gap-1">
+                  <i data-lucide="banknote" class="w-3 h-3 text-amber-600"></i> Cash (₹)
+                </span>
+                <button type="button" onclick="modalSetPaymentSplit('cash')" class="text-[10px] font-bold text-amber-700 hover:underline cursor-pointer">All Cash</button>
               </div>
-            </label>
-            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-amber-200 bg-amber-50/60 cursor-pointer hover:bg-amber-50 transition">
-              <input type="radio" name="modalBookingPaymentMode" value="cash" id="modalBookingModeCash" class="text-amber-600 focus:ring-amber-500" />
-              <div>
-                <div class="text-xs font-bold text-amber-950">Cash Payment</div>
-                <div class="text-[10px] text-amber-700/80">Cash at Counter</div>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                <input
+                  type="number"
+                  id="modalBookingCashAmount"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value="0"
+                  oninput="onModalCashOnlineInput()"
+                  class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-amber-950 rounded-xl border border-amber-300 bg-white focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                />
               </div>
-            </label>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-semibold text-indigo-900 flex items-center gap-1">
+                  <i data-lucide="globe" class="w-3 h-3 text-indigo-600"></i> Online (₹)
+                </span>
+                <button type="button" onclick="modalSetPaymentSplit('online')" class="text-[10px] font-bold text-indigo-700 hover:underline cursor-pointer">All Online</button>
+              </div>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                <input
+                  type="number"
+                  id="modalBookingOnlineAmount"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value="0"
+                  oninput="onModalCashOnlineInput()"
+                  class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-indigo-950 rounded-xl border border-indigo-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs pt-1 px-1 text-slate-600">
+            <span class="font-medium">Total: <b class="text-slate-900 font-mono" id="modalPaymentTotalPreview">₹0</b></span>
+            <span id="modalPaymentModeBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Online</span>
           </div>
         </div>
 
@@ -2278,6 +2326,30 @@ export function getDashboardHtml(): string {
     let currentPaymentAmount = 0;
 
     let currentPickerTarget = null; // { staffId, date }
+
+    // Helpers: Split / Cash / Online amounts for Room Bookings
+    function getBookingOnlineAmount(b) {
+      if (!b) return 0;
+      return Number(b.online_amount !== undefined && b.online_amount !== null ? b.online_amount : (b.payment_mode === "online" ? b.amount : 0)) || 0;
+    }
+
+    function getBookingCashAmount(b) {
+      if (!b) return 0;
+      return Number(b.cash_amount !== undefined && b.cash_amount !== null ? b.cash_amount : (b.payment_mode === "cash" ? b.amount : 0)) || 0;
+    }
+
+    function renderBookingPaymentBadge(b) {
+      if (!b) return "";
+      const cash = getBookingCashAmount(b);
+      const online = getBookingOnlineAmount(b);
+      if (cash > 0 && online > 0) {
+        return \`<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-purple-100 text-purple-900 border border-purple-200" title="Split: ₹\${formatCurrency(cash)} Cash + ₹\${formatCurrency(online)} Online">Split (₹\${formatCurrency(cash)} Cs + ₹\${formatCurrency(online)} On)</span>\`;
+      }
+      if (cash > 0) {
+        return \`<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800">Cash: ₹\${formatCurrency(cash)}</span>\`;
+      }
+      return \`<span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-100 text-indigo-800">Online: ₹\${formatCurrency(online)}</span>\`;
+    }
 
     // Init Lucide
     function refreshIcons() {
@@ -5646,9 +5718,9 @@ export function getDashboardHtml(): string {
       const propRooms = hasLodging ? roomsList.filter(r => r.property_id === propId) : [];
       const todayBookings = hasLodging ? roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate) : [];
 
-      // Lodging calculations (automated from bookings)
-      const lo = hasLodging ? todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0) : 0;
-      const lc = hasLodging ? todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0) : 0;
+      // Lodging calculations (automated from bookings, supports split cash & online)
+      const lo = hasLodging ? todayBookings.reduce((sum, b) => sum + getBookingOnlineAmount(b), 0) : 0;
+      const lc = hasLodging ? todayBookings.reduce((sum, b) => sum + getBookingCashAmount(b), 0) : 0;
       const lodgingSub = lo + lc;
 
       // Fooding calculations
@@ -5898,50 +5970,69 @@ export function getDashboardHtml(): string {
                     </select>
                   </div>
 
-                  <!-- Amount -->
+                  <!-- Cash Amount -->
                   <div>
-                    <label id="mgrAmountLabel" class="block text-xs font-semibold text-indigo-950 mb-1">
-                      \${mgrStayMode === 'range' ? 'Rate / Night (₹) *' : 'Booking Amount (₹) *'}
-                    </label>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block text-xs font-bold text-amber-950 flex items-center gap-1">
+                        <i data-lucide="banknote" class="w-3.5 h-3.5 text-amber-600"></i>
+                        <span>Cash Amount (₹)</span>
+                      </label>
+                      <button type="button" onclick="mgrQuickSetPayment('cash')" class="text-[10px] font-bold text-amber-700 hover:text-amber-900 cursor-pointer">All Cash</button>
+                    </div>
                     <div class="relative">
                       <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
                       <input
                         type="number"
-                        id="mgrBookAmount"
+                        id="mgrBookCashAmount"
                         min="0"
                         step="1"
-                        required
-                        placeholder="2000"
-                        oninput="onMgrRateInput(this.value)"
-                        class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-slate-900 rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                        placeholder="0"
+                        value="0"
+                        oninput="onMgrCashOnlineChange()"
+                        class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-amber-950 rounded-xl border border-amber-300 bg-amber-50/20 focus:ring-2 focus:ring-amber-500 shadow-2xs"
                       />
                     </div>
                   </div>
 
-                  <!-- Payment Method Toggle -->
+                  <!-- Online Amount -->
                   <div>
-                    <label class="block text-xs font-semibold text-indigo-950 mb-1">Payment Method *</label>
-                    <div class="grid grid-cols-2 gap-1.5 p-1 bg-white rounded-xl border border-indigo-200 shadow-2xs">
-                      <button
-                        type="button"
-                        id="btnModeOnline"
-                        onclick="setQuickBookPaymentMode('online')"
-                        class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-indigo-600 text-white shadow-xs"
-                      >
-                        <i data-lucide="globe" class="w-3.5 h-3.5"></i>
-                        <span>Online</span>
-                      </button>
-                      <button
-                        type="button"
-                        id="btnModeCash"
-                        onclick="setQuickBookPaymentMode('cash')"
-                        class="py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100"
-                      >
-                        <i data-lucide="banknote" class="w-3.5 h-3.5"></i>
-                        <span>Cash</span>
-                      </button>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block text-xs font-bold text-indigo-950 flex items-center gap-1">
+                        <i data-lucide="globe" class="w-3.5 h-3.5 text-indigo-600"></i>
+                        <span>Online Amount (₹)</span>
+                      </label>
+                      <button type="button" onclick="mgrQuickSetPayment('online')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 cursor-pointer">All Online</button>
+                    </div>
+                    <div class="relative">
+                      <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-mono font-bold text-xs pointer-events-none">₹</span>
+                      <input
+                        type="number"
+                        id="mgrBookOnlineAmount"
+                        min="0"
+                        step="1"
+                        placeholder="0"
+                        value="0"
+                        oninput="onMgrCashOnlineChange()"
+                        class="w-full pl-7 pr-3 py-2 text-xs font-bold font-mono text-indigo-950 rounded-xl border border-indigo-300 bg-indigo-50/20 focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                      />
                     </div>
                   </div>
+                </div>
+
+                <!-- Live Payment Breakdown & Quick 50/50 Split -->
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex-wrap gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-slate-500 font-medium">Total Booking:</span>
+                    <span id="mgrBookTotalPreview" class="font-mono font-black text-slate-900 text-sm">₹0</span>
+                    <span id="mgrBookPaymentBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Enter Amount</span>
+                  </div>
+                  <button
+                    type="button"
+                    onclick="mgrQuickSetPayment('split')"
+                    class="text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1"
+                  >
+                    <span>⚡ Half Cash / Half Online (50/50)</span>
+                  </button>
                 </div>
 
                 <!-- Guest / Notes Row -->
@@ -6044,9 +6135,7 @@ export function getDashboardHtml(): string {
                                 \${escapeHtml(b.platform)}
                               </span>
                             \` : ''}
-                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
-                              \${isOnline ? 'Online' : 'Cash'}
-                            </span>
+                            \${renderBookingPaymentBadge(b)}
                           </div>
                           <div class="flex items-center gap-1">
                             <button
@@ -6491,21 +6580,100 @@ export function getDashboardHtml(): string {
           : \`\${nights} Night\${nights > 1 ? 's' : ''} Stay (\${checkIn} → \${checkOut})\`;
       }
 
-      const rateInput = document.getElementById("mgrBookAmount");
-      const rate = parseFloat(rateInput?.value || "0") || 0;
+      const select = document.getElementById("mgrBookRoomSelect");
+      const opt = select?.selectedOptions[0];
+      const rate = opt ? (parseFloat(opt.getAttribute("data-price") || "0") || 2000) : 2000;
       const total = rate * nights;
+
+      const cashInp = document.getElementById("mgrBookCashAmount");
+      const onlineInp = document.getElementById("mgrBookOnlineAmount");
+      const curTotal = (parseFloat(cashInp?.value || "0") || 0) + (parseFloat(onlineInp?.value || "0") || 0);
+      if (curTotal === 0 || curTotal !== total) {
+        if (cashInp && onlineInp) {
+          if (parseFloat(cashInp.value) > 0 && parseFloat(onlineInp.value) > 0) {
+            const half = Math.round(total / 2);
+            cashInp.value = half;
+            onlineInp.value = total - half;
+          } else if (parseFloat(cashInp.value) > 0) {
+            cashInp.value = total;
+            onlineInp.value = 0;
+          } else {
+            onlineInp.value = total;
+            cashInp.value = 0;
+          }
+        }
+      }
+      onMgrCashOnlineChange();
+    }
+
+    function onMgrCashOnlineChange() {
+      const cashInp = document.getElementById("mgrBookCashAmount");
+      const onlineInp = document.getElementById("mgrBookOnlineAmount");
+      const cash = Math.max(0, parseFloat(cashInp?.value || "0") || 0);
+      const online = Math.max(0, parseFloat(onlineInp?.value || "0") || 0);
+      const total = cash + online;
+      const preview = document.getElementById("mgrBookTotalPreview");
+      const badge = document.getElementById("mgrBookPaymentBadge");
       const btnText = document.getElementById("btnMgrSubmitBookText");
+
+      if (preview) preview.innerText = \`₹\${formatCurrency(total)}\`;
+      if (badge) {
+        if (total === 0) {
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700";
+          badge.innerText = "Enter Amount";
+        } else if (cash > 0 && online > 0) {
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200";
+          badge.innerText = \`Split: ₹\${formatCurrency(cash)} Cash + ₹\${formatCurrency(online)} Online\`;
+        } else if (cash > 0) {
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200";
+          badge.innerText = "100% Cash";
+        } else {
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200";
+          badge.innerText = "100% Online";
+        }
+      }
       if (btnText) {
-        btnText.innerText = total > 0
-          ? \`+ Book \${nights} Night\${nights > 1 ? 's' : ''} (₹\${formatCurrency(total)})\`
-          : \`+ Book \${nights} Night\${nights > 1 ? 's' : ''}\`;
+        if (mgrStayMode === 'range') {
+          const inVal = document.getElementById("mgrBookCheckIn")?.value;
+          const outVal = document.getElementById("mgrBookCheckOut")?.value;
+          const inc = document.getElementById("mgrIncludeCheckoutDay")?.checked || false;
+          const nights = (inVal && outVal) ? calculateStayNights(inVal, outVal, inc) : 1;
+          btnText.innerText = total > 0 ? \`+ Book \${nights} Night\${nights > 1 ? 's' : ''} (₹\${formatCurrency(total)})\` : \`+ Book \${nights} Night\${nights > 1 ? 's' : ''}\`;
+        } else {
+          btnText.innerText = total > 0 ? \`+ Book Room (₹\${formatCurrency(total)})\` : "+ Book Room Now";
+        }
       }
     }
 
-    function onMgrRateInput(val) {
-      if (mgrStayMode === 'range') {
-        onMgrRangeChange();
+    function mgrQuickSetPayment(mode) {
+      const cashInp = document.getElementById("mgrBookCashAmount");
+      const onlineInp = document.getElementById("mgrBookOnlineAmount");
+      let currentTotal = (parseFloat(cashInp?.value || "0") || 0) + (parseFloat(onlineInp?.value || "0") || 0);
+      if (currentTotal <= 0) {
+        const sel = document.getElementById("mgrBookRoomSelect");
+        const opt = sel?.selectedOptions[0];
+        let base = opt ? (parseFloat(opt.getAttribute("data-price") || "0") || 2000) : 2000;
+        if (mgrStayMode === 'range') {
+          const inVal = document.getElementById("mgrBookCheckIn")?.value;
+          const outVal = document.getElementById("mgrBookCheckOut")?.value;
+          const inc = document.getElementById("mgrIncludeCheckoutDay")?.checked || false;
+          const nights = (inVal && outVal) ? calculateStayNights(inVal, outVal, inc) : 1;
+          base = base * nights;
+        }
+        currentTotal = base;
       }
+      if (mode === "cash") {
+        if (cashInp) cashInp.value = currentTotal;
+        if (onlineInp) onlineInp.value = 0;
+      } else if (mode === "online") {
+        if (onlineInp) onlineInp.value = currentTotal;
+        if (cashInp) cashInp.value = 0;
+      } else if (mode === "split") {
+        const half = Math.round(currentTotal / 2);
+        if (cashInp) cashInp.value = half;
+        if (onlineInp) onlineInp.value = currentTotal - half;
+      }
+      onMgrCashOnlineChange();
     }
 
     // Quick Book Room Chip Selection
@@ -6520,36 +6688,26 @@ export function getDashboardHtml(): string {
     function onMgrBookRoomSelectChange(roomId) {
       const select = document.getElementById("mgrBookRoomSelect");
       const opt = select?.selectedOptions[0];
-      const amountInput = document.getElementById("mgrBookAmount");
-      if (opt && amountInput) {
-        const price = opt.getAttribute("data-price");
-        if (price && (!amountInput.value || parseFloat(amountInput.value) === 0)) {
-          amountInput.value = price;
+      const cashInp = document.getElementById("mgrBookCashAmount");
+      const onlineInp = document.getElementById("mgrBookOnlineAmount");
+      if (opt && cashInp && onlineInp) {
+        let price = parseFloat(opt.getAttribute("data-price") || "0") || 2000;
+        if (mgrStayMode === 'range') {
+          const inVal = document.getElementById("mgrBookCheckIn")?.value;
+          const outVal = document.getElementById("mgrBookCheckOut")?.value;
+          const inc = document.getElementById("mgrIncludeCheckoutDay")?.checked || false;
+          const nights = (inVal && outVal) ? calculateStayNights(inVal, outVal, inc) : 1;
+          price = price * nights;
+        }
+        const currentTotal = (parseFloat(cashInp.value || "0") || 0) + (parseFloat(onlineInp.value || "0") || 0);
+        if (currentTotal === 0) {
+          onlineInp.value = price;
+          cashInp.value = 0;
         }
       }
+      onMgrCashOnlineChange();
       if (mgrStayMode === 'range') {
         onMgrRangeChange();
-      }
-    }
-
-    function setQuickBookPaymentMode(mode) {
-      quickBookPaymentMode = mode;
-      const btnOnline = document.getElementById("btnModeOnline");
-      const btnCash = document.getElementById("btnModeCash");
-      if (mode === "online") {
-        if (btnOnline) {
-          btnOnline.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-indigo-600 text-white shadow-xs";
-        }
-        if (btnCash) {
-          btnCash.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100";
-        }
-      } else {
-        if (btnOnline) {
-          btnOnline.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 text-slate-600 hover:bg-slate-100";
-        }
-        if (btnCash) {
-          btnCash.className = "py-1.5 px-2 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1 bg-amber-600 text-white shadow-xs";
-        }
       }
     }
 
@@ -6630,10 +6788,23 @@ export function getDashboardHtml(): string {
       if (!propId) return showToast("Error: No property assigned");
       if (!roomId) return showToast("Please select a room");
 
+      const cash_amount = Math.max(0, parseFloat(document.getElementById("mgrBookCashAmount")?.value || "0") || 0);
+      const online_amount = Math.max(0, parseFloat(document.getElementById("mgrBookOnlineAmount")?.value || "0") || 0);
+      const total_amount = cash_amount + online_amount;
+
+      if (total_amount <= 0) {
+        return showToast("Please enter a cash or online booking amount");
+      }
+
+      const payment_mode = (cash_amount > 0 && online_amount > 0) ? "split" : (cash_amount > 0 ? "cash" : "online");
+
       let payload = {
         property_id: propId,
         room_id: roomId,
-        payment_mode: quickBookPaymentMode,
+        payment_mode,
+        cash_amount,
+        online_amount,
+        amount: total_amount,
         guest_name: guestName,
         guests_json: guestsJson,
         guest_id_image: guestIdImage,
@@ -6644,7 +6815,6 @@ export function getDashboardHtml(): string {
         const check_in_date = document.getElementById("mgrBookCheckIn")?.value;
         const check_out_date = document.getElementById("mgrBookCheckOut")?.value;
         const include_checkout_day = document.getElementById("mgrIncludeCheckoutDay")?.checked || false;
-        const rate_per_day = Math.max(0, parseFloat(document.getElementById("mgrBookAmount")?.value || "0") || 0);
 
         if (!check_in_date || !check_out_date) {
           return showToast("Please select check-in and check-out dates");
@@ -6652,22 +6822,14 @@ export function getDashboardHtml(): string {
         if (check_in_date > check_out_date) {
           return showToast("Check-out date must be after check-in date");
         }
-        if (rate_per_day <= 0) {
-          return showToast("Please enter a valid rate per night");
-        }
 
         const nights = calculateStayNights(check_in_date, check_out_date, include_checkout_day);
         payload.is_range = true;
         payload.check_in_date = check_in_date;
         payload.check_out_date = check_out_date;
         payload.include_checkout_day = include_checkout_day;
-        payload.rate_per_day = rate_per_day;
-        payload.amount = rate_per_day * nights;
       } else {
-        const amount = Math.max(0, parseFloat(document.getElementById("mgrBookAmount")?.value || "0") || 0);
-        if (amount <= 0) return showToast("Please enter a valid booking amount");
         payload.date = managerFinanceDate;
-        payload.amount = amount;
       }
 
       try {
@@ -6689,12 +6851,15 @@ export function getDashboardHtml(): string {
           showToast("Room booked successfully! Lodging total updated.");
         }
 
-        const amountInput = document.getElementById("mgrBookAmount");
+        const cashInput = document.getElementById("mgrBookCashAmount");
+        const onlineInput = document.getElementById("mgrBookOnlineAmount");
         const guestInput = document.getElementById("mgrBookGuest");
         const notesInput = document.getElementById("mgrBookNotes");
-        if (amountInput) amountInput.value = "";
+        if (cashInput) cashInput.value = "0";
+        if (onlineInput) onlineInput.value = "0";
         if (guestInput) guestInput.value = "";
         if (notesInput) notesInput.value = "";
+        onMgrCashOnlineChange();
         clearMgrGuestId();
 
         await Promise.all([fetchRoomBookings(), fetchFinances()]);
@@ -6756,8 +6921,8 @@ export function getDashboardHtml(): string {
       let lodgingSub = 0;
       if (hasLodging) {
         const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate);
-        const lo = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
-        const lc = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+        const lo = todayBookings.reduce((sum, b) => sum + getBookingOnlineAmount(b), 0);
+        const lc = todayBookings.reduce((sum, b) => sum + getBookingCashAmount(b), 0);
         lodgingSub = lo + lc;
         const elLodging = document.getElementById("mgrLodgingSubtotal");
         if (elLodging) elLodging.innerText = formatCurrency(lodgingSub);
@@ -6817,8 +6982,8 @@ export function getDashboardHtml(): string {
       let lodgingCash = 0;
       if (hasLodging) {
         const todayBookings = roomBookingsList.filter(b => b.property_id === propId && b.date === date);
-        lodgingOnline = todayBookings.filter(b => b.payment_mode === "online").reduce((sum, b) => sum + (b.amount || 0), 0);
-        lodgingCash = todayBookings.filter(b => b.payment_mode === "cash").reduce((sum, b) => sum + (b.amount || 0), 0);
+        lodgingOnline = todayBookings.reduce((sum, b) => sum + getBookingOnlineAmount(b), 0);
+        lodgingCash = todayBookings.reduce((sum, b) => sum + getBookingCashAmount(b), 0);
       }
 
       const foodingOnline = hasFooding ? Math.max(0, parseFloat(document.getElementById("mgrFoodingOnline")?.value || "0") || 0) : 0;
@@ -7519,8 +7684,8 @@ export function getDashboardHtml(): string {
         const monthBookings = roomBookingsList.filter(b => b.property_id === propId && b.date && b.date.startsWith(currentMonthPrefix));
 
         const totalBookingsCount = monthBookings.length;
-        const monthLodgingOnline = monthBookings.filter(b => b.payment_mode === "online").reduce((s, b) => s + (b.amount || 0), 0);
-        const monthLodgingCash = monthBookings.filter(b => b.payment_mode === "cash").reduce((s, b) => s + (b.amount || 0), 0);
+        const monthLodgingOnline = monthBookings.reduce((s, b) => s + getBookingOnlineAmount(b), 0);
+        const monthLodgingCash = monthBookings.reduce((s, b) => s + getBookingCashAmount(b), 0);
         const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
 
         container.innerHTML = \`
@@ -7634,6 +7799,7 @@ export function getDashboardHtml(): string {
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Split (Cash + Online)</span>
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
               <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
               <span class="inline-flex items-center gap-1.5"><span>🪪</span> ID Attached</span>
@@ -7694,8 +7860,8 @@ export function getDashboardHtml(): string {
       const allMonthBookings = roomBookingsList.filter(b => activeLodgingProps.some(lp => lp.id === b.property_id) && b.date && b.date.startsWith(currentMonthPrefix));
 
       const totalBookingsCount = allMonthBookings.length;
-      const monthLodgingOnline = allMonthBookings.filter(b => b.payment_mode === "online").reduce((s, b) => s + (b.amount || 0), 0);
-      const monthLodgingCash = allMonthBookings.filter(b => b.payment_mode === "cash").reduce((s, b) => s + (b.amount || 0), 0);
+      const monthLodgingOnline = allMonthBookings.reduce((s, b) => s + getBookingOnlineAmount(b), 0);
+      const monthLodgingCash = allMonthBookings.reduce((s, b) => s + getBookingCashAmount(b), 0);
       const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
       const hasEliteHomes = activeLodgingProps.some(p => p.id === "elite-homes");
 
@@ -7810,6 +7976,7 @@ export function getDashboardHtml(): string {
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Split (Cash + Online)</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
             <span class="inline-flex items-center gap-1.5"><span>🪪</span> ID Attached</span>
@@ -7902,7 +8069,10 @@ export function getDashboardHtml(): string {
                           \`;
                         } else if (count === 1) {
                           const bk = cellBookings[0];
-                          const isOnline = bk.payment_mode === "online";
+                          const bkCash = getBookingCashAmount(bk);
+                          const bkOnline = getBookingOnlineAmount(bk);
+                          const isSplit = (bkCash > 0 && bkOnline > 0) || bk.payment_mode === "split";
+                          const isOnline = bk.payment_mode === "online" && !isSplit;
                           const isMultiDay = !!bk.group_booking_id;
                           const idCount = parseGuestIdImages(bk.guest_id_image).length;
                           const hasId = idCount > 0;
@@ -7910,17 +8080,20 @@ export function getDashboardHtml(): string {
                           const stayInfo = isMultiDay ? \` (Multi-day stay: \${bk.check_in_date || ''} to \${bk.check_out_date || ''})\` : '';
                           const isAirbnb = (bk.platform || '').toLowerCase().includes('airbnb');
                           const isBookingCom = (bk.platform || '').toLowerCase().includes('booking');
-                          const platformTag = isAirbnb ? 'Airbnb' : (isBookingCom ? 'OTA' : (isOnline ? 'On' : 'Cs') + (isMultiDay ? '·Stay' : ''));
+                          const platformTag = isAirbnb ? 'Airbnb' : (isBookingCom ? 'OTA' : (isSplit ? 'Split' : (isOnline ? 'On' : 'Cs')) + (isMultiDay ? '·Stay' : ''));
                           const cellStyle = isAirbnb
                             ? 'bg-rose-100 text-rose-900 border border-rose-300'
                             : (isBookingCom
                               ? 'bg-blue-100 text-blue-900 border border-blue-300'
-                              : (isOnline ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-amber-100 text-amber-900 border border-amber-200'));
+                              : (isSplit
+                                ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                                : (isOnline ? 'bg-indigo-100 text-indigo-900 border border-indigo-200' : 'bg-amber-100 text-amber-900 border border-amber-200')));
+                          const splitTooltip = isSplit ? \` (Split: ₹\${formatCurrency(bkCash)} Cash + ₹\${formatCurrency(bkOnline)} Online)\` : '';
 
                           return \`
                             <td
                               onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
-                              title="Booked: ₹\${formatCurrency(bk.amount)} [\${bk.platform || (isOnline ? 'Online' : 'Cash')}] - \${bk.guest_name || 'Guest'}\${hasId ? \` (🪪 \${idCount} ID\${idCount > 1 ? 's' : ''} Attached)\` : ''}\${stayInfo}"
+                              title="Booked: ₹\${formatCurrency(bk.amount)} [\${bk.platform || (isSplit ? 'Split Cash+Online' : (isOnline ? 'Online' : 'Cash'))}]\${splitTooltip} - \${bk.guest_name || 'Guest'}\${hasId ? \` (🪪 \${idCount} ID\${idCount > 1 ? 's' : ''} Attached)\` : ''}\${stayInfo}"
                               class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
                             >
                               <span class="relative inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${cellStyle}">
@@ -8001,9 +8174,16 @@ export function getDashboardHtml(): string {
 
                   <div class="space-y-1 my-1 overflow-hidden">
                     \${dateBookings.slice(0, 2).map(b => {
-                      const isOnline = b.payment_mode === "online";
+                      const bkCash = getBookingCashAmount(b);
+                      const bkOnline = getBookingOnlineAmount(b);
+                      const isSplit = (bkCash > 0 && bkOnline > 0) || b.payment_mode === "split";
+                      const isOnline = b.payment_mode === "online" && !isSplit;
                       const pTag = b.platform ? (b.platform.toLowerCase().includes('airbnb') ? 'Ab·' : (b.platform.toLowerCase().includes('booking') ? 'OTA·' : '')) : '';
-                      const itemBg = (b.platform || '').toLowerCase().includes('airbnb') ? 'bg-rose-100/90 text-rose-950 border border-rose-200' : (isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900');
+                      const itemBg = (b.platform || '').toLowerCase().includes('airbnb')
+                        ? 'bg-rose-100/90 text-rose-950 border border-rose-200'
+                        : (isSplit
+                          ? 'bg-purple-100/90 text-purple-950 border border-purple-200'
+                          : (isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900'));
                       return \`
                         <div class="text-[9px] truncate font-medium px-1.5 py-0.5 rounded-md flex items-center justify-between gap-1 \${itemBg}">
                           <span class="truncate">\${pTag}Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k</span>
@@ -9324,7 +9504,11 @@ export function getDashboardHtml(): string {
       const room = roomsList.find(r => r.id === bk.room_id);
       const roomNum = room ? room.room_number : (bk.room_number || "Room");
       const guestName = bk.guest_name || "Guest";
-      const infoText = \`Room \${roomNum} · \${bk.date} · \${bk.payment_mode === 'cash' ? 'Cash' : 'Online'}\`;
+      const bCash = getBookingCashAmount(bk);
+      const bOnline = getBookingOnlineAmount(bk);
+      const isSplit = (bCash > 0 && bOnline > 0) || bk.payment_mode === "split";
+      const payLabel = isSplit ? \`Split (₹\${formatCurrency(bCash)} Cs + ₹\${formatCurrency(bOnline)} On)\` : (bk.payment_mode === 'cash' ? 'Cash' : 'Online');
+      const infoText = \`Room \${roomNum} · \${bk.date} · \${payLabel}\`;
       openMultiIdLightbox(ids, startIndex, guestName, infoText);
     }
 
@@ -9653,13 +9837,14 @@ export function getDashboardHtml(): string {
 
           modalGuestIdList = parseGuestIdImages(bk.guest_id_image);
           renderModalGuestIdGallery();
-          if (bk.payment_mode === "cash") {
-            const r = document.getElementById("modalBookingModeCash");
-            if (r) r.checked = true;
-          } else {
-            const r = document.getElementById("modalBookingModeOnline");
-            if (r) r.checked = true;
-          }
+
+          const cashVal = Number(bk.cash_amount !== undefined && bk.cash_amount !== null ? bk.cash_amount : (bk.payment_mode === "cash" ? bk.amount : 0)) || 0;
+          const onlineVal = Number(bk.online_amount !== undefined && bk.online_amount !== null ? bk.online_amount : (bk.payment_mode === "online" ? bk.amount : 0)) || 0;
+          const cashInp = document.getElementById("modalBookingCashAmount");
+          const onlineInp = document.getElementById("modalBookingOnlineAmount");
+          if (cashInp) cashInp.value = cashVal;
+          if (onlineInp) onlineInp.value = onlineVal;
+          onModalCashOnlineInput();
 
           if (bk.group_booking_id) {
             if (groupNotice) groupNotice.classList.remove("hidden");
@@ -9701,8 +9886,12 @@ export function getDashboardHtml(): string {
         const guestCountInput = document.getElementById("modalBookingGuestCount");
         if (guestCountInput) guestCountInput.value = 1;
         clearModalGuestIds();
-        const r = document.getElementById("modalBookingModeOnline");
-        if (r) r.checked = true;
+
+        const cashInp = document.getElementById("modalBookingCashAmount");
+        const onlineInp = document.getElementById("modalBookingOnlineAmount");
+        if (cashInp) cashInp.value = 0;
+        if (onlineInp) onlineInp.value = basePrice;
+        onModalCashOnlineInput();
 
         if (staySegment) staySegment.classList.remove("hidden");
         if (groupNotice) groupNotice.classList.add("hidden");
@@ -9713,6 +9902,63 @@ export function getDashboardHtml(): string {
       document.getElementById("roomBookingModal").classList.remove("hidden");
       document.getElementById("roomBookingModal").classList.add("flex");
       refreshIcons();
+    }
+
+    function onModalCashOnlineInput() {
+      const cashInp = document.getElementById("modalBookingCashAmount");
+      const onlineInp = document.getElementById("modalBookingOnlineAmount");
+      const cash = Math.max(0, parseFloat(cashInp?.value || "0") || 0);
+      const online = Math.max(0, parseFloat(onlineInp?.value || "0") || 0);
+      const total = cash + online;
+      const totalStayInput = document.getElementById("modalTotalStayAmount");
+      const singleAmountInput = document.getElementById("modalBookingAmount");
+      const preview = document.getElementById("modalPaymentTotalPreview");
+      const badge = document.getElementById("modalPaymentModeBadge");
+
+      if (preview) preview.innerText = \`₹\${formatCurrency(total)}\`;
+      if (totalStayInput && total > 0) totalStayInput.value = total;
+      if (singleAmountInput && total > 0) singleAmountInput.value = total;
+
+      if (badge) {
+        if (total === 0) {
+          badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700";
+          badge.innerText = "Enter Amount";
+        } else if (cash > 0 && online > 0) {
+          badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200";
+          badge.innerText = \`Split: ₹\${formatCurrency(cash)} Cash + ₹\${formatCurrency(online)} Online\`;
+        } else if (cash > 0) {
+          badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200";
+          badge.innerText = "100% Cash";
+        } else {
+          badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200";
+          badge.innerText = "100% Online";
+        }
+      }
+    }
+
+    function modalSetPaymentSplit(mode) {
+      const cashInp = document.getElementById("modalBookingCashAmount");
+      const onlineInp = document.getElementById("modalBookingOnlineAmount");
+      const totalStayInput = document.getElementById("modalTotalStayAmount");
+      const singleAmountInput = document.getElementById("modalBookingAmount");
+
+      let total = (parseFloat(cashInp?.value || "0") || 0) + (parseFloat(onlineInp?.value || "0") || 0);
+      if (total <= 0) {
+        total = parseFloat(totalStayInput?.value || singleAmountInput?.value || "0") || 2000;
+      }
+
+      if (mode === "cash") {
+        if (cashInp) cashInp.value = total;
+        if (onlineInp) onlineInp.value = 0;
+      } else if (mode === "online") {
+        if (onlineInp) onlineInp.value = total;
+        if (cashInp) cashInp.value = 0;
+      } else if (mode === "split") {
+        const half = Math.round(total / 2);
+        if (cashInp) cashInp.value = half;
+        if (onlineInp) onlineInp.value = total - half;
+      }
+      onModalCashOnlineInput();
     }
 
     function closeRoomBookingModal() {
@@ -9732,8 +9978,16 @@ export function getDashboardHtml(): string {
       const bookingId = document.getElementById("modalBookingId")?.value?.trim() || null;
       const property_id = document.getElementById("modalBookingProperty")?.value;
       const room_id = document.getElementById("modalBookingRoomSelect")?.value;
-      const isCash = document.getElementById("modalBookingModeCash")?.checked;
-      const payment_mode = isCash ? "cash" : "online";
+
+      const cash_amount = Math.max(0, parseFloat(document.getElementById("modalBookingCashAmount")?.value || "0") || 0);
+      const online_amount = Math.max(0, parseFloat(document.getElementById("modalBookingOnlineAmount")?.value || "0") || 0);
+      const total_amount = cash_amount + online_amount;
+
+      if (total_amount <= 0) {
+        return showToast("Please enter a cash or online booking amount");
+      }
+
+      const payment_mode = (cash_amount > 0 && online_amount > 0) ? "split" : (cash_amount > 0 ? "cash" : "online");
 
       const guestInputs = Array.from(document.querySelectorAll(".modal-guest-name-input"));
       let names = [];
@@ -9759,6 +10013,9 @@ export function getDashboardHtml(): string {
         property_id,
         room_id,
         payment_mode,
+        cash_amount,
+        online_amount,
+        amount: total_amount,
         guest_name,
         guest_count,
         guests_json,
@@ -9768,17 +10025,16 @@ export function getDashboardHtml(): string {
 
       if (bookingId) {
         const date = document.getElementById("modalBookingDate")?.value;
-        const amount = Math.max(0, parseFloat(document.getElementById("modalBookingAmount")?.value || "0") || 0);
         if (!date) return showToast("Booking date is required");
         payload.date = date;
-        payload.amount = amount;
+        payload.amount = total_amount;
+        payload.cash_amount = cash_amount;
+        payload.online_amount = online_amount;
         payload.update_entire_group = document.getElementById("modalUpdateEntireGroup")?.checked || false;
       } else if (modalStayMode === 'range') {
         const check_in_date = document.getElementById("modalBookingCheckInDate")?.value;
         const check_out_date = document.getElementById("modalBookingCheckOutDate")?.value;
         const include_checkout_day = document.getElementById("modalIncludeCheckoutDay")?.checked || false;
-        const rate_per_day = Math.max(0, parseFloat(document.getElementById("modalRatePerNight")?.value || "0") || 0);
-        const amount = Math.max(0, parseFloat(document.getElementById("modalTotalStayAmount")?.value || "0") || 0);
 
         if (!check_in_date || !check_out_date) {
           return showToast("Check-in and check-out dates are required");
@@ -9786,23 +10042,24 @@ export function getDashboardHtml(): string {
         if (check_in_date > check_out_date) {
           return showToast("Check-out date must be after check-in date");
         }
-        if (rate_per_day <= 0 && amount <= 0) {
-          return showToast("Please enter a valid rate or total stay amount");
-        }
 
         const nights = calculateStayNights(check_in_date, check_out_date, include_checkout_day);
+        const rate_per_day = nights > 0 ? Math.round(total_amount / nights) : total_amount;
         payload.is_range = true;
         payload.check_in_date = check_in_date;
         payload.check_out_date = check_out_date;
         payload.include_checkout_day = include_checkout_day;
         payload.rate_per_day = rate_per_day;
-        payload.amount = amount > 0 ? amount : (rate_per_day * nights);
+        payload.cash_amount = cash_amount;
+        payload.online_amount = online_amount;
+        payload.amount = total_amount;
       } else {
         const date = document.getElementById("modalBookingDate")?.value;
-        const amount = Math.max(0, parseFloat(document.getElementById("modalBookingAmount")?.value || "0") || 0);
         if (!date) return showToast("Booking date is required");
         payload.date = date;
-        payload.amount = amount;
+        payload.cash_amount = cash_amount;
+        payload.online_amount = online_amount;
+        payload.amount = total_amount;
       }
 
       try {
@@ -9880,9 +10137,7 @@ export function getDashboardHtml(): string {
                         \${escapeHtml(b.platform)}
                       </span>
                     \` : ''}
-                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'}">
-                      \${isOnline ? 'Online' : 'Cash'}
-                    </span>
+                    \${renderBookingPaymentBadge(b)}
                     \${b.external_booking_id ? \`
                       <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1" title="External Booking Synced from Airbnb Host Portal">
                         <i data-lucide="cloud-check" class="w-2.5 h-2.5"></i>
@@ -10599,7 +10854,18 @@ export function getDashboardHtml(): string {
             <div class="text-xs font-bold text-slate-900">\${escapeHtml(bk.guest_name || "Guest")}</div>
             <div class="text-[11px] text-slate-600 flex items-center justify-between">
               <span>\${escapeHtml(bk.check_in_date || bk.date || "")}\${bk.check_out_date && bk.check_out_date !== (bk.check_in_date || bk.date) ? \` → \${escapeHtml(bk.check_out_date)}\` : ""}</span>
-              <span class="font-mono font-bold text-slate-900">₹\${formatCurrency(bk.total_stay_amount || bk.amount || 0)} (\${escapeHtml((bk.payment_mode || "online").toUpperCase())})</span>
+              <span class="font-mono font-bold text-slate-900">
+                \${(() => {
+                  const bCash = Number(bk.cash_amount) || 0;
+                  const bOnline = Number(bk.online_amount) || 0;
+                  const isSplit = (bCash > 0 && bOnline > 0) || bk.payment_mode === "split";
+                  const tot = bk.total_stay_amount || bk.amount || (bCash + bOnline) || 0;
+                  if (isSplit) {
+                    return \`₹\${formatCurrency(tot)} <span class="text-purple-700 font-semibold">(₹\${formatCurrency(bCash)} Cs + ₹\${formatCurrency(bOnline)} On)</span>\`;
+                  }
+                  return \`₹\${formatCurrency(tot)} (\${escapeHtml((bk.payment_mode || "online").toUpperCase())})\`;
+                })()}
+              </span>
             </div>
             <div class="flex items-center gap-1.5 pt-1">
               <button

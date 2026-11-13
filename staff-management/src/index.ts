@@ -201,8 +201,8 @@ async function syncDailyFinanceLodging(env: Env, propertyId: string, date: strin
 	try {
 		const bookingSums = await env.DB.prepare(`
 			SELECT
-				COALESCE(SUM(CASE WHEN payment_mode = 'online' THEN amount ELSE 0 END), 0) AS lodging_online,
-				COALESCE(SUM(CASE WHEN payment_mode = 'cash' THEN amount ELSE 0 END), 0) AS lodging_cash,
+				COALESCE(SUM(COALESCE(online_amount, CASE WHEN payment_mode = 'online' THEN amount ELSE 0 END)), 0) AS lodging_online,
+				COALESCE(SUM(COALESCE(cash_amount, CASE WHEN payment_mode = 'cash' THEN amount ELSE 0 END)), 0) AS lodging_cash,
 				COUNT(*) AS booking_count
 			FROM room_bookings
 			WHERE property_id = ? AND date = ?
@@ -1325,8 +1325,8 @@ export default {
 				// Lodging is automatically derived from room bookings if any exist
 				const bookingSums = await env.DB.prepare(`
 					SELECT
-						COALESCE(SUM(CASE WHEN payment_mode = 'online' THEN amount ELSE 0 END), 0) AS lodging_online,
-						COALESCE(SUM(CASE WHEN payment_mode = 'cash' THEN amount ELSE 0 END), 0) AS lodging_cash,
+						COALESCE(SUM(COALESCE(online_amount, CASE WHEN payment_mode = 'online' THEN amount ELSE 0 END)), 0) AS lodging_online,
+						COALESCE(SUM(COALESCE(cash_amount, CASE WHEN payment_mode = 'cash' THEN amount ELSE 0 END)), 0) AS lodging_cash,
 						COUNT(*) AS booking_count
 					FROM room_bookings
 					WHERE property_id = ? AND date = ?
@@ -1584,7 +1584,6 @@ export default {
 				}
 
 				const roomId = bookingInput.room_id?.trim() || "";
-				const paymentMode = bookingInput.payment_mode === "cash" ? "cash" : "online";
 				const guestName = bookingInput.guest_name?.trim() || null;
 				const guestsJson = bookingInput.guests_json ? (typeof bookingInput.guests_json === "string" ? bookingInput.guests_json.trim() : JSON.stringify(bookingInput.guests_json)) : null;
 				let parsedNamesCount = 0;
@@ -1653,31 +1652,60 @@ export default {
 					throw Object.assign(new Error("Stay duration exceeds maximum 90 days."), { statusCode: 400 });
 				}
 
-				// Determine daily amount and total stay amount
-				const rawAmount = Math.max(0, Math.round(Number(bookingInput.amount) || 0));
-				const rawRatePerDay = bookingInput.rate_per_day !== undefined ? Math.max(0, Math.round(Number(bookingInput.rate_per_day) || 0)) : null;
+				// Determine cash, online, and total amounts
+				let cashAmount = 0;
+				let onlineAmount = 0;
 
-				let totalStayAmount = rawAmount;
-				let dailyRate = rawRatePerDay !== null ? rawRatePerDay : Math.floor(rawAmount / dates.length);
+				if (bookingInput.cash_amount !== undefined || bookingInput.online_amount !== undefined) {
+					cashAmount = Math.max(0, Math.round(Number(bookingInput.cash_amount) || 0));
+					onlineAmount = Math.max(0, Math.round(Number(bookingInput.online_amount) || 0));
+				} else {
+					const rawAmount = Math.max(0, Math.round(Number(bookingInput.amount) || 0));
+					if (bookingInput.payment_mode === "cash") {
+						cashAmount = rawAmount;
+						onlineAmount = 0;
+					} else {
+						onlineAmount = rawAmount;
+						cashAmount = 0;
+					}
+				}
 
-				if (rawRatePerDay !== null && dates.length > 1) {
-					totalStayAmount = rawRatePerDay * dates.length;
-				} else if (rawAmount > 0 && dates.length > 1 && rawRatePerDay === null) {
-					totalStayAmount = rawAmount;
-					dailyRate = Math.floor(rawAmount / dates.length);
+				let totalStayAmount = cashAmount + onlineAmount;
+				if (totalStayAmount === 0 && bookingInput.amount) {
+					totalStayAmount = Math.max(0, Math.round(Number(bookingInput.amount) || 0));
+					if (bookingInput.payment_mode === "cash") {
+						cashAmount = totalStayAmount;
+					} else {
+						onlineAmount = totalStayAmount;
+					}
+				}
+
+				let paymentMode: "online" | "cash" | "split" = "online";
+				if (cashAmount > 0 && onlineAmount > 0) {
+					paymentMode = "split";
+				} else if (cashAmount > 0) {
+					paymentMode = "cash";
+				} else {
+					paymentMode = "online";
 				}
 
 				const isMultiDay = dates.length > 1;
 				const groupBookingId = isMultiDay ? `grp_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}` : null;
 				const actualCheckOut = isMultiDay ? checkOutDate : checkInDate;
 
+				const n = dates.length;
+				const dailyCashRate = Math.floor(cashAmount / n);
+				const dailyOnlineRate = Math.floor(onlineAmount / n);
+
 				const createdBookings: RoomBooking[] = [];
 
 				for (let i = 0; i < dates.length; i++) {
 					const stayDate = dates[i];
 					const isLastDay = i === dates.length - 1;
-					// For multi-day, ensure sum of daily amounts exactly matches totalStayAmount
-					const dayAmount = isMultiDay ? (isLastDay ? (totalStayAmount - (dailyRate * (dates.length - 1))) : dailyRate) : totalStayAmount;
+					const dayCash = isMultiDay ? (isLastDay ? (cashAmount - (dailyCashRate * (n - 1))) : dailyCashRate) : cashAmount;
+					const dayOnline = isMultiDay ? (onlineAmount - (dailyOnlineRate * (n - 1))) : dailyOnlineRate;
+					const dayAmount = dayCash + dayOnline;
+					const dayMode: "online" | "cash" | "split" = (dayCash > 0 && dayOnline > 0) ? "split" : (dayCash > 0 ? "cash" : "online");
 
 					// Determine slot number for this room on this date
 					const slotCount = await env.DB.prepare(`
@@ -1689,11 +1717,11 @@ export default {
 
 					await env.DB.prepare(`
 						INSERT INTO room_bookings (
-							id, property_id, room_id, date, amount, payment_mode, guest_name, guest_count, guests_json, guest_id_image, notes, slot_number,
+							id, property_id, room_id, date, amount, payment_mode, cash_amount, online_amount, guest_name, guest_count, guests_json, guest_id_image, notes, slot_number,
 							group_booking_id, check_in_date, check_out_date, total_stay_amount, platform, created_by, created_at, updated_at
-						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					`).bind(
-						id, propertyId, roomId, stayDate, dayAmount, paymentMode, guestName, guestCount, guestsJson, guestIdImage, notes, slotNumber,
+						id, propertyId, roomId, stayDate, dayAmount, dayMode, dayCash, dayOnline, guestName, guestCount, guestsJson, guestIdImage, notes, slotNumber,
 						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, bookingInput.platform || "Direct", submittedBy
 					).run();
 
@@ -1774,8 +1802,35 @@ export default {
 				}
 
 				const body = await request.json() as any;
-				const amount = body.amount !== undefined ? Math.max(0, Math.round(Number(body.amount) || 0)) : existing.amount;
-				const paymentMode = body.payment_mode ? (body.payment_mode === "cash" ? "cash" : "online") : existing.payment_mode;
+				const hasCashOrOnline = body.cash_amount !== undefined || body.online_amount !== undefined;
+				let cashAmount = body.cash_amount !== undefined ? Math.max(0, Math.round(Number(body.cash_amount) || 0)) : (existing.cash_amount ?? (existing.payment_mode === "cash" ? existing.amount : 0));
+				let onlineAmount = body.online_amount !== undefined ? Math.max(0, Math.round(Number(body.online_amount) || 0)) : (existing.online_amount ?? (existing.payment_mode === "online" ? existing.amount : 0));
+
+				let amount = existing.amount;
+				if (hasCashOrOnline) {
+					amount = cashAmount + onlineAmount;
+				} else if (body.amount !== undefined) {
+					amount = Math.max(0, Math.round(Number(body.amount) || 0));
+					if (body.payment_mode === "cash") {
+						cashAmount = amount;
+						onlineAmount = 0;
+					} else if (body.payment_mode === "online") {
+						onlineAmount = amount;
+						cashAmount = 0;
+					}
+				}
+
+				let paymentMode: "online" | "cash" | "split" = existing.payment_mode as any;
+				if (cashAmount > 0 && onlineAmount > 0) {
+					paymentMode = "split";
+				} else if (cashAmount > 0) {
+					paymentMode = "cash";
+				} else if (onlineAmount > 0) {
+					paymentMode = "online";
+				} else if (body.payment_mode) {
+					paymentMode = body.payment_mode === "cash" ? "cash" : "online";
+				}
+
 				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
 				const guestCount = body.guest_count !== undefined ? Math.max(1, Math.round(Number(body.guest_count) || 1)) : (existing.guest_count || 1);
 				const guestsJson = body.guests_json !== undefined ? (typeof body.guests_json === "string" ? body.guests_json.trim() : JSON.stringify(body.guests_json)) : (existing as any).guests_json;
@@ -1787,9 +1842,9 @@ export default {
 				if (updateGroup && existing.group_booking_id) {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET payment_mode = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE group_booking_id = ?
-					`).bind(paymentMode, guestName, guestCount, guestsJson, guestIdImage, notes, existing.group_booking_id).run();
+					`).bind(paymentMode, cashAmount, onlineAmount, guestName, guestCount, guestsJson, guestIdImage, notes, existing.group_booking_id).run();
 
 					// Re-sync lodging across all affected dates
 					const groupBookings = await env.DB.prepare("SELECT DISTINCT property_id, date FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ property_id: string; date: string }>();
@@ -1799,9 +1854,9 @@ export default {
 				} else {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET amount = ?, payment_mode = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET amount = ?, payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE id = ?
-					`).bind(amount, paymentMode, guestName, guestCount, guestsJson, guestIdImage, notes, bookingId).run();
+					`).bind(amount, paymentMode, cashAmount, onlineAmount, guestName, guestCount, guestsJson, guestIdImage, notes, bookingId).run();
 
 					// Re-sync lodging in daily_finances
 					await syncDailyFinanceLodging(env, existing.property_id, existing.date);

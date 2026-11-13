@@ -20,7 +20,9 @@ export interface BookingChatDraft {
 	check_in_date?: string | null;
 	check_out_date?: string | null;
 	nights?: number | null;
-	payment_mode?: "online" | "cash" | null;
+	payment_mode?: "online" | "cash" | "split" | null;
+	cash_amount?: number | null;
+	online_amount?: number | null;
 	amount?: number | null;
 	notes?: string | null;
 	confirm_overlap?: boolean;
@@ -29,7 +31,9 @@ export interface BookingChatDraft {
 export interface CreateRoomBookingInput {
 	property_id: string;
 	room_id: string;
-	payment_mode?: "online" | "cash";
+	payment_mode?: "online" | "cash" | "split";
+	cash_amount?: number | null;
+	online_amount?: number | null;
 	guest_name?: string | null;
 	guest_count?: number | null;
 	guests_json?: string | null;
@@ -72,7 +76,9 @@ interface ParsedAiJson {
 	check_in_date?: string | null;
 	check_out_date?: string | null;
 	nights?: number | null;
-	payment_mode?: "online" | "cash" | null;
+	payment_mode?: "online" | "cash" | "split" | null;
+	cash_amount?: number | null;
+	online_amount?: number | null;
 	amount?: number | null;
 	notes?: string | null;
 	confirm_overlap?: boolean | null;
@@ -122,7 +128,7 @@ function isAvailabilityQuery(text: string): boolean {
  *   Number of person: 2
  * as well as natural inline variants and short follow-up replies.
  */
-function parseDeterministicBooking(
+export function parseDeterministicBooking(
 	text: string,
 	todayIso: string,
 	rooms: Array<Room & { property_name?: string }>,
@@ -151,7 +157,7 @@ function parseDeterministicBooking(
 			continue;
 		}
 
-		if ((m = line.match(/^(?:room\s*no\.?|room\s*number|rm\s*no\.?|room)\s*[:=\-.]?\s*(.+)$/i))) {
+		if ((m = line.match(/^(?:room\s*no\.?|room\s*number|rm\s*no\.?|room)\s*[:=\-.]?\s*([a-z0-9][a-z0-9\s-]{0,20}?)(?:\s*[,;|\n]|$)/i))) {
 			const val = m[1].trim();
 			if (val) result.room_number = val;
 			continue;
@@ -190,8 +196,19 @@ function parseDeterministicBooking(
 
 		if ((m = line.match(/^(?:payment(?:\s*mode|\s*method)?|mode)\s*[:=\-]\s*(.+)$/i))) {
 			const mode = m[1].trim().toLowerCase();
-			if (/cash/.test(mode)) result.payment_mode = "cash";
+			if (/half|split|partial|both/.test(mode)) result.payment_mode = "split";
+			else if (/cash/.test(mode)) result.payment_mode = "cash";
 			else if (/online|upi|gpay|paytm|card|bank|ota/.test(mode)) result.payment_mode = "online";
+			continue;
+		}
+
+		if ((m = line.match(/^(?:cash(?:\s*amount)?)\s*[:=\-]\s*[₹rs.\s]*(\d+(?:\.\d+)?)/i))) {
+			result.cash_amount = Math.round(Number(m[1]));
+			continue;
+		}
+
+		if ((m = line.match(/^(?:online(?:\s*amount)?)\s*[:=\-]\s*[₹rs.\s]*(\d+(?:\.\d+)?)/i))) {
+			result.online_amount = Math.round(Number(m[1]));
 			continue;
 		}
 
@@ -203,16 +220,38 @@ function parseDeterministicBooking(
 
 	// 2. Inline pattern fallbacks when fields aren't strictly Key: Value lines
 	if (!result.room_number) {
-		const inlineRoom = trimmed.match(/\b(?:room\s*no\.?|rm\s*no\.?|room|rm)\s*[#:\-.]?\s*([a-z0-9][a-z0-9\s-]{0,16}?)(?=\s*(?:,|\n|for\b|with\b|number\b|persons?\b|guests?\b|pax\b|cash\b|online\b|$))/i);
-		if (inlineRoom?.[1]) {
-			result.room_number = inlineRoom[1].trim();
+		// Check direct room match first against known property rooms (e.g. "101", "Studio Room 1", "Deluxe 201")
+		for (const r of rooms) {
+			const escaped = r.room_number.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			if (new RegExp(`(?:^|\\b|#)${escaped}(?:\\b|,|\\s|$)`, "i").test(trimmed)) {
+				result.room_number = r.room_number;
+				break;
+			}
+		}
+		if (!result.room_number) {
+			const inlineRoom = trimmed.match(/\b(?:room\s*no\.?|rm\s*no\.?|room|rm)\s*[#:\-.]?\s*([a-z0-9]+)\b/i);
+			if (inlineRoom?.[1]) {
+				result.room_number = inlineRoom[1].trim();
+			}
+		}
+	}
+
+	if (!result.guest_name) {
+		const inlineName = trimmed.match(/\b(?:for|guest|customer)\s+([A-Za-z][A-Za-z\s]{1,24}?)(?=\s*(?:,|\n|with|room|rm|\d|pax|person|cash|online|$))/i);
+		if (inlineName?.[1]) {
+			const candidate = inlineName[1].trim();
+			if (!/^(?:room|today|tomorrow|cash|online)$/i.test(candidate)) {
+				result.guest_name = candidate;
+			}
 		} else {
-			// Check direct room match (e.g. "Studio Room 1", "101", "1 BHK")
-			for (const r of rooms) {
-				const escaped = r.room_number.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-				if (new RegExp(`(?:^|\\s|#)${escaped}(?:\\s|,|$)`, "i").test(trimmed)) {
-					result.room_number = r.room_number;
-					break;
+			// Check comma or newline separated segments for simple guest names
+			const segments = trimmed.split(/[,;\n]/).map((s) => s.trim());
+			for (const seg of segments) {
+				if (/^[A-Za-z]{2,20}(?:\s+[A-Za-z]{2,20}){0,2}$/.test(seg)) {
+					if (!/^(?:room|rooms|today|tomorrow|cash|online|upi|gpay|card|split|half\s*cash|half\s*online|person|persons|guest|guests|pax)$/i.test(seg)) {
+						result.guest_name = seg;
+						break;
+					}
 				}
 			}
 		}
@@ -224,6 +263,48 @@ function parseDeterministicBooking(
 			const n = parseInt(inlineCount[1], 10);
 			if (n > 0 && n <= 30) result.guest_count = n;
 		}
+	}
+
+	if (/half\s*cash|half\s*online|50\s*%\s*cash|cash\s*and\s*online|online\s*and\s*cash|split/i.test(trimmed)) {
+		result.payment_mode = "split";
+	}
+	const inlineCash = trimmed.match(/(?:₹|rs\.?|inr)?\s*(\d+)\s*(?:cash\b)/i) || trimmed.match(/\bcash\b\s*(?:of|amount|is|:)?\s*(?:₹|rs\.?|inr)?\s*(\d+)/i);
+	if (inlineCash?.[1]) {
+		result.cash_amount = parseInt(inlineCash[1], 10);
+	}
+	const inlineOnline = trimmed.match(/(?:₹|rs\.?|inr)?\s*(\d+)\s*(?:online|upi|gpay|phonepe|card)\b/i) || trimmed.match(/\b(?:online|upi|gpay|phonepe|card)\b\s*(?:of|amount|is|:)?\s*(?:₹|rs\.?|inr)?\s*(\d+)/i);
+	if (inlineOnline?.[1]) {
+		result.online_amount = parseInt(inlineOnline[1], 10);
+	}
+
+	if (!result.amount) {
+		const inlineAmt = trimmed.match(/(?:(?:₹|rs\.?|amount|tariff|rate|price|total)\s*[:=\-]?\s*)(\d{2,6})\b/i) || trimmed.match(/\b([1-9]\d{2,5})\s*(?:rs|inr|₹|\/|-)\b/i);
+		if (inlineAmt?.[1]) {
+			const val = parseInt(inlineAmt[1], 10);
+			if (val >= 100 && val <= 500000 && val !== result.cash_amount && val !== result.online_amount) {
+				result.amount = val;
+			}
+		} else {
+			// Find standalone number that is not room_number, guest_count, or any known room
+			const allNums = [...trimmed.matchAll(/\b([1-9]\d{2,5})\b/g)].map((x) => parseInt(x[1], 10));
+			for (const num of allNums) {
+				if (String(num) === result.room_number || rooms.some((r) => r.room_number === String(num))) continue;
+				if (num === result.cash_amount || num === result.online_amount || num === result.guest_count) continue;
+				if (num >= 300 && num <= 500000) {
+					result.amount = num;
+					break;
+				}
+			}
+		}
+	}
+
+	if (result.cash_amount !== undefined && result.online_amount !== undefined && result.cash_amount !== null && result.online_amount !== null) {
+		result.payment_mode = "split";
+		result.amount = result.cash_amount + result.online_amount;
+	} else if (result.payment_mode === "split" && result.amount) {
+		const half = Math.round(result.amount / 2);
+		result.cash_amount = half;
+		result.online_amount = result.amount - half;
 	}
 
 	if (!result.payment_mode) {
@@ -342,7 +423,9 @@ async function parseWithWorkersAI(
 		'  "check_in_date": "YYYY-MM-DD" | null,',
 		'  "check_out_date": "YYYY-MM-DD" | null,',
 		'  "nights": number | null,',
-		'  "payment_mode": "online" | "cash" | null,',
+		'  "payment_mode": "online" | "cash" | "split" | null,',
+		'  "cash_amount": number | null,',
+		'  "online_amount": number | null,',
 		'  "amount": number | null,',
 		'  "notes": string | null,',
 		'  "confirm_overlap": boolean,',
@@ -351,6 +434,7 @@ async function parseWithWorkersAI(
 		"Rules:",
 		"- If the user asks about room availability or says hello/help, set intent accordingly and give a helpful concise assistant_reply.",
 		"- If the user provides customer name, room number, or number of persons (or answers a clarification), set intent='create_booking'.",
+		"- If payment is split (e.g. half cash half online, or specific amounts for cash and online), set payment_mode to 'split' and populate cash_amount and online_amount.",
 		"- Keep room_number matching one of the configured rooms when obvious.",
 		"- guest_count is the integer number of persons staying (e.g., '2 pax', 'Number of person: 3').",
 		"- Return JSON only."
@@ -632,8 +716,14 @@ export async function handleAiBookingChat(
 			? { check_out_date: aiParsed.check_out_date }
 			: {}),
 		...(aiParsed?.nights && aiParsed.nights > 0 ? { nights: Math.round(aiParsed.nights) } : {}),
-		...(aiParsed?.payment_mode === "cash" || aiParsed?.payment_mode === "online"
+		...(aiParsed?.payment_mode === "cash" || aiParsed?.payment_mode === "online" || aiParsed?.payment_mode === "split"
 			? { payment_mode: aiParsed.payment_mode }
+			: {}),
+		...(aiParsed?.cash_amount !== null && aiParsed?.cash_amount !== undefined && aiParsed.cash_amount >= 0
+			? { cash_amount: Math.round(Number(aiParsed.cash_amount)) }
+			: {}),
+		...(aiParsed?.online_amount !== null && aiParsed?.online_amount !== undefined && aiParsed.online_amount >= 0
+			? { online_amount: Math.round(Number(aiParsed.online_amount)) }
 			: {}),
 		...(aiParsed?.amount !== null && aiParsed?.amount !== undefined && aiParsed.amount >= 0
 			? { amount: Math.round(Number(aiParsed.amount)) }
@@ -719,9 +809,29 @@ export async function handleAiBookingChat(
 	const stayInfo = buildStayDateList(checkInDate, merged.check_out_date, merged.nights);
 	const room = resolvedRoom!;
 	const guestCount = Math.max(1, Math.round(merged.guest_count!));
-	const paymentMode: "online" | "cash" = merged.payment_mode === "cash" ? "cash" : "online";
 	const defaultTotalAmount = Math.max(0, Math.round((room.base_price || 0) * stayInfo.dates.length));
 	const totalAmount = merged.amount !== null && merged.amount !== undefined ? Math.max(0, Math.round(merged.amount)) : defaultTotalAmount;
+
+	let cashAmount = merged.cash_amount !== null && merged.cash_amount !== undefined ? Math.max(0, Math.round(merged.cash_amount)) : null;
+	let onlineAmount = merged.online_amount !== null && merged.online_amount !== undefined ? Math.max(0, Math.round(merged.online_amount)) : null;
+	let paymentMode: "online" | "cash" | "split" = "online";
+
+	if (cashAmount !== null && onlineAmount !== null) {
+		paymentMode = (cashAmount > 0 && onlineAmount > 0) ? "split" : (cashAmount > 0 ? "cash" : "online");
+	} else if (merged.payment_mode === "split") {
+		paymentMode = "split";
+		const half = Math.round(totalAmount / 2);
+		cashAmount = half;
+		onlineAmount = totalAmount - half;
+	} else if (merged.payment_mode === "cash") {
+		paymentMode = "cash";
+		cashAmount = totalAmount;
+		onlineAmount = 0;
+	} else {
+		paymentMode = "online";
+		onlineAmount = totalAmount;
+		cashAmount = 0;
+	}
 
 	// Conflict check on target date(s) unless user explicitly confirmed overlap
 	if (!merged.confirm_overlap) {
@@ -763,6 +873,8 @@ export async function handleAiBookingChat(
 		property_id: room.property_id,
 		room_id: room.id,
 		payment_mode: paymentMode,
+		cash_amount: cashAmount,
+		online_amount: onlineAmount,
 		guest_name: merged.guest_name!,
 		guest_count: guestCount,
 		guests_json: JSON.stringify(namesList),

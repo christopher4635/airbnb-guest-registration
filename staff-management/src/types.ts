@@ -140,7 +140,9 @@ export interface RoomBooking {
 	room_type?: string;
 	date: string;
 	amount: number;
-	payment_mode: "online" | "cash";
+	payment_mode: "online" | "cash" | "split";
+	cash_amount?: number | null;
+	online_amount?: number | null;
 	guest_name?: string | null;
 	guest_count?: number | null;
 	guests_json?: string | null;
