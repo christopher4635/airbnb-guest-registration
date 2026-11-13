@@ -7,7 +7,7 @@ import submissionsRoute from './routes/submissions';
 import uploadsRoute from './routes/uploads';
 import configRoute from './routes/config';
 import propertiesRoute from './routes/properties';
-import icalRoute from './routes/ical';
+import icalRoute, { executeIcalSync } from './routes/ical';
 import expensesRoute from './routes/expenses';
 import channelsRoute from './routes/channels';
 
@@ -104,4 +104,14 @@ app.onError((err, c) => {
   }, 500);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async scheduled(event: any, env: Bindings, ctx: any) {
+    console.log('[Cron] Triggering automatic 2-way iCal sync across Airbnb & Booking.com...');
+    ctx.waitUntil(executeIcalSync(env, null, ctx).then((stats: any) => {
+      console.log('[Cron] iCal sync completed:', stats.message);
+    }).catch((err: any) => {
+      console.error('[Cron] iCal sync failed:', err);
+    }));
+  }
+};

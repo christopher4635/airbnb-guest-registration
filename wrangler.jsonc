@@ -43,6 +43,11 @@
     "NOTIFICATION_EMAIL": "elitehomeskokrajhar@gmail.com"
   },
 
+  // 5. Automated 2-Way Calendar Sync Cron (every 10 minutes)
+  "triggers": {
+    "crons": ["*/10 * * * *"]
+  },
+
   "observability": {
     "enabled": true
   }

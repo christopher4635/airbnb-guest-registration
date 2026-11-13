@@ -899,113 +899,133 @@
       border-right: 1.5px dashed rgba(16, 185, 129, 0.35);
     }
 
-    /* Floating Booking Bar - Modern Minimal Style */
+    /* Floating Booking Bar - High Clarity & Premium Channel Manager Style */
     .timeline-booking-bar {
       position: absolute;
       border-radius: 8px;
-      padding: 4px 8px;
+      padding: 6px 10px;
       cursor: pointer;
       z-index: 10;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
       transition: transform 0.12s ease, box-shadow 0.12s ease;
-      border: 1px solid #E2E8F0;
-      border-left: 4px solid var(--primary);
+      border: 1px solid #CBD5E1;
+      border-left: 5px solid var(--primary);
       box-sizing: border-box;
       background: #FFFFFF;
     }
     .timeline-booking-bar:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
       z-index: 30;
-      filter: brightness(0.98);
+      border-color: #94A3B8;
+    }
+    .timeline-booking-bar.is-airbnb {
+      border-left-color: #FF385C !important;
+    }
+    .timeline-booking-bar.is-bookingcom {
+      border-left-color: #003580 !important;
+    }
+    .timeline-booking-bar.is-direct {
+      border-left-color: #059669 !important;
+    }
+    .timeline-booking-bar.is-blocked {
+      border-left-color: #64748B !important;
+      background: #F8FAFC !important;
     }
     .timeline-booking-bar.is-overlap {
-      border: 1.5px dashed #F59E0B !important;
-      border-left: 4px solid #D97706 !important;
-      background: #FFFDF5 !important;
-      box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3), 0 2px 8px rgba(245, 158, 11, 0.15) !important;
+      border: 2px dashed #EF4444 !important;
+      border-left: 5px solid #DC2626 !important;
+      background: #FFF5F5 !important;
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3), 0 4px 12px rgba(239, 68, 68, 0.15) !important;
     }
-    .timeline-booking-bar.is-missing-amount {
-      box-shadow: 0 1px 4px rgba(217, 119, 6, 0.15);
-    }
-    .tbar-row-top {
+
+    /* Bar Header */
+    .tbar-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 6px;
+      margin-bottom: 2px;
       line-height: 1.2;
     }
-    .tbar-guest-name {
+    .tbar-platform {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      line-height: 1.2;
+      white-space: nowrap;
+      color: #FFFFFF;
+    }
+    .tbar-nights {
       font-size: 11px;
+      font-weight: 600;
+      color: #64748B;
+      white-space: nowrap;
+    }
+
+    /* Bar Guest Name - Crystal clear and bold */
+    .tbar-guest {
+      font-size: 13px;
       font-weight: 700;
+      color: #0F172A;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      flex: 1;
-      color: var(--text-main);
+      margin-bottom: 2px;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
     }
-    .tbar-row-bot {
+
+    /* Bar Bottom / Meta */
+    .tbar-meta {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 4px;
-      font-size: 10px;
+      gap: 6px;
+      font-size: 11px;
+      color: #64748B;
       line-height: 1.2;
     }
-    .tbar-badges {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .tbar-badge {
-      font-size: 9px;
-      font-weight: 800;
-      padding: 1px 4px;
-      border-radius: 4px;
+    .tbar-meta span {
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
-      letter-spacing: 0.2px;
-      line-height: 1.2;
     }
-    .tbar-badge.is-multi {
-      background: #EFF6FF;
-      color: #1D4ED8;
-      border: 1px solid #93C5FD;
-    }
-    .tbar-badge.is-conflict {
-      background: #FEF3C7;
-      color: #92400E;
-      border: 1px solid #F59E0B;
+    .tbar-payout-valid {
+      font-weight: 700;
+      font-size: 12px;
+      color: #047857;
+      background: #ECFDF5;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #A7F3D0;
+      cursor: pointer;
+      white-space: nowrap;
     }
     .tbar-payout-missing {
       background: #FEF3C7;
       color: #B45309;
-      border: 1px solid #FCD34D;
+      border: 1px dashed #F59E0B;
       border-radius: 4px;
-      padding: 1px 5px;
-      font-size: 9px;
-      font-weight: 800;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      transition: all 0.12s ease;
       white-space: nowrap;
+      transition: all 0.12s ease;
     }
     .tbar-payout-missing:hover {
       background: #FDE68A;
       color: #78350F;
-      border-color: #F59E0B;
-      transform: scale(1.05);
-    }
-    .tbar-payout-valid {
-      font-size: 10px;
-      font-weight: 800;
-      color: #065F46;
-      white-space: nowrap;
+      border-color: #D97706;
+      transform: scale(1.04);
     }
     .cal-filter-pill {
       padding: 4px 10px;
@@ -5063,9 +5083,10 @@
 
     function isBookingOverlapping(b, allBookings) {
       if (!b || b.status === 'Cancelled') return false;
+      // Real merged multi-channel reservation confirmed on both channels
       if (b.platform && (b.platform.includes(' + ') || b.platform.includes(' & '))) return true;
-      if (b.notes && /synced via|merged|dual-channel/i.test(b.notes)) return true;
 
+      // Real date collision with another active booking on the exact same property
       const list = allBookings || currentBookings || [];
       return list.some(other => {
         if (!other || other.id === b.id) return false;
@@ -5077,8 +5098,7 @@
 
     function isMultiChannel(b) {
       if (!b) return false;
-      return (b.platform && (b.platform.includes('+') || b.platform.includes('&'))) ||
-             (b.notes && /synced via/i.test(b.notes));
+      return Boolean(b.platform && (b.platform.includes('+') || b.platform.includes('&')));
     }
 
     function getPlatformBadgeStyle(platform) {
@@ -5351,9 +5371,9 @@
         });
 
         const totalLanes = Math.max(1, lanes.length);
-        const laneHeight = totalLanes === 1 ? 58 : 40;
-        const laneGap = 4;
-        const trackPaddingTop = 8;
+        const laneHeight = totalLanes === 1 ? 58 : 46;
+        const laneGap = 6;
+        const trackPaddingTop = 10;
         const trackHeight = Math.max(86, trackPaddingTop * 2 + totalLanes * laneHeight + (totalLanes - 1) * laneGap);
 
         // Align matching sidebar row height
@@ -5413,34 +5433,30 @@
           const multiChan = isMultiChannel(booking);
           const pBadge = getPlatformBadgeStyle(booking.platform);
 
+          let channelClass = 'is-airbnb';
+          const platLower = (booking.platform || '').toLowerCase();
+          if (isBlocked) channelClass = 'is-blocked';
+          else if (platLower.includes('booking')) channelClass = 'is-bookingcom';
+          else if (platLower.includes('direct') || platLower.includes('manual') || platLower.includes('walk-in')) channelClass = 'is-direct';
+
           const bTop = trackPaddingTop + (booking._lane || 0) * (laneHeight + laneGap);
 
           const ribbon = document.createElement('div');
-          ribbon.className = `timeline-booking-bar ${hasOverlap ? 'is-overlap' : ''} ${missingPayout ? 'has-missing-payout' : ''}`;
+          ribbon.className = `timeline-booking-bar ${channelClass} ${hasOverlap ? 'is-overlap' : ''}`;
           ribbon.style.position = 'absolute';
           ribbon.style.left = `${startPx}px`;
           ribbon.style.top = `${bTop}px`;
           ribbon.style.width = `${width}px`;
           ribbon.style.height = `${laneHeight}px`;
-
-          const bTheme = isBlocked 
-            ? { color: '#64748B', bg: '#F1F5F9', border: '#CBD5E1', text: '#334155' } 
-            : (hasOverlap 
-                ? { color: '#B45309', bg: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)', border: '#F59E0B', text: '#78350F' }
-                : theme);
-
-          ribbon.style.background = bTheme.bg;
-          ribbon.style.borderColor = bTheme.border;
-          ribbon.style.color = bTheme.text;
-          ribbon.title = `${booking.guestName} (${booking.checkInDate} to ${booking.checkOutDate}, ${booking.nights || 1} nights)${hasOverlap ? ' [⚠️ Overlapping / Synced across channels]' : ''}${missingPayout ? ' [⚠️ Missing amount]' : ''}`;
+          ribbon.title = `${booking.guestName} (${booking.checkInDate} to ${booking.checkOutDate}, ${booking.nights || 1} nights)${hasOverlap ? ' [⚠️ Date Collision]' : ''}`;
 
           let payoutHtml = '';
           if (isBlocked) {
-            payoutHtml = '<span style="font-size:11px; opacity:0.8;">🔒 Blocked</span>';
+            payoutHtml = '<span style="font-size:11px; color:#64748B;">🔒 Blocked</span>';
           } else if (missingPayout) {
             payoutHtml = `
               <button type="button" class="tbar-payout-missing" onclick="event.stopPropagation(); quickAddPayout('${booking.id}')" title="Click to add payout amount">
-                ⚠️ + Add ₹
+                + Add ₹
               </button>
             `;
           } else {
@@ -5451,40 +5467,24 @@
             `;
           }
 
-          if (totalLanes > 1) {
-            ribbon.innerHTML = `
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 2px 6px; height: 100%; box-sizing: border-box;">
-                <div style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;">
-                  <span class="tbar-platform" style="background:${pBadge.bg}; color:${pBadge.text}; font-size: 9px; padding: 1px 5px; flex-shrink: 0;">
-                    ${multiChan ? '🔄 ' : ''}${escapeHtml(pBadge.label)}
-                  </span>
-                  ${hasOverlap ? `<span class="tbar-overlap-badge" style="font-size: 9px; padding: 1px 4px; flex-shrink: 0;">⚠️ Overlap</span>` : ''}
-                  <strong style="color: inherit; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(booking.guestName)}</strong>
-                </div>
-                <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
-                  <span style="font-size: 10px; opacity: 0.85;">${booking.nights || 1}n</span>
-                  ${payoutHtml}
-                </div>
+          ribbon.innerHTML = `
+            <div class="tbar-header">
+              <div style="display: flex; align-items: center; gap: 4px; overflow: hidden; min-width: 0;">
+                <span class="tbar-platform" style="background:${pBadge.bg};">
+                  ${multiChan ? '🔄 ' : ''}${isFromPrev ? '◀ ' : ''}${escapeHtml(pBadge.label)}${isToNext ? ' ▶' : ''}
+                </span>
+                ${hasOverlap ? `<span style="background:#EF4444; color:#fff; font-size:9px; font-weight:800; padding:1px 5px; border-radius:3px;">⚠️ Conflict</span>` : ''}
               </div>
-            `;
-          } else {
-            ribbon.innerHTML = `
-              <div class="tbar-header">
-                <div style="display: flex; align-items: center; gap: 4px; overflow: hidden;">
-                  <span class="tbar-platform" style="background:${pBadge.bg}; color:${pBadge.text};">
-                    ${multiChan ? '🔄 ' : ''}${isFromPrev ? '◀ ' : ''}${escapeHtml(pBadge.label)}${isToNext ? ' ▶' : ''}
-                  </span>
-                  ${hasOverlap ? `<span class="tbar-overlap-badge" title="Calendar synced across multiple platforms / Overlapping dates">⚠️ Overlap</span>` : ''}
-                </div>
-                <span class="tbar-nights">${booking.nights || 1} nts</span>
-              </div>
-              <div class="tbar-guest">${escapeHtml(booking.guestName)}</div>
-              <div class="tbar-meta">
-                <span>${escapeHtml(booking.reservationCode || booking.status || 'Confirmed')}</span>
-                ${payoutHtml}
-              </div>
-            `;
-          }
+              <span class="tbar-nights">${booking.nights || 1} nts</span>
+            </div>
+            <div class="tbar-guest" title="${escapeHtml(booking.guestName)}">${escapeHtml(booking.guestName)}</div>
+            <div class="tbar-meta">
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${escapeHtml(booking.reservationCode ? '#' + booking.reservationCode : (booking.status || 'Confirmed'))}
+              </span>
+              ${payoutHtml}
+            </div>
+          `;
 
           ribbon.onclick = (e) => {
             e.stopPropagation();
@@ -6946,13 +6946,32 @@
       container.innerHTML = '';
       filePropSelect.innerHTML = '';
 
+      // Two-Way Sync Architecture Banner
+      const archBanner = document.createElement('div');
+      archBanner.style.cssText = 'background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #1E40AF;';
+      archBanner.innerHTML = `
+        <div style="font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+          <span>🔄</span> <strong>Two-Way Calendar Sync Architecture (Airbnb ⇄ Website ⇄ Booking.com)</strong>
+        </div>
+        <div style="font-size: 12px; line-height: 1.5; color: #1E3A8A;">
+          <div>• <strong>Airbnb (Primary Reference)</strong>: When a booking confirms on Airbnb, dates are automatically blocked on Booking.com &amp; your Website.</div>
+          <div>• <strong>Booking.com</strong>: When a booking confirms on Booking.com, dates are automatically blocked on Airbnb &amp; your Website.</div>
+          <div>• <strong>Website Direct</strong>: When a customer books directly on your website, dates are immediately blocked on both Airbnb &amp; Booking.com.</div>
+          <div>• <strong>Automated Edge Cron</strong>: Cloudflare Worker runs automatic synchronization every 10 minutes in the background.</div>
+        </div>
+      `;
+      container.appendChild(archBanner);
+
       const props = loadedProperties && loadedProperties.length > 0 ? loadedProperties : [];
 
       props.forEach((prop, idx) => {
         const color = prop.color || '#3B82F6';
-        const exportUrl = window.AirbnbAPI 
+        const baseExportUrl = window.AirbnbAPI 
           ? window.AirbnbAPI.getIcalExportUrl(prop.name) 
           : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(prop.name)}.ics`;
+
+        const airbnbImportTargetUrl = `${baseExportUrl}?target=airbnb`;
+        const bookingComImportTargetUrl = `${baseExportUrl}?target=bookingcom`;
 
         const card = document.createElement('div');
         card.className = 'room-manage-card';
@@ -6960,6 +6979,7 @@
         card.style.border = '1px solid #E2E8F0';
         card.style.borderRadius = 'var(--radius-md)';
         card.style.padding = '14px 16px';
+        card.style.marginBottom = '14px';
         card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
         card.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
@@ -6972,40 +6992,53 @@
             </span>
           </div>
 
-          <!-- Outbound Export URL Box -->
-          <div style="margin-top: 10px;">
-            <label style="font-size: 11px; font-weight: 700; color: #166534; display: block; margin-bottom: 3px;">
-              📤 Outgoing iCal Feed (Airbnb &amp; Booking.com import this):
-            </label>
-            <div class="feed-copy-box">
-              <span class="feed-url-text">${exportUrl}</span>
-              <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${exportUrl}', this)">
-                📋 Copy Feed URL
-              </button>
-              <a href="${exportUrl}" target="_blank" class="btn-copy-sm" style="text-decoration:none;" title="Open or test .ics feed in browser">
-                📥 Test .ics
-              </a>
+          <!-- Outbound Export URLs for 2-Way Sync -->
+          <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: #FFF5F5; border: 1px solid #FECDD3; border-radius: var(--radius-sm); padding: 8px 10px;">
+              <label style="font-size: 11px; font-weight: 700; color: #9F1239; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                <span>🔴</span> Paste into Airbnb Calendar Import:
+              </label>
+              <div style="font-size: 10px; color: #881337; margin-bottom: 6px;">Blocks Booking.com &amp; Website bookings on Airbnb</div>
+              <div class="feed-copy-box" style="margin-top: 0;">
+                <span class="feed-url-text" style="font-size: 10px;">${airbnbImportTargetUrl}</span>
+                <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${airbnbImportTargetUrl}', this)" style="background: #FF385C; color: #fff; border: none; font-size: 10px; padding: 2px 6px;">
+                  📋 Copy Link
+                </button>
+              </div>
+            </div>
+
+            <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 8px 10px;">
+              <label style="font-size: 11px; font-weight: 700; color: #1E40AF; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                <span>🔵</span> Paste into Booking.com Calendar Import:
+              </label>
+              <div style="font-size: 10px; color: #1E3A8A; margin-bottom: 6px;">Blocks Airbnb &amp; Website bookings on Booking.com</div>
+              <div class="feed-copy-box" style="margin-top: 0;">
+                <span class="feed-url-text" style="font-size: 10px;">${bookingComImportTargetUrl}</span>
+                <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${bookingComImportTargetUrl}', this)" style="background: #003580; color: #fff; border: none; font-size: 10px; padding: 2px 6px;">
+                  📋 Copy Link
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Inbound Channel URL Inputs -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
             <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600;">
+              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #334155;">
                 Airbnb Calendar Export URL:
               </label>
               <input type="text" id="feed-airbnb-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 12px; height: 36px;">
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600;">
+              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #334155;">
                 Booking.com Calendar Export URL:
               </label>
               <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 36px;">
             </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
             <button type="button" class="btn btn-outline" onclick="saveSingleRoomFeeds('${escapeJsString(prop.name)}', ${idx}, this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #1D4ED8; border-color: #BFDBFE;">
               💾 Save Links
             </button>
