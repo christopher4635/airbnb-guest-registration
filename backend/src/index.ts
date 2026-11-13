@@ -58,6 +58,38 @@ app.route('/api/expenses', expensesRoute);
 app.route('/api/finances', expensesRoute);
 app.route('/api/channels', channelsRoute);
 
+// 4b. Common Unified Earnings Dashboard API
+app.get('/api/dashboard/earnings', async (c) => {
+  const month = c.req.query('month');
+  try {
+    const targetUrl = 'https://staff-management.elitehomes-portal.workers.dev/api/dashboard/earnings' + (month ? `?month=${encodeURIComponent(month)}` : '');
+    
+    // 1. First try Service Binding (In-memory edge call without HTTP)
+    if (c.env.STAFF_SERVICE) {
+      const sRes = await c.env.STAFF_SERVICE.fetch(targetUrl);
+      if (sRes.ok) {
+        const data = await sRes.json();
+        return c.json(data);
+      }
+    }
+
+    // 2. Fallback to direct HTTP fetch
+    const res = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Cloudflare-Worker-AirbnbPortal)',
+        'Accept': 'application/json'
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return c.json(data);
+    }
+  } catch (e) {
+    console.error('Error forwarding dashboard earnings request:', e);
+  }
+  return c.json({ error: 'Failed to retrieve unified dashboard data' }, 500);
+});
+
 // 5. 404 Handler
 app.notFound((c) => {
   return c.json({ success: false, error: 'Endpoint not found', path: c.req.path }, 404);

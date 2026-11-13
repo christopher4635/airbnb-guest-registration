@@ -1,0 +1,39 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "staff-management",
+  "main": "./src/index.ts",
+  "compatibility_date": "2024-10-23",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "staff-management-db",
+      "database_id": "2074d1ad-6a79-43c2-8bce-61bb19484545"
+    },
+    {
+      "binding": "AIRBNB_DB",
+      "database_name": "airbnb-db",
+      "database_id": "aa4ef584-3db3-4c2c-8bbd-873b80979869"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "GUEST_ID_BUCKET",
+      "bucket_name": "xsquareguestid"
+    }
+  ],
+
+  "ai": {
+    "binding": "AI"
+  },
+
+  "vars": {
+    "AUTH_PIN": "4635"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

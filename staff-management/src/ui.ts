@@ -283,6 +283,12 @@ export function getDashboardHtml(): string {
               <span class="hidden sm:inline">Sync</span>
             </button>
 
+            <!-- Unified Earnings Dashboard Button -->
+            <a href="/dashboard" target="_blank" title="Open Unified Portfolio Earnings Dashboard" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition shadow-2xs active:scale-95 cursor-pointer">
+              <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 text-rose-600"></i>
+              <span class="hidden sm:inline font-bold">Earnings Dashboard</span>
+            </a>
+
             <!-- Download Android APK Button -->
             <a href="/app.apk" download="elite-havens-app.apk" title="Download Android App APK" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shadow-2xs active:scale-95 cursor-pointer">
               <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-600"></i>

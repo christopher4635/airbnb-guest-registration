@@ -1,4 +1,5 @@
 import { getDashboardHtml } from "./ui";
+import { getUnifiedDashboardHtml, fetchUnifiedEarningsData } from "./unifiedDashboard";
 import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance, Room, RoomBooking } from "./types";
 import { syncAirbnbBookingsToStaffSync, pushBookingToAirbnbPortal } from "./airbnbSync";
 import { handleAiBookingChat, type CreateRoomBookingInput, type CreateRoomBookingResult } from "./aiBooking";
@@ -271,6 +272,25 @@ export default {
 					"Expires": "0"
 				},
 			});
+		}
+
+		// 1b. Serve Unified Earnings Dashboard (One-Pager for Staff Management & Airbnb Host Portal)
+		if (path === "/dashboard" || path === "/dashboard.html" || path === "/unified-dashboard") {
+			return new Response(getUnifiedDashboardHtml(), {
+				headers: {
+					"Content-Type": "text/html; charset=utf-8",
+					"Cache-Control": "no-cache, no-store, must-revalidate",
+					"Pragma": "no-cache",
+					"Expires": "0"
+				},
+			});
+		}
+
+		// 1c. Unified Earnings API (Returns daily, weekly, and monthly earnings, revenue, expenses, and profit across both properties)
+		if (path === "/api/dashboard/earnings" && method === "GET") {
+			const month = url.searchParams.get("month") || undefined;
+			const payload = await fetchUnifiedEarningsData(env, month);
+			return jsonResponse(payload);
 		}
 
 		// 1b. Serve Web App Manifest & App Icon for Android / PWA

@@ -28,6 +28,14 @@
     }
   ],
 
+  // 3b. Service Binding to staff-management Worker
+  "services": [
+    {
+      "binding": "STAFF_SERVICE",
+      "service": "staff-management"
+    }
+  ],
+
   // 4. Environment Variables
   "vars": {
     "ADMIN_PIN": "4635",

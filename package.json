@@ -28,6 +28,6 @@
     "r2:create": "wrangler r2 bucket create airbnb-guest-images"
   },
   "devDependencies": {
-    "wrangler": "^3.84.0"
+    "wrangler": "^4.161.0"
   }
 }

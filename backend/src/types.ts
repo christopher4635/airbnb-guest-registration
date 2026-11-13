@@ -5,6 +5,7 @@
 export type Bindings = {
   DB: D1Database;
   IMAGES_BUCKET: R2Bucket;
+  STAFF_SERVICE?: Fetcher;
   ADMIN_PIN?: string;
   CORS_ORIGIN?: string;
   ENVIRONMENT?: string;
