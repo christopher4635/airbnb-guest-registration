@@ -11,7 +11,7 @@ export function getDashboardHtml(): string {
   <meta name="format-detection" content="telephone=no">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
-  <title>Staff Attendance, Salary & Documents Hub</title>
+  <title>Xsquare Hotel · Sales, Expenses & Operations Hub</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter -->
@@ -265,13 +265,13 @@ export function getDashboardHtml(): string {
             </div>
             <div class="min-w-0">
               <div class="flex items-center gap-1 sm:gap-2">
-                <span class="font-bold text-slate-900 text-sm sm:text-lg leading-tight tracking-tight truncate">StaffSync</span>
+                <span class="font-bold text-slate-900 text-sm sm:text-lg leading-tight tracking-tight truncate">Xsquare Hotel</span>
                 <span class="hidden sm:inline-flex px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full items-center gap-1 shrink-0">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Cloud D1</span>
+                  <span>4 Rooms</span>
                 </span>
               </div>
-              <p class="hidden sm:block text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Hotel · Homes · Salon · Help</p>
+              <p class="hidden sm:block text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Operations · Sales & Expenses Hub</p>
             </div>
           </div>
 
@@ -282,12 +282,6 @@ export function getDashboardHtml(): string {
               <i data-lucide="refresh-cw" id="syncNowIcon" class="w-3.5 h-3.5 text-indigo-600"></i>
               <span class="hidden sm:inline">Sync</span>
             </button>
-
-            <!-- Unified Earnings Dashboard Button -->
-            <a href="/dashboard" target="_blank" title="Open Unified Portfolio Earnings Dashboard" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition shadow-2xs active:scale-95 cursor-pointer">
-              <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 text-rose-600"></i>
-              <span class="hidden sm:inline font-bold">Earnings Dashboard</span>
-            </a>
 
             <!-- Download Android APK Button -->
             <a href="/app.apk" download="elite-havens-app.apk" title="Download Android App APK" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shadow-2xs active:scale-95 cursor-pointer">
@@ -329,19 +323,19 @@ export function getDashboardHtml(): string {
             <!-- Rendered by JS -->
           </div>
           
-          <!-- View Switcher Tabs -->
+          <!-- View Switcher Tabs (Sales & Expenses is 1st for Admin) -->
           <div class="w-full md:w-auto min-w-0 max-w-full flex items-center bg-slate-200/80 p-0.5 sm:p-1 rounded-xl overflow-x-auto no-scrollbar scrollbar-none flex-nowrap">
-            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+            <button id="viewTabFinances" onclick="switchView('finances')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Sales & Expenses</span>
+            </button>
+            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
               <span>Daily Roll Call</span>
             </button>
             <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
               <span>Monthly Sheet</span>
-            </button>
-            <button id="viewTabFinances" onclick="switchView('finances')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
-              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-indigo-600"></i>
-              <span>Sales & Expenses</span>
             </button>
             <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
@@ -361,7 +355,7 @@ export function getDashboardHtml(): string {
     <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 flex-1 flex flex-col">
       
       <!-- Month & Action Controls Bar (shown for Attendance & Payroll) -->
-      <div id="monthControlBar" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div id="monthControlBar" class="hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
         
         <!-- Month Selector -->
         <div class="flex items-center gap-2">
@@ -502,7 +496,7 @@ export function getDashboardHtml(): string {
       <!-- ===================================================================== -->
       <!-- VIEW 2: DAILY ROLL CALL VIEW (Mobile-Optimized)                       -->
       <!-- ===================================================================== -->
-      <div id="dailyViewSection" class="flex-1 flex flex-col gap-3">
+      <div id="dailyViewSection" class="hidden flex-1 flex flex-col gap-3">
         <!-- Day Selector -->
         <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between shadow-xs gap-2">
           <div class="flex items-center gap-1">
@@ -677,7 +671,7 @@ export function getDashboardHtml(): string {
       <!-- ===================================================================== -->
       <!-- VIEW 5: SALES & EXPENSES (Manager Daily Entry & Admin Revenue Hub)    -->
       <!-- ===================================================================== -->
-      <div id="financesViewSection" class="hidden flex-1 flex flex-col gap-4">
+      <div id="financesViewSection" class="flex-1 flex flex-col gap-4">
         <div id="financesViewContent" class="flex-1 flex flex-col gap-4">
           <!-- Dynamically populated by renderFinancesView() -->
         </div>
@@ -687,7 +681,7 @@ export function getDashboardHtml(): string {
 
     <!-- Footer -->
     <footer class="mt-auto border-t border-slate-200 bg-white py-3 px-4 text-center text-xs text-slate-400">
-      StaffSync Cloud · Connected to Cloudflare D1 · Secure Access
+      Xsquare Hotel Hub · Connected to Cloudflare D1 · Secure Access
     </footer>
 
   </div>
@@ -2313,11 +2307,11 @@ export function getDashboardHtml(): string {
     let currentUserRole = "admin"; // 'admin' or 'manager'
     let currentManagerInfo = null; // { staff_id, name, property_id, property_name }
     let isSubmittingLogin = false;
-    let activePropertyId = "all"; // 'all' or property.id
+    let activePropertyId = "xsquare-hotel"; // Dedicated to Xsquare Hotel
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth(); // 0-indexed
     let dailyDate = new Date();
-    let currentView = "daily"; // Default to Daily Roll Call for best mobile & daily experience ('daily', 'monthly', 'payroll', 'directory')
+    let currentView = "finances"; // Sales & Expenses is the opening 1st tab for Admin
     let mobileMonthlyMode = "cards"; // 'cards' or 'table'
     const openStaffCalendars = new Set();
 
@@ -2334,7 +2328,7 @@ export function getDashboardHtml(): string {
     let managerFinanceDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
     let financeYear = new Date().getFullYear();
     let financeMonth = new Date().getMonth(); // 0-indexed
-    let financeFilterProperty = "all";
+    let financeFilterProperty = "xsquare-hotel";
     let roomsList = []; // Array of room records
     let roomBookingsList = []; // Array of room_bookings records
     let adminFinanceSubTab = "dashboard"; // 'dashboard' | 'calendar' | 'rooms'
@@ -3163,75 +3157,28 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     function renderPropertyTabs() {
       const container = document.getElementById("propertyTabs");
+      if (!container) return;
 
-      if (currentUserRole === "manager" && currentManagerInfo) {
-        const assignedProp = properties.find(p => p.id === currentManagerInfo.property_id) || {
-          id: currentManagerInfo.property_id,
-          name: currentManagerInfo.property_name || "Assigned Property"
-        };
-        const count = staffList.filter(s => s.active !== 0 && s.property_id === assignedProp.id).length;
-        container.innerHTML = \`
-          <div class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs flex items-center gap-2 shrink-0">
-            <i data-lucide="building" class="w-4 h-4"></i>
-            <span>\${escapeHtml(assignedProp.name)}</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-800 text-white font-semibold">\${count} Staff</span>
-          </div>
-        \`;
-        activePropertyId = assignedProp.id;
-        updatePropertyAllowanceBanner();
-        refreshIcons();
-        return;
-      }
+      activePropertyId = "xsquare-hotel";
+      calendarSelectedProperty = "xsquare-hotel";
+      financeFilterProperty = "xsquare-hotel";
 
-      let html = "";
-      const activeProps = properties.filter(p => p.active !== 0);
-      if (activePropertyId !== "all" && !activeProps.some(p => p.id === activePropertyId)) {
-        activePropertyId = "all";
-      }
-
-      // 1. Individual active businesses rendered first
-      activeProps.forEach(prop => {
-        const isSelected = activePropertyId === prop.id;
-        const count = staffList.filter(s => s.active !== 0 && s.property_id === prop.id).length;
-        html += \`
-          <button onclick="selectProperty('\${prop.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer'}">
-            <span>\${escapeHtml(prop.name)}</span>
-            <span class="px-1.5 py-0.2 rounded-full text-[10px] \${isSelected ? 'bg-indigo-800 text-white' : 'bg-slate-100 text-slate-600'}">\${count}</span>
-          </button>
-        \`;
-      });
-
-      // 2. "All Properties" MUST be at last in sequence
-      const totalStaffCount = staffList.filter(s => {
-        const p = properties.find(prop => prop.id === s.property_id);
-        return s.active !== 0 && p && p.active !== 0;
-      }).length;
-
-      html += \`
-        <button onclick="selectProperty('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 \${activePropertyId === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer'}">
-          <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
-          <span>All Properties (\${totalStaffCount})</span>
-        </button>
+      const count = staffList.filter(s => s.active !== 0).length;
+      container.innerHTML = \`
+        <div class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs flex items-center gap-2 shrink-0">
+          <i data-lucide="hotel" class="w-4 h-4"></i>
+          <span>Xsquare Hotel</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-800 text-white font-semibold">4 Rooms · \${count} Staff</span>
+        </div>
       \`;
-
-      container.innerHTML = html;
       updatePropertyAllowanceBanner();
       refreshIcons();
     }
 
     async function selectProperty(id) {
-      if (currentUserRole === "manager" && currentManagerInfo) {
-        activePropertyId = currentManagerInfo.property_id;
-      } else {
-        activePropertyId = id;
-      }
-      calendarSelectedProperty = (id !== "all") ? id : (properties.find(p => p.active !== 0 && p.has_lodging === 1)?.id || properties[0]?.id || "");
-      financeFilterProperty = id;
-
-      if (id === "elite-homes") {
-        autoSyncEliteHomesCalendar();
-      }
-
+      activePropertyId = "xsquare-hotel";
+      calendarSelectedProperty = "xsquare-hotel";
+      financeFilterProperty = "xsquare-hotel";
       renderPropertyTabs();
       if (currentView === "finances") {
         await Promise.all([fetchRoomBookings(), fetchFinances()]);
@@ -3301,7 +3248,7 @@ export function getDashboardHtml(): string {
 
     function switchView(view) {
       currentView = view;
-      const tabs = ["Daily", "Monthly", "Finances", "Payroll", "Directory"];
+      const tabs = ["Finances", "Daily", "Monthly", "Payroll", "Directory"];
       tabs.forEach(t => {
         const btn = document.getElementById("viewTab" + t);
         if (!btn) return;
@@ -5739,6 +5686,9 @@ export function getDashboardHtml(): string {
       // Filter rooms and bookings if lodging is active
       const propRooms = hasLodging ? roomsList.filter(r => r.property_id === propId) : [];
       const todayBookings = hasLodging ? roomBookingsList.filter(b => b.property_id === propId && b.date === managerFinanceDate) : [];
+      const totalRoomsCount = propRooms.length > 0 ? propRooms.length : 4;
+      const todayOccPct = totalRoomsCount > 0 ? Math.round((todayBookings.length / totalRoomsCount) * 100) : 0;
+      const isMgrOccGreen = todayOccPct > 50;
 
       // Lodging calculations (automated from bookings, supports split cash & online)
       const lo = hasLodging ? todayBookings.reduce((sum, b) => sum + getBookingOnlineAmount(b), 0) : 0;
@@ -5794,6 +5744,12 @@ export function getDashboardHtml(): string {
               \${escapeHtml(typeInfo.label)}
             </span>
             \${statusBadge}
+            \${hasLodging ? \`
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold \${isMgrOccGreen ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300 shadow-2xs' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
+                <i data-lucide="percent" class="w-3.5 h-3.5 \${isMgrOccGreen ? 'text-emerald-600' : 'text-slate-500'}"></i>
+                <span>Occupancy: \${todayOccPct}% (\${todayBookings.length}/\${totalRoomsCount} Rooms)\${isMgrOccGreen ? ' 🟢 (>50%)' : ''}</span>
+              </span>
+            \` : ''}
           </div>
 
           <!-- Date Control -->
@@ -5827,17 +5783,7 @@ export function getDashboardHtml(): string {
                     <i data-lucide="door-closed" class="w-5 h-5 text-indigo-600"></i>
                     <span>Room Bookings & Lodging Revenue</span>
                   </h3>
-                  \${propId === 'elite-homes' ? \`
-                    <button
-                      type="button"
-                      onclick="syncAirbnbCalendar()"
-                      title="Fetch latest bookings from Airbnb Host Portal"
-                      class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-2xs transition cursor-pointer"
-                    >
-                      <i data-lucide="refresh-cw" class="w-3.5 h-3.5 airbnb-sync-icon"></i>
-                      <span class="airbnb-sync-text">Sync Airbnb</span>
-                    </button>
-                  \` : ''}
+
                 </div>
                 <p class="text-xs text-slate-500 mt-0.5">Select a room and record the booking. Lodging online & cash amounts are calculated automatically.</p>
               </div>
@@ -7242,15 +7188,7 @@ export function getDashboardHtml(): string {
               class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'rooms' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
             >
               <i data-lucide="door-closed" class="w-4 h-4"></i>
-              <span>Manage Rooms</span>
-            </button>
-            <button
-              type="button"
-              onclick="setAdminFinanceSubTab('business')"
-              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'business' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
-            >
-              <i data-lucide="sliders" class="w-4 h-4"></i>
-              <span>Business Offerings</span>
+              <span>Manage Rooms (4 Rooms)</span>
             </button>
           </div>
 
@@ -7275,9 +7213,6 @@ export function getDashboardHtml(): string {
 
     function setAdminFinanceSubTab(subTab) {
       adminFinanceSubTab = subTab;
-      if (subTab === "calendar" && calendarSelectedProperty === "elite-homes") {
-        autoSyncEliteHomesCalendar();
-      }
       renderFinancesView();
     }
 
@@ -7285,10 +7220,7 @@ export function getDashboardHtml(): string {
     // SUBTAB 1: ADMIN FINANCIAL DASHBOARD
     // -------------------------------------------------------------------------
     function renderAdminFinancialDashboard(container) {
-      const activePropIds = new Set(properties.filter(p => p.active !== 0).map(p => p.id));
-      const records = activePropertyId === "all"
-        ? financesList.filter(f => activePropIds.has(f.property_id))
-        : financesList.filter(f => f.property_id === activePropertyId && activePropIds.has(f.property_id));
+      const records = financesList.filter(f => !f.property_id || f.property_id === "xsquare-hotel");
 
       let totalLodgingOnline = 0;
       let totalLodgingCash = 0;
@@ -7319,22 +7251,44 @@ export function getDashboardHtml(): string {
       const netOperatingProfit = grossRevenue - totalExpenses;
       const profitMarginPct = grossRevenue > 0 ? Math.round((netOperatingProfit / grossRevenue) * 100) : 0;
 
-      const selectedProp = activePropertyId !== "all" ? properties.find(p => p.id === activePropertyId) : null;
-      const showLodgingCard = !selectedProp || selectedProp.has_lodging === 1;
-      const showFoodingCard = !selectedProp || selectedProp.has_fooding === 1;
-      const showServicesCard = !selectedProp || selectedProp.has_services === 1;
+      // Occupancy Calculations for Xsquare Hotel (4 Rooms: 101, 102, 103, 104)
+      const daysInMonth = new Date(financeYear, financeMonth + 1, 0).getDate();
+      const mStr = String(financeMonth + 1).padStart(2, "0");
+      const currentMonthPrefix = financeYear + "-" + mStr;
+      const todayIso = new Date().toISOString().split("T")[0];
+
+      const hotelRooms = roomsList.filter(r => !r.property_id || r.property_id === "xsquare-hotel");
+      const displayRooms = hotelRooms.length > 0 ? hotelRooms : [
+        { id: "room-101", room_number: "101", room_type: "Standard", base_price: 3000 },
+        { id: "room-102", room_number: "102", room_type: "Standard", base_price: 2000 },
+        { id: "room-103", room_number: "103", room_type: "Deluxe", base_price: 2000 },
+        { id: "room-104", room_number: "104", room_type: "Deluxe", base_price: 2500 },
+      ];
+      const totalHotelRooms = displayRooms.length;
+
+      const monthBookings = roomBookingsList.filter(b => (!b.property_id || b.property_id === "xsquare-hotel") && b.date && b.date.startsWith(currentMonthPrefix));
+      const todayBookings = roomBookingsList.filter(b => (!b.property_id || b.property_id === "xsquare-hotel") && b.date === todayIso);
+
+      const totalCapacity = totalHotelRooms * daysInMonth;
+      const bookedNightsCount = monthBookings.length;
+      const monthOccupancyPct = totalCapacity > 0 ? Math.round((bookedNightsCount / totalCapacity) * 100) : 0;
+      const isMonthOccupancyGreen = monthOccupancyPct > 50;
+
+      const todayBookedCount = todayBookings.length;
+      const todayOccupancyPct = totalHotelRooms > 0 ? Math.round((todayBookedCount / totalHotelRooms) * 100) : 0;
+      const isTodayOccupancyGreen = todayOccupancyPct > 50;
 
       container.innerHTML = \`
         <div class="space-y-4">
           <!-- Admin Filter & Action Bar -->
           <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <!-- Active Business Indicator (Unified top bar selection) -->
+              <!-- Active Business Indicator -->
               <div class="flex items-center gap-1.5">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold \${selectedProp ? 'bg-indigo-50 text-indigo-800 border border-indigo-200' : 'bg-slate-100 text-slate-800 border border-slate-200'}">
-                  <i data-lucide="\${selectedProp ? 'building' : 'layout-grid'}" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  <span>\${selectedProp ? escapeHtml(selectedProp.name) : 'All Businesses Combined'}</span>
-                  \${selectedProp ? \`<span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold \${getBusinessTypeInfo(selectedProp).badgeClass}">\${escapeHtml(getBusinessTypeInfo(selectedProp).label)}</span>\` : ''}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>Xsquare Hotel</span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-indigo-100 text-indigo-700">4 Rooms Active</span>
                 </span>
               </div>
 
@@ -7375,7 +7329,7 @@ export function getDashboardHtml(): string {
             </div>
           </div>
 
-          <!-- Dynamic Executive Summary Cards -->
+          <!-- Dynamic Executive Summary Cards (with Occupancy % Green if > 50%) -->
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <!-- Card 1: Gross Revenue -->
             <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
@@ -7392,50 +7346,52 @@ export function getDashboardHtml(): string {
             </div>
 
             <!-- Card 2: Lodging Sales -->
-            <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between \${showLodgingCard ? '' : 'opacity-50'}">
+            <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between">
               <div>
                 <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center justify-between">
                   <span>Lodging Sales</span>
                   <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-500"></i>
                 </div>
                 <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">
-                  \${showLodgingCard ? \`₹\${formatCurrency(totalLodging)}\` : 'N/A'}
+                  ₹\${formatCurrency(totalLodging)}
                 </div>
               </div>
               <div class="text-[10px] text-indigo-800 mt-2 pt-2 border-t border-indigo-50 font-medium truncate">
-                \${showLodgingCard ? \`On: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}\` : 'Non-lodging business'}
+                On: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}
               </div>
             </div>
 
-            <!-- Card 3: Fooding Sales -->
-            <div class="bg-white p-3.5 rounded-2xl border border-amber-100 shadow-xs flex flex-col justify-between \${showFoodingCard ? '' : 'opacity-50'}">
+            <!-- Card 3: Month Room Occupancy % (Green if > 50%) -->
+            <div class="p-3.5 rounded-2xl shadow-xs flex flex-col justify-between transition \${isMonthOccupancyGreen ? 'bg-emerald-50/90 border-2 border-emerald-400 text-emerald-950 ring-2 ring-emerald-200/50' : 'bg-white border border-slate-200'}">
               <div>
-                <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center justify-between">
-                  <span>Fooding Sales</span>
-                  <i data-lucide="utensils" class="w-3.5 h-3.5 text-amber-500"></i>
+                <div class="text-[10px] font-bold uppercase tracking-wider flex items-center justify-between \${isMonthOccupancyGreen ? 'text-emerald-700' : 'text-slate-400'}">
+                  <span>Month Occupancy</span>
+                  <i data-lucide="percent" class="w-3.5 h-3.5 \${isMonthOccupancyGreen ? 'text-emerald-600' : 'text-slate-400'}"></i>
                 </div>
-                <div class="text-lg sm:text-xl font-black text-amber-950 font-mono mt-1">
-                  \${showFoodingCard ? \`₹\${formatCurrency(totalFooding)}\` : 'N/A'}
+                <div class="flex items-baseline gap-2 mt-1">
+                  <span class="text-xl sm:text-2xl font-black font-mono \${isMonthOccupancyGreen ? 'text-emerald-700' : 'text-slate-900'}">\${monthOccupancyPct}%</span>
+                  \${isMonthOccupancyGreen ? '<span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 >50%</span>' : '<span class="text-[10px] text-slate-400 font-medium">Standard</span>'}
                 </div>
               </div>
-              <div class="text-[10px] text-amber-800 mt-2 pt-2 border-t border-amber-50 font-medium truncate">
-                \${showFoodingCard ? \`On: ₹\${formatCurrency(totalFoodingOnline)} · Cash: ₹\${formatCurrency(totalFoodingCash)}\` : 'No fooding module'}
+              <div class="text-[10px] mt-2 pt-2 border-t \${isMonthOccupancyGreen ? 'border-emerald-200/70 text-emerald-800 font-semibold' : 'border-slate-100 text-slate-500 font-medium'} truncate">
+                \${bookedNightsCount} / \${totalCapacity} room-nights
               </div>
             </div>
 
-            <!-- Card 4: Services Sales -->
-            <div class="bg-white p-3.5 rounded-2xl border border-purple-100 shadow-xs flex flex-col justify-between \${showServicesCard ? '' : 'opacity-50'}">
+            <!-- Card 4: Today's Occupancy % (Green if > 50%) -->
+            <div class="p-3.5 rounded-2xl shadow-xs flex flex-col justify-between transition \${isTodayOccupancyGreen ? 'bg-emerald-50/90 border-2 border-emerald-400 text-emerald-950 ring-2 ring-emerald-200/50' : 'bg-white border border-slate-200'}">
               <div>
-                <div class="text-[10px] font-bold text-purple-700 uppercase tracking-wider flex items-center justify-between">
-                  <span>Services Sales</span>
-                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-500"></i>
+                <div class="text-[10px] font-bold uppercase tracking-wider flex items-center justify-between \${isTodayOccupancyGreen ? 'text-emerald-700' : 'text-slate-400'}">
+                  <span>Today Occupancy</span>
+                  <i data-lucide="door-open" class="w-3.5 h-3.5 \${isTodayOccupancyGreen ? 'text-emerald-600' : 'text-slate-400'}"></i>
                 </div>
-                <div class="text-lg sm:text-xl font-black text-purple-950 font-mono mt-1">
-                  \${showServicesCard ? \`₹\${formatCurrency(totalServices)}\` : 'N/A'}
+                <div class="flex items-baseline gap-2 mt-1">
+                  <span class="text-xl sm:text-2xl font-black font-mono \${isTodayOccupancyGreen ? 'text-emerald-700' : 'text-slate-900'}">\${todayOccupancyPct}%</span>
+                  \${isTodayOccupancyGreen ? '<span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 >50%</span>' : '<span class="text-[10px] text-slate-400 font-medium">Standard</span>'}
                 </div>
               </div>
-              <div class="text-[10px] text-purple-800 mt-2 pt-2 border-t border-purple-50 font-medium truncate">
-                \${showServicesCard ? \`On: ₹\${formatCurrency(totalServicesOnline)} · Cash: ₹\${formatCurrency(totalServicesCash)}\` : 'No services module'}
+              <div class="text-[10px] mt-2 pt-2 border-t \${isTodayOccupancyGreen ? 'border-emerald-200/70 text-emerald-800 font-semibold' : 'border-slate-100 text-slate-500 font-medium'} truncate">
+                \${todayBookedCount} of \${totalHotelRooms} rooms booked
               </div>
             </div>
 
@@ -7470,75 +7426,67 @@ export function getDashboardHtml(): string {
             </div>
           </div>
 
-          <!-- Business Performance Comparison (when All Properties selected) -->
-          \${activePropertyId === 'all' && properties.filter(p => p.active !== 0).length > 0 ? \`
-            <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
-                Business Performance Comparison (\${MONTH_NAMES[financeMonth]} \${financeYear})
+          <!-- Xsquare Hotel Room-by-Room Occupancy & Performance (4 Rooms) -->
+          <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+                <span>Xsquare Hotel — Room-by-Room Occupancy & Performance (\${MONTH_NAMES[financeMonth]} \${financeYear})</span>
               </h4>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full \${isMonthOccupancyGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-700'}">
+                Overall Occupancy: \${monthOccupancyPct}% (\${bookedNightsCount}/\${totalCapacity} nights)
+              </span>
+            </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                \${properties.filter(p => p.active !== 0).map(p => {
-                  const propRecords = records.filter(r => r.property_id === p.id);
-                  let pSales = 0, pExp = 0;
-                  let pLodgingOn = 0, pLodgingCash = 0, pFoodingOn = 0, pFoodingCash = 0, pServicesOn = 0, pServicesCash = 0;
-                  propRecords.forEach(r => {
-                    pSales += (r.total_sales || 0);
-                    pExp += (r.expenses_total || 0);
-                    const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
-                    const rFoodingCash = r.fooding_cash ?? r.fooding_offline ?? 0;
-                    pLodgingOn += (r.lodging_online || 0);
-                    pLodgingCash += rLodgingCash;
-                    pFoodingOn += (r.fooding_online || 0);
-                    pFoodingCash += rFoodingCash;
-                    pServicesOn += (r.services_online || 0);
-                    pServicesCash += (r.services_cash || 0);
-                  });
-                  const pLodging = pLodgingOn + pLodgingCash;
-                  const pFooding = pFoodingOn + pFoodingCash;
-                  const pServices = pServicesOn + pServicesCash;
-                  const pNet = pSales - pExp;
-                  const ti = getBusinessTypeInfo(p);
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              \${displayRooms.map(rm => {
+                const roomNights = monthBookings.filter(b => b.room_id === rm.id || String(b.room_number) === String(rm.room_number)).length;
+                const roomOccPct = daysInMonth > 0 ? Math.round((roomNights / daysInMonth) * 100) : 0;
+                const isRoomGreen = roomOccPct > 50;
+                const roomRev = monthBookings
+                  .filter(b => b.room_id === rm.id || String(b.room_number) === String(rm.room_number))
+                  .reduce((sum, b) => sum + (b.amount || 0), 0);
+                const isBookedToday = todayBookings.some(b => b.room_id === rm.id || String(b.room_number) === String(rm.room_number));
 
-                  return \`
-                    <div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white transition flex flex-col justify-between gap-2 shadow-2xs">
-                      <div>
-                        <div class="flex items-center justify-between mb-1">
-                          <span class="text-xs font-black text-slate-900">\${escapeHtml(p.name)}</span>
-                          <span class="text-[10px] px-2 py-0.5 rounded-md font-bold \${ti.badgeClass}">\${escapeHtml(ti.label)}</span>
-                        </div>
-                        <div class="text-[10px] text-slate-400 font-medium">\${propRecords.length} entries recorded</div>
+                return \`
+                  <div class="p-4 rounded-2xl border \${isRoomGreen ? 'border-2 border-emerald-400 bg-emerald-50/50 shadow-xs' : 'border-slate-200 bg-slate-50/50'} flex flex-col justify-between gap-3">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5">
+                        <i data-lucide="hotel" class="w-4 h-4 \${isRoomGreen ? 'text-emerald-700' : 'text-indigo-600'}"></i>
+                        <span class="text-sm font-black text-slate-900">Room \${escapeHtml(rm.room_number)}</span>
                       </div>
+                      <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isRoomGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-700'}">
+                        \${isRoomGreen ? '🟢 ' : ''}\${roomOccPct}% \${isRoomGreen ? '(>50%)' : ''}
+                      </span>
+                    </div>
 
-                      <div class="grid grid-cols-2 gap-1.5 text-xs py-1">
-                        <div>
-                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Gross Sales</span>
-                          <div class="font-bold font-mono text-emerald-700">₹\${formatCurrency(pSales)}</div>
-                        </div>
-                        <div>
-                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
-                          <div class="font-bold font-mono text-rose-700">₹\${formatCurrency(pExp)}</div>
-                        </div>
+                    <div class="space-y-1 text-xs">
+                      <div class="flex items-center justify-between text-slate-500">
+                        <span>Type:</span>
+                        <span class="font-semibold text-slate-800">\${escapeHtml(rm.room_type || 'Standard')} (₹\${formatCurrency(rm.base_price || 0)}/night)</span>
                       </div>
-
-                      <div class="pt-1.5 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
-                        <span class="text-slate-500">Net Profit:</span>
-                        <span class="font-bold font-mono \${pNet < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(pNet)}</span>
+                      <div class="flex items-center justify-between text-slate-500">
+                        <span>Booked Nights:</span>
+                        <span class="font-bold font-mono text-slate-900">\${roomNights} / \${daysInMonth} nights</span>
                       </div>
-
-                      <!-- Itemized Active Offerings Only -->
-                      <div class="text-[10px] text-slate-500 space-y-0.5 pt-1 border-t border-slate-100">
-                        \${p.has_lodging === 1 ? \`<div>Lodging: <strong class="text-indigo-900 font-mono">₹\${formatCurrency(pLodging)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pLodgingOn)} · Cs ₹\${formatCurrency(pLodgingCash)})</span></div>\` : ''}
-                        \${p.has_fooding === 1 ? \`<div>Fooding: <strong class="text-amber-900 font-mono">₹\${formatCurrency(pFooding)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pFoodingOn)} · Cs ₹\${formatCurrency(pFoodingCash)})</span></div>\` : ''}
-                        \${p.has_services === 1 ? \`<div>\${escapeHtml(p.services_label || 'Services')}: <strong class="text-purple-900 font-mono">₹\${formatCurrency(pServices)}</strong> <span class="text-slate-400">(On ₹\${formatCurrency(pServicesOn)} · Cs ₹\${formatCurrency(pServicesCash)})</span></div>\` : ''}
+                      <div class="flex items-center justify-between text-slate-500">
+                        <span>Month Revenue:</span>
+                        <span class="font-bold font-mono text-indigo-900">₹\${formatCurrency(roomRev)}</span>
                       </div>
                     </div>
-                  \`;
-                }).join("")}
-              </div>
+
+                    <div class="pt-2 border-t \${isRoomGreen ? 'border-emerald-200' : 'border-slate-200'} flex items-center justify-between text-[11px]">
+                      <span class="text-slate-500 font-medium">Today's Status:</span>
+                      \${isBookedToday
+                        ? '<span class="inline-flex items-center gap-1 font-bold text-emerald-700"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Booked Today</span>'
+                        : '<span class="inline-flex items-center gap-1 font-medium text-slate-400"><span class="w-2 h-2 rounded-full bg-slate-300"></span> Vacant Today</span>'
+                      }
+                    </div>
+                  </div>
+                \`;
+              }).join("")}
             </div>
-          \` : ''}
+          </div>
 
           <!-- Itemized Daily Records Table (Desktop) & Cards (Mobile) -->
           <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
@@ -7753,269 +7701,42 @@ export function getDashboardHtml(): string {
     // SUBTAB 2: ADMIN ROOM BOOKINGS CALENDAR (MATRIX & MONTHLY VIEWS)
     // -------------------------------------------------------------------------
     function renderAdminRoomCalendarView(container) {
-      const isAll = (activePropertyId === "all");
-      const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
-
       // Month info
       const mStr = String(financeMonth + 1).padStart(2, "0");
-      const currentMonthPrefix = \`\${financeYear}-\${mStr}\`;
+      const currentMonthPrefix = financeYear + "-" + mStr;
       const daysInMonth = new Date(financeYear, financeMonth + 1, 0).getDate();
 
-      // Case 1: Specific Business Selected in Top Bar
-      if (!isAll) {
-        const prop = properties.find(p => p.id === activePropertyId);
-        const propId = prop ? prop.id : "";
-        const propName = prop ? prop.name : "Selected Business";
-        const hasLodging = prop ? (prop.has_lodging === 1) : false;
+      // Rooms for Xsquare Hotel (4 rooms: 101, 102, 103, 104)
+      const hotelRooms = roomsList.filter(r => !r.property_id || r.property_id === "xsquare-hotel");
+      const propRooms = hotelRooms.length > 0 ? hotelRooms : [
+        { id: "room-101", room_number: "101", room_type: "Standard", base_price: 3000 },
+        { id: "room-102", room_number: "102", room_type: "Standard", base_price: 2000 },
+        { id: "room-103", room_number: "103", room_type: "Deluxe", base_price: 2000 },
+        { id: "room-104", room_number: "104", room_type: "Deluxe", base_price: 2500 },
+      ];
 
-        // If selected property has NO lodging, display a clean notice with a link to Business Offerings
-        if (!hasLodging) {
-          container.innerHTML = \`
-            <div class="space-y-4">
-              <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between flex-wrap gap-2">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</span>
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                    <i data-lucide="building" class="w-3.5 h-3.5 text-amber-600"></i>
-                    <span>\${escapeHtml(propName)}</span>
-                    <span class="text-[10px] opacity-75">(\${escapeHtml(getBusinessTypeInfo(prop).label)})</span>
-                  </span>
-                </div>
-                <div class="text-xs text-slate-400">
-                  Switch business using the top navigation bar
-                </div>
-              </div>
+      // Filter bookings for Xsquare Hotel & month
+      const monthBookings = roomBookingsList.filter(b => (!b.property_id || b.property_id === "xsquare-hotel") && b.date && b.date.startsWith(currentMonthPrefix));
 
-              <div class="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-xl mx-auto">
-                <div class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-                  <i data-lucide="hotel" class="w-7 h-7"></i>
-                </div>
-                <h4 class="text-base font-bold text-slate-900">\${escapeHtml(propName)} has no Lodging / Rooms</h4>
-                <p class="text-xs text-slate-500 mt-1 max-w-md">
-                  This business is currently configured as <strong>\${escapeHtml(getBusinessTypeInfo(prop).label)}</strong>. Room bookings and calendar are disabled.
-                </p>
-                <div class="flex items-center gap-3 mt-5">
-                  <button
-                    type="button"
-                    onclick="openBusinessConfigModal('\${propId}')"
-                    class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
-                  >
-                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
-                    <span>Enable Lodging for this Business</span>
-                  </button>
-                  <button
-                    type="button"
-                    onclick="setAdminFinanceSubTab('business')"
-                    class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
-                  >
-                    View Business Offerings
-                  </button>
-                </div>
-              </div>
-            </div>
-          \`;
-          return;
-        }
+      const totalBookingsCount = monthBookings.length;
+      const totalAvailableNights = propRooms.length * daysInMonth;
+      const occupancyPct = totalAvailableNights > 0 ? Math.round((totalBookingsCount / totalAvailableNights) * 100) : 0;
+      const isOccGreen = occupancyPct > 50;
 
-        // Rooms for this property
-        const propRooms = roomsList.filter(r => r.property_id === propId);
-
-        // Filter bookings for this property & month
-        const monthBookings = roomBookingsList.filter(b => b.property_id === propId && b.date && b.date.startsWith(currentMonthPrefix));
-
-        const totalBookingsCount = monthBookings.length;
-        const monthLodgingOnline = monthBookings.reduce((s, b) => s + getBookingOnlineAmount(b), 0);
-        const monthLodgingCash = monthBookings.reduce((s, b) => s + getBookingCashAmount(b), 0);
-        const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
-
-        container.innerHTML = \`
-          <div class="space-y-4">
-            <!-- Calendar Controls Bar -->
-            <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div class="flex items-center gap-2.5 flex-wrap">
-                <!-- Business Indicator (Single source of truth: top bar) -->
-                <div class="flex items-center gap-1.5">
-                  <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</span>
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
-                    <span>\${escapeHtml(propName)}</span>
-                  </span>
-                </div>
-
-                <!-- Month Navigation -->
-                <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
-                  <button onclick="changeCalendarMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
-                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
-                  </button>
-                  <span class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
-                    \${MONTH_NAMES[financeMonth]} \${financeYear}
-                  </span>
-                  <button onclick="changeCalendarMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
-                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-
-                <button onclick="goToCalendarCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
-                  Today
-                </button>
-              </div>
-
-              <!-- View Switcher & Actions -->
-              <div class="flex items-center gap-2 self-start md:self-auto flex-wrap">
-                <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-                  <button
-                    type="button"
-                    onclick="setCalendarViewMode('matrix')"
-                    class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'matrix' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
-                  >
-                    <i data-lucide="grid" class="w-3.5 h-3.5"></i>
-                    <span>Matrix (Rooms × Days)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onclick="setCalendarViewMode('calendar')"
-                    class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'calendar' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
-                  >
-                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                    <span>Monthly Grid</span>
-                  </button>
-                </div>
-
-                \${propId === 'elite-homes' ? \`
-                  <button
-                    type="button"
-                    onclick="syncAirbnbCalendar()"
-                    title="Synchronize confirmed bookings from Airbnb Host Portal"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-xs transition cursor-pointer"
-                  >
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 airbnb-sync-icon"></i>
-                    <span class="airbnb-sync-text">Sync Airbnb Portal</span>
-                  </button>
-                \` : ''}
-
-                <button
-                  type="button"
-                  onclick="openAiBookingChat()"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl shadow-xs transition cursor-pointer"
-                >
-                  <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                  <span>AI Chat Book</span>
-                </button>
-
-                <button
-                  type="button"
-                  onclick="openRoomBookingModal(null, null, null)"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
-                >
-                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                  <span>+ Book Room</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Calendar Summary Stats Bar -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Configured Rooms</span>
-                <span class="text-base sm:text-lg font-black text-slate-900">\${propRooms.length} Rooms</span>
-              </div>
-              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month Bookings</span>
-                <span class="text-base sm:text-lg font-black text-indigo-600">\${totalBookingsCount} Bookings</span>
-              </div>
-              <div class="bg-white p-3 rounded-2xl border border-indigo-100 shadow-2xs">
-                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Lodging Total</span>
-                <span class="text-base sm:text-lg font-black font-mono text-indigo-950">₹\${formatCurrency(monthLodgingTotal)}</span>
-              </div>
-              <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs text-[11px] text-slate-600 flex flex-col justify-center">
-                <div>Online: <strong class="text-indigo-700 font-mono">₹\${formatCurrency(monthLodgingOnline)}</strong></div>
-                <div>Cash: <strong class="text-amber-700 font-mono">₹\${formatCurrency(monthLodgingCash)}</strong></div>
-              </div>
-            </div>
-
-            <!-- Legend Bar -->
-            <div class="flex items-center gap-4 text-[11px] text-slate-600 flex-wrap px-2">
-              <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Legend:</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Split (Cash + Online)</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
-              <span class="inline-flex items-center gap-1.5"><span>🪪</span> ID Attached</span>
-              \${propId === 'elite-homes' ? \`
-                <span class="ml-auto text-[11px] text-rose-700 font-semibold flex items-center gap-1">
-                  <i data-lucide="cloud-sync" class="w-3.5 h-3.5 text-rose-600"></i>
-                  <span>Connected: Airbnb Host Portal</span>
-                </span>
-              \` : ''}
-            </div>
-
-            <!-- RENDER MATRIX OR MONTHLY VIEW -->
-            \${propRooms.length === 0 ? \`
-              <div class="bg-white p-8 rounded-3xl border border-slate-200 text-center flex flex-col items-center justify-center">
-                <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                  <i data-lucide="door-closed" class="w-6 h-6"></i>
-                </div>
-                <h5 class="text-sm font-bold text-slate-900">No Rooms Found for \${escapeHtml(propName)}</h5>
-                <p class="text-xs text-slate-500 mt-1 max-w-sm">Add rooms (e.g. 101, 102, 103, 104) to enable the room booking calendar.</p>
-                <button
-                  type="button"
-                  onclick="setAdminFinanceSubTab('rooms')"
-                  class="mt-4 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer"
-                >
-                  Configure Rooms Now
-                </button>
-              </div>
-            \` : (calendarViewMode === 'matrix' ? renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) : renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings))}
-          </div>
-        \`;
-        return;
-      }
-
-      // Case 2: activePropertyId === 'all'
-      if (activeLodgingProps.length === 0) {
-        container.innerHTML = \`
-          <div class="bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center flex flex-col items-center justify-center max-w-xl mx-auto">
-            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3">
-              <i data-lucide="hotel" class="w-7 h-7"></i>
-            </div>
-            <h4 class="text-base font-bold text-slate-900">No Lodging Businesses Active</h4>
-            <p class="text-xs text-slate-500 mt-1 max-w-md">
-              None of your active businesses currently have Lodging enabled. Go to Business Offerings to enable Lodging.
-            </p>
-            <button
-              type="button"
-              onclick="setAdminFinanceSubTab('business')"
-              class="mt-5 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
-            >
-              Configure Business Offerings
-            </button>
-          </div>
-        \`;
-        return;
-      }
-
-      const allLodgingRooms = roomsList.filter(r => activeLodgingProps.some(lp => lp.id === r.property_id));
-      const allMonthBookings = roomBookingsList.filter(b => activeLodgingProps.some(lp => lp.id === b.property_id) && b.date && b.date.startsWith(currentMonthPrefix));
-
-      const totalBookingsCount = allMonthBookings.length;
-      const monthLodgingOnline = allMonthBookings.reduce((s, b) => s + getBookingOnlineAmount(b), 0);
-      const monthLodgingCash = allMonthBookings.reduce((s, b) => s + getBookingCashAmount(b), 0);
+      const monthLodgingOnline = monthBookings.reduce((s, b) => s + getBookingOnlineAmount(b), 0);
+      const monthLodgingCash = monthBookings.reduce((s, b) => s + getBookingCashAmount(b), 0);
       const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
-      const hasEliteHomes = activeLodgingProps.some(p => p.id === "elite-homes");
 
       container.innerHTML = \`
         <div class="space-y-4">
           <!-- Calendar Controls Bar -->
           <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div class="flex items-center gap-2.5 flex-wrap">
-              <!-- Business Indicator: All Properties -->
+              <!-- Business Indicator -->
               <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scope:</span>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  <span>All Properties (\${activeLodgingProps.map(p => escapeHtml(p.name)).join(', ')})</span>
+                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>Xsquare Hotel (4 Rooms)</span>
                 </span>
               </div>
 
@@ -8058,18 +7779,6 @@ export function getDashboardHtml(): string {
                 </button>
               </div>
 
-              \${hasEliteHomes ? \`
-                <button
-                  type="button"
-                  onclick="syncAirbnbCalendar()"
-                  title="Synchronize confirmed bookings from Airbnb Host Portal"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-xs transition cursor-pointer"
-                >
-                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5 airbnb-sync-icon"></i>
-                  <span class="airbnb-sync-text">Sync Airbnb Portal</span>
-                </button>
-              \` : ''}
-
               <button
                 type="button"
                 onclick="openAiBookingChat()"
@@ -8090,11 +7799,18 @@ export function getDashboardHtml(): string {
             </div>
           </div>
 
-          <!-- Calendar Summary Stats Bar -->
+          <!-- Calendar Summary Stats Bar with Occupancy % (Green if > 50%) -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Rooms</span>
-              <span class="text-base sm:text-lg font-black text-slate-900">\${allLodgingRooms.length} Rooms</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Configured Rooms</span>
+              <span class="text-base sm:text-lg font-black text-slate-900">\${propRooms.length} Rooms</span>
+            </div>
+            <div class="p-3 rounded-2xl shadow-2xs \${isOccGreen ? 'bg-emerald-50 border-2 border-emerald-400 text-emerald-900 ring-1 ring-emerald-200' : 'bg-white border border-slate-200'}">
+              <span class="text-[10px] font-bold uppercase tracking-wider block \${isOccGreen ? 'text-emerald-700 font-black' : 'text-slate-400'}">Occupancy %</span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="text-base sm:text-lg font-black font-mono \${isOccGreen ? 'text-emerald-700' : 'text-indigo-600'}">\${occupancyPct}%</span>
+                \${isOccGreen ? '<span class="text-[9px] px-1.5 py-0.2 rounded-full font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 >50%</span>' : ''}
+              </div>
             </div>
             <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
               <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month Bookings</span>
@@ -8103,10 +7819,7 @@ export function getDashboardHtml(): string {
             <div class="bg-white p-3 rounded-2xl border border-indigo-100 shadow-2xs">
               <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Lodging Total</span>
               <span class="text-base sm:text-lg font-black font-mono text-indigo-950">₹\${formatCurrency(monthLodgingTotal)}</span>
-            </div>
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs text-[11px] text-slate-600 flex flex-col justify-center">
-              <div>Online: <strong class="text-indigo-700 font-mono">₹\${formatCurrency(monthLodgingOnline)}</strong></div>
-              <div>Cash: <strong class="text-amber-700 font-mono">₹\${formatCurrency(monthLodgingCash)}</strong></div>
+              <div class="text-[10px] text-slate-500 mt-1">On: ₹\${formatCurrency(monthLodgingOnline)} · Cs: ₹\${formatCurrency(monthLodgingCash)}</div>
             </div>
           </div>
 
@@ -8117,38 +7830,15 @@ export function getDashboardHtml(): string {
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Split (Cash + Online)</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Airbnb Sync</span>
             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
             <span class="inline-flex items-center gap-1.5"><span>🪪</span> ID Attached</span>
-            \${hasEliteHomes ? \`
-              <span class="ml-auto text-[11px] text-rose-700 font-semibold flex items-center gap-1">
-                <i data-lucide="cloud-sync" class="w-3.5 h-3.5 text-rose-600"></i>
-                <span>Connected: Airbnb Host Portal</span>
-              </span>
-            \` : ''}
           </div>
 
           <!-- RENDER MATRIX OR MONTHLY VIEW -->
-          \${allLodgingRooms.length === 0 ? \`
-            <div class="bg-white p-8 rounded-3xl border border-slate-200 text-center flex flex-col items-center justify-center">
-              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                <i data-lucide="door-closed" class="w-6 h-6"></i>
-              </div>
-              <h5 class="text-sm font-bold text-slate-900">No Rooms Added Yet</h5>
-              <p class="text-xs text-slate-500 mt-1 max-w-sm">No rooms found across your lodging businesses.</p>
-              <button
-                type="button"
-                onclick="setAdminFinanceSubTab('rooms')"
-                class="mt-4 px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition cursor-pointer"
-              >
-                Configure Rooms Now
-              </button>
-            </div>
-          \` : (calendarViewMode === 'matrix' ? renderAdminMatrixGrid(allLodgingRooms, daysInMonth, currentMonthPrefix, allMonthBookings) : renderAdminMonthlyGrid(allLodgingRooms, daysInMonth, currentMonthPrefix, allMonthBookings))}
+          \${calendarViewMode === 'matrix' ? renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) : renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings)}
         </div>
       \`;
-    }
-
+    }\n
     // Helper: Matrix Grid (Rooms x Days)
     function renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) {
       const todayIso = new Date().toISOString().split("T")[0];
@@ -8297,6 +7987,8 @@ export function getDashboardHtml(): string {
               const totalDay = dateBookings.reduce((s, b) => s + (b.amount || 0), 0);
               const bookedRoomsCount = dateBookings.length;
               const totalRooms = propRooms.length;
+              const dayOccPct = totalRooms > 0 ? Math.round((bookedRoomsCount / totalRooms) * 100) : 0;
+              const isDayOccGreen = dayOccPct > 50;
 
               return \`
                 <div
@@ -8306,8 +7998,8 @@ export function getDashboardHtml(): string {
                   <div class="flex items-center justify-between gap-1 flex-wrap">
                     <span class="text-xs font-bold \${isToday ? 'text-indigo-600 font-black' : 'text-slate-800'}">\${d}</span>
                     \${dateBookings.length > 0 ? \`
-                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap \${bookedRoomsCount > totalRooms ? 'bg-purple-100 text-purple-900 border border-purple-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200'}" title="\${bookedRoomsCount} booking\${bookedRoomsCount > 1 ? 's' : ''} across \${totalRooms} room\${totalRooms > 1 ? 's' : ''}">
-                        \${bookedRoomsCount}/\${totalRooms} rooms
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap \${isDayOccGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : (bookedRoomsCount > totalRooms ? 'bg-purple-100 text-purple-900 border border-purple-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200')}" title="\${bookedRoomsCount} booking(s) across \${totalRooms} rooms (\${dayOccPct}% occupancy)">
+                        \${isDayOccGreen ? '🟢 ' : ''}\${bookedRoomsCount}/\${totalRooms} (\${dayOccPct}%)
                       </span>
                     \` : ''}
                   </div>
@@ -8356,9 +8048,6 @@ export function getDashboardHtml(): string {
     async function setCalendarProperty(propId) {
       calendarSelectedProperty = propId;
       await fetchRoomBookings({ property_id: propId });
-      if (propId === "elite-homes") {
-        autoSyncEliteHomesCalendar();
-      }
       renderFinancesView();
     }
 
