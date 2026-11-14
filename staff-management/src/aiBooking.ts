@@ -42,6 +42,9 @@ export interface CreateRoomBookingInput {
 	date?: string;
 	check_in_date?: string;
 	check_out_date?: string;
+	nights?: number | null;
+	days?: number | null;
+	number_of_days?: number | null;
 	is_range?: boolean;
 	include_checkout_day?: boolean;
 	amount?: number;
@@ -97,6 +100,38 @@ function addDaysIso(isoDate: string, days: number): string {
 	return d.toISOString().split("T")[0];
 }
 
+function parseHumanDate(str: string | null | undefined, todayIso: string): string | null {
+	if (!str) return null;
+	const s = str.trim().toLowerCase();
+	if (s === "today") return todayIso;
+	if (s === "tomorrow") return addDaysIso(todayIso, 1);
+	if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+	const ddmmyyyy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+	if (ddmmyyyy) {
+		const day = ddmmyyyy[1].padStart(2, "0");
+		const month = ddmmyyyy[2].padStart(2, "0");
+		const year = ddmmyyyy[3].length === 2 ? `20${ddmmyyyy[3]}` : ddmmyyyy[3];
+		return `${year}-${month}-${day}`;
+	}
+
+	const monthMap: Record<string, string> = {
+		jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
+		jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12"
+	};
+	const ddMonth = s.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})(?:\s+(\d{4}))?$/i);
+	if (ddMonth) {
+		const day = ddMonth[1].padStart(2, "0");
+		const monKey = ddMonth[2].slice(0, 3).toLowerCase();
+		const month = monthMap[monKey];
+		if (month) {
+			const year = ddMonth[3] || todayIso.split("-")[0];
+			return `${year}-${month}-${day}`;
+		}
+	}
+	return null;
+}
+
 function normalizeRoomToken(value: string): string {
 	return value
 		.toLowerCase()
@@ -140,14 +175,14 @@ export function parseDeterministicBooking(
 
 	// 1. Key-value line extraction (works across newlines, commas, or inline labels)
 	const normalizedForKv = trimmed
-		.replace(/,\s*(?=(?:customer\s*name|guest\s*name|name|room\s*no\.?|room\s*number|room|number\s*of\s*persons?|no\.?\s*of\s*persons?|persons?|guests?|pax|check[\s-]*in|check[\s-]*out|date|nights?|amount|price|rate|payment(?:\s*mode)?|notes?)\b)/gi, "\n")
-		.replace(/\s+(?=(?:customer\s*name|guest\s*name|room\s*no\.?|room\s*number|number\s*of\s*persons?|no\.?\s*of\s*persons?|check[\s-]*in(?:\s*date)?|check[\s-]*out(?:\s*date)?|payment\s*mode|payment\s*method)\b)/gi, "\n");
+		.replace(/,\s*(?=(?:customer\s*name|guest\s*name|name|room\s*no\.?|room\s*number|room|number\s*of\s*persons?|no\.?\s*of\s*persons?|persons?|guests?|pax|number\s*of\s*days?|no\.?\s*of\s*days?|number\s*of\s*nights?|no\.?\s*of\s*nights?|days?|nights?|stay\s*(?:duration|days?|nights?|period)?|duration|check[\s-]*in|check[\s-]*out|from|to|date|amount|price|rate|payment(?:\s*mode)?|notes?)\b)/gi, "\n")
+		.replace(/\s+(?=(?:customer\s*name|guest\s*name|room\s*no\.?|room\s*number|number\s*of\s*persons?|no\.?\s*of\s*persons?|number\s*of\s*days?|no\.?\s*of\s*days?|number\s*of\s*nights?|no\.?\s*of\s*nights?|check[\s-]*in(?:\s*date)?|check[\s-]*out(?:\s*date)?|payment\s*mode|payment\s*method)\b)/gi, "\n");
 	const kvLines = normalizedForKv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
 	for (const line of kvLines) {
 		let m: RegExpMatchArray | null;
 
-		if ((m = line.match(/^(?:customer\s*name|guest\s*name|guests?\s*names?|customer|guest|name)\s*[:=\-]\s*(.+)$/i))) {
+		if ((m = line.match(/^(?:customer\s*name|guest\s*name|guests?\s*names?|customer|guest|name)\s*[:=\-.]\s*(.+)$/i))) {
 			const val = m[1].trim();
 			if (val && !/^(?:n\/a|none|-)$/i.test(val)) {
 				result.guest_name = val;
@@ -157,7 +192,7 @@ export function parseDeterministicBooking(
 			continue;
 		}
 
-		if ((m = line.match(/^(?:room\s*no\.?|room\s*number|rm\s*no\.?|room)\s*[:=\-.]?\s*([a-z0-9][a-z0-9\s-]{0,20}?)(?:\s*[,;|\n]|$)/i))) {
+		if ((m = line.match(/^(?:room\s*no\.?|room\s*number|rm\s*no\.?|room)\s*[:=\-.]?\s*([a-z0-9]+(?:\s+[a-z0-9]+)?)(?:\s*(?:for\b|with\b|[,;|\n]|$))/i))) {
 			const val = m[1].trim();
 			if (val) result.room_number = val;
 			continue;
@@ -169,22 +204,21 @@ export function parseDeterministicBooking(
 			continue;
 		}
 
-		if ((m = line.match(/^(?:check[\s-]*in(?:\s*date)?|date)\s*[:=\-]\s*(.+)$/i))) {
-			const rawDate = m[1].trim().toLowerCase();
-			if (rawDate === "today") result.check_in_date = todayIso;
-			else if (rawDate === "tomorrow") result.check_in_date = addDaysIso(todayIso, 1);
-			else if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) result.check_in_date = rawDate;
-			continue;
-		}
-
-		if ((m = line.match(/^(?:check[\s-]*out(?:\s*date)?)\s*[:=\-]\s*(\d{4}-\d{2}-\d{2})$/i))) {
-			result.check_out_date = m[1];
-			continue;
-		}
-
-		if ((m = line.match(/^(?:nights?|days?)\s*[:=\-]\s*(\d+)/i))) {
+		if ((m = line.match(/^(?:number\s*of\s*days?|no\.?\s*of\s*days?|number\s*of\s*nights?|no\.?\s*of\s*nights?|stay\s*(?:duration|days?|nights?|period)?|duration|days?|nights?)\s*[:=\-.]?\s*(\d+)/i))) {
 			const n = parseInt(m[1], 10);
 			if (Number.isFinite(n) && n > 0 && n <= 90) result.nights = n;
+			continue;
+		}
+
+		if ((m = line.match(/^(?:check[\s-]*in(?:\s*date)?|from(?:\s*date)?|arrival|date)\s*[:=\-]\s*(.+)$/i))) {
+			const d = parseHumanDate(m[1], todayIso);
+			if (d) result.check_in_date = d;
+			continue;
+		}
+
+		if ((m = line.match(/^(?:check[\s-]*out(?:\s*date)?|to(?:\s*date)?|till|departure)\s*[:=\-]\s*(.+)$/i))) {
+			const d = parseHumanDate(m[1], todayIso);
+			if (d) result.check_out_date = d;
 			continue;
 		}
 
@@ -220,7 +254,6 @@ export function parseDeterministicBooking(
 
 	// 2. Inline pattern fallbacks when fields aren't strictly Key: Value lines
 	if (!result.room_number) {
-		// Check direct room match first against known property rooms (e.g. "101", "Studio Room 1", "Deluxe 201")
 		for (const r of rooms) {
 			const escaped = r.room_number.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 			if (new RegExp(`(?:^|\\b|#)${escaped}(?:\\b|,|\\s|$)`, "i").test(trimmed)) {
@@ -237,18 +270,17 @@ export function parseDeterministicBooking(
 	}
 
 	if (!result.guest_name) {
-		const inlineName = trimmed.match(/\b(?:for|guest|customer)\s+([A-Za-z][A-Za-z\s]{1,24}?)(?=\s*(?:,|\n|with|room|rm|\d|pax|person|cash|online|$))/i);
+		const inlineName = trimmed.match(/\b(?:for|guest|customer)\s+([A-Za-z][A-Za-z\s]{1,24}?)(?=\s*(?:,|\n|with|room|rm|\d|pax|person|staying|stay|days?|nights?|cash|online|$))/i);
 		if (inlineName?.[1]) {
 			const candidate = inlineName[1].trim();
 			if (!/^(?:room|today|tomorrow|cash|online)$/i.test(candidate)) {
 				result.guest_name = candidate;
 			}
 		} else {
-			// Check comma or newline separated segments for simple guest names
 			const segments = trimmed.split(/[,;\n]/).map((s) => s.trim());
 			for (const seg of segments) {
 				if (/^[A-Za-z]{2,20}(?:\s+[A-Za-z]{2,20}){0,2}$/.test(seg)) {
-					if (!/^(?:room|rooms|today|tomorrow|cash|online|upi|gpay|card|split|half\s*cash|half\s*online|person|persons|guest|guests|pax)$/i.test(seg)) {
+					if (!/^(?:room|rooms|today|tomorrow|cash|online|upi|gpay|card|split|half\s*cash|half\s*online|person|persons|guest|guests|pax|days|nights)$/i.test(seg)) {
 						result.guest_name = seg;
 						break;
 					}
@@ -265,6 +297,43 @@ export function parseDeterministicBooking(
 		}
 	}
 
+	if (!result.nights) {
+		const inlineNights = trimmed.match(/\b(?:for|staying(?:\s*for)?|stay)\s*(\d{1,2})\s*(?:days?|nights?)\b/i)
+			|| trimmed.match(/\b(\d{1,2})\s*(?:days?|nights?)\s*(?:stay)?\b/i);
+		if (inlineNights?.[1]) {
+			const n = parseInt(inlineNights[1], 10);
+			if (n > 0 && n <= 90) result.nights = n;
+		}
+	}
+
+	// Inline date range
+	if (!result.check_in_date || !result.check_out_date) {
+		const rangeMatch = trimmed.match(/\b(?:from\s+)?(\d{1,2}(?:st|nd|rd|th)?(?:\s+[a-z]{3,9})?)\s*(?:to|till|until|-)\s*(\d{1,2}(?:st|nd|rd|th)?(?:\s+[a-z]{3,9})?)\b/i);
+		if (rangeMatch) {
+			const dIn = parseHumanDate(rangeMatch[1], todayIso);
+			const dOut = parseHumanDate(rangeMatch[2], todayIso);
+			if (dIn) result.check_in_date = dIn;
+			if (dOut) result.check_out_date = dOut;
+		}
+	}
+
+	if (result.nights && result.nights > 1 && !result.check_out_date) {
+		result.check_out_date = addDaysIso(result.check_in_date || todayIso, result.nights);
+	} else if (result.check_in_date && result.check_out_date && !result.nights) {
+		const diff = Math.round((new Date(`${result.check_out_date}T00:00:00Z`).getTime() - new Date(`${result.check_in_date}T00:00:00Z`).getTime()) / 86400000);
+		if (diff > 0 && diff <= 90) result.nights = diff;
+	}
+
+	if (!result.check_in_date) {
+		if (/\btomorrow\b/i.test(trimmed)) result.check_in_date = addDaysIso(todayIso, 1);
+		else if (/\btoday\b/i.test(trimmed)) result.check_in_date = todayIso;
+		else {
+			const isoMatch = trimmed.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+			if (isoMatch) result.check_in_date = isoMatch[1];
+		}
+	}
+
+	// Split payment
 	if (/half\s*cash|half\s*online|50\s*%\s*cash|cash\s*and\s*online|online\s*and\s*cash|split/i.test(trimmed)) {
 		result.payment_mode = "split";
 	}
@@ -277,19 +346,23 @@ export function parseDeterministicBooking(
 		result.online_amount = parseInt(inlineOnline[1], 10);
 	}
 
+	// Amount extraction (strip date strings so years like 2026 or days are never parsed as money)
 	if (!result.amount) {
-		const inlineAmt = trimmed.match(/(?:(?:₹|rs\.?|amount|tariff|rate|price|total)\s*[:=\-]?\s*)(\d{2,6})\b/i) || trimmed.match(/\b([1-9]\d{2,5})\s*(?:rs|inr|₹|\/|-)\b/i);
+		const cleanNoDates = trimmed
+			.replace(/\d{4}-\d{2}-\d{2}/g, " ")
+			.replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g, " ")
+			.replace(/\d{1,2}(?:st|nd|rd|th)?\s+[a-z]{3,9}/gi, " ");
+		const inlineAmt = cleanNoDates.match(/(?:(?:₹|rs\.?|amount|tariff|rate|price|total)\s*[:=\-]?\s*)(\d{2,6})\b/i) || cleanNoDates.match(/\b([1-9]\d{2,5})\s*(?:rs|inr|₹|\/|-)\b/i);
 		if (inlineAmt?.[1]) {
 			const val = parseInt(inlineAmt[1], 10);
 			if (val >= 100 && val <= 500000 && val !== result.cash_amount && val !== result.online_amount) {
 				result.amount = val;
 			}
 		} else {
-			// Find standalone number that is not room_number, guest_count, or any known room
-			const allNums = [...trimmed.matchAll(/\b([1-9]\d{2,5})\b/g)].map((x) => parseInt(x[1], 10));
+			const allNums = [...cleanNoDates.matchAll(/\b([1-9]\d{2,5})\b/g)].map((x) => parseInt(x[1], 10));
 			for (const num of allNums) {
 				if (String(num) === result.room_number || rooms.some((r) => r.room_number === String(num))) continue;
-				if (num === result.cash_amount || num === result.online_amount || num === result.guest_count) continue;
+				if (num === result.cash_amount || num === result.online_amount || num === result.guest_count || num === result.nights) continue;
 				if (num >= 300 && num <= 500000) {
 					result.amount = num;
 					break;
@@ -310,40 +383,6 @@ export function parseDeterministicBooking(
 	if (!result.payment_mode) {
 		if (/\bcash\b/i.test(trimmed)) result.payment_mode = "cash";
 		else if (/\b(?:online|upi|gpay|phonepe|paytm|card)\b/i.test(trimmed)) result.payment_mode = "online";
-	}
-
-	if (!result.check_in_date) {
-		if (/\btomorrow\b/i.test(trimmed)) result.check_in_date = addDaysIso(todayIso, 1);
-		else if (/\btoday\b/i.test(trimmed)) result.check_in_date = todayIso;
-		else {
-			const isoMatch = trimmed.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
-			if (isoMatch) result.check_in_date = isoMatch[1];
-		}
-	}
-
-	if (!result.nights) {
-		const nightsMatch = trimmed.match(/\b(\d{1,2})\s*nights?\b/i);
-		if (nightsMatch?.[1]) result.nights = parseInt(nightsMatch[1], 10);
-	}
-
-	if (result.amount === undefined) {
-		const amtMatch = trimmed.match(/(?:₹|rs\.?\s*)(\d{3,6})\b/i);
-		if (amtMatch?.[1]) result.amount = parseInt(amtMatch[1], 10);
-	}
-
-	if (!result.guest_name) {
-		const forGuestMatch = trimmed.match(/\bfor\s+([A-Za-z][A-Za-z\s.&,-]{1,60}?)(?=\s*(?:\bwith\b|\bfor\s+\d+|\broom\b|\bnumber\s+of\b|\bpersons?\b|\bpeople\b|\bguests?\b|\bpax\b|\bby\b|\bon\b|\btoday\b|\btomorrow\b|\bcash\b|\bonline\b|\bupi\b|\d{4}-\d{2}-\d{2}|$))/i);
-		if (forGuestMatch?.[1]) {
-			const candidateName = forGuestMatch[1].trim();
-			if (
-				candidateName &&
-				!/^(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|a|an|the|today|tomorrow|cash|online|upi)(?:\s*(?:persons?|people|guests?|pax|nights?|days?))?$/i.test(candidateName)
-			) {
-				result.guest_name = candidateName;
-				const splitNames = candidateName.split(/\s*(?:,|&|\band\b)\s*/i).map((s) => s.trim()).filter(Boolean);
-				if (splitNames.length > 0) result.guest_names = splitNames;
-			}
-		}
 	}
 
 	// 3. Conversational short-answer handling if pendingDraft is missing exactly one item
@@ -882,14 +921,18 @@ export async function handleAiBookingChat(
 		date: checkInDate,
 		check_in_date: checkInDate,
 		check_out_date: stayInfo.actualCheckOut,
+		nights: stayInfo.dates.length,
 		is_range: stayInfo.isRange,
 		amount: totalAmount,
 		platform: "Direct (AI Chat)",
 	});
 
 	const mainBooking = created.booking;
+	const payDetails = paymentMode === "split"
+		? `SPLIT (₹${(cashAmount || 0).toLocaleString("en-IN")} Cash + ₹${(onlineAmount || 0).toLocaleString("en-IN")} Online)`
+		: paymentMode.toUpperCase();
 	const staySummary = created.isMultiDay
-		? `${checkInDate} → ${stayInfo.actualCheckOut} (${created.nights} nights)`
+		? `${checkInDate} → ${stayInfo.actualCheckOut} (${created.nights} nights stay)`
 		: checkInDate;
 
 	return {
@@ -905,8 +948,8 @@ export async function handleAiBookingChat(
 				`• Customer: ${merged.guest_name}\n` +
 				`• Room: ${room.room_number} (${room.room_type || "Standard"})\n` +
 				`• Persons: ${guestCount}\n` +
-				`• Date: ${staySummary}\n` +
-				`• Tariff: ₹${totalAmount.toLocaleString("en-IN")} (${paymentMode.toUpperCase()})`,
+				`• Stay: ${staySummary}\n` +
+				`• Total Tariff: ₹${totalAmount.toLocaleString("en-IN")}${created.isMultiDay ? ` (${created.nights} nights)` : ""} (${payDetails})`,
 		},
 	};
 }

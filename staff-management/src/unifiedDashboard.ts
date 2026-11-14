@@ -211,9 +211,11 @@ export async function fetchUnifiedEarningsData(
 	const staffMonthsRes = await staffDb
 		.prepare("SELECT DISTINCT substr(date, 1, 7) as month FROM daily_finances ORDER BY month DESC")
 		.all<{ month: string }>();
-	const airbnbMonthsRes = await airbnbDb
-		.prepare("SELECT DISTINCT substr(check_in_date, 1, 7) as month FROM bookings WHERE check_in_date IS NOT NULL ORDER BY month DESC")
-		.all<{ month: string }>();
+	const airbnbMonthsRes = airbnbDb
+		? await airbnbDb
+				.prepare("SELECT DISTINCT substr(check_in_date, 1, 7) as month FROM bookings WHERE check_in_date IS NOT NULL ORDER BY month DESC")
+				.all<{ month: string }>()
+		: { results: [] as { month: string }[] };
 
 	const monthSet = new Set<string>();
 	monthSet.add(currentMonth);
@@ -242,36 +244,42 @@ export async function fetchUnifiedEarningsData(
 		.prepare("SELECT * FROM daily_finances ORDER BY date DESC")
 		.all<any>();
 
-	const airbnbBookingsRes = await airbnbDb
-		.prepare(
-			`SELECT * FROM bookings 
+	const airbnbBookingsRes = airbnbDb
+		? await airbnbDb
+				.prepare(
+					`SELECT * FROM bookings 
        WHERE (check_in_date LIKE ? OR check_out_date LIKE ?)
          AND status NOT IN ('Cancelled', 'Blocked')
        ORDER BY check_in_date DESC`
-		)
-		.bind(`${targetMonth}%`, `${targetMonth}%`)
-		.all<any>();
+				)
+				.bind(`${targetMonth}%`, `${targetMonth}%`)
+				.all<any>()
+		: { results: [] as any[] };
 
-	const airbnbAllBookingsRes = await airbnbDb
-		.prepare(
-			`SELECT * FROM bookings 
+	const airbnbAllBookingsRes = airbnbDb
+		? await airbnbDb
+				.prepare(
+					`SELECT * FROM bookings 
        WHERE status NOT IN ('Cancelled', 'Blocked')
        ORDER BY check_in_date DESC`
-		)
-		.all<any>();
+				)
+				.all<any>()
+		: { results: [] as any[] };
 
-	const airbnbExpensesRes = await airbnbDb
-		.prepare(
-			`SELECT * FROM expenses 
+	const airbnbExpensesRes = airbnbDb
+		? await airbnbDb
+				.prepare(
+					`SELECT * FROM expenses 
        WHERE date LIKE ? 
        ORDER BY date DESC`
-		)
-		.bind(`${targetMonth}%`)
-		.all<any>();
+				)
+				.bind(`${targetMonth}%`)
+				.all<any>()
+		: { results: [] as any[] };
 
-	const airbnbAllExpensesRes = await airbnbDb
-		.prepare("SELECT * FROM expenses ORDER BY date DESC")
-		.all<any>();
+	const airbnbAllExpensesRes = airbnbDb
+		? await airbnbDb.prepare("SELECT * FROM expenses ORDER BY date DESC").all<any>()
+		: { results: [] as any[] };
 
 	const [yearStr, monthNumStr] = targetMonth.split("-");
 	const year = parseInt(yearStr, 10);

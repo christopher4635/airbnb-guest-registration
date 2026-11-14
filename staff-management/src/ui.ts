@@ -1565,15 +1565,24 @@ export function getDashboardHtml(): string {
       </div>
 
       <!-- Stay Duration Type Segmented Control -->
-      <div id="modalStayTypeSegment" class="flex items-center justify-between p-1 bg-slate-100 rounded-xl mb-3">
-        <button type="button" id="btnModalStaySingle" onclick="setModalStayMode('single')" class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs">
-          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-          <span>Single Day</span>
-        </button>
-        <button type="button" id="btnModalStayRange" onclick="setModalStayMode('range')" class="flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900">
-          <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
-          <span>Multi-Day Date Range</span>
-        </button>
+      <div id="modalStayTypeSegment" class="space-y-2 mb-3">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-semibold text-slate-700">Stay Duration</label>
+          <div class="flex items-center gap-1 bg-slate-100 rounded-lg px-2 py-0.5">
+            <button type="button" onclick="modalStepNights(-1)" class="w-4 h-4 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">−</button>
+            <span id="modalNightsCountBadge" class="text-xs font-bold text-indigo-700 font-mono px-1">1 Night</span>
+            <button type="button" onclick="modalStepNights(1)" class="w-4 h-4 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">+</button>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 flex-wrap">
+          <button type="button" id="btnModalStay1" onclick="modalQuickSetNights(1)" class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-2xs">1 Night</button>
+          <button type="button" id="btnModalStay2" onclick="modalQuickSetNights(2)" class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700">2 Nights</button>
+          <button type="button" id="btnModalStay3" onclick="modalQuickSetNights(3)" class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700">3 Nights</button>
+          <button type="button" id="btnModalStay4" onclick="modalQuickSetNights(4)" class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700">4 Nights</button>
+          <button type="button" id="btnModalStay5" onclick="modalQuickSetNights(5)" class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700">5 Nights</button>
+          <button type="button" id="btnModalStay7" onclick="modalQuickSetNights(7)" class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700">7 Nights</button>
+          <button type="button" id="btnModalStayCustom" onclick="toggleModalCustomRange()" class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700">📅 Custom</button>
+        </div>
       </div>
 
       <!-- Notice when editing a multi-day stay -->
@@ -2238,7 +2247,14 @@ export function getDashboardHtml(): string {
           onclick="fillAiBookingTemplate()"
           class="px-2.5 py-1 rounded-full bg-white hover:bg-indigo-50 text-indigo-700 border border-indigo-200 text-[11px] font-semibold whitespace-nowrap transition cursor-pointer"
         >
-          📝 Use Booking Format
+          📝 1-Day Format
+        </button>
+        <button
+          type="button"
+          onclick="fillAiMultiDayTemplate()"
+          class="px-2.5 py-1 rounded-full bg-white hover:bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-semibold whitespace-nowrap transition cursor-pointer"
+        >
+          📅 Multi-Day (3 Days)
         </button>
         <button
           type="button"
@@ -5900,30 +5916,82 @@ export function getDashboardHtml(): string {
                 </div>
               </div>
 
-              <!-- Stay Duration Type Segment -->
-              <div class="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  id="btnMgrStaySingle"
-                  onclick="setMgrStayMode('single')"
-                  class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${mgrStayMode === 'single' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}"
-                >
-                  <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                  <span>Single Day (\${managerFinanceDate})</span>
-                </button>
-                <button
-                  type="button"
-                  id="btnMgrStayRange"
-                  onclick="setMgrStayMode('range')"
-                  class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${mgrStayMode === 'range' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'}"
-                >
-                  <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
-                  <span>Date Range (Multi-Day Stay)</span>
-                </button>
+              <!-- Stay Duration Quick Select -->
+              <div class="space-y-2 pt-1">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-slate-700 flex items-center gap-1 mr-1">
+                      <i data-lucide="moon" class="w-3.5 h-3.5 text-indigo-600"></i>
+                      <span>Stay:</span>
+                    </span>
+                    <button
+                      type="button"
+                      id="btnMgrStay1"
+                      onclick="mgrQuickSetNights(1)"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs"
+                    >
+                      1 Night (\${managerFinanceDate})
+                    </button>
+                    <button
+                      type="button"
+                      id="btnMgrStay2"
+                      onclick="mgrQuickSetNights(2)"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                    >
+                      2 Nights
+                    </button>
+                    <button
+                      type="button"
+                      id="btnMgrStay3"
+                      onclick="mgrQuickSetNights(3)"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                    >
+                      3 Nights
+                    </button>
+                    <button
+                      type="button"
+                      id="btnMgrStay4"
+                      onclick="mgrQuickSetNights(4)"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                    >
+                      4 Nights
+                    </button>
+                    <button
+                      type="button"
+                      id="btnMgrStay5"
+                      onclick="mgrQuickSetNights(5)"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                    >
+                      5 Nights
+                    </button>
+                    <button
+                      type="button"
+                      id="btnMgrStay7"
+                      onclick="mgrQuickSetNights(7)"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                    >
+                      7 Nights
+                    </button>
+                    <button
+                      type="button"
+                      id="btnMgrStayCustom"
+                      onclick="toggleMgrCustomRange()"
+                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+                    >
+                      📅 Custom Dates
+                    </button>
+                  </div>
+                  <!-- Stepper -->
+                  <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2 py-0.5 shadow-2xs">
+                    <button type="button" onclick="mgrStepNights(-1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">−</button>
+                    <span id="mgrNightsCountBadge" class="text-xs font-black text-indigo-700 font-mono px-1">1 Night</span>
+                    <button type="button" onclick="mgrStepNights(1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">+</button>
+                  </div>
+                </div>
               </div>
 
               <!-- Multi-day date range section for manager -->
-              <div id="mgrStayRangeSection" class="\${mgrStayMode === 'range' ? '' : 'hidden'} p-3 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 space-y-2.5">
+              <div id="mgrStayRangeSection" class="hidden p-3 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 space-y-2.5">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
                     <label class="block text-xs font-semibold text-indigo-950 mb-1">Check-in Date *</label>
@@ -6509,13 +6577,19 @@ export function getDashboardHtml(): string {
     // ROOM BOOKING & MULTI-DAY STAY HELPERS
     // -------------------------------------------------------------------------
     let mgrStayMode = 'single';
+    let mgrStayNights = 1;
     let modalStayMode = 'single';
+    let modalStayNights = 1;
 
-    function getTomorrowIso(dateStr) {
+    function addDaysIso(dateStr, days) {
       if (!dateStr) dateStr = new Date().toISOString().split("T")[0];
       const d = new Date(dateStr + "T00:00:00Z");
-      d.setUTCDate(d.getUTCDate() + 1);
+      d.setUTCDate(d.getUTCDate() + (parseInt(days, 10) || 0));
       return d.toISOString().split("T")[0];
+    }
+
+    function getTomorrowIso(dateStr) {
+      return addDaysIso(dateStr, 1);
     }
 
     function calculateStayNights(startDateStr, endDateStr, includeCheckout = false) {
@@ -6529,41 +6603,74 @@ export function getDashboardHtml(): string {
       return Math.max(1, diffDays);
     }
 
-    function setMgrStayMode(mode) {
-      mgrStayMode = mode;
-      const btnSingle = document.getElementById("btnMgrStaySingle");
-      const btnRange = document.getElementById("btnMgrStayRange");
+    function mgrQuickSetNights(n) {
+      mgrStayNights = Math.max(1, parseInt(n, 10) || 1);
+      mgrStayMode = mgrStayNights > 1 ? 'range' : 'single';
+      const inInput = document.getElementById("mgrBookCheckIn");
+      const outInput = document.getElementById("mgrBookCheckOut");
+      const checkIn = inInput?.value || managerFinanceDate;
+      if (inInput) inInput.value = checkIn;
+      if (outInput) outInput.value = addDaysIso(checkIn, mgrStayNights);
+      updateMgrStayPillStyles();
+      onMgrRangeChange();
+    }
+
+    function mgrStepNights(delta) {
+      mgrQuickSetNights(mgrStayNights + delta);
+    }
+
+    function toggleMgrCustomRange() {
       const rangeSec = document.getElementById("mgrStayRangeSection");
-      const amtLabel = document.getElementById("mgrAmountLabel");
-      const btnText = document.getElementById("btnMgrSubmitBookText");
-
-      if (mode === 'single') {
-        if (btnSingle) {
-          btnSingle.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-indigo-600 text-white shadow-xs";
+      if (rangeSec) {
+        rangeSec.classList.toggle("hidden");
+        if (!rangeSec.classList.contains("hidden")) {
+          mgrStayMode = 'range';
         }
-        if (btnRange) {
-          btnRange.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
-        }
-        if (rangeSec) rangeSec.classList.add("hidden");
-        if (amtLabel) amtLabel.innerText = "Booking Amount (₹) *";
-        if (btnText) btnText.innerText = "+ Book Room";
-      } else {
-        if (btnSingle) {
-          btnSingle.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
-        }
-        if (btnRange) {
-          btnRange.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 bg-indigo-600 text-white shadow-xs";
-        }
-        if (rangeSec) rangeSec.classList.remove("hidden");
-        if (amtLabel) amtLabel.innerText = "Rate / Night (₹) *";
-
-        const inInput = document.getElementById("mgrBookCheckIn");
-        const outInput = document.getElementById("mgrBookCheckOut");
-        if (inInput && !inInput.value) inInput.value = managerFinanceDate;
-        if (outInput && !outInput.value) outInput.value = getTomorrowIso(inInput.value || managerFinanceDate);
-        onMgrRangeChange();
       }
-      refreshIcons();
+      updateMgrStayPillStyles();
+      onMgrRangeChange();
+    }
+
+    function updateMgrStayPillStyles() {
+      const standardPills = [1, 2, 3, 4, 5, 7];
+      standardPills.forEach(p => {
+        const btn = document.getElementById("btnMgrStay" + p);
+        if (btn) {
+          if (mgrStayNights === p) {
+            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
+          } else {
+            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+          }
+        }
+      });
+      const btnCustom = document.getElementById("btnMgrStayCustom");
+      if (btnCustom) {
+        if (!standardPills.includes(mgrStayNights)) {
+          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
+        } else {
+          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+        }
+      }
+      const badge = document.getElementById("mgrNightsCountBadge");
+      if (badge) {
+        badge.innerText = \`\${mgrStayNights} Night\${mgrStayNights > 1 ? 's' : ''}\`;
+      }
+      const rangeSec = document.getElementById("mgrStayRangeSection");
+      if (rangeSec) {
+        if (mgrStayNights > 1) {
+          rangeSec.classList.remove("hidden");
+        } else if (mgrStayMode === 'single') {
+          rangeSec.classList.add("hidden");
+        }
+      }
+    }
+
+    function setMgrStayMode(mode) {
+      if (mode === 'single') {
+        mgrQuickSetNights(1);
+      } else {
+        mgrQuickSetNights(Math.max(2, mgrStayNights));
+      }
     }
 
     function onMgrRangeChange() {
@@ -6579,6 +6686,31 @@ export function getDashboardHtml(): string {
       }
 
       const nights = calculateStayNights(checkIn, checkOut, includeCheckout);
+      mgrStayNights = nights;
+      const standardPills = [1, 2, 3, 4, 5, 7];
+      standardPills.forEach(p => {
+        const btn = document.getElementById("btnMgrStay" + p);
+        if (btn) {
+          if (mgrStayNights === p) {
+            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
+          } else {
+            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+          }
+        }
+      });
+      const btnCustom = document.getElementById("btnMgrStayCustom");
+      if (btnCustom) {
+        if (!standardPills.includes(mgrStayNights)) {
+          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
+        } else {
+          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
+        }
+      }
+      const countBadge = document.getElementById("mgrNightsCountBadge");
+      if (countBadge) {
+        countBadge.innerText = \`\${mgrStayNights} Night\${mgrStayNights > 1 ? 's' : ''}\`;
+      }
+
       const summaryText = document.getElementById("mgrRangeSummaryText");
       if (summaryText) {
         summaryText.innerText = includeCheckout
@@ -6817,22 +6949,23 @@ export function getDashboardHtml(): string {
         notes
       };
 
-      if (mgrStayMode === 'range') {
-        const check_in_date = document.getElementById("mgrBookCheckIn")?.value;
-        const check_out_date = document.getElementById("mgrBookCheckOut")?.value;
+      if (mgrStayMode === 'range' || mgrStayNights > 1) {
+        const check_in_date = document.getElementById("mgrBookCheckIn")?.value || managerFinanceDate;
+        let check_out_date = document.getElementById("mgrBookCheckOut")?.value;
         const include_checkout_day = document.getElementById("mgrIncludeCheckoutDay")?.checked || false;
 
-        if (!check_in_date || !check_out_date) {
-          return showToast("Please select check-in and check-out dates");
+        if (!check_in_date) {
+          return showToast("Please select check-in date");
         }
-        if (check_in_date > check_out_date) {
-          return showToast("Check-out date must be after check-in date");
+        if (!check_out_date || check_out_date <= check_in_date) {
+          check_out_date = addDaysIso(check_in_date, Math.max(1, mgrStayNights));
         }
 
         const nights = calculateStayNights(check_in_date, check_out_date, include_checkout_day);
         payload.is_range = true;
         payload.check_in_date = check_in_date;
         payload.check_out_date = check_out_date;
+        payload.nights = nights;
         payload.include_checkout_day = include_checkout_day;
       } else {
         payload.date = managerFinanceDate;
@@ -6867,6 +7000,7 @@ export function getDashboardHtml(): string {
         if (notesInput) notesInput.value = "";
         onMgrCashOnlineChange();
         clearMgrGuestId();
+        mgrQuickSetNights(1);
 
         await Promise.all([fetchRoomBookings(), fetchFinances()]);
         renderFinancesView();
@@ -9039,33 +9173,84 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     // MODALS: ROOM BOOKING, ROOM DAY DETAIL & MANAGE ROOM
     // -------------------------------------------------------------------------
+    function modalQuickSetNights(n) {
+      modalStayNights = Math.max(1, parseInt(n, 10) || 1);
+      modalStayMode = modalStayNights > 1 ? 'range' : 'single';
+
+      const inInput = document.getElementById("modalBookingCheckInDate");
+      const outInput = document.getElementById("modalBookingCheckOutDate");
+      const singleDate = document.getElementById("modalBookingDate");
+      const baseDate = inInput?.value || singleDate?.value || managerFinanceDate || new Date().toISOString().split("T")[0];
+
+      if (inInput) inInput.value = baseDate;
+      if (singleDate) singleDate.value = baseDate;
+      if (outInput) outInput.value = addDaysIso(baseDate, modalStayNights);
+
+      updateModalStayPillStyles();
+      setModalStayMode(modalStayMode);
+    }
+
+    function modalStepNights(delta) {
+      modalQuickSetNights(modalStayNights + delta);
+    }
+
+    function toggleModalCustomRange() {
+      if (modalStayMode === 'single') {
+        modalStayMode = 'range';
+        modalStayNights = Math.max(2, modalStayNights);
+      } else {
+        modalStayMode = 'single';
+        modalStayNights = 1;
+      }
+      const inInput = document.getElementById("modalBookingCheckInDate");
+      const outInput = document.getElementById("modalBookingCheckOutDate");
+      const singleDate = document.getElementById("modalBookingDate");
+      const baseDate = inInput?.value || singleDate?.value || managerFinanceDate || new Date().toISOString().split("T")[0];
+      if (outInput) outInput.value = addDaysIso(baseDate, modalStayNights);
+
+      updateModalStayPillStyles();
+      setModalStayMode(modalStayMode);
+    }
+
+    function updateModalStayPillStyles() {
+      const pills = [1, 2, 3, 4, 5, 7];
+      pills.forEach(p => {
+        const btn = document.getElementById("btnModalStay" + p);
+        if (btn) {
+          if (modalStayNights === p) {
+            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-2xs";
+          } else {
+            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700";
+          }
+        }
+      });
+      const btnCustom = document.getElementById("btnModalStayCustom");
+      if (btnCustom) {
+        if (!pills.includes(modalStayNights)) {
+          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-2xs";
+        } else {
+          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700";
+        }
+      }
+      const badge = document.getElementById("modalNightsCountBadge");
+      if (badge) {
+        badge.innerText = \`\${modalStayNights} Night\${modalStayNights > 1 ? 's' : ''}\`;
+      }
+    }
+
     function setModalStayMode(mode) {
       modalStayMode = mode;
-      const btnSingle = document.getElementById("btnModalStaySingle");
-      const btnRange = document.getElementById("btnModalStayRange");
       const singleDateSec = document.getElementById("modalSingleDateContainer");
       const rangeDateSec = document.getElementById("modalDateRangeContainer");
       const singleAmtSec = document.getElementById("modalSingleAmountContainer");
       const rangeAmtSec = document.getElementById("modalRangeAmountContainer");
 
       if (mode === 'single') {
-        if (btnSingle) {
-          btnSingle.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs";
-        }
-        if (btnRange) {
-          btnRange.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900";
-        }
         if (singleDateSec) singleDateSec.classList.remove("hidden");
         if (rangeDateSec) rangeDateSec.classList.add("hidden");
         if (singleAmtSec) singleAmtSec.classList.remove("hidden");
         if (rangeAmtSec) rangeAmtSec.classList.add("hidden");
       } else {
-        if (btnSingle) {
-          btnSingle.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900";
-        }
-        if (btnRange) {
-          btnRange.className = "flex-1 py-1.5 px-3 text-xs font-bold rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 bg-white text-indigo-600 shadow-2xs";
-        }
         if (singleDateSec) singleDateSec.classList.add("hidden");
         if (rangeDateSec) rangeDateSec.classList.remove("hidden");
         if (singleAmtSec) singleAmtSec.classList.add("hidden");
@@ -9088,6 +9273,9 @@ export function getDashboardHtml(): string {
       }
 
       const nights = calculateStayNights(checkIn, checkOut, includeCheckout);
+      modalStayNights = nights;
+      updateModalStayPillStyles();
+
       const nightsLabel = document.getElementById("modalRangeNightsLabel");
       const datesLabel = document.getElementById("modalRangeDatesLabel");
 
@@ -9109,6 +9297,26 @@ export function getDashboardHtml(): string {
       const total = rate * nights;
       if (totalInput) totalInput.value = total > 0 ? total : "";
       if (preview) preview.innerText = \`₹\${formatCurrency(rate)}\`;
+
+      // Update cash & online inputs to match multi-day total stay amount
+      const cashInp = document.getElementById("modalBookingCashAmount");
+      const onlineInp = document.getElementById("modalBookingOnlineAmount");
+      const curCash = parseFloat(cashInp?.value || "0") || 0;
+      const curOnline = parseFloat(onlineInp?.value || "0") || 0;
+      if (total > 0 && (curCash + curOnline !== total)) {
+        if (curCash > 0 && curOnline > 0) {
+          const half = Math.round(total / 2);
+          if (cashInp) cashInp.value = half;
+          if (onlineInp) onlineInp.value = total - half;
+        } else if (curCash > 0) {
+          if (cashInp) cashInp.value = total;
+          if (onlineInp) onlineInp.value = 0;
+        } else {
+          if (onlineInp) onlineInp.value = total;
+          if (cashInp) cashInp.value = 0;
+        }
+        onModalCashOnlineInput();
+      }
     }
 
     function onModalRateChange(val) {
@@ -9863,7 +10071,7 @@ export function getDashboardHtml(): string {
 
 
           if (staySegment) staySegment.classList.add("hidden");
-          setModalStayMode('single');
+          modalQuickSetNights(1);
         }
       } else {
         if (title) title.innerText = "Record Room Booking";
@@ -9901,8 +10109,7 @@ export function getDashboardHtml(): string {
 
         if (staySegment) staySegment.classList.remove("hidden");
         if (groupNotice) groupNotice.classList.add("hidden");
-        setModalStayMode('single');
-        onModalRangeDateChange();
+        modalQuickSetNights(1);
       }
 
       document.getElementById("roomBookingModal").classList.remove("hidden");
@@ -10037,16 +10244,16 @@ export function getDashboardHtml(): string {
         payload.cash_amount = cash_amount;
         payload.online_amount = online_amount;
         payload.update_entire_group = document.getElementById("modalUpdateEntireGroup")?.checked || false;
-      } else if (modalStayMode === 'range') {
-        const check_in_date = document.getElementById("modalBookingCheckInDate")?.value;
-        const check_out_date = document.getElementById("modalBookingCheckOutDate")?.value;
+      } else if (modalStayMode === 'range' || modalStayNights > 1) {
+        const check_in_date = document.getElementById("modalBookingCheckInDate")?.value || document.getElementById("modalBookingDate")?.value;
+        let check_out_date = document.getElementById("modalBookingCheckOutDate")?.value;
         const include_checkout_day = document.getElementById("modalIncludeCheckoutDay")?.checked || false;
 
-        if (!check_in_date || !check_out_date) {
-          return showToast("Check-in and check-out dates are required");
+        if (!check_in_date) {
+          return showToast("Check-in date is required");
         }
-        if (check_in_date > check_out_date) {
-          return showToast("Check-out date must be after check-in date");
+        if (!check_out_date || check_out_date <= check_in_date) {
+          check_out_date = addDaysIso(check_in_date, Math.max(1, modalStayNights));
         }
 
         const nights = calculateStayNights(check_in_date, check_out_date, include_checkout_day);
@@ -10054,6 +10261,7 @@ export function getDashboardHtml(): string {
         payload.is_range = true;
         payload.check_in_date = check_in_date;
         payload.check_out_date = check_out_date;
+        payload.nights = nights;
         payload.include_checkout_day = include_checkout_day;
         payload.rate_per_day = rate_per_day;
         payload.cash_amount = cash_amount;
@@ -10771,7 +10979,7 @@ export function getDashboardHtml(): string {
       return [
         {
           role: "assistant",
-          text: "Hi! Type booking details below to create a room booking instantly:\\n\\nCustomer Name: Rahul Sharma\\nRoom No. 101\\nNumber of person: 2\\n\\nYou can also add optional details like Cash/Online, ₹2500, Tomorrow, or 2 nights.",
+          text: "Hi! Type booking details below to create single or multi-day room bookings instantly:\\n\\nCustomer Name: Rahul Sharma\\nRoom No. 101\\nNumber of person: 2\\nNumber of days: 3\\n\\nYou can also specify Cash/Online amounts, or natural phrases like 'staying 3 days' or 'from 14 Nov to 17 Nov'.",
           booking: null
         }
       ];
@@ -10817,7 +11025,19 @@ export function getDashboardHtml(): string {
       const inp = document.getElementById("aiChatInput");
       if (!inp) return;
       const sampleRoom = (roomsList.find(r => activePropertyId === "all" || !activePropertyId || r.property_id === activePropertyId)?.room_number) || "";
-      inp.value = "Customer Name: \\nRoom No. " + sampleRoom + "\\nNumber of person: ";
+      inp.value = "Customer Name: \\nRoom No. " + sampleRoom + "\\nNumber of person: 1\\nNumber of days: 1";
+      inp.focus();
+      const firstLineEnd = "Customer Name: ".length;
+      try {
+        inp.setSelectionRange(firstLineEnd, firstLineEnd);
+      } catch (e) {}
+    }
+
+    function fillAiMultiDayTemplate() {
+      const inp = document.getElementById("aiChatInput");
+      if (!inp) return;
+      const sampleRoom = (roomsList.find(r => activePropertyId === "all" || !activePropertyId || r.property_id === activePropertyId)?.room_number) || "";
+      inp.value = "Customer Name: \\nRoom No. " + sampleRoom + "\\nNumber of person: 2\\nNumber of days: 3";
       inp.focus();
       const firstLineEnd = "Customer Name: ".length;
       try {
