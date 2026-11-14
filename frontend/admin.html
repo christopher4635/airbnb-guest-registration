@@ -6,7 +6,9 @@
   <title>Host Admin — Elite Homes Property Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
       --primary: #FF385C;
@@ -1055,6 +1057,686 @@
       color: #64748B;
       white-space: nowrap;
     }
+
+    /* =========================================================================
+       STAFF MANAGEMENT DESIGN SYSTEM (MINIMALIST & CLEAN CALENDAR)
+       ========================================================================= */
+
+    .sm-calendar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    [data-lucide] {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    /* 1. Controls Bar */
+    .sm-controls-bar {
+      background: #FFFFFF;
+      padding: 12px 16px;
+      border-radius: 18px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sm-controls-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .sm-controls-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .sm-business-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #EEF2FF;
+      color: #4338CA;
+      border: 1px solid #C7D2FE;
+      white-space: nowrap;
+    }
+
+    .sm-month-nav-pill {
+      display: inline-flex;
+      align-items: center;
+      background: #F1F5F9;
+      border-radius: 12px;
+      padding: 2px;
+      border: 1px solid #E2E8F0;
+    }
+    .sm-nav-arrow-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #475569;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sm-nav-arrow-btn:hover {
+      background: #FFFFFF;
+      color: #0F172A;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .sm-month-text {
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1E293B;
+      min-width: 110px;
+      text-align: center;
+      user-select: none;
+    }
+    .sm-today-btn {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: none;
+      color: #475569;
+      background: #F1F5F9;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sm-today-btn:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+    }
+    .sm-prop-select {
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 5px 10px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.15s ease;
+      height: 32px;
+    }
+    .sm-prop-select:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+    }
+
+    /* View Switcher */
+    .sm-view-switcher-pill {
+      display: inline-flex;
+      align-items: center;
+      background: #F1F5F9;
+      padding: 2px;
+      border-radius: 12px;
+      border: 1px solid #E2E8F0;
+    }
+    .sm-view-btn {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 9px;
+      border: none;
+      background: transparent;
+      color: #475569;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .sm-view-btn:hover {
+      color: #0F172A;
+    }
+    .sm-view-btn.active {
+      background: #FFFFFF;
+      color: #4338CA;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    /* Action Buttons */
+    .sm-sync-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #4338CA;
+      background: #EEF2FF;
+      border: 1px solid #C7D2FE;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      transition: all 0.15s ease;
+    }
+    .sm-sync-btn:hover {
+      background: #E0E7FF;
+    }
+
+    .sm-add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #FFFFFF;
+      background: #4F46E5;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
+      transition: all 0.15s ease;
+    }
+    .sm-add-btn:hover {
+      background: #4338CA;
+      transform: translateY(-1px);
+    }
+
+    /* 2. Summary Stats Bar */
+    .sm-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 768px) {
+      .sm-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    .sm-stat-card {
+      background: #FFFFFF;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .sm-stat-card.is-occ-highlight {
+      background: #ECFDF5;
+      border: 2px solid #34D399;
+      color: #064E3B;
+      box-shadow: 0 0 0 1px #A7F3D0;
+    }
+    .sm-stat-card-indigo {
+      border-color: #E0E7FF;
+    }
+    .sm-stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+    }
+    .sm-stat-label.is-occ-label {
+      color: #047857;
+      font-weight: 800;
+    }
+    .sm-stat-value {
+      font-size: 18px;
+      font-weight: 900;
+      color: #0F172A;
+      margin-top: 2px;
+      display: block;
+      line-height: 1.2;
+    }
+    .sm-stat-occ-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .sm-stat-badge-green {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-weight: 800;
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #6EE7B7;
+    }
+    .sm-stat-sub {
+      font-size: 10px;
+      color: #64748B;
+      margin-top: 4px;
+    }
+
+    /* 3. Legend & Tools Bar */
+    .sm-legend-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 4px;
+      flex-wrap: wrap;
+      font-size: 11px;
+      color: #475569;
+    }
+    .sm-legend-items {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sm-legend-label {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #94A3B8;
+    }
+    .sm-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .sm-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .sm-dot-vacant { background: #E2E8F0; border: 1px solid #CBD5E1; }
+    .sm-dot-direct { background: #10B981; }
+    .sm-dot-airbnb { background: #F43F5E; }
+    .sm-dot-booking { background: #2563EB; }
+    .sm-dot-blocked { background: #94A3B8; }
+    .sm-dot-overlap { background: #F59E0B; }
+
+    .sm-tools-items {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sm-tool-pill-btn {
+      padding: 4px 9px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sm-tool-pill-btn:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+    }
+
+    /* 4. The Matrix Table Card */
+    .sm-card {
+      background: #FFFFFF;
+      border-radius: 24px;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+    .sm-table-scroll {
+      overflow-x: auto;
+      position: relative;
+    }
+    .sm-matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+    .sm-head-row {
+      background: #F8FAFC;
+      border-bottom: 1px solid #E2E8F0;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #64748B;
+    }
+    .sm-sticky-col-head {
+      padding: 10px 14px;
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background: #F1F5F9;
+      min-width: 150px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #334155;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+    }
+    .sm-day-th {
+      padding: 8px 4px;
+      text-align: center;
+      min-width: 48px;
+      border-left: 1px solid #F1F5F9;
+    }
+    .sm-day-th.is-today-th {
+      background: #EEF2FF;
+      color: #312E81;
+      font-weight: 900;
+    }
+    .sm-day-sub {
+      font-size: 9px;
+      font-weight: 500;
+      color: #94A3B8;
+      margin-top: 1px;
+    }
+    .sm-matrix-tbody tr {
+      border-bottom: 1px solid #F1F5F9;
+      transition: background 0.12s ease;
+    }
+    .sm-matrix-tbody tr:hover {
+      background: rgba(248, 250, 252, 0.7);
+    }
+    .sm-sticky-col-cell {
+      padding: 10px 14px;
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background: #FFFFFF;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.03);
+      white-space: nowrap;
+    }
+    .sm-prop-title-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    .sm-prop-icon {
+      width: 14px;
+      height: 14px;
+      color: #4F46E5;
+      flex-shrink: 0;
+    }
+    .sm-prop-sub {
+      font-size: 10px;
+      color: #94A3B8;
+      margin-top: 2px;
+    }
+
+    /* Matrix Cells */
+    .sm-vacant-cell {
+      padding: 8px 2px;
+      text-align: center;
+      border-left: 1px solid #F1F5F9;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+    .sm-vacant-cell:hover {
+      background: #EEF2FF !important;
+    }
+    .sm-vacant-cell.is-today-cell {
+      background: rgba(238, 242, 255, 0.35);
+    }
+    .sm-vacant-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #E2E8F0;
+      transition: all 0.15s ease;
+    }
+    .sm-vacant-dot.has-checkout {
+      border: 1.5px dashed #94A3B8;
+      background: transparent;
+    }
+    .sm-vacant-cell:hover .sm-vacant-dot {
+      background: #6366F1;
+      transform: scale(1.3);
+    }
+
+    .sm-booked-cell {
+      padding: 4px 2px;
+      text-align: center;
+      border-left: 1px solid #F1F5F9;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .sm-booked-cell.is-today-cell {
+      background: rgba(238, 242, 255, 0.4);
+    }
+    .sm-booking-chip {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 5px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      min-width: 42px;
+      max-width: 52px;
+      line-height: 1.15;
+    }
+    .sm-booking-chip:hover {
+      transform: scale(1.08);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      z-index: 5;
+    }
+    .sm-chip-amt {
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .sm-chip-label {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: -0.3px;
+      opacity: 0.92;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 44px;
+    }
+    .sm-chip-badge {
+      position: absolute;
+      top: -5px;
+      right: -4px;
+      font-size: 8px;
+      background: #EF4444;
+      color: #FFFFFF;
+      border-radius: 3px;
+      padding: 0 3px;
+      font-weight: 800;
+    }
+    .sm-chip-badge.is-warning {
+      background: #F59E0B;
+    }
+
+    .sm-chip-airbnb {
+      background: #FFE4E6;
+      color: #9F1239;
+      border: 1px solid #FDA4AF;
+    }
+    .sm-chip-booking {
+      background: #DBEAFE;
+      color: #1E40AF;
+      border: 1px solid #93C5FD;
+    }
+    .sm-chip-direct {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #6EE7B7;
+    }
+    .sm-chip-blocked {
+      background: #F1F5F9;
+      color: #475569;
+      border: 1px solid #CBD5E1;
+    }
+    .sm-chip-overlap {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FCD34D;
+    }
+    .sm-chip-multi {
+      background: #F3E8FF;
+      color: #6B21A8;
+      border: 1px solid #D8B4FE;
+    }
+
+    /* 5. Monthly Grid Card */
+    .sm-month-grid-card {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sm-month-grid-head {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #94A3B8;
+      text-transform: uppercase;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .sm-month-grid-body {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .sm-month-day-empty {
+      min-height: 90px;
+      background: rgba(248, 250, 252, 0.4);
+      border-radius: 12px;
+      border: 1px dashed #E2E8F0;
+    }
+    .sm-month-day-cell {
+      min-height: 92px;
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid #E2E8F0;
+      background: rgba(248, 250, 252, 0.5);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sm-month-day-cell:hover {
+      background: #FFFFFF;
+      border-color: #CBD5E1;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+    }
+    .sm-month-day-cell.is-today-month-cell {
+      background: rgba(238, 242, 255, 0.6);
+      border-color: #A5B4FC;
+      box-shadow: 0 0 0 1px #C7D2FE;
+    }
+    .sm-mday-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .sm-mday-num {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1E293B;
+    }
+    .sm-mday-num.is-today-num {
+      color: #4F46E5;
+      font-weight: 900;
+    }
+    .sm-mday-occ-pill {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .sm-mday-occ-pill.is-occ-green {
+      background: #D1FAE5;
+      color: #065F46;
+      border: 1px solid #6EE7B7;
+    }
+    .sm-mday-occ-pill.is-occ-indigo {
+      background: #EEF2FF;
+      color: #3730A3;
+      border: 1px solid #C7D2FE;
+    }
+    .sm-mday-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin: 4px 0;
+      overflow: hidden;
+    }
+    .sm-mday-item {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .sm-mday-item:hover {
+      transform: translateX(1px);
+    }
+    .sm-mitem-airbnb { background: #FFE4E6; color: #9F1239; border: 1px solid #FDA4AF; }
+    .sm-mitem-booking { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+    .sm-mitem-direct { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+    .sm-mday-more {
+      font-size: 8px;
+      font-weight: 700;
+      color: #94A3B8;
+      text-align: center;
+    }
+    .sm-mday-bottom {
+      padding-top: 4px;
+      border-top: 1px solid rgba(226, 232, 240, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+    }
+    .sm-mday-status {
+      color: #94A3B8;
+      font-weight: 600;
+    }
+    .sm-mday-total {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      color: #94A3B8;
+    }
+    .sm-mday-total.has-total {
+      color: #1E1B4B;
+    }
     .cal-filter-pill {
       padding: 4px 10px;
       font-size: 11px;
@@ -1865,228 +2547,86 @@
       </div>
 
             <!-- TAB 1: MULTI-PROPERTY BOOKINGS & CALENDAR -->
+      <!-- TAB 1: MULTI-PROPERTY BOOKINGS & CALENDAR (STAFF MANAGEMENT MINIMALIST STYLE) -->
       <div id="view-bookings">
-        
-        <!-- KPI Summary Cards Row -->
-        <div class="portal-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-          <div class="kpi-card">
-            <div>
-              <div class="kpi-label">🏡 Multi-Property Portfolio</div>
-              <div class="kpi-value" id="kpi-properties-count">3 Units</div>
-            </div>
-            <div class="kpi-sub" id="kpi-properties-summary">1 BHK &bull; 2 BHK &bull; Studio</div>
-          </div>
-          
-          <div class="kpi-card">
-            <div>
-              <div class="kpi-label">📅 Bookings this Month</div>
-              <div class="kpi-value" id="kpi-bookings-count">0</div>
-            </div>
-            <div class="kpi-sub" id="kpi-nights-count">0 total nights booked</div>
+        <div class="sm-calendar-wrap">
+          <!-- Calendar Controls Bar: Business Indicator, Month Navigation, View Switcher & Action Buttons -->
+          <div class="sm-controls-bar" id="sm-controls-container">
+            <!-- Populated dynamically by renderCalendarTopBarAndStats() -->
           </div>
 
-          <div class="kpi-card" style="cursor: pointer;" onclick="switchAdminTab('finances')" title="Click to view detailed month-wise revenue & expenses">
-            <div>
-              <div class="kpi-label" style="color: #065F46;">💵 Month Revenue</div>
-              <div class="kpi-value" id="kpi-month-revenue" style="color: #065F46;">₹0</div>
-            </div>
-            <div class="kpi-sub" id="kpi-month-revenue-sub">From confirmed stays &rarr;</div>
+          <!-- Calendar Summary Stats Bar: Units, Occupancy %, Bookings, Lodging Total -->
+          <div class="sm-stats-grid" id="sm-stats-container">
+            <!-- Populated dynamically by renderCalendarTopBarAndStats() -->
           </div>
 
-          <div class="kpi-card" style="cursor: pointer;" onclick="switchAdminTab('finances')" title="Click to view operating expenses & bills">
-            <div>
-              <div class="kpi-label" style="color: #9F1239;">⚡ Bills &amp; Expenses</div>
-              <div class="kpi-value" id="kpi-month-expenses" style="color: #9F1239;">₹0</div>
-            </div>
-            <div class="kpi-sub" id="kpi-month-net-profit" style="color: #1E40AF; font-weight: 600;">Net: ₹0</div>
+          <!-- Legend & Secondary Tools Bar -->
+          <div class="sm-legend-bar" id="sm-legend-container">
+            <!-- Populated dynamically by renderCalendarTopBarAndStats() -->
           </div>
 
-          <div class="kpi-card">
-            <div>
-              <div class="kpi-label">🛎️ Turnovers &amp; Stays Today</div>
-              <div class="kpi-value" id="kpi-turnover-count">0 In / 0 Out</div>
-            </div>
-            <div class="kpi-sub" id="kpi-turnover-sub">No check-ins today</div>
+          <!-- VIEW 1: Matrix Grid (Rooms / Units × Days) [Default View] -->
+          <div id="calendar-matrix-view">
+            <!-- Populated dynamically by renderAdminMatrixGrid() -->
           </div>
-        </div>
 
-                <!-- DASHBOARD CHART: Bookings Count vs Booking Mode & Mode-wise Revenue -->
-        <div class="card" id="booking-mode-chart-card" style="padding: 16px 18px; margin-bottom: 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-            <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 18px;">📊</span>
-                <strong style="font-size: 15px; color: var(--text-main);">Bookings by Mode &amp; Channels</strong>
-              </div>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
-                Comparison of booking volume vs mode &bull; Hover or tap any bar to view mode-wise revenue
-              </p>
-            </div>
-            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              <div class="view-mode-toggle" style="background: #F1F5F9;">
-                <button type="button" class="view-mode-btn active" id="chart-scope-month" onclick="switchChartScope('month')">
-                  This Month
-                </button>
-                <button type="button" class="view-mode-btn" id="chart-scope-all" onclick="switchChartScope('all')">
-                  All Stays
-                </button>
-              </div>
-              <button type="button" class="btn btn-outline" onclick="openChannelSettingsShortcut()" style="font-size: 11px; height: 32px; padding: 0 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Manage booking channels, add OTAs or deactivate channels">
-                <span>📡 Manage Channels</span>
-              </button>
+          <!-- VIEW 2: Monthly Grid (7-Day Calendar Grid) -->
+          <div id="calendar-month-view" style="display: none;">
+            <!-- Populated dynamically by renderAdminMonthlyGrid() -->
+          </div>
+
+          <!-- VIEW 3: Multi-Property Timeline (Channel Manager Gantt Grid) -->
+          <div id="calendar-timeline-view" class="timeline-container sm-card" style="display: none;">
+            <div class="timeline-scroll-container" id="timeline-scroll-area">
+              <div class="timeline-sidebar" id="timeline-sidebar-col"></div>
+              <div class="timeline-grid-area" id="timeline-grid-area"></div>
             </div>
           </div>
 
-          <!-- Dynamic Chart Visual Container -->
-          <div id="booking-mode-chart-wrapper" style="position: relative;">
-            <div id="booking-mode-chart-bars"></div>
-            <!-- Interactive Floating Tooltip -->
-            <div id="chart-floating-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 50; background: #0F172A; color: #FFFFFF; padding: 8px 12px; border-radius: 8px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); white-space: nowrap; transform: translate(-50%, -110%); transition: opacity 0.12s ease;"></div>
-          </div>
-
-          <!-- Chart Summary Strip -->
-          <div id="booking-mode-chart-summary" style="display: flex; gap: 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #F1F5F9; flex-wrap: wrap; font-size: 12px; color: var(--text-muted);">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
-
-        <!-- Controls Bar: Navigation, Property Filters, View Toggle, Actions -->
-        <div class="portal-controls-card">
-          <!-- Month & Year Navigation -->
-          <div class="date-nav-wrapper">
-            <button type="button" class="date-nav-btn" id="btn-cal-prev" title="Previous Month">◀</button>
-            <button type="button" class="date-nav-btn" id="btn-cal-today">Today</button>
-            <button type="button" class="date-nav-btn" id="btn-cal-next" title="Next Month">▶</button>
-            <span class="month-display-text" id="month-display-label">November 2026</span>
-            <div id="cal-quick-month-pills" style="display: inline-flex; gap: 4px; margin-left: 8px; align-items: center;">
-              <button type="button" class="period-pill-btn" onclick="jumpToMonth(2026, 9)">📅 Oct 2026</button>
-              <button type="button" class="period-pill-btn is-selected-period" onclick="jumpToMonth(2026, 10)">✓ 📅 Nov 2026</button>
-            </div>
-          </div>
-
-          <!-- Property Filter Pills -->
-          <div class="prop-pill-filters" id="portal-prop-pills">
-            <!-- Rendered dynamically -->
-          </div>
-
-          <!-- View Switcher -->
-          <div class="view-mode-toggle">
-            <button type="button" class="view-mode-btn active" id="btn-view-timeline" onclick="switchCalendarView('timeline')">
-              📊 Timeline
-            </button>
-            <button type="button" class="view-mode-btn" id="btn-view-month" onclick="switchCalendarView('month')">
-              🗓️ Month
-            </button>
-            <button type="button" class="view-mode-btn" id="btn-view-list" onclick="switchCalendarView('list')">
-              📋 List (<span id="list-count-badge">0</span>)
-            </button>
-          </div>
-
-          <!-- Quick Issue Filters (All, Overlaps, Missing Amount) -->
-          <div class="cal-quick-filters" style="display: inline-flex; gap: 5px; align-items: center; flex-wrap: wrap;">
-            <button type="button" class="cal-filter-pill active" id="btn-filter-all" data-filter="all" onclick="setCalendarFilter('all')">
-              All (<span id="badge-total-bookings">0</span>)
-            </button>
-            <button type="button" class="cal-filter-pill is-warning" id="btn-filter-overlaps" data-filter="overlaps" onclick="setCalendarFilter('overlaps')" title="Show multi-channel synced &amp; overlapping bookings">
-              ⚠️ Overlaps (<span id="badge-overlap-count">0</span>)
-            </button>
-            <button type="button" class="cal-filter-pill is-danger" id="btn-filter-missing-payout" data-filter="missing_payout" onclick="setCalendarFilter('missing_payout')" title="Highlight bookings missing amount so you can add">
-              💰 Missing Amount (<span id="badge-missing-payout-count">0</span>)
-            </button>
-          </div>
-
-          <!-- Action Buttons -->
-          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <button type="button" class="btn btn-outline" id="btn-sync-all-ical" onclick="syncAllIcalFeeds()" style="background:#EFF6FF; border-color:#3B82F6; color:#1D4ED8; font-weight:700;" title="Instantly sync Airbnb &amp; Booking.com calendars">
-              <span id="sync-ical-icon">🔄</span> <span id="sync-ical-text">Sync Calendars</span>
-            </button>
-            <button type="button" class="btn btn-primary" id="btn-open-add-booking" onclick="openAddBookingModal()" style="display: inline-flex; align-items: center; gap: 5px;">
-              <span>➕ Add Booking</span>
-            </button>
-            <button type="button" class="btn btn-outline" id="btn-open-quick-block" onclick="openQuickBlockModal()" title="Block dates for maintenance, cleaning, or owner stay">
-              <span>🔒 Block Dates</span>
-            </button>
-            <button type="button" class="btn btn-outline" id="btn-open-manage-rooms" onclick="openManageRoomsModal()" title="Add, rename, and manage rooms and custom units">
-              <span>🏡 Manage Rooms</span>
-            </button>
-            <button type="button" class="btn btn-outline" id="btn-open-manage-channels" onclick="openChannelSettingsShortcut()" title="Add, remove, or deactivate booking channels">
-              <span>📡 Channels</span>
-            </button>
-            <button type="button" class="btn btn-outline" id="btn-open-ical-sync" onclick="openIcalSyncModal()" style="background:#F8FAFC; border-color:#CBD5E1; color:#334155; font-weight:600;" title="Two-Way iCal Feeds &amp; Export Links">
-              <span>⚙️ iCal Links</span>
-            </button>
-            <button type="button" class="btn btn-outline" id="btn-open-backup-export" onclick="openBackupModal()" title="Backup &amp; Export Bookings">
-              <span>💾 Backup</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- VIEW 1: Multi-Property Timeline (Channel Manager Gantt Grid) -->
-        <div id="calendar-timeline-view" class="timeline-container">
-          <div class="timeline-scroll-container" id="timeline-scroll-area">
-            <!-- Sticky Sidebar for Property Names -->
-            <div class="timeline-sidebar" id="timeline-sidebar-col">
-              <!-- Dynamically populated -->
-            </div>
-            
-            <!-- Dates & Booking Tracks Grid -->
-            <div class="timeline-grid-area" id="timeline-grid-area">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
-        </div>
-
-        <!-- VIEW 2: Month Grid View -->
-        <div id="calendar-month-view" class="month-grid-wrapper" style="display: none;">
-          <div class="month-grid-table" id="month-grid-table">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-        <!-- VIEW 3: Bookings List View -->
-        <div id="calendar-list-view" style="display: none;">
-          <div class="card" style="padding: 16px; margin-bottom: 16px;">
-            <div class="list-filter-bar">
-              <div style="flex: 1; min-width: 220px;">
-                <input type="text" id="list-search-input" placeholder="🔍 Search by guest name, reservation code, or phone...">
-              </div>
-              <div>
-                <select id="list-status-filter" style="height: 38px;">
-                  <option value="">All Statuses</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Checked In">Checked In</option>
-                  <option value="Checked Out">Checked Out</option>
-                  <option value="Blocked">Blocked / Maintenance</option>
-                </select>
-              </div>
-              <div>
-                <select id="list-prop-filter" style="height: 38px;">
-                  <option value="">All Properties</option>
-                </select>
+          <!-- VIEW 4: Bookings List View -->
+          <div id="calendar-list-view" style="display: none;">
+            <div class="card" style="padding: 16px; margin-bottom: 16px; border-radius: 20px; border-color: #E2E8F0;">
+              <div class="list-filter-bar">
+                <div style="flex: 1; min-width: 220px;">
+                  <input type="text" id="list-search-input" placeholder="🔍 Search by guest name, reservation code, or phone..." oninput="renderBookingsListView()">
+                </div>
+                <div>
+                  <select id="list-status-filter" style="height: 38px;" onchange="renderBookingsListView()">
+                    <option value="">All Statuses</option>
+                    <option value="Confirmed">Confirmed</option>
+                    <option value="Checked In">Checked In</option>
+                    <option value="Checked Out">Checked Out</option>
+                    <option value="Blocked">Blocked / Maintenance</option>
+                  </select>
+                </div>
+                <div>
+                  <select id="list-prop-filter" style="height: 38px;" onchange="renderBookingsListView()">
+                    <option value="">All Properties</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="bookings-table-wrapper">
-            <table class="bookings-table">
-              <thead>
-                <tr>
-                  <th>Property</th>
-                  <th>Guest Name</th>
-                  <th>Dates & Nights</th>
-                  <th>Platform / Code</th>
-                  <th>Payout & Guests</th>
-                  <th>Status</th>
-                  <th style="text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="bookings-table-body">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
+            <div class="bookings-table-wrapper" style="border-radius: 20px; border: 1px solid #E2E8F0;">
+              <table class="bookings-table">
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th>Guest Name</th>
+                    <th>Dates &amp; Nights</th>
+                    <th>Platform / Code</th>
+                    <th>Payout &amp; Guests</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="bookings-table-body">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-
       </div>
 
       <!-- ====================================================================
@@ -2804,6 +3344,46 @@
               <div class="kpi-value" id="fin-kpi-margin" style="color: #5B21B6;">0%</div>
             </div>
             <div class="kpi-sub" id="fin-kpi-margin-sub">Efficiency ratio</div>
+          </div>
+        </div>
+
+        <!-- DASHBOARD CHART: Bookings Count vs Booking Mode & Mode-wise Revenue -->
+        <div class="card" id="booking-mode-chart-card" style="padding: 16px 18px; margin-bottom: 20px; border-radius: 20px; border: 1px solid #E2E8F0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 18px;">📊</span>
+                <strong style="font-size: 15px; color: var(--text-main);">Bookings by Mode &amp; Channels</strong>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Comparison of booking volume vs mode &bull; Hover or tap any bar to view mode-wise revenue
+              </p>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <div class="view-mode-toggle" style="background: #F1F5F9;">
+                <button type="button" class="view-mode-btn active" id="chart-scope-month" onclick="switchChartScope('month')">
+                  This Month
+                </button>
+                <button type="button" class="view-mode-btn" id="chart-scope-all" onclick="switchChartScope('all')">
+                  All Stays
+                </button>
+              </div>
+              <button type="button" class="btn btn-outline" onclick="openChannelSettingsShortcut()" style="font-size: 11px; height: 32px; padding: 0 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Manage booking channels, add OTAs or deactivate channels">
+                <span>📡 Manage Channels</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Chart Visual Container -->
+          <div id="booking-mode-chart-wrapper" style="position: relative;">
+            <div id="booking-mode-chart-bars"></div>
+            <!-- Interactive Floating Tooltip -->
+            <div id="chart-floating-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 50; background: #0F172A; color: #FFFFFF; padding: 8px 12px; border-radius: 8px; font-size: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); white-space: nowrap; transform: translate(-50%, -110%); transition: opacity 0.12s ease;"></div>
+          </div>
+
+          <!-- Chart Summary Strip -->
+          <div id="booking-mode-chart-summary" style="display: flex; gap: 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #F1F5F9; flex-wrap: wrap; font-size: 12px; color: var(--text-muted);">
+            <!-- Populated dynamically -->
           </div>
         </div>
 
@@ -3883,9 +4463,9 @@
       { id: 'ch_whatsapp', name: 'Direct Call / WhatsApp', icon: '💬', color: '#16A34A', isActive: true, is_active: 1, type: 'direct', isSystem: true },
       { id: 'ch_other', name: 'Other Channels', icon: '✨', color: '#8B5CF6', isActive: true, is_active: 1, type: 'custom', isSystem: true }
     ];
-    let currentCalYear = 2026;
-    let currentCalMonth = 9; // 0-indexed: 9 = October, 10 = November
-    let currentCalView = 'timeline'; // 'timeline' | 'month' | 'list'
+    let currentCalYear = new Date().getFullYear();
+    let currentCalMonth = new Date().getMonth();
+    let currentCalView = localStorage.getItem('elitehomes_cal_view') || 'matrix'; // 'matrix' | 'month' | 'timeline' | 'list'
     let selectedPropFilter = 'ALL';
     let editingBookingId = null;
 
@@ -4643,66 +5223,547 @@
       document.getElementById('bookings-count-badge').textContent = currentBookings.filter(b => b.status !== 'Cancelled').length;
     }
 
+    // =========================================================================
+    // STAFF MANAGEMENT MINIMALIST CALENDAR UTILITIES & RENDERERS
+    // =========================================================================
+
+    function formatCurrency(val) {
+      if (!val || isNaN(val)) return '0';
+      return Math.round(Number(val)).toLocaleString('en-IN');
+    }
+
+    function formatKAmount(payout) {
+      if (!payout) return '—';
+      const num = parsePayoutNumber(payout);
+      if (!num || isNaN(num) || num <= 0) return '—';
+      if (num >= 1000) {
+        const k = Math.round(num / 1000 * 10) / 10;
+        return `₹${k}k`;
+      }
+      return `₹${num}`;
+    }
+
+    function parsePayoutNumber(payout) {
+      if (!payout) return 0;
+      if (typeof payout === 'number') return payout;
+      const cleaned = String(payout).replace(/[^0-9.]/g, '');
+      const val = parseFloat(cleaned);
+      return isNaN(val) ? 0 : val;
+    }
+
+    function changeCalendarMonth(delta) {
+      currentCalMonth += delta;
+      if (currentCalMonth < 0) {
+        currentCalMonth = 11;
+        currentCalYear -= 1;
+      } else if (currentCalMonth > 11) {
+        currentCalMonth = 0;
+        currentCalYear += 1;
+      }
+      renderBookingsPortal();
+    }
+
+    function goToCalendarCurrentMonth() {
+      const today = new Date();
+      currentCalYear = today.getFullYear();
+      currentCalMonth = today.getMonth();
+      renderBookingsPortal();
+    }
+
+    function setCalendarPropertyFilter(prop) {
+      selectedPropFilter = prop;
+      renderBookingsPortal();
+    }
+
+    // 1. Controls Bar, 4-Card Summary Stats Bar & Legend Bar
+    function renderCalendarTopBarAndStats() {
+      const controlsEl = document.getElementById('sm-controls-container');
+      const statsEl = document.getElementById('sm-stats-container');
+      const legendEl = document.getElementById('sm-legend-container');
+      if (!controlsEl || !statsEl || !legendEl) return;
+
+      const props = getPropertiesList();
+      const visibleProps = selectedPropFilter === 'ALL' ? props : [selectedPropFilter];
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const mStr = String(currentCalMonth + 1).padStart(2, "0");
+      const currentMonthPrefix = `${currentCalYear}-${mStr}`;
+      const monthStartStr = `${currentMonthPrefix}-01`;
+      const monthEndStr = `${currentMonthPrefix}-${String(daysInMonth).padStart(2, '0')}`;
+
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+      // Active month bookings
+      const monthBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled') return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+        return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
+      });
+
+      const totalBookingsCount = monthBookings.length;
+      const totalAvailableNights = (selectedPropFilter !== 'ALL' ? 1 : props.length) * daysInMonth;
+
+      let totalBookedNights = 0;
+      let directTotal = 0;
+      let otaTotal = 0;
+
+      monthBookings.forEach(b => {
+        const start = b.checkInDate < monthStartStr ? monthStartStr : b.checkInDate;
+        const end = b.checkOutDate > monthEndStr ? monthEndStr : b.checkOutDate;
+        const d1 = new Date(start);
+        const d2 = new Date(end);
+        const diff = Math.max(1, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)));
+        totalBookedNights += diff;
+
+        const amt = parsePayoutNumber(b.payout);
+        const platLower = (b.platform || '').toLowerCase();
+        if (platLower.includes('airbnb') || platLower.includes('booking')) {
+          otaTotal += amt;
+        } else {
+          directTotal += amt;
+        }
+      });
+
+      const monthLodgingTotal = directTotal + otaTotal;
+      const occupancyPct = totalAvailableNights > 0 ? Math.min(100, Math.round((totalBookedNights / totalAvailableNights) * 100)) : 0;
+      const isOccGreen = occupancyPct > 50;
+
+      // 1. Controls Bar (Pill design matching Staff Management)
+      controlsEl.innerHTML = `
+        <div class="sm-controls-left">
+          <span class="sm-business-pill">
+            <i data-lucide="hotel"></i>
+            <span>Elite Homes (${props.length} Units)</span>
+          </span>
+
+          <div class="sm-month-nav-pill">
+            <button type="button" onclick="changeCalendarMonth(-1)" title="Previous Month" class="sm-nav-arrow-btn">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            <span class="sm-month-text">
+              ${monthNames[currentCalMonth]} ${currentCalYear}
+            </span>
+            <button type="button" onclick="changeCalendarMonth(1)" title="Next Month" class="sm-nav-arrow-btn">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+
+          <button type="button" onclick="goToCalendarCurrentMonth()" class="sm-today-btn" title="Jump to current month">
+            Today
+          </button>
+
+          <div style="position: relative;">
+            <select onchange="setCalendarPropertyFilter(this.value)" class="sm-prop-select" title="Filter calendar by property">
+              <option value="ALL" ${selectedPropFilter === 'ALL' ? 'selected' : ''}>All Units (${props.length})</option>
+              ${props.map(p => `
+                <option value="${escapeHtml(p)}" ${selectedPropFilter === p ? 'selected' : ''}>${escapeHtml(p)}</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div class="sm-controls-right">
+          <div class="sm-view-switcher-pill">
+            <button
+              type="button"
+              onclick="switchCalendarView('matrix')"
+              class="sm-view-btn ${currentCalView === 'matrix' ? 'active' : ''}"
+              title="Matrix View (Rooms × Days)"
+            >
+              <i data-lucide="grid"></i>
+              <span>Matrix</span>
+            </button>
+            <button
+              type="button"
+              onclick="switchCalendarView('month')"
+              class="sm-view-btn ${currentCalView === 'month' ? 'active' : ''}"
+              title="Monthly 7-Day Calendar Grid"
+            >
+              <i data-lucide="calendar"></i>
+              <span>Monthly</span>
+            </button>
+            <button
+              type="button"
+              onclick="switchCalendarView('timeline')"
+              class="sm-view-btn ${currentCalView === 'timeline' ? 'active' : ''}"
+              title="Channel Manager Gantt Timeline"
+            >
+              <i data-lucide="sliders"></i>
+              <span>Timeline</span>
+            </button>
+            <button
+              type="button"
+              onclick="switchCalendarView('list')"
+              class="sm-view-btn ${currentCalView === 'list' ? 'active' : ''}"
+              title="Searchable Bookings List"
+            >
+              <i data-lucide="list"></i>
+              <span>List</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            id="btn-sync-all-ical"
+            onclick="syncAllIcalFeeds()"
+            class="sm-sync-btn"
+            title="Instantly sync Airbnb & Booking.com calendars"
+          >
+            <span id="sync-ical-icon">🔄</span>
+            <span id="sync-ical-text">Sync</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="openAddBookingModal()"
+            class="sm-add-btn"
+          >
+            <i data-lucide="plus"></i>
+            <span>+ Add Booking</span>
+          </button>
+        </div>
+      `;
+
+      // 2. Summary Stats Bar (4-Card Grid with Occupancy % highlight)
+      statsEl.innerHTML = `
+        <div class="sm-stat-card">
+          <span class="sm-stat-label">Configured Units</span>
+          <span class="sm-stat-value">${visibleProps.length} Units</span>
+        </div>
+        <div class="sm-stat-card ${isOccGreen ? 'is-occ-highlight' : ''}">
+          <span class="sm-stat-label ${isOccGreen ? 'is-occ-label' : ''}">Occupancy %</span>
+          <div class="sm-stat-occ-row">
+            <span class="sm-stat-value font-mono ${isOccGreen ? 'text-emerald-700' : 'text-indigo-600'}">${occupancyPct}%</span>
+            ${isOccGreen ? '<span class="sm-stat-badge-green">🟢 >50%</span>' : ''}
+          </div>
+        </div>
+        <div class="sm-stat-card">
+          <span class="sm-stat-label">Month Bookings</span>
+          <span class="sm-stat-value text-indigo-600">${totalBookingsCount} Bookings</span>
+        </div>
+        <div class="sm-stat-card sm-stat-card-indigo">
+          <span class="sm-stat-label text-indigo-600">Lodging Total</span>
+          <span class="sm-stat-value font-mono text-indigo-950">₹${formatCurrency(monthLodgingTotal)}</span>
+          <div class="sm-stat-sub">Dir: ₹${formatCurrency(directTotal)} · OTAs: ₹${formatCurrency(otaTotal)}</div>
+        </div>
+      `;
+
+      // 3. Legend & Secondary Tools Bar
+      legendEl.innerHTML = `
+        <div class="sm-legend-items">
+          <span class="sm-legend-label">Legend:</span>
+          <span class="sm-legend-item"><span class="sm-dot sm-dot-vacant"></span> Vacant</span>
+          <span class="sm-legend-item"><span class="sm-dot sm-dot-direct"></span> Direct</span>
+          <span class="sm-legend-item"><span class="sm-dot sm-dot-airbnb"></span> Airbnb</span>
+          <span class="sm-legend-item"><span class="sm-dot sm-dot-booking"></span> Booking.com</span>
+          <span class="sm-legend-item"><span class="sm-dot sm-dot-blocked"></span> Blocked</span>
+          <span class="sm-legend-item"><span class="sm-dot sm-dot-overlap"></span> Overlap</span>
+        </div>
+
+        <div class="sm-tools-items">
+          <button type="button" onclick="openIcalSyncModal()" class="sm-tool-pill-btn" title="Two-Way iCal Feeds & Export Links">⚙️ iCal</button>
+          <button type="button" onclick="openQuickBlockModal()" class="sm-tool-pill-btn" title="Block Dates">🔒 Block</button>
+          <button type="button" onclick="openManageRoomsModal()" class="sm-tool-pill-btn" title="Manage Rooms">🏡 Rooms</button>
+          <button type="button" onclick="openBackupModal()" class="sm-tool-pill-btn" title="Backup & Export Bookings">💾 Backup</button>
+        </div>
+      `;
+    }
+
+    // 2. Matrix Grid View Renderer (Rooms/Properties × Days)
+    function renderAdminMatrixGrid() {
+      const container = document.getElementById('calendar-matrix-view');
+      if (!container) return;
+
+      const props = getPropertiesList();
+      const visibleProps = selectedPropFilter === 'ALL' ? props : [selectedPropFilter];
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const mStr = String(currentCalMonth + 1).padStart(2, "0");
+      const currentMonthPrefix = `${currentCalYear}-${mStr}`;
+      const todayIso = new Date().toISOString().split("T")[0];
+      const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+      container.innerHTML = `
+        <div class="sm-card sm-table-card">
+          <div class="sm-table-scroll">
+            <table class="sm-matrix-table">
+              <thead>
+                <tr class="sm-head-row">
+                  <th class="sm-sticky-col-head">Property / Unit</th>
+                  ${days.map(d => {
+                    const dayStr = String(d).padStart(2, "0");
+                    const dateStr = `${currentMonthPrefix}-${dayStr}`;
+                    const isToday = (dateStr === todayIso);
+                    const dateObj = new Date(currentCalYear, currentCalMonth, d);
+                    const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' });
+                    return `
+                      <th class="sm-day-th ${isToday ? 'is-today-th' : ''}">
+                        <div>${d}</div>
+                        <div class="sm-day-sub">${dayName}</div>
+                      </th>
+                    `;
+                  }).join("")}
+                </tr>
+              </thead>
+              <tbody class="sm-matrix-tbody">
+                ${visibleProps.map(prop => {
+                  return `
+                    <tr class="sm-row">
+                      <td class="sm-sticky-col-cell">
+                        <div class="sm-prop-title-box">
+                          <i data-lucide="home" class="sm-prop-icon"></i>
+                          <span>${escapeHtml(prop)}</span>
+                        </div>
+                        <div class="sm-prop-sub">Elite Homes Listing</div>
+                      </td>
+
+                      ${days.map(d => {
+                        const dayStr = String(d).padStart(2, "0");
+                        const dateStr = `${currentMonthPrefix}-${dayStr}`;
+                        const isToday = (dateStr === todayIso);
+
+                        // Active bookings covering this night:
+                        // Standard stays: checkInDate <= dateStr && checkOutDate > dateStr
+                        // Single-day same checkIn/checkOut: checkInDate === dateStr && checkOutDate === dateStr
+                        const cellBookings = currentBookings.filter(b => {
+                          if (b.status === 'Cancelled') return false;
+                          if (!matchesProperty(b.property, prop)) return false;
+                          if (b.checkInDate <= dateStr && b.checkOutDate > dateStr) return true;
+                          if (b.checkInDate === dateStr && b.checkOutDate === dateStr) return true;
+                          return false;
+                        });
+
+                        const count = cellBookings.length;
+
+                        if (count === 0) {
+                          // Check if departing guest on checkout morning
+                          const departingBooking = currentBookings.find(b => {
+                            if (b.status === 'Cancelled') return false;
+                            if (!matchesProperty(b.property, prop)) return false;
+                            return b.checkOutDate === dateStr;
+                          });
+
+                          return `
+                            <td
+                              onclick="openAddBookingModal('${escapeJsString(prop)}', '${dateStr}')"
+                              title="${departingBooking ? `Departing: ${escapeHtml(departingBooking.guestName)} at 11am. Vacant tonight - Click to book` : `Vacant - Click to book ${escapeHtml(prop)} on ${dateStr}`}"
+                              class="sm-vacant-cell ${isToday ? 'is-today-cell' : ''}"
+                            >
+                              <span class="sm-vacant-dot ${departingBooking ? 'has-checkout' : ''}"></span>
+                            </td>
+                          `;
+                        } else if (count === 1) {
+                          const bk = cellBookings[0];
+                          const isBlocked = (bk.platform === 'Blocked' || bk.status === 'Blocked');
+                          const hasOverlap = isBookingOverlapping(bk, currentBookings);
+                          const missingPayout = isMissingPayout(bk);
+
+                          const platLower = (bk.platform || '').toLowerCase();
+                          const isAirbnb = platLower.includes('airbnb');
+                          const isBookingCom = platLower.includes('booking');
+
+                          let chipClass = 'sm-chip-direct';
+                          let platLabel = 'Direct';
+                          if (isBlocked) {
+                            chipClass = 'sm-chip-blocked';
+                            platLabel = 'Blocked';
+                          } else if (hasOverlap) {
+                            chipClass = 'sm-chip-overlap';
+                            platLabel = 'Overlap';
+                          } else if (isAirbnb) {
+                            chipClass = 'sm-chip-airbnb';
+                            platLabel = 'Airbnb';
+                          } else if (isBookingCom) {
+                            chipClass = 'sm-chip-booking';
+                            platLabel = 'Booking';
+                          }
+
+                          const kAmt = isBlocked ? '🔒' : formatKAmount(bk.payout);
+                          const guestFirstName = isBlocked ? 'Blocked' : (bk.guestName || 'Guest').split(' ')[0];
+                          const stayInfo = ` (${bk.checkInDate} to ${bk.checkOutDate}, ${bk.nights || 1} nts)`;
+
+                          return `
+                            <td
+                              onclick="openEditBookingModal('${bk.id}')"
+                              title="Booked: ${escapeHtml(bk.payout || 'Missing payout')} [${escapeHtml(bk.platform || platLabel)}] - ${escapeHtml(bk.guestName)}${stayInfo}${hasOverlap ? ' [⚠️ Date Collision]' : ''}"
+                              class="sm-booked-cell ${isToday ? 'is-today-cell' : ''}"
+                            >
+                              <span class="sm-booking-chip ${chipClass}">
+                                ${hasOverlap ? `<span class="sm-chip-badge" title="Collision">⚠️</span>` : (missingPayout ? `<span class="sm-chip-badge is-warning" onclick="event.stopPropagation(); quickAddPayout('${bk.id}')" title="Missing payout - click to add">+₹</span>` : '')}
+                                <span class="sm-chip-amt">${kAmt}</span>
+                                <span class="sm-chip-label">${escapeHtml(guestFirstName)}</span>
+                              </span>
+                            </td>
+                          `;
+                        } else {
+                          // Turnover or multiple bookings on this day
+                          const totalAmt = cellBookings.reduce((s, b) => s + parsePayoutNumber(b.payout), 0);
+                          const kAmt = totalAmt > 0 ? `₹${Math.round(totalAmt / 1000 * 10) / 10}k` : '—';
+                          const guestsList = cellBookings.map(b => b.guestName).join(' & ');
+
+                          return `
+                            <td
+                              onclick="openEditBookingModal('${cellBookings[0].id}')"
+                              title="${count} Bookings: ${escapeHtml(guestsList)} - Click to view"
+                              class="sm-booked-cell ${isToday ? 'is-today-cell' : ''}"
+                            >
+                              <span class="sm-booking-chip sm-chip-multi">
+                                <span class="sm-chip-badge">⚠️</span>
+                                <span class="sm-chip-amt">${count}x</span>
+                                <span class="sm-chip-label">${kAmt}</span>
+                              </span>
+                            </td>
+                          `;
+                        }
+                      }).join("")}
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. Monthly Grid View Renderer (7-Day Calendar Grid from Staff Management)
+    function renderAdminMonthlyGrid() {
+      const container = document.getElementById('calendar-month-view');
+      if (!container) return;
+
+      const props = getPropertiesList();
+      const visibleProps = selectedPropFilter === 'ALL' ? props : [selectedPropFilter];
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const mStr = String(currentCalMonth + 1).padStart(2, "0");
+      const currentMonthPrefix = `${currentCalYear}-${mStr}`;
+      const todayIso = new Date().toISOString().split("T")[0];
+      const firstDayOfWeek = new Date(currentCalYear, currentCalMonth, 1).getDay();
+      const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+      container.innerHTML = `
+        <div class="sm-card sm-month-grid-card">
+          <div class="sm-month-grid-head">
+            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+          </div>
+
+          <div class="sm-month-grid-body">
+            ${Array.from({ length: firstDayOfWeek }).map(() => `
+              <div class="sm-month-day-empty"></div>
+            `).join("")}
+
+            ${days.map(d => {
+              const dayStr = String(d).padStart(2, "0");
+              const dateStr = `${currentMonthPrefix}-${dayStr}`;
+              const isToday = (dateStr === todayIso);
+
+              const dateBookings = currentBookings.filter(b => {
+                if (b.status === 'Cancelled') return false;
+                if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+                return (b.checkInDate <= dateStr && b.checkOutDate > dateStr) || (b.checkInDate === dateStr && b.checkOutDate === dateStr);
+              });
+
+              const totalDay = dateBookings.reduce((s, b) => s + parsePayoutNumber(b.payout), 0);
+              const bookedUnitsCount = dateBookings.length;
+              const totalUnits = (selectedPropFilter !== 'ALL' ? 1 : visibleProps.length);
+              const dayOccPct = totalUnits > 0 ? Math.round((bookedUnitsCount / totalUnits) * 100) : 0;
+              const isDayOccGreen = dayOccPct > 50;
+
+              return `
+                <div
+                  onclick="openAddBookingModal('${selectedPropFilter !== 'ALL' ? escapeJsString(selectedPropFilter) : ''}', '${dateStr}')"
+                  class="sm-month-day-cell ${isToday ? 'is-today-month-cell' : ''}"
+                >
+                  <div class="sm-mday-top">
+                    <span class="sm-mday-num ${isToday ? 'is-today-num' : ''}">${d}</span>
+                    ${bookedUnitsCount > 0 ? `
+                      <span class="sm-mday-occ-pill ${isDayOccGreen ? 'is-occ-green' : 'is-occ-indigo'}" title="${bookedUnitsCount} unit(s) booked (${dayOccPct}% occupancy)">
+                        ${isDayOccGreen ? '🟢 ' : ''}${bookedUnitsCount}/${totalUnits} (${dayOccPct}%)
+                      </span>
+                    ` : ''}
+                  </div>
+
+                  <div class="sm-mday-list">
+                    ${dateBookings.slice(0, 2).map(b => {
+                      const platLower = (b.platform || '').toLowerCase();
+                      const isAirbnb = platLower.includes('airbnb');
+                      const isBookingCom = platLower.includes('booking');
+                      const pTag = isAirbnb ? 'Ab·' : (isBookingCom ? 'OTA·' : 'Dir·');
+                      const itemBg = isAirbnb ? 'sm-mitem-airbnb' : (isBookingCom ? 'sm-mitem-booking' : 'sm-mitem-direct');
+                      const kAmt = formatKAmount(b.payout);
+                      return `
+                        <div
+                          onclick="event.stopPropagation(); openEditBookingModal('${b.id}')"
+                          class="sm-mday-item ${itemBg}"
+                          title="${escapeHtml(b.property)}: ${escapeHtml(b.guestName)} [${escapeHtml(b.platform)}] (${escapeHtml(b.payout || 'No payout')})"
+                        >
+                          <span>${pTag}${escapeHtml(b.property)} · ${kAmt}</span>
+                        </div>
+                      `;
+                    }).join("")}
+                    ${dateBookings.length > 2 ? `
+                      <div class="sm-mday-more">+${dateBookings.length - 2} more</div>
+                    ` : ''}
+                  </div>
+
+                  <div class="sm-mday-bottom">
+                    <span class="sm-mday-status">${dateBookings.length ? 'Total:' : 'Vacant'}</span>
+                    <span class="sm-mday-total ${totalDay > 0 ? 'has-total' : ''}">
+                      ${totalDay > 0 ? `₹${formatCurrency(totalDay)}` : '—'}
+                    </span>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    }
+
     // Main Render function
     function renderBookingsPortal() {
-      renderPropertyPills();
-      renderKpis();
-      updateMonthLabel();
-      renderBookingModeChart();
+      // 1. Render Staff Management Controls, 4-Card Summary Stats & Legend Bar
+      renderCalendarTopBarAndStats();
 
-      if (currentCalView === 'timeline') {
-        document.getElementById('calendar-timeline-view').style.display = 'block';
-        document.getElementById('calendar-month-view').style.display = 'none';
-        document.getElementById('calendar-list-view').style.display = 'none';
-        renderTimelineView();
+      // 2. Safely update KPIs / labels if elements exist
+      if (typeof renderKpis === 'function') renderKpis();
+      if (typeof renderBookingModeChart === 'function') renderBookingModeChart();
+
+      // 3. Switch between views cleanly
+      const vMatrix = document.getElementById('calendar-matrix-view');
+      const vMonth = document.getElementById('calendar-month-view');
+      const vTimeline = document.getElementById('calendar-timeline-view');
+      const vList = document.getElementById('calendar-list-view');
+
+      if (vMatrix) vMatrix.style.display = (currentCalView === 'matrix' ? 'block' : 'none');
+      if (vMonth) vMonth.style.display = (currentCalView === 'month' ? 'block' : 'none');
+      if (vTimeline) vTimeline.style.display = (currentCalView === 'timeline' ? 'block' : 'none');
+      if (vList) vList.style.display = (currentCalView === 'list' ? 'block' : 'none');
+
+      if (currentCalView === 'matrix') {
+        renderAdminMatrixGrid();
       } else if (currentCalView === 'month') {
-        document.getElementById('calendar-timeline-view').style.display = 'none';
-        document.getElementById('calendar-month-view').style.display = 'block';
-        document.getElementById('calendar-list-view').style.display = 'none';
-        renderMonthGridView();
+        renderAdminMonthlyGrid();
+      } else if (currentCalView === 'timeline') {
+        renderTimelineView();
       } else {
-        document.getElementById('calendar-timeline-view').style.display = 'none';
-        document.getElementById('calendar-month-view').style.display = 'none';
-        document.getElementById('calendar-list-view').style.display = 'block';
         renderBookingsListView();
+      }
+
+      // 4. Render Lucide icons if library loaded
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
       }
     }
 
     function switchCalendarView(view) {
       currentCalView = view;
-      document.getElementById('btn-view-timeline').classList.toggle('active', view === 'timeline');
-      document.getElementById('btn-view-month').classList.toggle('active', view === 'month');
-      document.getElementById('btn-view-list').classList.toggle('active', view === 'list');
+      try { localStorage.setItem('elitehomes_cal_view', view); } catch (e) {}
       renderBookingsPortal();
       if (view === 'timeline') {
         setTimeout(autoScrollTimelineToToday, 100);
       }
     }
-
-    function updateMonthLabel() {
-      const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      const today = new Date();
-      const isCurrentMonth = (currentCalYear === today.getFullYear() && currentCalMonth === today.getMonth());
-      const labelEl = document.getElementById('month-display-label');
-      if (labelEl) {
-        labelEl.innerHTML = `<span>${monthNames[currentCalMonth]} ${currentCalYear}</span>` +
-          (isCurrentMonth ? `<span class="period-status-badge is-current" title="Current Month">● Current</span>` : `<span class="period-status-badge is-selected" title="Selected Month">Selected</span>`);
-      }
-
-      // Highlight "Today" button in green when viewing today's month
-      const btnToday = document.getElementById('btn-cal-today');
-      if (btnToday) {
-        if (isCurrentMonth) {
-          btnToday.classList.add('is-period-active');
-          btnToday.title = "Currently viewing today's month (November 2026)";
-        } else {
-          btnToday.classList.remove('is-period-active');
-          btnToday.title = "Jump to Today (November 2026)";
-        }
-      }
 
       renderQuickMonthPills('cal');
     }
@@ -4744,45 +5805,50 @@
     // Property Filter Pills
     function renderPropertyPills() {
       const container = document.getElementById('portal-prop-pills');
-      container.innerHTML = '';
-
       const props = getPropertiesList();
-      
-      // All pill
-      const allBtn = document.createElement('button');
-      allBtn.type = 'button';
-      allBtn.className = `prop-pill-btn ${selectedPropFilter === 'ALL' ? 'active' : ''}`;
-      allBtn.innerHTML = `<span>All ${props.length} Units</span>`;
-      allBtn.onclick = () => { selectedPropFilter = 'ALL'; renderBookingsPortal(); };
-      container.appendChild(allBtn);
 
-      props.forEach((prop, idx) => {
-        const theme = PROPERTY_THEMES[idx % PROPERTY_THEMES.length];
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `prop-pill-btn ${selectedPropFilter === prop ? 'active' : ''}`;
-        btn.innerHTML = `<span class="prop-pill-dot" style="background:${theme.color};"></span><span>${prop}</span>`;
-        btn.onclick = () => { selectedPropFilter = prop; renderBookingsPortal(); };
-        container.appendChild(btn);
-      });
+      if (container) {
+        container.innerHTML = '';
+        
+        // All pill
+        const allBtn = document.createElement('button');
+        allBtn.type = 'button';
+        allBtn.className = `prop-pill-btn ${selectedPropFilter === 'ALL' ? 'active' : ''}`;
+        allBtn.innerHTML = `<span>All ${props.length} Units</span>`;
+        allBtn.onclick = () => { selectedPropFilter = 'ALL'; renderBookingsPortal(); };
+        container.appendChild(allBtn);
+
+        props.forEach((prop, idx) => {
+          const theme = PROPERTY_THEMES[idx % PROPERTY_THEMES.length];
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `prop-pill-btn ${selectedPropFilter === prop ? 'active' : ''}`;
+          btn.innerHTML = `<span class="prop-pill-dot" style="background:${theme.color};"></span><span>${prop}</span>`;
+          btn.onclick = () => { selectedPropFilter = prop; renderBookingsPortal(); };
+          container.appendChild(btn);
+        });
+      }
 
       // Update list prop filter dropdown
       const listSelect = document.getElementById('list-prop-filter');
-      const curVal = listSelect.value;
-      listSelect.innerHTML = '<option value="">All Properties</option>';
-      props.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        if (p === curVal) opt.selected = true;
-        listSelect.appendChild(opt);
-      });
+      if (listSelect) {
+        const curVal = listSelect.value;
+        listSelect.innerHTML = '<option value="">All Properties</option>';
+        props.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          if (p === curVal) opt.selected = true;
+          listSelect.appendChild(opt);
+        });
+      }
     }
 
     // KPIs & Stats calculation
     function renderKpis() {
       const props = getPropertiesList();
-      document.getElementById('kpi-properties-summary').textContent = props.join(' • ');
+      const propSummaryEl = document.getElementById('kpi-properties-summary');
+      if (propSummaryEl) propSummaryEl.textContent = props.join(' • ');
 
       const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
       const monthStartStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-01`;
@@ -4802,7 +5868,8 @@
         return (b.checkInDate >= monthStartStr && b.checkInDate <= monthEndStr);
       });
 
-      document.getElementById('kpi-bookings-count').textContent = checkInBookings.length;
+      const bCountEl = document.getElementById('kpi-bookings-count');
+      if (bCountEl) bCountEl.textContent = checkInBookings.length;
 
       // Update quick calendar filter badge counts for the active view
       const totalOverlapCount = activeBookings.filter(b => typeof isBookingOverlapping === 'function' && isBookingOverlapping(b, currentBookings)).length;
@@ -4832,7 +5899,8 @@
         }
       });
 
-      document.getElementById('kpi-nights-count').textContent = `${totalNights} nights booked`;
+      const nightsCountEl = document.getElementById('kpi-nights-count');
+      if (nightsCountEl) nightsCountEl.textContent = `${totalNights} nights booked`;
 
       // Month Revenue Calculation - recognized strictly from check-in amount
       let monthRev = 0;
@@ -4886,8 +5954,10 @@
         }
       });
 
-      document.getElementById('kpi-turnover-count').textContent = `${checkInsToday} In / ${checkOutsToday} Out`;
-      document.getElementById('kpi-turnover-sub').textContent = firstGuestName || (checkInsToday === 0 && checkOutsToday === 0 ? "No turnovers today" : "");
+      const turnoverCountEl = document.getElementById('kpi-turnover-count');
+      if (turnoverCountEl) turnoverCountEl.textContent = `${checkInsToday} In / ${checkOutsToday} Out`;
+      const turnoverSubEl = document.getElementById('kpi-turnover-sub');
+      if (turnoverSubEl) turnoverSubEl.textContent = firstGuestName || (checkInsToday === 0 && checkOutsToday === 0 ? "No turnovers today" : "");
     }
 
     // =========================================================================
