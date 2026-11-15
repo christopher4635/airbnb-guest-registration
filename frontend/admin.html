@@ -3677,6 +3677,36 @@
         </div>
       </div>
 
+      <!-- MODAL: Standard Room Rates (Rack Rates for Invoicing) -->
+      <div class="modal-backdrop" id="modal-standard-rates" style="z-index: 10000;">
+        <div class="modal-dialog" style="max-width: 520px;">
+          <div class="modal-header">
+            <div>
+              <h3>⚙️ Standard Room Rates (Rack Rates)</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Configure the standard nightly rack rates for your rooms.
+              </p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeStandardRatesModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 12px; color: #1E40AF; line-height: 1.5;">
+              ℹ️ <strong>How this works:</strong> When a room is selected on a bill, the standard rate prefills automatically. If the guest paid less (e.g. <strong>₹2,300</strong> for a <strong>₹2,500</strong> room), the bill itemizes: <strong>Rate: ₹2,500</strong>, <strong>Disc: ₹200</strong>, <strong>Amount: ₹2,300</strong>.
+            </div>
+
+            <div id="standard-rates-modal-list" style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-outline" onclick="closeStandardRatesModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveStandardRatesFromModal(this)" style="background: #4338CA; border-color: #4338CA; font-weight: 700;">
+              💾 Save Standard Rates
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- MODAL 4: Rename Room (With Cascading Updates) -->
       <div class="modal-backdrop" id="modal-rename-room" style="z-index: 10000;">
         <div class="modal-dialog" style="max-width: 480px;">
@@ -4219,6 +4249,24 @@
           <input type="text" id="new-property-input" placeholder="e.g. 3 BHK Penthouse, Studio Suite...">
           <button type="button" class="btn btn-primary" id="btn-add-property">+ Add Room</button>
         </div>
+
+        <!-- Sub-section: Standard Room Rates (Rack Rates for Invoicing) -->
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <strong style="font-size: 13.5px; color: var(--text-main);">🏷️ Standard Room Rates (Rack Rates for Invoicing)</strong>
+              <p style="font-size: 11.5px; color: var(--text-muted); margin: 2px 0 0 0;">
+                These standard rates are used on guest bills. If price paid is lower (e.g. ₹2,300 for a ₹2,500 room), the bill itemizes: Rate: ₹2,500, Disc: ₹200, Amount: ₹2,300.
+              </p>
+            </div>
+            <button type="button" class="btn btn-outline" onclick="saveStandardRatesFromSettings(this)" style="font-size: 12px; height: 32px; padding: 0 12px; color: #4338CA; border-color: #C7D2FE; font-weight: 600;">
+              💾 Save Standard Rates
+            </button>
+          </div>
+          <div id="settings-standard-rates-table">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
       </div>
 
       <!-- SECTION 2: Booking Channels & Modes -->
@@ -4355,6 +4403,9 @@
               </select>
               <button type="button" class="btn btn-outline" onclick="resetBillerToBlank()" style="height: 36px; padding: 0 12px; font-size: 12px;" title="Reset bill to blank template">
                 🔄 Blank Bill
+              </button>
+              <button type="button" class="btn btn-outline" onclick="openStandardRatesModal()" style="height: 36px; padding: 0 12px; font-size: 12px; color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; font-weight: 600;" title="Configure standard room rack rates for billing">
+                ⚙️ Standard Rates
               </button>
             </div>
 
@@ -4745,6 +4796,9 @@
         `;
         container.appendChild(chip);
       });
+      if (typeof renderSettingsStandardRates === 'function') {
+        renderSettingsStandardRates();
+      }
     }
 
     document.getElementById('btn-add-property').addEventListener('click', async () => {
@@ -9925,6 +9979,9 @@
               <span style="font-size: 11px; font-weight: 600; background: #EEF2F6; color: #475569; padding: 2px 8px; border-radius: 12px;">
                 ${activeBookings} active booking${activeBookings === 1 ? '' : 's'}
               </span>
+              <span style="font-size: 11px; font-weight: 700; background: #EEF2FF; color: #4338CA; padding: 2px 8px; border-radius: 12px; border: 1px solid #C7D2FE;">
+                Standard: ₹${getStandardRackRate(p.name).toLocaleString('en-IN')}/nt
+              </span>
             </div>
             <div style="display: flex; gap: 6px;">
               <button type="button" class="btn btn-outline" onclick="openRenameRoomModal('${escapeJsString(p.name)}', '${color}')" style="height: 32px; padding: 0 12px; font-size: 12px; font-weight: 600; color: #2563EB; border-color: #BFDBFE;" title="Rename room (cascades to all bookings in Cloudflare D1)">
@@ -10941,18 +10998,207 @@
       }
     }
 
-    // Helper: Standard Rack Rates (Studio: 2500, 1 BHK: 3000, 2 BHK: decided by admin)
+    // Helper: Retrieve all configured standard room rack rates
+    function getStandardRoomRatesMap() {
+      let map = {};
+      try {
+        const local = localStorage.getItem('elitehomes_room_rates');
+        if (local) map = JSON.parse(local);
+      } catch(e) {}
+
+      if (currentConfig && currentConfig.standardRoomRates) {
+        map = Object.assign({}, currentConfig.standardRoomRates, map);
+      }
+
+      // Default baseline fallbacks
+      if (!map['1 Room / Studio']) map['1 Room / Studio'] = 2500;
+      if (!map['1 BHK']) map['1 BHK'] = 3000;
+      if (!map['2 BHK']) map['2 BHK'] = 4000;
+
+      return map;
+    }
+
+    // Helper: Standard Rack Rates (configurable per room in Admin Settings & Biller)
     function getStandardRackRate(prop, defaultRate = 0) {
-      const p = (prop || '').toLowerCase();
-      if (p.includes('studio') || p.includes('1 room') || p.includes('room / studio') || (p.includes('room') && !p.includes('1 bhk') && !p.includes('2 bhk'))) {
-        return 2500;
+      if (!prop) return defaultRate || 2500;
+      const rates = getStandardRoomRatesMap();
+
+      // 1. Direct match in configured rates
+      if (rates[prop] && Number(rates[prop]) > 0) {
+        return Number(rates[prop]);
       }
-      if (p.includes('1 bhk') || p.includes('1bhk')) {
-        return 3000;
+
+      // 2. Case-insensitive exact match
+      const pLower = prop.toLowerCase().trim();
+      for (const [key, val] of Object.entries(rates)) {
+        if (key.toLowerCase().trim() === pLower && Number(val) > 0) {
+          return Number(val);
+        }
       }
-      // 2 BHK rate is decided by admin
+
+      // 3. Substring match (e.g. "Luna (Studio Room)" matching "Studio" or "1 Room / Studio")
+      for (const [key, val] of Object.entries(rates)) {
+        const kLower = key.toLowerCase().trim();
+        if (Number(val) > 0 && (pLower.includes(kLower) || kLower.includes(pLower))) {
+          return Number(val);
+        }
+      }
+
+      // 4. Keyword fallbacks if not configured
+      if (pLower.includes('studio') || pLower.includes('1 room')) return 2500;
+      if (pLower.includes('1 bhk') || pLower.includes('1bhk')) return 3000;
       if (defaultRate > 0) return defaultRate;
-      return 4500;
+      if (pLower.includes('2 bhk') || pLower.includes('2bhk')) return 4000;
+
+      return defaultRate || 2500;
+    }
+
+    // Save standard room rates to Cloudflare D1 and browser storage
+    async function saveStandardRoomRates(ratesMap, btn = null) {
+      localStorage.setItem('elitehomes_room_rates', JSON.stringify(ratesMap));
+      if (!currentConfig.standardRoomRates) currentConfig.standardRoomRates = {};
+      Object.assign(currentConfig.standardRoomRates, ratesMap);
+
+      const origText = btn ? btn.textContent : '';
+      if (btn) {
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+      }
+
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.saveConfig === 'function') {
+          await window.AirbnbAPI.saveConfig(currentConfig, currentConfig.adminPin);
+        }
+        showToast("✅ Standard room rates saved to Cloudflare D1!");
+      } catch(e) {
+        console.warn("Could not save rates to D1:", e);
+        showToast("Saved room rates locally.");
+      } finally {
+        if (btn) {
+          btn.textContent = origText;
+          btn.disabled = false;
+        }
+      }
+
+      // Re-render UI tables
+      renderSettingsStandardRates();
+      // If biller is active, refresh current bill
+      if (currentBillerBookingId) {
+        loadBookingIntoBill(currentBillerBookingId);
+      } else {
+        const select = document.getElementById('bill-stay-property-select');
+        if (select && select.value) {
+          onBillPropertySelected(select.value);
+        }
+      }
+    }
+
+    // Biller Modal: Open Standard Rates Manager
+    function openStandardRatesModal() {
+      const container = document.getElementById('standard-rates-modal-list');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const props = getPropertiesList();
+      const rates = getStandardRoomRatesMap();
+
+      props.forEach(p => {
+        const rateVal = rates[p] || getStandardRackRate(p);
+        const theme = (typeof getPropertyTheme === 'function') ? getPropertyTheme(p) : { color: '#3B82F6' };
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.background = '#F8FAFC';
+        row.style.border = '1px solid #E2E8F0';
+        row.style.borderRadius = '6px';
+        row.style.padding = '10px 14px';
+
+        row.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="room-color-dot" style="background: ${theme.color}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+            <strong style="font-size: 13.5px; color: #0F172A;">${escapeHtml(p)}</strong>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-weight: 700; color: #475569; font-size: 13px;">₹</span>
+            <input type="number" class="standard-rate-modal-input font-mono" data-room="${escapeHtml(p)}" value="${rateVal}" min="0" step="50" style="width: 120px; height: 36px; padding: 0 10px; font-size: 13.5px; font-weight: 700; border: 1.5px solid #CBD5E1; border-radius: 6px; text-align: right; background: #FFFFFF;">
+            <span style="font-size: 11px; color: #64748B;">/ night</span>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      document.getElementById('modal-standard-rates').style.display = 'flex';
+    }
+
+    function closeStandardRatesModal() {
+      const modal = document.getElementById('modal-standard-rates');
+      if (modal) modal.style.display = 'none';
+    }
+
+    async function saveStandardRatesFromModal(btn) {
+      const inputs = document.querySelectorAll('.standard-rate-modal-input');
+      const rates = {};
+      inputs.forEach(input => {
+        const room = input.getAttribute('data-room');
+        const val = parseFloat(input.value) || 0;
+        if (room) rates[room] = val;
+      });
+      await saveStandardRoomRates(rates, btn);
+      closeStandardRatesModal();
+    }
+
+    // Settings Tab: Render Standard Rates Grid
+    function renderSettingsStandardRates() {
+      const container = document.getElementById('settings-standard-rates-table');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const props = getPropertiesList();
+      const rates = getStandardRoomRatesMap();
+
+      const grid = document.createElement('div');
+      grid.style.display = 'grid';
+      grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(260px, 1fr))';
+      grid.style.gap = '10px';
+
+      props.forEach(p => {
+        const rateVal = rates[p] || getStandardRackRate(p);
+        const theme = (typeof getPropertyTheme === 'function') ? getPropertyTheme(p) : { color: '#3B82F6' };
+        const card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.alignItems = 'center';
+        card.style.justifyContent = 'space-between';
+        card.style.padding = '8px 12px';
+        card.style.background = '#F8FAFC';
+        card.style.border = '1px solid #E2E8F0';
+        card.style.borderRadius = '6px';
+
+        card.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span class="room-color-dot" style="background: ${theme.color}; width: 10px; height: 10px; border-radius: 50%; display: inline-block;"></span>
+            <strong style="font-size: 12.5px; color: #1E293B;">${escapeHtml(p)}</strong>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-weight: 700; color: #64748B; font-size: 12px;">₹</span>
+            <input type="number" class="settings-standard-rate-input font-mono" data-room="${escapeHtml(p)}" value="${rateVal}" min="0" step="50" style="width: 105px; height: 32px; font-size: 12.5px; font-weight: 700; border: 1px solid #CBD5E1; border-radius: 4px; text-align: right; background: #FFFFFF;">
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      container.appendChild(grid);
+    }
+
+    async function saveStandardRatesFromSettings(btn) {
+      const inputs = document.querySelectorAll('.settings-standard-rate-input');
+      const rates = {};
+      inputs.forEach(input => {
+        const room = input.getAttribute('data-room');
+        const val = parseFloat(input.value) || 0;
+        if (room) rates[room] = val;
+      });
+      await saveStandardRoomRates(rates, btn);
     }
 
     function onBillPropertySelected(val) {
@@ -10975,7 +11221,26 @@
           if (firstRowDesc && firstRowDesc.innerText.includes('Accommodation:')) {
             firstRowDesc.innerText = `Accommodation: ${val} (1 Night)`;
             if (firstRowRateInput) firstRowRateInput.value = rackRate;
-            if (firstRowDiscInput) firstRowDiscInput.value = 0;
+            
+            // If an active booking is loaded, calculate discount against actual booked rate
+            if (currentBillerBookingId) {
+              const b = currentBookings.find(x => x && x.id === currentBillerBookingId);
+              if (b) {
+                const fin = getBookingFinancials(b);
+                const nts = b.nights || 1;
+                const actualRate = (fin.total > 0 && nts > 0) ? Math.round(fin.total / nts) : rackRate;
+                if (actualRate < rackRate) {
+                  if (firstRowDiscInput) firstRowDiscInput.value = rackRate - actualRate;
+                } else {
+                  if (firstRowDiscInput) firstRowDiscInput.value = 0;
+                }
+              }
+            } else {
+              // For walk-in / manual bill: if user entered a discount, preserve it; otherwise default to 0
+              if (firstRowDiscInput && !firstRowDiscInput.value) {
+                firstRowDiscInput.value = 0;
+              }
+            }
             recalculateBill();
           }
         }
