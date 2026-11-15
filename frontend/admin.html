@@ -2911,6 +2911,235 @@
       }
     }
 
+    /* =========================================================================
+       BILLER & GST INVOICE GENERATOR STYLES
+       ========================================================================= */
+    .biller-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .biller-toolbar {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .biller-tip-banner {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E40AF;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 12.5px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bill-sheet {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      padding: 36px 40px;
+      color: #1E293B;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      position: relative;
+    }
+    .bill-edit-text {
+      outline: none;
+      transition: all 0.15s ease;
+      border-radius: 4px;
+      padding: 1px 4px;
+      display: inline-block;
+      min-width: 20px;
+    }
+    .bill-edit-text:hover {
+      background: #F1F5F9;
+      box-shadow: 0 0 0 1px #CBD5E1;
+    }
+    .bill-edit-text:focus {
+      background: #FEF3C7;
+      box-shadow: 0 0 0 1.5px #F59E0B;
+    }
+    .bill-num-input {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      border: 1px solid #E2E8F0;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 13px;
+      width: 80px;
+      text-align: right;
+      background: #FFFFFF;
+      color: #0F172A;
+      transition: border-color 0.15s ease;
+    }
+    .bill-num-input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      background: #F8FAFC;
+    }
+    .bill-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+    }
+    .bill-table th {
+      background: #F8FAFC;
+      border-top: 1.5px solid #0F172A;
+      border-bottom: 1.5px solid #0F172A;
+      padding: 10px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0F172A;
+      text-align: left;
+    }
+    .bill-table td {
+      border-bottom: 1px solid #E2E8F0;
+      padding: 10px 12px;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    .bill-table tr:hover td {
+      background: #FAFAFA;
+    }
+    .bill-highlight-box {
+      background: #FEF9C3;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: #854D0E;
+    }
+    .bill-stamp-paid {
+      display: inline-block;
+      padding: 6px 14px;
+      border: 2px solid #16A34A;
+      color: #16A34A;
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border-radius: 6px;
+      transform: rotate(-3deg);
+      user-select: none;
+    }
+    .bill-stamp-due {
+      display: inline-block;
+      padding: 6px 14px;
+      border: 2px solid #DC2626;
+      color: #DC2626;
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border-radius: 6px;
+      transform: rotate(-3deg);
+      user-select: none;
+    }
+    .bill-row-del-btn {
+      background: none;
+      border: none;
+      color: #EF4444;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      opacity: 0.5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+    .bill-row-del-btn:hover {
+      opacity: 1;
+      background: #FEE2E2;
+    }
+
+    /* Print Stylesheet for Pristine Invoicing */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm 12mm;
+      }
+      body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      /* Hide all portal navigation, sidebars and headers */
+      .header,
+      .admin-tabs,
+      .biller-no-print,
+      .biller-toolbar,
+      .biller-tip-banner,
+      #view-bookings,
+      #view-finances,
+      #view-entries,
+      #view-settings,
+      .toast,
+      .modal-backdrop,
+      #cal-booking-hover-popup,
+      button {
+        display: none !important;
+      }
+      .container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+      .biller-wrapper {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      #view-biller {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .bill-sheet {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+      }
+      .bill-edit-text {
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+      }
+      .bill-num-input {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        -moz-appearance: textfield;
+      }
+      .bill-num-input::-webkit-outer-spin-button,
+      .bill-num-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .bill-table th {
+        background: #F8FAFC !important;
+        color: #000000 !important;
+      }
+    }
+
   </style>
   <script src="js/api.js"></script>
 </head>
@@ -2958,6 +3187,9 @@
         </button>
         <button type="button" class="tab-btn" id="tab-btn-finances" onclick="switchAdminTab('finances')">
           💰 Monthly Revenue &amp; Expenses
+        </button>
+        <button type="button" class="tab-btn" id="tab-btn-biller" onclick="switchAdminTab('biller')">
+          🧾 Customer Biller (GST)
         </button>
         <button type="button" class="tab-btn" id="tab-btn-entries" onclick="switchAdminTab('entries')">
           📋 Guest Check-ins &amp; IDs (<span id="entries-count-badge">0</span>)
@@ -3115,6 +3347,9 @@
               </button>
               <button type="button" class="btn btn-outline" onclick="openFullEditFromQuickPayout()" style="color: #2563EB; border-color: #BFDBFE;" title="Open full booking editor with room, dates, and details">
                 ✏️ Full Edit Details &amp; Dates
+              </button>
+              <button type="button" class="btn btn-outline" onclick="issueBillFromQuickPayout()" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;" title="Issue customer bill / invoice with GST">
+                🧾 Issue Bill
               </button>
             </div>
             <div style="display: flex; gap: 8px;">
@@ -3282,9 +3517,12 @@
 
           </div>
           <div class="modal-footer">
-            <div id="modal-booking-delete-wrap">
+            <div id="modal-booking-delete-wrap" style="display: flex; gap: 8px; align-items: center;">
               <button type="button" class="btn btn-outline" id="btn-delete-booking" onclick="deleteCurrentBooking()" style="color: var(--danger); border-color: #FECACA; display: none;">
                 🗑️ Delete
+              </button>
+              <button type="button" class="btn btn-outline" id="btn-issue-bill-modal" onclick="issueBillFromCurrentModal()" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
+                🧾 Issue / Print Bill
               </button>
             </div>
             <div style="display: flex; gap: 8px;">
@@ -4058,6 +4296,266 @@
 
       </div> <!-- /view-settings -->
 
+      <!-- TAB 5: CUSTOMER BILLER & GST INVOICE GENERATOR -->
+      <div id="view-biller" style="display: none;">
+        <div class="biller-wrapper">
+
+          <!-- Top Toolbar (Hidden on print) -->
+          <div class="biller-toolbar biller-no-print">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <div style="font-weight: 700; font-size: 13px; color: #0F172A; display: flex; align-items: center; gap: 6px;">
+                <span>🧾 Load Booking:</span>
+              </div>
+              <select id="biller-booking-select" style="height: 36px; font-size: 12.5px; border-radius: 6px; border: 1px solid #CBD5E1; padding: 4px 10px; min-width: 250px; background: #FFFFFF;" onchange="onBillerBookingSelected(this.value)">
+                <option value="">✨ Blank / Walk-in Customer Bill</option>
+              </select>
+              <button type="button" class="btn btn-outline" onclick="resetBillerToBlank()" style="height: 36px; padding: 0 12px; font-size: 12px;" title="Reset bill to blank template">
+                🔄 Blank Bill
+              </button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 6px; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 6px;">
+                <label for="biller-apply-gst" style="font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 6px; margin: 0;">
+                  <input type="checkbox" id="biller-apply-gst" checked onchange="recalculateBill()" style="width: 15px; height: 15px; cursor: pointer;">
+                  <span>Extra 5% GST</span>
+                </label>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="font-size: 11px; font-weight: 600; color: #64748B;">Host GSTIN:</span>
+                <input type="text" id="biller-host-gstin-input" placeholder="e.g. 18ABCDE1234F1Z5" style="height: 36px; width: 170px; font-size: 12px; border-radius: 6px; border: 1px solid #CBD5E1; padding: 4px 8px; font-family: monospace; font-weight: 700;" oninput="onHostGstinInputChanged(this.value)" title="Host GST ID / GSTIN (Saved automatically)">
+              </div>
+
+              <button type="button" class="btn btn-primary" onclick="printCustomerBill()" style="background: #2563EB; border-color: #2563EB; height: 36px; padding: 0 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                <span>🖨️ Print / Save PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Edit Helper Banner (Hidden on print) -->
+          <div class="biller-tip-banner biller-no-print">
+            <span style="font-size: 16px;">💡</span>
+            <div style="flex: 1;">
+              <strong>Fully Editable Invoice:</strong> Click directly on any text, guest name, GST ID, room dates, or rates below to customize them before printing. Extra 5% GST and balance due recalculate automatically.
+            </div>
+          </div>
+
+          <!-- Printable Bill Sheet Document -->
+          <div class="bill-sheet" id="bill-sheet">
+            
+            <!-- Header: Business Info & Invoice Badge -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; border-bottom: 2px solid #0F172A; padding-bottom: 20px; margin-bottom: 20px;">
+              <div>
+                <div style="font-size: 24px; font-weight: 900; letter-spacing: 0.5px; color: #0F172A;">
+                  ELITE HOMES
+                </div>
+                <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #4338CA; margin-bottom: 6px;">
+                  Luxury Serviced Apartments &amp; Stays
+                </div>
+                <div contenteditable="true" class="bill-edit-text" id="bill-hotel-address" style="font-size: 12px; color: #475569;">
+                  Main Road, Kokrajhar / Guwahati, Assam, India - 783370
+                </div>
+                <div contenteditable="true" class="bill-edit-text" id="bill-hotel-contact" style="font-size: 12px; color: #475569;">
+                  Phone: +91 70022 93073 • Email: stay@elitehomes.in
+                </div>
+                <div style="margin-top: 6px; font-size: 13px; font-weight: 800; color: #0F172A;">
+                  GSTIN / GST ID: <span contenteditable="true" class="bill-edit-text bill-highlight-box" id="bill-host-gstin-display" oninput="onBillHostGstinEdited(this.innerText)">18ABCDE1234F1Z5</span>
+                </div>
+              </div>
+
+              <div style="text-align: right; min-width: 220px;">
+                <div style="font-size: 18px; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 1px; border: 1.5px solid #0F172A; padding: 4px 12px; border-radius: 6px; display: inline-block; margin-bottom: 8px;">
+                  TAX INVOICE
+                </div>
+                <div style="font-size: 12px; margin-bottom: 3px;">
+                  <strong>Invoice No:</strong> <span contenteditable="true" class="bill-edit-text font-mono" id="bill-invoice-no" style="font-weight: 700;">EH-2026-11-001</span>
+                </div>
+                <div style="font-size: 12px; margin-bottom: 3px;">
+                  <strong>Invoice Date:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-invoice-date">15 Nov 2026</span>
+                </div>
+                <div style="font-size: 11.5px; color: #64748B;">
+                  <strong>SAC Code:</strong> 996311 (Lodging Services)
+                </div>
+                <div style="font-size: 11.5px; color: #64748B;">
+                  <strong>Place of Supply:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-place-of-supply">Assam (18)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Guest & Stay Metadata (2-Column Box) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px 18px; margin-bottom: 24px;">
+              <div>
+                <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #64748B; margin-bottom: 6px;">
+                  Billed To (Guest Details)
+                </div>
+                <div contenteditable="true" class="bill-edit-text" id="bill-guest-name" style="font-size: 15px; font-weight: 800; color: #0F172A; display: block; margin-bottom: 2px;">
+                  Guest Name
+                </div>
+                <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
+                  <strong>Phone:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-phone">+91 00000 00000</span>
+                </div>
+                <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
+                  <strong>Email:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-email">—</span>
+                </div>
+                <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
+                  <strong>Origin / City:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-address">India</span>
+                </div>
+                <div style="font-size: 12px; color: #0F172A; margin-top: 4px;">
+                  <strong>Guest GSTIN (B2B):</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-gstin" style="font-family: monospace;">Unregistered</span>
+                </div>
+              </div>
+
+              <div style="border-left: 1px dashed #CBD5E1; padding-left: 18px;">
+                <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #64748B; margin-bottom: 6px;">
+                  Reservation &amp; Stay Details
+                </div>
+                <div style="font-size: 12.5px; color: #0F172A; margin-bottom: 3px;">
+                  <strong>Room / Property:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-stay-property" style="font-weight: 700; color: #4338CA;">1 BHK Executive Suite</span>
+                </div>
+                <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
+                  <strong>Check-in:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-stay-checkin">14 Nov 2026 (02:00 PM)</span>
+                </div>
+                <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
+                  <strong>Check-out:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-stay-checkout">16 Nov 2026 (11:00 AM)</span>
+                </div>
+                <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
+                  <strong>Total Stay:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-stay-nights">2 Nights</span> • <span contenteditable="true" class="bill-edit-text" id="bill-stay-guests">2 Guests</span>
+                </div>
+                <div style="font-size: 12px; color: #475569;">
+                  <strong>Booking Channel:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-stay-channel">Direct / Website</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items & Services Table -->
+            <table class="bill-table" id="bill-table">
+              <thead>
+                <tr>
+                  <th style="width: 36px; text-align: center;">#</th>
+                  <th>Description / Particulars</th>
+                  <th style="width: 85px; text-align: center;">SAC</th>
+                  <th style="width: 95px; text-align: right;">Qty / Nts</th>
+                  <th style="width: 110px; text-align: right;">Rate (₹)</th>
+                  <th style="width: 120px; text-align: right;">Amount (₹)</th>
+                  <th class="biller-no-print" style="width: 38px; text-align: center;"></th>
+                </tr>
+              </thead>
+              <tbody id="bill-items-tbody">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+
+            <!-- Add Row Action (Hidden on print) -->
+            <div class="biller-no-print" style="margin-top: -8px; margin-bottom: 20px;">
+              <button type="button" class="btn btn-outline" onclick="addBillItemRow()" style="font-size: 12px; height: 32px; padding: 0 12px; border-style: dashed;">
+                ➕ Add Line Item (Extra Guest, Meals, Airport Cab, Late Checkout...)
+              </button>
+            </div>
+
+            <!-- Financial Summary & Tax Calculation -->
+            <div style="display: grid; grid-template-columns: 1fr 340px; gap: 30px; margin-top: 10px; align-items: start;">
+              
+              <!-- Payment & Bank Details -->
+              <div>
+                <div style="margin-bottom: 14px;">
+                  <span id="bill-stamp-badge" class="bill-stamp-paid">PAID IN FULL</span>
+                </div>
+                <div style="font-size: 12px; margin-bottom: 4px;">
+                  <strong>Payment Mode:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-payment-mode">UPI / Bank Transfer</span>
+                </div>
+                <div style="font-size: 12px; margin-bottom: 10px;">
+                  <strong>Payment Status:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-payment-status">Settled</span>
+                </div>
+                
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px;">
+                    Bank / UPI Details for Payment:
+                  </div>
+                  <div contenteditable="true" class="bill-edit-text" id="bill-bank-info" style="font-size: 11.5px; color: #334155; line-height: 1.5;">
+                    UPI ID: <strong>7002293073@upi</strong> • Account Name: <strong>Elite Homes</strong><br>
+                    Bank: HDFC Bank • IFSC: HDFC0001234
+                  </div>
+                </div>
+
+                <div style="font-size: 12px; color: #334155; line-height: 1.4;">
+                  <strong>Amount in Words:</strong><br>
+                  <span contenteditable="true" class="bill-edit-text" id="bill-amount-words" style="font-style: italic; color: #1E293B; font-weight: 600;">
+                    Seven Thousand Three Hundred Fifty Rupees Only
+                  </span>
+                </div>
+              </div>
+
+              <!-- Totals & GST 5% Box -->
+              <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #475569;">
+                  <span>Subtotal (Lodging &amp; Services):</span>
+                  <span class="font-mono" style="font-weight: 700; color: #0F172A;" id="bill-subtotal-val">₹7,000.00</span>
+                </div>
+
+                <div id="bill-gst-rows-wrap" style="border-top: 1px dashed #CBD5E1; padding-top: 8px; margin-top: 8px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #64748B;">
+                    <span>CGST (2.5%):</span>
+                    <span class="font-mono" id="bill-cgst-val">₹175.00</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #64748B;">
+                    <span>SGST (2.5%):</span>
+                    <span class="font-mono" id="bill-sgst-val">₹175.00</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 700; color: #0284C7; margin-bottom: 8px;">
+                    <span>Total GST (Extra 5%):</span>
+                    <span class="font-mono" id="bill-total-gst-val">₹350.00</span>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: #0F172A; border-top: 1.5px solid #0F172A; padding-top: 10px; margin-top: 6px;">
+                  <span>Grand Total:</span>
+                  <span class="font-mono" id="bill-grand-total-val" style="color: #0F172A;">₹7,350.00</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #166534; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #CBD5E1;">
+                  <span>Advance Received:</span>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span style="font-size: 12px;">₹</span>
+                    <input type="number" id="bill-advance-paid-input" class="bill-num-input" value="7350" min="0" step="50" oninput="onBillAdvanceInputChanged(this.value)" style="width: 100px; font-weight: 700; color: #15803D;">
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 900; margin-top: 10px; padding-top: 10px; border-top: 1.5px solid #CBD5E1;" id="bill-balance-row">
+                  <span id="bill-balance-label" style="color: #15803D;">Net Balance Due:</span>
+                  <span class="font-mono" id="bill-balance-due-val" style="color: #15803D;">₹0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer: Terms & Authorized Signatory -->
+            <div style="margin-top: 36px; padding-top: 16px; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px;">
+              <div style="flex: 1; max-width: 480px;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; margin-bottom: 4px;">
+                  Terms &amp; Conditions:
+                </div>
+                <div contenteditable="true" class="bill-edit-text" id="bill-terms-conditions" style="font-size: 10.5px; color: #64748B; line-height: 1.4;">
+                  1. Standard checkout time is 11:00 AM. Late check-out subject to room availability.<br>
+                  2. All disputes subject to local jurisdiction (Kokrajhar / Assam).<br>
+                  3. This is a computer-generated tax invoice issued by Elite Homes.
+                </div>
+              </div>
+
+              <div style="text-align: right; min-width: 180px;">
+                <div style="font-size: 12px; font-weight: 800; color: #0F172A; margin-bottom: 30px;">
+                  For ELITE HOMES
+                </div>
+                <div style="border-top: 1px dashed #94A3B8; font-size: 11px; color: #64748B; padding-top: 4px; display: inline-block;">
+                  Authorized Signatory
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- /bill-sheet -->
+
+        </div> <!-- /biller-wrapper -->
+      </div> <!-- /view-biller -->
+
     </div> <!-- /admin-panel -->
 
     <div class="toast" id="toast">Saved successfully!</div>
@@ -4377,19 +4875,23 @@
     window.switchAdminTab = function(tab) {
       const btnBookings = document.getElementById('tab-btn-bookings');
       const btnFinances = document.getElementById('tab-btn-finances');
+      const btnBiller = document.getElementById('tab-btn-biller');
       const btnEntries = document.getElementById('tab-btn-entries');
       const btnSettings = document.getElementById('tab-btn-settings');
       const viewBookings = document.getElementById('view-bookings');
       const viewFinances = document.getElementById('view-finances');
+      const viewBiller = document.getElementById('view-biller');
       const viewEntries = document.getElementById('view-entries');
       const viewSettings = document.getElementById('view-settings');
 
       if (btnBookings) btnBookings.classList.remove('active');
       if (btnFinances) btnFinances.classList.remove('active');
+      if (btnBiller) btnBiller.classList.remove('active');
       if (btnEntries) btnEntries.classList.remove('active');
       if (btnSettings) btnSettings.classList.remove('active');
       if (viewBookings) viewBookings.style.display = 'none';
       if (viewFinances) viewFinances.style.display = 'none';
+      if (viewBiller) viewBiller.style.display = 'none';
       if (viewEntries) viewEntries.style.display = 'none';
       if (viewSettings) viewSettings.style.display = 'none';
 
@@ -4401,6 +4903,10 @@
         if (btnFinances) btnFinances.classList.add('active');
         if (viewFinances) viewFinances.style.display = 'block';
         if (typeof loadFinancialData === 'function') loadFinancialData();
+      } else if (tab === 'biller') {
+        if (btnBiller) btnBiller.classList.add('active');
+        if (viewBiller) viewBiller.style.display = 'block';
+        if (typeof initBillerView === 'function') initBillerView();
       } else if (tab === 'entries') {
         if (btnEntries) btnEntries.classList.add('active');
         if (viewEntries) viewEntries.style.display = 'block';
@@ -6489,6 +6995,15 @@
                   >
                     ✏️ View
                   </button>
+                  <button
+                    type="button"
+                    class="sm-tool-pill-btn"
+                    onclick="issueBillForBooking('${bk.id}')"
+                    title="Issue & print customer bill"
+                    style="padding: 5px 8px; color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
+                  >
+                    🧾 Bill
+                  </button>
                   ${split.nextLeg ? `
                     <button
                       type="button"
@@ -6572,6 +7087,15 @@
                   >
                     ✏️ View
                   </button>
+                  <button
+                    type="button"
+                    class="sm-tool-pill-btn"
+                    onclick="issueBillForBooking('${bk.id}')"
+                    title="Issue & print combined customer bill with GST"
+                    style="padding: 5px 8px; color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
+                  >
+                    🧾 Bill
+                  </button>
                 </div>
               </div>
             `;
@@ -6633,6 +7157,15 @@
                   style="padding: 5px 8px;"
                 >
                   ✏️ View
+                </button>
+                <button
+                  type="button"
+                  class="sm-tool-pill-btn"
+                  onclick="issueBillForBooking('${bk.id}')"
+                  title="Issue & print customer bill with GST"
+                  style="padding: 5px 8px; color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
+                >
+                  🧾 Bill
                 </button>
               </div>
             </div>
@@ -8160,6 +8693,7 @@
               <a href="${checkinFormLink}" target="_blank" class="btn-action-pill" style="color: var(--primary); background: var(--primary-light);" title="Open Guest Check-in Form for this booking">
                 🔗 Check-in Link
               </a>
+              <button type="button" class="btn-action-pill" onclick="issueBillForBooking('${b.id}')" style="color: #0284C7; background: #F0F9FF;" title="Issue & print customer bill with GST">🧾 Bill</button>
               <button type="button" class="btn-action-pill" onclick="openEditBookingModal('${b.id}')" title="Edit booking details">✏️ Edit</button>
               <button type="button" class="btn-action-pill" onclick="directDeleteBooking('${b.id}')" style="color: var(--danger); background: #FEF2F2;" title="Delete this booking from Cloudflare D1">🗑️ Delete</button>
             </div>
@@ -10160,6 +10694,451 @@
       closeBackupModal();
       showToast("All bookings cleared.");
     }
+
+    // =========================================================================
+    // 12. CUSTOMER BILLER & GST INVOICE GENERATOR
+    // =========================================================================
+    let currentBillerBookingId = null;
+
+    // In-browser Indian Currency Number to Words converter (e.g. ₹7,350 -> Seven Thousand Three Hundred Fifty Rupees Only)
+    function numberToWordsINR(amount) {
+      let num = Math.round(Number(amount) || 0);
+      if (num === 0) return 'Zero Rupees Only';
+      const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+      const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+      function twoDigits(n) {
+        if (n < 20) return a[n];
+        const d = n % 10;
+        return b[Math.floor(n / 10)] + (d ? ' ' + a[d] : '');
+      }
+      function threeDigits(n) {
+        let s = '';
+        if (Math.floor(n / 100) > 0) {
+          s += a[Math.floor(n / 100)] + ' Hundred ';
+          n %= 100;
+        }
+        if (n > 0) {
+          if (s) s += 'and ';
+          s += twoDigits(n) + ' ';
+        }
+        return s;
+      }
+      let words = '';
+      if (num >= 10000000) {
+        words += twoDigits(Math.floor(num / 10000000)) + ' Crore ';
+        num %= 10000000;
+      }
+      if (num >= 100000) {
+        words += twoDigits(Math.floor(num / 100000)) + ' Lakh ';
+        num %= 100000;
+      }
+      if (num >= 1000) {
+        words += twoDigits(Math.floor(num / 1000)) + ' Thousand ';
+        num %= 1000;
+      }
+      if (num > 0) {
+        words += threeDigits(num);
+      }
+      return words.trim() + ' Rupees Only';
+    }
+
+    // Format Date for Indian Invoicing (e.g. 15 Nov 2026)
+    function formatInvoiceDate(isoDateStr) {
+      if (!isoDateStr) return new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const parts = String(isoDateStr).slice(0, 10).split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const dt = new Date(y, m, d);
+        if (!isNaN(dt.getTime())) {
+          return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+      }
+      const d = new Date(isoDateStr);
+      if (isNaN(d.getTime())) return isoDateStr;
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // Initialize Biller View
+    function initBillerView(prefillBookingId = null) {
+      // 1. Populate Host GSTIN from localStorage
+      const savedGstin = localStorage.getItem('elitehomes_host_gstin') || '18ABCDE1234F1Z5';
+      const inputGstin = document.getElementById('biller-host-gstin-input');
+      const displayGstin = document.getElementById('bill-host-gstin-display');
+      if (inputGstin) inputGstin.value = savedGstin;
+      if (displayGstin) displayGstin.innerText = savedGstin;
+
+      // 2. Populate Booking Select Dropdown
+      const select = document.getElementById('biller-booking-select');
+      if (select) {
+        select.innerHTML = '<option value="">✨ Blank / Walk-in Customer Bill</option>';
+        const sortedBookings = [...(currentBookings || [])].filter(b => b && b.status !== 'Cancelled');
+        sortedBookings.sort((a, b) => (b.checkInDate || '').localeCompare(a.checkInDate || ''));
+
+        sortedBookings.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b.id;
+          opt.textContent = `${b.guestName || 'Guest'} — ${b.property || 'Room'} (${b.checkInDate} → ${b.checkOutDate})`;
+          select.appendChild(opt);
+        });
+
+        if (prefillBookingId) {
+          select.value = prefillBookingId;
+          loadBookingIntoBill(prefillBookingId);
+          return;
+        } else if (currentBillerBookingId && sortedBookings.some(b => b.id === currentBillerBookingId)) {
+          select.value = currentBillerBookingId;
+          return;
+        } else if (select.value) {
+          loadBookingIntoBill(select.value);
+          return;
+        }
+      }
+
+      if (!prefillBookingId && !currentBillerBookingId) {
+        resetBillerToBlank();
+      }
+    }
+
+    // Handler when Host GSTIN is edited
+    function onHostGstinInputChanged(val) {
+      const g = (val || '').trim();
+      const display = document.getElementById('bill-host-gstin-display');
+      if (display) display.innerText = g || '18ABCDE1234F1Z5';
+      localStorage.setItem('elitehomes_host_gstin', g || '18ABCDE1234F1Z5');
+    }
+
+    function onBillHostGstinEdited(val) {
+      const g = (val || '').trim();
+      const input = document.getElementById('biller-host-gstin-input');
+      if (input) input.value = g;
+      localStorage.setItem('elitehomes_host_gstin', g || '18ABCDE1234F1Z5');
+    }
+
+    // Reset to blank template for walk-in / manual billing
+    function resetBillerToBlank() {
+      currentBillerBookingId = null;
+      const select = document.getElementById('biller-booking-select');
+      if (select) select.value = '';
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const invNo = 'EH-' + new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + Math.floor(100 + Math.random() * 900);
+
+      const invNoEl = document.getElementById('bill-invoice-no');
+      const invDateEl = document.getElementById('bill-invoice-date');
+      const gNameEl = document.getElementById('bill-guest-name');
+      const gPhoneEl = document.getElementById('bill-guest-phone');
+      const gEmailEl = document.getElementById('bill-guest-email');
+      const gAddrEl = document.getElementById('bill-guest-address');
+      const gGstinEl = document.getElementById('bill-guest-gstin');
+      const propEl = document.getElementById('bill-stay-property');
+      const inEl = document.getElementById('bill-stay-checkin');
+      const outEl = document.getElementById('bill-stay-checkout');
+      const ntsEl = document.getElementById('bill-stay-nights');
+      const gstEl = document.getElementById('bill-stay-guests');
+      const chEl = document.getElementById('bill-stay-channel');
+      const pModeEl = document.getElementById('bill-payment-mode');
+      const pStatEl = document.getElementById('bill-payment-status');
+      const advEl = document.getElementById('bill-advance-paid-input');
+
+      if (invNoEl) invNoEl.innerText = invNo;
+      if (invDateEl) invDateEl.innerText = formatInvoiceDate(todayStr);
+      if (gNameEl) gNameEl.innerText = 'Customer / Guest Name';
+      if (gPhoneEl) gPhoneEl.innerText = '+91 ';
+      if (gEmailEl) gEmailEl.innerText = 'guest@example.com';
+      if (gAddrEl) gAddrEl.innerText = 'Assam, India';
+      if (gGstinEl) gGstinEl.innerText = 'Unregistered';
+
+      if (propEl) propEl.innerText = '1 BHK / Studio Room';
+      if (inEl) inEl.innerText = `${formatInvoiceDate(todayStr)} (02:00 PM)`;
+      
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+      if (outEl) outEl.innerText = `${formatInvoiceDate(tomorrowStr)} (11:00 AM)`;
+      if (ntsEl) ntsEl.innerText = '1 Night';
+      if (gstEl) gstEl.innerText = '2 Guests';
+      if (chEl) chEl.innerText = 'Direct / Walk-in';
+
+      // Clear & set default line item
+      const tbody = document.getElementById('bill-items-tbody');
+      if (tbody) {
+        tbody.innerHTML = '';
+        addBillItemRow('Room Accommodation Charges (1 Night)', '996311', 1, 3500);
+      }
+
+      if (pModeEl) pModeEl.innerText = 'Cash / UPI';
+      if (pStatEl) pStatEl.innerText = 'Settled';
+      if (advEl) advEl.value = 3675; // 3500 + 5% GST = 3675
+      recalculateBill();
+    }
+
+    // Load an existing booking into the biller sheet
+    function loadBookingIntoBill(bookingId) {
+      if (!bookingId) {
+        resetBillerToBlank();
+        return;
+      }
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+
+      currentBillerBookingId = b.id;
+
+      // Split Stay Detection: If Kamal or other guest stayed across rooms, pull all legs!
+      const split = getSplitStayInfo(b, currentBookings);
+
+      const invNo = 'EH-' + new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + (b.id.replace(/[^0-9]/g, '').slice(-3) || Math.floor(100 + Math.random() * 900));
+      const invNoEl = document.getElementById('bill-invoice-no');
+      const invDateEl = document.getElementById('bill-invoice-date');
+      const gNameEl = document.getElementById('bill-guest-name');
+      const gPhoneEl = document.getElementById('bill-guest-phone');
+      const gEmailEl = document.getElementById('bill-guest-email');
+      const gAddrEl = document.getElementById('bill-guest-address');
+      const gGstinEl = document.getElementById('bill-guest-gstin');
+      const propEl = document.getElementById('bill-stay-property');
+      const inEl = document.getElementById('bill-stay-checkin');
+      const outEl = document.getElementById('bill-stay-checkout');
+      const ntsEl = document.getElementById('bill-stay-nights');
+      const gstEl = document.getElementById('bill-stay-guests');
+      const chEl = document.getElementById('bill-stay-channel');
+      const pModeEl = document.getElementById('bill-payment-mode');
+      const pStatEl = document.getElementById('bill-payment-status');
+      const advEl = document.getElementById('bill-advance-paid-input');
+
+      if (invNoEl) invNoEl.innerText = invNo;
+      if (invDateEl) invDateEl.innerText = formatInvoiceDate(new Date().toISOString().slice(0, 10));
+
+      if (gNameEl) gNameEl.innerText = b.guestName || 'Valued Guest';
+      if (gPhoneEl) gPhoneEl.innerText = b.phone || '—';
+      if (gEmailEl) gEmailEl.innerText = b.email || '—';
+      if (gAddrEl) gAddrEl.innerText = 'India';
+      if (gGstinEl) gGstinEl.innerText = 'Unregistered';
+
+      const tbody = document.getElementById('bill-items-tbody');
+      if (tbody) tbody.innerHTML = '';
+
+      let totalAdvanceAcrossChain = 0;
+
+      if (split.isSplit) {
+        if (propEl) propEl.innerText = split.legs.map(l => l.property).join(' ➔ ') + ' (Split Stay)';
+        if (inEl) inEl.innerText = `${formatInvoiceDate(split.overallCheckIn)} (02:00 PM)`;
+        if (outEl) outEl.innerText = `${formatInvoiceDate(split.overallCheckOut)} (11:00 AM)`;
+        if (ntsEl) ntsEl.innerText = `${split.totalNights} Nights Total (${split.legs.length} Rooms)`;
+        if (gstEl) gstEl.innerText = `${b.guestsCount || 2} Guests`;
+        if (chEl) chEl.innerText = `${b.platform || 'Direct'} (Split Stay)`;
+
+        split.legs.forEach(leg => {
+          const rev = getBookingRevenue(leg);
+          const nts = leg.nights || 1;
+          const ratePerNight = Math.round(rev / nts);
+          const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts)`;
+          addBillItemRow(desc, '996311', nts, ratePerNight);
+        });
+
+        totalAdvanceAcrossChain = split.totalAdvance;
+      } else {
+        const fin = getBookingFinancials(b);
+        const nts = b.nights || 1;
+        const ratePerNight = (fin.total > 0 && nts > 0) ? Math.round(fin.total / nts) : 3500;
+        const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts)`;
+
+        if (propEl) propEl.innerText = b.property || 'Elite Homes Suite';
+        if (inEl) inEl.innerText = `${formatInvoiceDate(b.checkInDate)} (02:00 PM)`;
+        if (outEl) outEl.innerText = `${formatInvoiceDate(b.checkOutDate)} (11:00 AM)`;
+        if (ntsEl) ntsEl.innerText = `${nts} Night${nts > 1 ? 's' : ''}`;
+        if (gstEl) gstEl.innerText = `${b.guestsCount || 2} Guests`;
+        if (chEl) chEl.innerText = b.platform || 'Direct';
+
+        addBillItemRow(desc, '996311', nts, ratePerNight);
+        totalAdvanceAcrossChain = fin.advance;
+      }
+
+      // Check payment status and advance
+      const payMode = (b.platform || '').toLowerCase().includes('airbnb') ? 'Airbnb Online Payout' : 
+                      ((b.platform || '').toLowerCase().includes('booking') ? 'Booking.com Channel' : 'UPI / Direct Bank Transfer');
+      if (pModeEl) pModeEl.innerText = payMode;
+      if (pStatEl) pStatEl.innerText = b.paymentStatus || 'Confirmed';
+
+      // Set advance paid and recalculate
+      if (advEl) advEl.value = totalAdvanceAcrossChain;
+      recalculateBill();
+    }
+
+    // Handler when booking dropdown selected in Biller toolbar
+    function onBillerBookingSelected(bookingId) {
+      if (bookingId) {
+        loadBookingIntoBill(bookingId);
+      } else {
+        resetBillerToBlank();
+      }
+    }
+
+    // Add a line item row to the bill table
+    function addBillItemRow(desc = 'Extra Service / Line Item', sac = '996311', qty = 1, rate = 0) {
+      const tbody = document.getElementById('bill-items-tbody');
+      if (!tbody) return;
+
+      const rowIdx = tbody.children.length + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align: center; color: #64748B; font-weight: 600;" class="bill-row-index">${rowIdx}</td>
+        <td>
+          <div contenteditable="true" class="bill-edit-text" style="width: 100%; font-weight: 600; color: #0F172A;" oninput="recalculateBill()">${escapeHtml(desc)}</div>
+        </td>
+        <td style="text-align: center; color: #64748B; font-family: monospace;">
+          <div contenteditable="true" class="bill-edit-text" style="text-align: center;">${escapeHtml(sac)}</div>
+        </td>
+        <td style="text-align: right;">
+          <input type="number" class="bill-num-input bill-item-qty" value="${qty}" min="1" step="1" oninput="recalculateBill()">
+        </td>
+        <td style="text-align: right;">
+          <input type="number" class="bill-num-input bill-item-rate" value="${rate}" min="0" step="50" oninput="recalculateBill()" style="width: 95px;">
+        </td>
+        <td style="text-align: right; font-weight: 700; color: #0F172A;" class="bill-item-amount font-mono">
+          ₹0.00
+        </td>
+        <td class="biller-no-print" style="text-align: center;">
+          <button type="button" class="bill-row-del-btn" onclick="deleteBillItemRow(this)" title="Delete line item">✕</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      recalculateBill();
+    }
+
+    // Delete a line item row
+    function deleteBillItemRow(btn) {
+      const tr = btn.closest('tr');
+      if (tr) {
+        tr.remove();
+        // Renumber remaining rows
+        const rows = document.querySelectorAll('#bill-items-tbody tr');
+        rows.forEach((r, i) => {
+          const idxEl = r.querySelector('.bill-row-index');
+          if (idxEl) idxEl.textContent = i + 1;
+        });
+        recalculateBill();
+      }
+    }
+
+    // Handler when advance paid is changed
+    function onBillAdvanceInputChanged(val) {
+      recalculateBill();
+    }
+
+    // Core financial & GST recalculation engine
+    function recalculateBill() {
+      const rows = document.querySelectorAll('#bill-items-tbody tr');
+      let subtotal = 0;
+
+      rows.forEach(r => {
+        const qty = parseFloat(r.querySelector('.bill-item-qty')?.value) || 0;
+        const rate = parseFloat(r.querySelector('.bill-item-rate')?.value) || 0;
+        const amount = qty * rate;
+        subtotal += amount;
+
+        const amtEl = r.querySelector('.bill-item-amount');
+        if (amtEl) amtEl.textContent = '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      });
+
+      const applyGst = document.getElementById('biller-apply-gst')?.checked ?? true;
+      let cgst = 0;
+      let sgst = 0;
+      let totalGst = 0;
+
+      if (applyGst) {
+        cgst = subtotal * 0.025; // 2.5% CGST
+        sgst = subtotal * 0.025; // 2.5% SGST
+        totalGst = cgst + sgst;  // Extra 5% GST
+      }
+
+      const grandTotal = Math.round(subtotal + totalGst);
+      const advancePaid = parseFloat(document.getElementById('bill-advance-paid-input')?.value) || 0;
+      const balanceDue = Math.max(0, grandTotal - advancePaid);
+
+      // Update Subtotal and GST fields
+      const subEl = document.getElementById('bill-subtotal-val');
+      if (subEl) subEl.textContent = '₹' + subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const gstWrap = document.getElementById('bill-gst-rows-wrap');
+      if (gstWrap) gstWrap.style.display = applyGst ? 'block' : 'none';
+
+      const cgstEl = document.getElementById('bill-cgst-val');
+      if (cgstEl) cgstEl.textContent = '₹' + cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const sgstEl = document.getElementById('bill-sgst-val');
+      if (sgstEl) sgstEl.textContent = '₹' + sgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const totalGstEl = document.getElementById('bill-total-gst-val');
+      if (totalGstEl) totalGstEl.textContent = '₹' + totalGst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const grandEl = document.getElementById('bill-grand-total-val');
+      if (grandEl) grandEl.textContent = '₹' + grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const balEl = document.getElementById('bill-balance-due-val');
+      const balLabel = document.getElementById('bill-balance-label');
+      const stampEl = document.getElementById('bill-stamp-badge');
+
+      if (balEl) {
+        balEl.textContent = '₹' + balanceDue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (balanceDue > 0) {
+          balEl.style.color = '#DC2626';
+          if (balLabel) {
+            balLabel.style.color = '#DC2626';
+            balLabel.textContent = 'Net Balance Due on Checkout:';
+          }
+          if (stampEl) {
+            stampEl.className = 'bill-stamp-due';
+            stampEl.textContent = `BALANCE DUE: ₹${formatCurrency(balanceDue)}`;
+          }
+        } else {
+          balEl.style.color = '#15803D';
+          if (balLabel) {
+            balLabel.style.color = '#15803D';
+            balLabel.textContent = 'Net Balance Due:';
+          }
+          if (stampEl) {
+            stampEl.className = 'bill-stamp-paid';
+            stampEl.textContent = 'PAID IN FULL';
+          }
+        }
+      }
+
+      // Update words
+      const wordsEl = document.getElementById('bill-amount-words');
+      if (wordsEl) wordsEl.textContent = numberToWordsINR(grandTotal);
+    }
+
+    // Direct invocation helper from anywhere in the portal
+    window.issueBillForBooking = function(bookingId) {
+      if (!bookingId) return;
+      switchAdminTab('biller');
+      initBillerView(bookingId);
+    };
+
+    window.issueBillFromCurrentModal = function() {
+      const bId = editingBookingId;
+      closeBookingModal();
+      if (bId) {
+        issueBillForBooking(bId);
+      } else {
+        switchAdminTab('biller');
+        resetBillerToBlank();
+      }
+    };
+
+    window.issueBillFromQuickPayout = function() {
+      const bId = quickPayoutBookingId;
+      closeQuickPayoutModal();
+      if (bId) {
+        issueBillForBooking(bId);
+      }
+    };
+
+    // Print / PDF execution
+    window.printCustomerBill = function() {
+      window.print();
+    };
 
   </script>
 </body>
