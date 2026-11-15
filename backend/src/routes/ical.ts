@@ -310,6 +310,13 @@ export async function executeIcalSync(env: Bindings, targetProperty?: string | n
           `).bind(uid).first();
 
           if (existingByUid) {
+            // IF HOST PREVIOUSLY DELETED / CANCELLED THIS SYNCED BOOKING:
+            // KEEP IT DELETED! NEVER RESURRECT IT!
+            if (existingByUid.status === 'Cancelled') {
+              totalSkipped++;
+              continue;
+            }
+
             // Check if this existing iCal booking collides with an active primary website booking
             const primaryConflict = await env.DB.prepare(`
               SELECT * FROM bookings 
@@ -335,12 +342,19 @@ export async function executeIcalSync(env: Bindings, targetProperty?: string | n
               continue;
             }
 
+            // Preserve host manual edits: If host customized the guest name from generic to real name, keep it!
+            let nameToSave = guestName;
+            const currentName = ((existingByUid.guest_name as string) || '').trim();
+            if (currentName && !/airbnb|booking\.com|guest|not available|reserved|closed|blocked/i.test(currentName)) {
+              nameToSave = currentName; // Keep host's custom edited name!
+            }
+
             await env.DB.prepare(`
               UPDATE bookings SET
                 property = ?, guest_name = ?, check_in_date = ?, check_out_date = ?,
                 nights = ?, status = ?, updated_at = datetime('now')
               WHERE id = ?
-            `).bind(prop.name, guestName, checkIn, checkOut, nights, bookingStatus, existingByUid.id).run();
+            `).bind(prop.name, nameToSave, checkIn, checkOut, nights, bookingStatus, existingByUid.id).run();
             totalUpdated++;
             continue;
           }

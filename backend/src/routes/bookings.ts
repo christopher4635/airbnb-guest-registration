@@ -200,7 +200,28 @@ bookingsRoute.put('/:id', async (c) => {
 bookingsRoute.delete('/:id', async (c) => {
   try {
     const id = c.req.param('id');
-    const res = await c.env.DB.prepare(`DELETE FROM bookings WHERE id = ?`).bind(id).run();
+    const existing = await c.env.DB.prepare(`SELECT * FROM bookings WHERE id = ?`).bind(id).first();
+    if (!existing) {
+      return c.json({ success: true, message: `Booking ${id} already deleted` });
+    }
+
+    const plat = ((existing.platform as string) || '').toLowerCase();
+    const isSynced = Boolean(existing.external_uid || id.startsWith('bk_ical_') || plat.includes('airbnb') || plat.includes('booking'));
+
+    if (isSynced) {
+      // For synced / iCal bookings: mark as 'Cancelled' with a deletion note so that
+      // subsequent iCal sync background jobs will NEVER resurrect or re-import it!
+      await c.env.DB.prepare(`
+        UPDATE bookings SET 
+          status = 'Cancelled', 
+          notes = coalesce(notes, '') || ' [Deleted by Host - Do Not Resurrect]', 
+          updated_at = datetime('now')
+        WHERE id = ?
+      `).bind(id).run();
+    } else {
+      await c.env.DB.prepare(`DELETE FROM bookings WHERE id = ?`).bind(id).run();
+    }
+
     notifyStaffSync(c);
     return c.json({ success: true, message: `Booking ${id} deleted` });
   } catch (err: any) {

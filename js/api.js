@@ -90,6 +90,17 @@
       return [];
     },
 
+    getBooking: async function(id) {
+      try {
+        const res = await this.request(`/api/bookings/${encodeURIComponent(id)}`);
+        if (res && res.data) return res.data;
+      } catch (e) {
+        const local = JSON.parse(localStorage.getItem('airbnb_bookings') || '[]');
+        return local.find(b => b.id === id) || null;
+      }
+      return null;
+    },
+
     createBooking: async function(bookingData) {
       try {
         const res = await this.request('/api/bookings', {

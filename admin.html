@@ -3108,11 +3108,21 @@
               </div>
             </div>
           </div>
-          <div class="modal-footer" style="padding: 12px 18px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 8px;">
-            <button type="button" class="btn btn-outline" onclick="closeQuickPayoutModal()">Cancel</button>
-            <button type="button" class="btn btn-primary" id="btn-save-quick-payout" onclick="saveQuickPayout()" style="background: #10B981; border-color: #10B981; font-weight: 700;">
-              <span>💾 Save Payout</span>
-            </button>
+          <div class="modal-footer" style="padding: 12px 18px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-outline" onclick="deleteFromQuickPayout()" style="color: var(--danger); border-color: #FECACA;" title="Delete this booking from Cloudflare D1">
+                🗑️ Delete
+              </button>
+              <button type="button" class="btn btn-outline" onclick="openFullEditFromQuickPayout()" style="color: #2563EB; border-color: #BFDBFE;" title="Open full booking editor with room, dates, and details">
+                ✏️ Full Edit Details &amp; Dates
+              </button>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-outline" onclick="closeQuickPayoutModal()">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btn-save-quick-payout" onclick="saveQuickPayout()" style="background: #10B981; border-color: #10B981; font-weight: 700;">
+                <span>💾 Save Payout</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -4068,8 +4078,10 @@
     }
 
     // Auth gate
-    function unlockAdminPanel() {
+    function unlockAdminPanel(pin) {
       localStorage.setItem('airbnb_admin_authed', 'true');
+      if (pin) localStorage.setItem('airbnb_admin_pin', pin);
+      else if (!localStorage.getItem('airbnb_admin_pin')) localStorage.setItem('airbnb_admin_pin', '4635');
       const authScreen = document.getElementById('auth-screen');
       const adminPanel = document.getElementById('admin-panel');
       if (authScreen) authScreen.style.display = 'none';
@@ -4084,7 +4096,7 @@
       const pin = (pinInput ? pinInput.value : '').trim();
       const expected = (currentConfig && currentConfig.adminPin) ? currentConfig.adminPin : "4635";
       if (pin === expected || pin === "4635") {
-        unlockAdminPanel();
+        unlockAdminPanel(pin || "4635");
       } else {
         alert("Incorrect PIN. Please try again.");
         if (pinInput) { pinInput.value = ''; pinInput.focus(); }
@@ -5980,6 +5992,15 @@
         try {
           const d1Bookings = await window.AirbnbAPI.getBookings();
           if (Array.isArray(d1Bookings) && d1Bookings.length > 0) {
+            // Check if there are local bookings not yet in D1 (preserve local host entries)
+            const remoteIds = new Set(d1Bookings.map(b => b.id));
+            const localSaved = JSON.parse(localStorage.getItem('airbnb_bookings') || '[]');
+            const localUnsynced = localSaved.filter(b => b.id && !remoteIds.has(b.id) && !b.id.startsWith('demo_'));
+            if (localUnsynced.length > 0) {
+              for (const u of localUnsynced) {
+                d1Bookings.push(u);
+              }
+            }
             currentBookings = d1Bookings;
             localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
             localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);
@@ -6785,11 +6806,11 @@
 
                           return `
                             <td
-                              onclick="openEditBookingModal('${cellBookings[0].id}')"
+                              onclick="openMultiBookingPicker('${cellBookings.map(b => b.id).join(',')}')"
                               onmouseenter="showBookingHoverPopup(event, '${cellBookings[0].id}')"
                               onmousemove="positionHoverPopup(event)"
                               onmouseleave="hideBookingHoverPopup()"
-                              title="${count} Bookings: ${escapeHtml(guestsList)} - Click to view"
+                              title="${count} Bookings: ${escapeHtml(guestsList)} - Click to choose reservation to edit or delete"
                               class="sm-booked-cell ${isToday ? 'is-today-cell' : ''}"
                             >
                               <span class="sm-booking-chip sm-chip-multi">
@@ -7526,6 +7547,22 @@
       }
     };
 
+    window.openFullEditFromQuickPayout = function() {
+      const bId = document.getElementById('qp-booking-id')?.value;
+      closeQuickPayoutModal();
+      if (bId) {
+        openEditBookingModal(bId);
+      }
+    };
+
+    window.deleteFromQuickPayout = async function() {
+      const bId = document.getElementById('qp-booking-id')?.value;
+      if (!bId) return;
+      closeQuickPayoutModal();
+      editingBookingId = bId;
+      await deleteCurrentBooking();
+    };
+
     window.syncAllIcalFeeds = async function() {
       const icon = document.getElementById('sync-ical-icon');
       const text = document.getElementById('sync-ical-text');
@@ -7782,13 +7819,13 @@
             `;
           } else if (fin.balance > 0) {
             payoutHtml = `
-              <span class="tbar-payout-valid" style="color: #DC2626; font-weight: 800;" onclick="event.stopPropagation(); quickAddPayout('${booking.id}')" title="Balance to collect: ₹${fin.balance}">
+              <span class="tbar-payout-valid" style="color: #DC2626; font-weight: 800;" title="Balance to collect: ₹${fin.balance} - Click to edit booking">
                 Collect ₹${formatCurrency(fin.balance)}
               </span>
             `;
           } else {
             payoutHtml = `
-              <span class="tbar-payout-valid" onclick="event.stopPropagation(); quickAddPayout('${booking.id}')" title="Paid in Full">
+              <span class="tbar-payout-valid" title="Paid in Full - Click to edit booking">
                 ₹${formatCurrency(fin.total)} (Paid)
               </span>
             `;
@@ -8062,7 +8099,8 @@
               <a href="${checkinFormLink}" target="_blank" class="btn-action-pill" style="color: var(--primary); background: var(--primary-light);" title="Open Guest Check-in Form for this booking">
                 🔗 Check-in Link
               </a>
-              <button type="button" class="btn-action-pill" onclick="openEditBookingModal('${b.id}')">✏️ Edit</button>
+              <button type="button" class="btn-action-pill" onclick="openEditBookingModal('${b.id}')" title="Edit booking details">✏️ Edit</button>
+              <button type="button" class="btn-action-pill" onclick="directDeleteBooking('${b.id}')" style="color: var(--danger); background: #FEF2F2;" title="Delete this booking from Cloudflare D1">🗑️ Delete</button>
             </div>
           </td>
         `;
@@ -8183,16 +8221,75 @@
       setTimeout(() => document.getElementById('mb-guest-name').focus(), 100);
     }
 
-    function openEditBookingModal(bookingId) {
-      const b = currentBookings.find(x => x.id === bookingId);
-      if (!b) return;
+    async function openEditBookingModal(bookingId) {
+      if (!bookingId) return;
 
-      editingBookingId = bookingId;
+      let b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) {
+        b = currentBookings.find(x => x && String(x.id).trim().toLowerCase() === String(bookingId).trim().toLowerCase());
+      }
+
+      // If not in local cache, fetch directly from Cloudflare D1
+      if (!b && window.AirbnbAPI && typeof window.AirbnbAPI.getBooking === 'function') {
+        try {
+          b = await window.AirbnbAPI.getBooking(bookingId);
+          if (b) {
+            const exists = currentBookings.some(x => x.id === b.id);
+            if (!exists) {
+              currentBookings.push(b);
+              localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+            }
+          }
+        } catch (e) {
+          console.warn("Could not fetch booking from D1:", e);
+        }
+      }
+
+      // Fallback: match by guest name or reservation code if bookingId might be a name or search term
+      if (!b) {
+        const query = String(bookingId).toLowerCase();
+        b = currentBookings.find(x => x && (
+          (x.guestName && x.guestName.toLowerCase().includes(query)) ||
+          (x.reservationCode && x.reservationCode.toLowerCase().includes(query))
+        ));
+      }
+
+      if (!b) {
+        if (typeof showToast === 'function') {
+          showToast(`⚠️ Booking "${bookingId}" could not be found.`);
+        } else {
+          alert(`Booking "${bookingId}" not found in current records.`);
+        }
+        return;
+      }
+
+      editingBookingId = b.id;
       document.getElementById('modal-booking-title').textContent = '✏️ Edit Booking Details';
-      document.getElementById('btn-delete-booking').style.display = 'inline-block';
+      const delBtn = document.getElementById('btn-delete-booking');
+      if (delBtn) delBtn.style.display = 'inline-block';
 
       populateModalPropertyDropdown();
-      document.getElementById('mb-property').value = b.property;
+
+      // Robust property selection: match aliases if needed
+      const propSelect = document.getElementById('mb-property');
+      if (propSelect) {
+        let propMatched = false;
+        for (let i = 0; i < propSelect.options.length; i++) {
+          if (matchesProperty(propSelect.options[i].value, b.property)) {
+            propSelect.selectedIndex = i;
+            propMatched = true;
+            break;
+          }
+        }
+        if (!propMatched && b.property) {
+          const opt = document.createElement('option');
+          opt.value = b.property;
+          opt.textContent = b.property;
+          propSelect.appendChild(opt);
+          propSelect.value = b.property;
+        }
+      }
+
       document.getElementById('mb-guest-name').value = b.guestName || '';
       document.getElementById('mb-phone').value = b.phone || '';
       document.getElementById('mb-email').value = b.email || '';
@@ -8202,8 +8299,8 @@
       document.getElementById('mb-pay-status').value = b.paymentStatus || 'Paid in Full';
       document.getElementById('mb-status').value = b.status || 'Confirmed';
       document.getElementById('mb-notes').value = b.notes || '';
-      document.getElementById('mb-checkin').value = b.checkInDate;
-      document.getElementById('mb-checkout').value = b.checkOutDate;
+      document.getElementById('mb-checkin').value = b.checkInDate || '';
+      document.getElementById('mb-checkout').value = b.checkOutDate || '';
 
       // Extract nightly rate, total amount, and advance
       let nightlyRate = '';
@@ -8239,8 +8336,8 @@
         }
       }
 
-      if (totalAmount && !nightlyRate && b.nights > 0) {
-        nightlyRate = Math.round(totalAmount / b.nights);
+      if (totalAmount && !nightlyRate && (b.nights || 1) > 0) {
+        nightlyRate = Math.round(totalAmount / (b.nights || 1));
       }
 
       let advVal = '';
@@ -8249,9 +8346,9 @@
         if (m) advVal = parseFloat(m[1].replace(/,/g, ''));
       }
 
-      document.getElementById('mb-nightly-rate').value = nightlyRate;
-      document.getElementById('mb-total-amount').value = totalAmount;
-      document.getElementById('mb-advance').value = advVal;
+      document.getElementById('mb-nightly-rate').value = nightlyRate || '';
+      document.getElementById('mb-total-amount').value = totalAmount || '';
+      document.getElementById('mb-advance').value = advVal || '';
       calculatePricingAndBalance(false);
 
       let detectedMode = 'Offline / Direct';
@@ -8265,6 +8362,7 @@
 
       onBookingDateOrPropChange();
       document.getElementById('modal-booking').style.display = 'flex';
+      setTimeout(() => document.getElementById('mb-guest-name')?.focus(), 80);
     }
 
     function closeBookingModal() {
@@ -8468,18 +8566,26 @@
 
     async function deleteCurrentBooking() {
       if (!editingBookingId) return;
-      if (!confirm("Are you sure you want to delete this booking from the calendar and Cloudflare D1?")) return;
+      const b = currentBookings.find(x => x && x.id === editingBookingId);
+      const guestLabel = b ? (b.guestName || 'this reservation') : 'this reservation';
+      if (!confirm(`Are you sure you want to permanently delete the reservation for "${guestLabel}" from Cloudflare D1 and calendar?`)) return;
 
       const idToDelete = editingBookingId;
+      const delBtn = document.getElementById('btn-delete-booking');
+      if (delBtn) { delBtn.textContent = 'Deleting...'; delBtn.disabled = true; }
+
+      let d1Deleted = false;
       try {
         if (window.AirbnbAPI && typeof window.AirbnbAPI.deleteBooking === 'function') {
           await window.AirbnbAPI.deleteBooking(idToDelete);
+          d1Deleted = true;
         }
       } catch(e) {
         console.warn("Could not delete from D1:", e);
       }
 
       currentBookings = currentBookings.filter(x => x.id !== idToDelete);
+      localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
       saveBookings();
       closeBookingModal();
 
@@ -8489,8 +8595,37 @@
       } catch(renderErr) {
         console.error("UI render error after delete:", renderErr);
       }
-      showToast("Booking deleted from Cloudflare D1 & calendar.");
+      if (delBtn) { delBtn.textContent = '🗑️ Delete'; delBtn.disabled = false; }
+      showToast(d1Deleted ? "✅ Booking permanently deleted from Cloudflare D1 & calendar." : "Booking removed from calendar (saved locally).");
     }
+
+    window.directDeleteBooking = async function(id) {
+      if (!id) return;
+      editingBookingId = id;
+      await deleteCurrentBooking();
+    };
+
+    window.openMultiBookingPicker = function(idsStr) {
+      if (!idsStr) return;
+      const ids = idsStr.split(',').map(s => s.trim()).filter(Boolean);
+      if (ids.length === 1) {
+        openEditBookingModal(ids[0]);
+        return;
+      }
+      const matching = currentBookings.filter(b => ids.includes(b.id));
+      if (matching.length === 0) return;
+      if (matching.length === 1) {
+        openEditBookingModal(matching[0].id);
+        return;
+      }
+      const optionsMsg = matching.map((b, idx) => `${idx + 1}. ${b.guestName || 'Guest'} (${b.platform || 'Direct'}) - ${b.checkInDate} to ${b.checkOutDate} [${b.payout || 'No payout'}]`).join('\n');
+      const choice = prompt(`Multiple bookings on this date. Select which one to edit or delete:\n\n${optionsMsg}\n\nEnter number (1-${matching.length}):`, "1");
+      if (!choice) return;
+      const pickedIdx = parseInt(choice, 10) - 1;
+      if (pickedIdx >= 0 && pickedIdx < matching.length) {
+        openEditBookingModal(matching[pickedIdx].id);
+      }
+    };
 
     // Quick Block Dates
     function openQuickBlockModal() {
