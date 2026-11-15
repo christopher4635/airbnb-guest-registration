@@ -1512,182 +1512,15 @@
     }
 
     .sm-booked-cell {
-      padding: 4px 0 !important;
+      padding: 4px 2px;
       text-align: center;
       border-left: 1px solid #F1F5F9;
       cursor: pointer;
-      height: 38px;
-      vertical-align: middle;
-      user-select: none;
-      transition: background 0.12s ease;
+      transition: all 0.12s ease;
     }
     .sm-booked-cell.is-today-cell {
-      background: rgba(238, 242, 255, 0.45);
+      background: rgba(238, 242, 255, 0.4);
     }
-    .sm-booked-cell.sm-cell-mid,
-    .sm-booked-cell.sm-cell-end {
-      border-left-color: transparent !important;
-    }
-
-    /* Continuous Multi-Day Booking Bar Segments */
-    .sm-bar-segment {
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      font-size: 10px;
-      font-weight: 700;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      box-sizing: border-box;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: filter 0.12s ease, transform 0.1s ease;
-      position: relative;
-    }
-    .sm-bar-segment:hover {
-      filter: brightness(0.94);
-      z-index: 6;
-    }
-
-    /* Continuous ribbon geometry */
-    .sm-bar-segment.is-single {
-      margin: 0 2px;
-      border-radius: 6px;
-      border-width: 1px;
-      border-style: solid;
-      padding: 0 4px;
-    }
-    .sm-bar-segment.is-start {
-      margin-left: 2px;
-      margin-right: 0;
-      border-radius: 6px 0 0 6px;
-      border-width: 1px 0 1px 1px;
-      border-style: solid;
-      padding-left: 5px;
-      padding-right: 2px;
-    }
-    .sm-bar-segment.is-mid {
-      margin: 0;
-      border-radius: 0;
-      border-width: 1px 0 1px 0;
-      border-style: solid;
-      padding: 0 2px;
-    }
-    .sm-bar-segment.is-end {
-      margin-left: 0;
-      margin-right: 2px;
-      border-radius: 0 6px 6px 0;
-      border-width: 1px 1px 1px 0;
-      border-style: solid;
-      padding-left: 2px;
-      padding-right: 5px;
-    }
-
-    /* Turnover Split Container */
-    .sm-turnover-container {
-      display: flex;
-      width: 100%;
-      height: 30px;
-      align-items: center;
-      padding: 0 2px;
-      gap: 1px;
-      box-sizing: border-box;
-    }
-    .sm-turnover-left {
-      width: 50% !important;
-      margin: 0 !important;
-      border-radius: 0 !important;
-      border-right: 1px dashed rgba(0,0,0,0.15) !important;
-    }
-    .sm-turnover-right {
-      width: 50% !important;
-      margin: 0 !important;
-      border-radius: 0 6px 6px 0 !important;
-    }
-
-    /* Segment Content Typography & Badges */
-    .sm-seg-tag-in, .sm-seg-tag-out {
-      font-size: 8px;
-      font-weight: 800;
-      padding: 1px 3px;
-      border-radius: 3px;
-      text-transform: uppercase;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    .sm-seg-tag-in {
-      background: rgba(0, 0, 0, 0.08);
-    }
-    .sm-seg-tag-out {
-      background: rgba(0, 0, 0, 0.08);
-    }
-    .sm-seg-tag-due {
-      font-size: 8px;
-      font-weight: 900;
-      padding: 1px 3px;
-      border-radius: 3px;
-      background: #EF4444;
-      color: #FFFFFF;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .sm-seg-tag-paid {
-      font-size: 8px;
-      font-weight: 800;
-      padding: 1px 3px;
-      border-radius: 3px;
-      background: #10B981;
-      color: #FFFFFF;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    .sm-seg-name {
-      font-weight: 700;
-      font-size: 10px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .sm-seg-nts {
-      font-size: 8.5px;
-      opacity: 0.85;
-      font-weight: 600;
-    }
-    .sm-seg-mid-track {
-      height: 2px;
-      width: 6px;
-      background: currentColor;
-      opacity: 0.25;
-      border-radius: 1px;
-    }
-    .sm-seg-mid-name {
-      font-size: 9px;
-      opacity: 0.75;
-      font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 32px;
-    }
-    .sm-seg-bal-due {
-      font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
-      color: #B91C1C;
-    }
-    .sm-seg-bal-paid {
-      font-weight: 700;
-      font-size: 9px;
-      color: #047857;
-    }
-    .sm-seg-overlap-txt {
-      font-size: 9px;
-      font-weight: 800;
-      color: #92400E;
-    }
-
-    /* Fallback chip styles */
     .sm-booking-chip {
       position: relative;
       display: inline-flex;
@@ -1742,32 +1575,294 @@
     .sm-chip-airbnb {
       background: #FFE4E6;
       color: #9F1239;
-      border-color: #FDA4AF;
+      border: 1px solid #FDA4AF;
     }
     .sm-chip-booking {
       background: #DBEAFE;
       color: #1E40AF;
-      border-color: #93C5FD;
+      border: 1px solid #93C5FD;
     }
     .sm-chip-direct {
       background: #D1FAE5;
       color: #065F46;
-      border-color: #6EE7B7;
+      border: 1px solid #6EE7B7;
     }
     .sm-chip-blocked {
       background: #F1F5F9;
       color: #475569;
-      border-color: #CBD5E1;
+      border: 1px solid #CBD5E1;
     }
     .sm-chip-overlap {
       background: #FEF3C7;
       color: #92400E;
-      border-color: #FCD34D;
+      border: 1px solid #FCD34D;
     }
     .sm-chip-multi {
       background: #F3E8FF;
       color: #6B21A8;
-      border-color: #D8B4FE;
+      border: 1px solid #D8B4FE;
+    }
+
+    /* Today's Turnovers & Checkout Collection Feature Styles */
+    .sm-turnovers-panel {
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+    .sm-turnover-box {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 18px;
+      padding: 14px 18px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .sm-turnover-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .sm-turnover-head-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sm-turnover-icon {
+      font-size: 20px;
+    }
+    .sm-turnover-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0F172A;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sm-pill-in {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #DCFCE7;
+      color: #166534;
+      border: 1px solid #BBF7D0;
+    }
+    .sm-pill-out {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FECACA;
+    }
+    .sm-turnover-sub {
+      font-size: 11px;
+      color: #64748B;
+      margin-top: 2px;
+    }
+    .sm-total-collect-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .sm-total-collect-badge.has-balance {
+      background: #FEF3C7;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+    .sm-total-collect-badge.is-paid {
+      background: #DCFCE7;
+      color: #166534;
+      border: 1px solid #BBF7D0;
+    }
+    .sm-total-collect-badge strong {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+    }
+
+    /* Checkout rows */
+    .sm-checkout-guests-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sm-checkout-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+      transition: all 0.15s ease;
+    }
+    .sm-checkout-row:hover {
+      background: #F1F5F9;
+      border-color: #CBD5E1;
+    }
+    .sm-co-guest-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .sm-co-guest-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #0F172A;
+    }
+    .sm-co-prop-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 6px;
+      background: #EEF2FF;
+      color: #4338CA;
+      border: 1px solid #C7D2FE;
+    }
+    .sm-co-platform-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 5px;
+      text-transform: uppercase;
+    }
+    .sm-co-platform-pill.is-direct {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+    .sm-co-platform-pill.is-airbnb {
+      background: #FFE4E6;
+      color: #9F1239;
+    }
+    .sm-co-platform-pill.is-booking {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+    .sm-co-stay-meta {
+      font-size: 11px;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .sm-co-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sm-co-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .sm-co-input-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .sm-co-prefix {
+      position: absolute;
+      left: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #64748B;
+      pointer-events: none;
+    }
+    .sm-co-input {
+      padding: 6px 10px 6px 22px;
+      width: 105px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 800;
+      color: #0F172A;
+      background: #FFFFFF;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 10px;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .sm-co-input:focus {
+      border-color: #6366F1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    .sm-co-save-btn {
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #FFFFFF;
+      background: #4F46E5;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .sm-co-save-btn:hover {
+      background: #4338CA;
+      transform: translateY(-1px);
+    }
+    .sm-co-paid-btn {
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #065F46;
+      background: #D1FAE5;
+      border: 1px solid #A7F3D0;
+      border-radius: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .sm-co-paid-btn:hover {
+      background: #A7F3D0;
+      color: #064E3B;
+      transform: translateY(-1px);
+    }
+    .sm-btn-subtle {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #4338CA;
+      background: #EEF2FF;
+      border: 1px solid #C7D2FE;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sm-btn-subtle:hover {
+      background: #E0E7FF;
+    }
+    .sm-turnover-empty {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 10px 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
 
     /* Floating Hover Popup for Booking Details & Balance to Collect */
@@ -2847,6 +2942,11 @@
 
           <!-- Calendar Summary Stats Bar: Units, Occupancy %, Bookings, Lodging Total -->
           <div class="sm-stats-grid" id="sm-stats-container">
+            <!-- Populated dynamically by renderCalendarTopBarAndStats() -->
+          </div>
+
+          <!-- Today's Turnovers & Checkout Collections Panel -->
+          <div id="sm-turnovers-container" class="sm-turnovers-panel">
             <!-- Populated dynamically by renderCalendarTopBarAndStats() -->
           </div>
 
@@ -4870,19 +4970,24 @@
         if (m) advance = parseFloat(m[1].replace(/,/g, '')) || 0;
       }
 
-      const platLower = (b.platform || '').toLowerCase();
-      const payStatus = (b.paymentStatus || '').trim().toLowerCase();
-
-      // On Airbnb, payment is paid online directly to Airbnb prior to check-in, so balance to collect is 0
+      // Check if user has manually corrected or set the amount to collect
       let balance = 0;
-      if (platLower.includes('airbnb')) {
-        advance = total;
-        balance = 0;
-      } else if (payStatus === 'paid in full' || payStatus === 'paid') {
-        advance = total;
-        balance = 0;
+      if (b.manualCollectionAmount !== undefined && b.manualCollectionAmount !== null && b.manualCollectionAmount !== '') {
+        balance = Math.max(0, parseFloat(b.manualCollectionAmount) || 0);
       } else {
-        balance = Math.max(0, total - advance);
+        const platLower = (b.platform || '').toLowerCase();
+        const payStatus = (b.paymentStatus || '').trim().toLowerCase();
+
+        // On Airbnb, payment is paid online directly to Airbnb prior to check-in, so balance to collect is 0
+        if (platLower.includes('airbnb')) {
+          advance = total;
+          balance = 0;
+        } else if (payStatus === 'paid in full' || payStatus === 'paid') {
+          advance = total;
+          balance = 0;
+        } else {
+          balance = Math.max(0, total - advance);
+        }
       }
 
       const isPaid = (balance === 0 && total > 0);
@@ -4893,6 +4998,74 @@
         status: isPaid ? 'Paid in Full' : (advance > 0 ? 'Deposit Paid' : 'Pay on Arrival'),
         isPaid
       };
+    }
+
+    // Manual Checkout Collection Handlers (Changeable / Corrected Manually by Host)
+    function saveManualCollectionAmount(bookingId, newAmount) {
+      const b = currentBookings.find(x => x.id === bookingId);
+      if (!b) return;
+      const num = Math.max(0, parseFloat(newAmount) || 0);
+      b.manualCollectionAmount = num;
+
+      if (num === 0) {
+        b.paymentStatus = 'Paid in Full';
+      } else if (b.paymentStatus === 'Paid in Full') {
+        b.paymentStatus = 'Deposit Paid';
+      }
+
+      // Append/update manual collection note
+      const tag = `Collect: ₹${num.toLocaleString('en-IN')}`;
+      if (b.notes && b.notes.includes('Collect:')) {
+        b.notes = b.notes.replace(/Collect:\s*₹?[0-9,]+/i, tag);
+      } else if (b.notes) {
+        b.notes += ` | ${tag}`;
+      } else {
+        b.notes = tag;
+      }
+
+      saveBookings();
+      renderBookingsPortal();
+      showToast(`✅ Saved amount to collect for ${b.guestName}: ₹${num.toLocaleString('en-IN')}`);
+
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
+        window.AirbnbAPI.saveBooking(b).catch(err => console.warn('D1 sync notice:', err));
+      }
+    }
+
+    function markGuestFullyPaid(bookingId) {
+      const b = currentBookings.find(x => x.id === bookingId);
+      if (!b) return;
+      b.manualCollectionAmount = 0;
+      b.paymentStatus = 'Paid in Full';
+
+      const tag = `Collect: ₹0 (Paid in Full)`;
+      if (b.notes && b.notes.includes('Collect:')) {
+        b.notes = b.notes.replace(/Collect:\s*₹?[0-9,]+/i, tag);
+      } else if (b.notes) {
+        b.notes += ` | ${tag}`;
+      } else {
+        b.notes = tag;
+      }
+
+      saveBookings();
+      renderBookingsPortal();
+      showToast(`🎉 Marked ${b.guestName} as Paid in Full!`);
+
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
+        window.AirbnbAPI.saveBooking(b).catch(err => console.warn('D1 sync notice:', err));
+      }
+    }
+
+    let showUpcomingCheckouts = false;
+    function toggleUpcomingCheckouts() {
+      showUpcomingCheckouts = !showUpcomingCheckouts;
+      renderCalendarTopBarAndStats();
+    }
+
+    let turnoverSelectedDate = null;
+    function setTurnoverDate(dateStr) {
+      turnoverSelectedDate = dateStr;
+      renderCalendarTopBarAndStats();
     }
 
     // Calendar Hover Popup Manager
@@ -5865,7 +6038,30 @@
         </div>
       `;
 
-      // 2. Summary Stats Bar (4-Card Grid with Occupancy % highlight)
+      // Check-ins and Check-outs for turnover monitoring and checkout collection
+      const todayIsoStr = new Date().toISOString().slice(0, 10);
+      const activeTurnoverDate = turnoverSelectedDate || todayIsoStr;
+
+      const inBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+        return b.checkInDate === activeTurnoverDate;
+      });
+
+      const outBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+        return b.checkOutDate === activeTurnoverDate;
+      });
+
+      const checkInsCount = inBookings.length;
+      const checkOutsCount = outBookings.length;
+      let totalToCollect = 0;
+      outBookings.forEach(b => {
+        totalToCollect += getBookingFinancials(b).balance;
+      });
+
+      // 2. Summary Stats Bar (5-Card Grid with Occupancy % & Turnovers Today)
       statsEl.innerHTML = `
         <div class="sm-stat-card">
           <span class="sm-stat-label">Configured Units</span>
@@ -5887,9 +6083,165 @@
           <span class="sm-stat-value font-mono text-indigo-950">₹${formatCurrency(monthLodgingTotal)}</span>
           <div class="sm-stat-sub">Dir: ₹${formatCurrency(directTotal)} · OTAs: ₹${formatCurrency(otaTotal)}</div>
         </div>
+        <div class="sm-stat-card ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-highlight' : ''}" style="cursor: pointer;" onclick="document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth' });" title="Click to view departing guests and collect balance">
+          <span class="sm-stat-label ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-label' : ''}">🛎️ Turnovers (${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate})</span>
+          <div class="sm-stat-occ-row">
+            <span class="sm-stat-value font-mono text-indigo-950">${checkInsCount} In · ${checkOutsCount} Out</span>
+          </div>
+          <div class="sm-stat-sub">
+            To Collect: <strong style="color: ${totalToCollect > 0 ? '#B91C1C' : '#059669'}; font-family: 'JetBrains Mono', monospace;">₹${formatCurrency(totalToCollect)}</strong>
+          </div>
+        </div>
       `;
 
-      // 3. Legend & Secondary Tools Bar
+      // 3. Render Today's Turnovers & Checkout Collection Panel
+      const turnoversEl = document.getElementById('sm-turnovers-container');
+      if (turnoversEl) {
+        let upcomingCheckouts = [];
+        if (showUpcomingCheckouts) {
+          const next7Days = [];
+          for (let i = 1; i <= 7; i++) {
+            const dt = new Date();
+            dt.setDate(dt.getDate() + i);
+            next7Days.push(dt.toISOString().slice(0, 10));
+          }
+          upcomingCheckouts = currentBookings.filter(b => {
+            if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+            if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+            return next7Days.includes(b.checkOutDate);
+          }).sort((a, b) => a.checkOutDate.localeCompare(b.checkOutDate));
+        }
+
+        function renderCheckoutRow(bk) {
+          const fin = getBookingFinancials(bk);
+          const platLower = (bk.platform || '').toLowerCase();
+          let platClass = 'is-direct';
+          if (platLower.includes('airbnb')) platClass = 'is-airbnb';
+          else if (platLower.includes('booking')) platClass = 'is-booking';
+
+          return `
+            <div class="sm-checkout-row">
+              <div class="sm-co-guest-info">
+                <div class="sm-co-guest-name">
+                  <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
+                  <strong>${escapeHtml(bk.guestName)}</strong>
+                  <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
+                </div>
+                <div class="sm-co-stay-meta">
+                  <span>📅 ${bk.checkInDate} → ${bk.checkOutDate} (${bk.nights || 1}n)</span>
+                  <span>• Total: ₹${formatCurrency(fin.total)}</span>
+                  <span>• Recv: ₹${formatCurrency(fin.advance)}</span>
+                  ${fin.isPaid ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : (fin.balance > 0 ? `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(fin.balance)}</span>` : '')}
+                </div>
+              </div>
+              <div class="sm-co-actions">
+                <label class="sm-co-label" for="co-input-${bk.id}">Amount to Collect:</label>
+                <div class="sm-co-input-wrap">
+                  <span class="sm-co-prefix">₹</span>
+                  <input
+                    type="number"
+                    id="co-input-${bk.id}"
+                    class="sm-co-input"
+                    value="${fin.balance}"
+                    min="0"
+                    step="100"
+                    placeholder="0"
+                    title="Change or manually correct collection amount for ${escapeHtml(bk.guestName)}"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="sm-co-save-btn"
+                  onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)"
+                  title="Save corrected collection amount"
+                >
+                  💾 Save
+                </button>
+                <button
+                  type="button"
+                  class="sm-co-paid-btn"
+                  onclick="markGuestFullyPaid('${bk.id}')"
+                  title="Mark guest as fully paid"
+                >
+                  ✔ Paid
+                </button>
+                <button
+                  type="button"
+                  class="sm-tool-pill-btn"
+                  onclick="openEditBookingModal('${bk.id}')"
+                  title="View complete booking details"
+                  style="padding: 5px 8px;"
+                >
+                  ✏️ View
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        turnoversEl.innerHTML = `
+          <div class="sm-turnover-box">
+            <div class="sm-turnover-head">
+              <div class="sm-turnover-head-left">
+                <span class="sm-turnover-icon">🛎️</span>
+                <div>
+                  <div class="sm-turnover-title">
+                    <span>Turnovers &amp; Checkout Collections</span>
+                    <span class="sm-pill-in">⬇ ${checkInsCount} In</span>
+                    <span class="sm-pill-out">⬆ ${checkOutsCount} Out</span>
+                  </div>
+                  <div class="sm-turnover-sub">
+                    Showing date: <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
+                    ${activeTurnoverDate !== todayIsoStr ? `<button type="button" onclick="setTurnoverDate(null)" class="sm-today-btn" style="padding: 1px 7px; font-size: 10px; margin-left: 6px;">Reset to Today</button>` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="sm-total-collect-badge ${totalToCollect > 0 ? 'has-balance' : 'is-paid'}">
+                  <span>Total to Collect:</span>
+                  <strong>₹${formatCurrency(totalToCollect)}</strong>
+                </span>
+                <button
+                  type="button"
+                  onclick="toggleUpcomingCheckouts()"
+                  class="sm-tool-pill-btn"
+                  style="font-size: 11px; padding: 4px 10px;"
+                >
+                  ${showUpcomingCheckouts ? '▲ Hide Next 7 Days' : '📅 Next 7 Days'}
+                </button>
+              </div>
+            </div>
+
+            <div class="sm-checkout-guests-list">
+              ${outBookings.length > 0 ? `
+                ${outBookings.map(bk => renderCheckoutRow(bk)).join('')}
+              ` : `
+                <div style="padding: 10px 4px; font-size: 12px; color: #64748B; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                  <span>✨ No checkouts scheduled for ${activeTurnoverDate === todayIsoStr ? 'today' : activeTurnoverDate} (${checkInsCount} check-in${checkInsCount !== 1 ? 's' : ''} expected).</span>
+                </div>
+              `}
+
+              ${showUpcomingCheckouts && upcomingCheckouts.length > 0 ? `
+                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #CBD5E1;">
+                  <div style="font-size: 11.5px; font-weight: 800; color: #4338CA; margin-bottom: 6px;">
+                    📅 Upcoming Departures (Next 7 Days):
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    ${upcomingCheckouts.map(bk => renderCheckoutRow(bk)).join('')}
+                  </div>
+                </div>
+              ` : (showUpcomingCheckouts ? `
+                <div style="padding: 6px 4px; font-size: 11px; color: #94A3B8;">
+                  No upcoming departures in the next 7 days.
+                </div>
+              ` : '')}
+            </div>
+          </div>
+        `;
+      }
+
+      // 4. Legend & Secondary Tools Bar
       legendEl.innerHTML = `
         <div class="sm-legend-items">
           <span class="sm-legend-label">Legend:</span>
@@ -5962,8 +6314,10 @@
                         const dateStr = `${currentMonthPrefix}-${dayStr}`;
                         const isToday = (dateStr === todayIso);
 
-                        // Bookings staying tonight (Active night of stay):
-                        const stayBookings = currentBookings.filter(b => {
+                        // Active bookings covering this night:
+                        // Standard stays: checkInDate <= dateStr && checkOutDate > dateStr
+                        // Single-day same checkIn/checkOut: checkInDate === dateStr && checkOutDate === dateStr
+                        const cellBookings = currentBookings.filter(b => {
                           if (b.status === 'Cancelled') return false;
                           if (!matchesProperty(b.property, prop)) return false;
                           if (b.checkInDate <= dateStr && b.checkOutDate > dateStr) return true;
@@ -5971,190 +6325,94 @@
                           return false;
                         });
 
-                        // Bookings checking out this morning (Checkout day):
-                        const departingBookings = currentBookings.filter(b => {
-                          if (b.status === 'Cancelled') return false;
-                          if (!matchesProperty(b.property, prop)) return false;
-                          return (b.checkOutDate === dateStr && b.checkInDate < dateStr);
-                        });
+                        const count = cellBookings.length;
 
-                        function getSegmentChipClass(bk) {
-                          const isBlocked = (bk.platform === 'Blocked' || bk.status === 'Blocked');
-                          const hasOverlap = isBookingOverlapping(bk, currentBookings);
-                          if (isBlocked) return 'sm-chip-blocked';
-                          if (hasOverlap) return 'sm-chip-overlap';
-                          const platLower = (bk.platform || '').toLowerCase();
-                          if (platLower.includes('airbnb')) return 'sm-chip-airbnb';
-                          if (platLower.includes('booking')) return 'sm-chip-booking';
-                          return 'sm-chip-direct';
-                        }
+                        if (count === 0) {
+                          // Check if departing guest on checkout morning
+                          const departingBooking = currentBookings.find(b => {
+                            if (b.status === 'Cancelled') return false;
+                            if (!matchesProperty(b.property, prop)) return false;
+                            return b.checkOutDate === dateStr;
+                          });
 
-                        // Case 1: Fully Vacant
-                        if (stayBookings.length === 0 && departingBookings.length === 0) {
                           return `
                             <td
                               onclick="openAddBookingModal('${escapeJsString(prop)}', '${dateStr}')"
-                              title="Vacant - Click to book ${escapeHtml(prop)} on ${dateStr}"
+                              title="${departingBooking ? `Departing: ${escapeHtml(departingBooking.guestName)} at 11am. Vacant tonight - Click to book` : `Vacant - Click to book ${escapeHtml(prop)} on ${dateStr}`}"
                               class="sm-vacant-cell ${isToday ? 'is-today-cell' : ''}"
                             >
-                              <span class="sm-vacant-dot"></span>
+                              <span class="sm-vacant-dot ${departingBooking ? 'has-checkout' : ''}"></span>
                             </td>
                           `;
-                        }
-
-                        // Case 2: Checkout Morning Only (Guest departing today, vacant tonight)
-                        if (stayBookings.length === 0 && departingBookings.length === 1) {
-                          const bkDepart = departingBookings[0];
-                          const finDepart = getBookingFinancials(bkDepart);
-                          const chipClass = getSegmentChipClass(bkDepart);
-                          const isBlocked = (bkDepart.platform === 'Blocked' || bkDepart.status === 'Blocked');
-                          let endContent = '';
-                          if (isBlocked) {
-                            endContent = `<span class="sm-seg-tag-out">OUT</span> <span class="sm-seg-name">Blocked</span>`;
-                          } else if (finDepart.balance > 0) {
-                            endContent = `<span class="sm-seg-tag-due">OUT</span> <span class="sm-seg-bal-due">₹${formatCurrency(finDepart.balance)}</span>`;
-                          } else if (finDepart.total > 0) {
-                            endContent = `<span class="sm-seg-tag-paid">OUT</span> <span class="sm-seg-bal-paid">Paid</span>`;
-                          } else {
-                            endContent = `<span class="sm-seg-tag-out">OUT</span> <span class="sm-seg-name">${escapeHtml((bkDepart.guestName || 'Guest').split(' ')[0])}</span>`;
-                          }
-
-                          return `
-                            <td
-                              class="sm-booked-cell sm-cell-end ${isToday ? 'is-today-cell' : ''}"
-                              onclick="openEditBookingModal('${bkDepart.id}')"
-                              onmouseenter="showBookingHoverPopup(event, '${bkDepart.id}')"
-                              onmousemove="positionHoverPopup(event)"
-                              onmouseleave="hideBookingHoverPopup()"
-                              title="Checkout today: ${escapeHtml(bkDepart.guestName)} - Collect: ₹${finDepart.balance}"
-                            >
-                              <div class="sm-bar-segment ${chipClass} is-end">
-                                ${endContent}
-                              </div>
-                            </td>
-                          `;
-                        }
-
-                        // Case 3: Single Active Stay (No checkout this morning)
-                        if (stayBookings.length === 1 && departingBookings.length === 0) {
-                          const bk = stayBookings[0];
-                          const fin = getBookingFinancials(bk);
-                          const chipClass = getSegmentChipClass(bk);
+                        } else if (count === 1) {
+                          const bk = cellBookings[0];
                           const isBlocked = (bk.platform === 'Blocked' || bk.status === 'Blocked');
-                          const guestName = isBlocked ? 'Blocked' : (bk.guestName || 'Guest').split(' ')[0];
-                          const isSingle = (bk.nights === 1 || bk.checkInDate === bk.checkOutDate);
-                          const isStart = (bk.checkInDate === dateStr);
+                          const hasOverlap = isBookingOverlapping(bk, currentBookings);
+                          const missingPayout = isMissingPayout(bk);
 
-                          let segType = 'is-mid';
-                          let cellType = 'sm-cell-mid';
-                          let segContent = '';
+                          const platLower = (bk.platform || '').toLowerCase();
+                          const isAirbnb = platLower.includes('airbnb');
+                          const isBookingCom = platLower.includes('booking');
 
-                          if (isSingle) {
-                            segType = 'is-single';
-                            cellType = 'sm-cell-single';
-                            segContent = `
-                              <span class="sm-seg-tag-in">IN</span>
-                              <span class="sm-seg-name">${escapeHtml(guestName)}</span>
-                              <span class="sm-seg-nts">${fin.balance > 0 ? '₹' + formatCurrency(fin.balance) : (fin.total > 0 ? '₹' + formatKAmount(fin.total) : '1n')}</span>
-                            `;
-                          } else if (isStart) {
-                            segType = 'is-start';
-                            cellType = 'sm-cell-start';
-                            segContent = `
-                              <span class="sm-seg-tag-in">IN</span>
-                              <span class="sm-seg-name">${escapeHtml(guestName)}</span>
-                              <span class="sm-seg-nts">(${bk.nights || 1}n)</span>
-                            `;
-                          } else {
-                            segType = 'is-mid';
-                            cellType = 'sm-cell-mid';
-                            segContent = `
-                              <span class="sm-seg-mid-track"></span>
-                              <span class="sm-seg-mid-name">${escapeHtml(guestName)}</span>
-                              <span class="sm-seg-mid-track"></span>
-                            `;
+                          let chipClass = 'sm-chip-direct';
+                          let platLabel = 'Direct';
+                          if (isBlocked) {
+                            chipClass = 'sm-chip-blocked';
+                            platLabel = 'Blocked';
+                          } else if (hasOverlap) {
+                            chipClass = 'sm-chip-overlap';
+                            platLabel = 'Overlap';
+                          } else if (isAirbnb) {
+                            chipClass = 'sm-chip-airbnb';
+                            platLabel = 'Airbnb';
+                          } else if (isBookingCom) {
+                            chipClass = 'sm-chip-booking';
+                            platLabel = 'Booking';
                           }
+
+                          const kAmt = isBlocked ? '🔒' : formatKAmount(bk.payout);
+                          const guestFirstName = isBlocked ? 'Blocked' : (bk.guestName || 'Guest').split(' ')[0];
+                          const stayInfo = ` (${bk.checkInDate} to ${bk.checkOutDate}, ${bk.nights || 1} nts)`;
 
                           return `
                             <td
-                              class="sm-booked-cell ${cellType} ${isToday ? 'is-today-cell' : ''}"
                               onclick="openEditBookingModal('${bk.id}')"
                               onmouseenter="showBookingHoverPopup(event, '${bk.id}')"
                               onmousemove="positionHoverPopup(event)"
                               onmouseleave="hideBookingHoverPopup()"
-                              title="${escapeHtml(bk.guestName)} (${bk.checkInDate} to ${bk.checkOutDate}) - Click to view"
+                              title="Booked: ${escapeHtml(bk.payout || 'Missing payout')} [${escapeHtml(bk.platform || platLabel)}] - ${escapeHtml(bk.guestName)}${stayInfo}${hasOverlap ? ' [⚠️ Date Collision]' : ''}"
+                              class="sm-booked-cell ${isToday ? 'is-today-cell' : ''}"
                             >
-                              <div class="sm-bar-segment ${chipClass} ${segType}">
-                                ${segContent}
-                              </div>
+                              <span class="sm-booking-chip ${chipClass}">
+                                ${hasOverlap ? `<span class="sm-chip-badge" title="Collision">⚠️</span>` : (missingPayout ? `<span class="sm-chip-badge is-warning" onclick="event.stopPropagation(); quickAddPayout('${bk.id}')" title="Missing payout - click to add">+₹</span>` : '')}
+                                <span class="sm-chip-amt">${kAmt}</span>
+                                <span class="sm-chip-label">${escapeHtml(guestFirstName)}</span>
+                              </span>
                             </td>
                           `;
-                        }
-
-                        // Case 4: Turnover Day (One guest checks out this morning, next checks in this afternoon)
-                        if (stayBookings.length === 1 && departingBookings.length === 1) {
-                          const bkDepart = departingBookings[0];
-                          const bkStay = stayBookings[0];
-                          const finDepart = getBookingFinancials(bkDepart);
-                          const chipClassA = getSegmentChipClass(bkDepart);
-                          const chipClassB = getSegmentChipClass(bkStay);
-                          const isBlockedA = (bkDepart.platform === 'Blocked' || bkDepart.status === 'Blocked');
-                          const isBlockedB = (bkStay.platform === 'Blocked' || bkStay.status === 'Blocked');
-                          const nameA = isBlockedA ? 'Blocked' : (bkDepart.guestName || 'Guest').split(' ')[0];
-                          const nameB = isBlockedB ? 'Blocked' : (bkStay.guestName || 'Guest').split(' ')[0];
-                          const isSingleB = (bkStay.nights === 1 || bkStay.checkInDate === bkStay.checkOutDate);
+                        } else {
+                          // Turnover or multiple bookings on this day
+                          const totalAmt = cellBookings.reduce((s, b) => s + parsePayoutNumber(b.payout), 0);
+                          const kAmt = totalAmt > 0 ? `₹${Math.round(totalAmt / 1000 * 10) / 10}k` : '—';
+                          const guestsList = cellBookings.map(b => b.guestName).join(' & ');
 
                           return `
                             <td
-                              class="sm-booked-cell sm-cell-turnover ${isToday ? 'is-today-cell' : ''}"
-                              title="Turnover: Checkout ${escapeHtml(bkDepart.guestName)} (Collect: ₹${finDepart.balance}) / Check-in ${escapeHtml(bkStay.guestName)}"
+                              onclick="openEditBookingModal('${cellBookings[0].id}')"
+                              onmouseenter="showBookingHoverPopup(event, '${cellBookings[0].id}')"
+                              onmousemove="positionHoverPopup(event)"
+                              onmouseleave="hideBookingHoverPopup()"
+                              title="${count} Bookings: ${escapeHtml(guestsList)} - Click to view"
+                              class="sm-booked-cell ${isToday ? 'is-today-cell' : ''}"
                             >
-                              <div class="sm-turnover-container">
-                                <div
-                                  class="sm-bar-segment ${chipClassA} is-end sm-turnover-left"
-                                  onclick="event.stopPropagation(); openEditBookingModal('${bkDepart.id}')"
-                                  onmouseenter="showBookingHoverPopup(event, '${bkDepart.id}')"
-                                  onmousemove="positionHoverPopup(event)"
-                                  onmouseleave="hideBookingHoverPopup()"
-                                  title="Checkout: ${escapeHtml(bkDepart.guestName)} - Collect: ₹${finDepart.balance}"
-                                >
-                                  <span class="sm-seg-tag-due">OUT</span>
-                                  <span class="sm-seg-bal-due">${finDepart.balance > 0 ? '₹' + formatCurrency(finDepart.balance) : 'Paid'}</span>
-                                </div>
-                                <div
-                                  class="sm-bar-segment ${chipClassB} ${isSingleB ? 'is-single' : 'is-start'} sm-turnover-right"
-                                  onclick="event.stopPropagation(); openEditBookingModal('${bkStay.id}')"
-                                  onmouseenter="showBookingHoverPopup(event, '${bkStay.id}')"
-                                  onmousemove="positionHoverPopup(event)"
-                                  onmouseleave="hideBookingHoverPopup()"
-                                  title="Check-in: ${escapeHtml(bkStay.guestName)}"
-                                >
-                                  <span class="sm-seg-tag-in">IN</span>
-                                  <span class="sm-seg-name">${escapeHtml(nameB)}</span>
-                                </div>
-                              </div>
+                              <span class="sm-booking-chip sm-chip-multi">
+                                <span class="sm-chip-badge">⚠️</span>
+                                <span class="sm-chip-amt">${count}x</span>
+                                <span class="sm-chip-label">${kAmt}</span>
+                              </span>
                             </td>
                           `;
                         }
-
-                        // Case 5: Overlap / Collision / Multi-booking
-                        const allCellBookings = [...stayBookings, ...departingBookings];
-                        const guestsList = allCellBookings.map(b => b.guestName).join(' & ');
-                        return `
-                          <td
-                            class="sm-booked-cell sm-cell-overlap ${isToday ? 'is-today-cell' : ''}"
-                            onclick="openEditBookingModal('${allCellBookings[0].id}')"
-                            onmouseenter="showBookingHoverPopup(event, '${allCellBookings[0].id}')"
-                            onmousemove="positionHoverPopup(event)"
-                            onmouseleave="hideBookingHoverPopup()"
-                            title="Date Conflict / Overlap (${allCellBookings.length} bookings): ${escapeHtml(guestsList)}"
-                          >
-                            <div class="sm-bar-segment is-single sm-chip-overlap">
-                              <span class="sm-chip-badge">⚠️</span>
-                              <span class="sm-seg-overlap-txt">⚠️ ${allCellBookings.length}x Conflict</span>
-                            </div>
-                          </td>
-                        `;
                       }).join("")}
                     </tr>
                   `;
