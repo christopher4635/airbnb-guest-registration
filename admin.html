@@ -10898,11 +10898,23 @@
       const props = getPropertiesList();
       let matched = false;
 
+      // If currentVal is a split stay, add it directly as the selected option so "Custom / Other" never appears
+      const isSplitStay = currentVal && (currentVal.includes('➔') || currentVal.includes('(Split Stay)'));
+
+      if (isSplitStay) {
+        const splitOpt = document.createElement('option');
+        splitOpt.value = currentVal;
+        splitOpt.textContent = currentVal;
+        splitOpt.selected = true;
+        select.appendChild(splitOpt);
+        matched = true;
+      }
+
       props.forEach(p => {
         const opt = document.createElement('option');
         opt.value = p;
         opt.textContent = p;
-        if (currentVal && matchesProperty(p, currentVal)) {
+        if (!isSplitStay && currentVal && matchesProperty(p, currentVal)) {
           opt.selected = true;
           matched = true;
         }
@@ -10917,11 +10929,13 @@
 
       const customSpan = document.getElementById('bill-stay-property-custom');
       if (!matched && currentVal) {
-        select.value = '__custom__';
-        if (customSpan) {
-          customSpan.style.display = 'inline-block';
-          customSpan.innerText = currentVal;
-        }
+        // If it's another non-standard room name, add it cleanly to the dropdown
+        const opt = document.createElement('option');
+        opt.value = currentVal;
+        opt.textContent = currentVal;
+        opt.selected = true;
+        select.insertBefore(opt, customOpt);
+        if (customSpan) customSpan.style.display = 'none';
       } else {
         if (customSpan) customSpan.style.display = 'none';
       }
