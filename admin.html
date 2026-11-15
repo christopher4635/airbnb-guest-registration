@@ -4498,9 +4498,12 @@
             </table>
 
             <!-- Add Row Action (Hidden on print) -->
-            <div class="biller-no-print" style="margin-top: -8px; margin-bottom: 20px;">
+            <div class="biller-no-print" style="margin-top: -8px; margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
               <button type="button" class="btn btn-outline" onclick="addBillItemRow()" style="font-size: 12px; height: 32px; padding: 0 12px; border-style: dashed;">
-                ➕ Add Line Item (Extra Guest, Meals, Airport Cab, Late Checkout...)
+                ➕ Add Line Item (Extra Guest, Meals, Airport Cab...)
+              </button>
+              <button type="button" class="btn btn-outline" onclick="addDiscountItemRow(500)" style="font-size: 12px; height: 32px; padding: 0 12px; border-style: dashed; color: #DC2626; border-color: #FECACA; background: #FEF2F2;" title="Add a discount line (e.g. -₹500)">
+                🏷️ Add Discount (-₹500)
               </button>
             </div>
 
@@ -4539,8 +4542,16 @@
 
               <!-- Totals & GST 5% Box -->
               <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
-                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #475569;">
-                  <span>Subtotal (Lodging &amp; Services):</span>
+                <div style="display: none; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px; color: #475569;" id="bill-gross-row">
+                  <span>Rack Rate / Standard Total:</span>
+                  <span class="font-mono" style="font-weight: 600; color: #0F172A;" id="bill-gross-val">₹2,500.00</span>
+                </div>
+                <div id="bill-discount-row" style="display: none; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px; color: #DC2626;">
+                  <span>Less: Guest Discount / Offer:</span>
+                  <span class="font-mono" style="font-weight: 700;" id="bill-discount-val">-₹500.00</span>
+                </div>
+                <div id="bill-subtotal-row" style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; color: #0F172A;">
+                  <span id="bill-subtotal-label" style="font-weight: 700;">Subtotal (Lodging &amp; Services):</span>
                   <span class="font-mono" style="font-weight: 700; color: #0F172A;" id="bill-subtotal-val">₹7,000.00</span>
                 </div>
 
@@ -10913,6 +10924,20 @@
       }
     }
 
+    // Helper: Standard Rack Rates (Studio: 2500, 1 BHK: 3000, 2 BHK: decided by admin)
+    function getStandardRackRate(prop, defaultRate = 0) {
+      const p = (prop || '').toLowerCase();
+      if (p.includes('studio') || p.includes('1 room') || p.includes('room / studio') || (p.includes('room') && !p.includes('1 bhk') && !p.includes('2 bhk'))) {
+        return 2500;
+      }
+      if (p.includes('1 bhk') || p.includes('1bhk')) {
+        return 3000;
+      }
+      // 2 BHK rate is decided by admin
+      if (defaultRate > 0) return defaultRate;
+      return 4500;
+    }
+
     function onBillPropertySelected(val) {
       const customSpan = document.getElementById('bill-stay-property-custom');
       if (val === '__custom__') {
@@ -10923,10 +10948,17 @@
         }
       } else {
         if (customSpan) customSpan.style.display = 'none';
-        // Auto-update first accommodation row description
-        const firstRowDesc = document.querySelector('#bill-items-tbody tr:first-child .bill-edit-text');
-        if (firstRowDesc && firstRowDesc.innerText.includes('Accommodation:')) {
-          firstRowDesc.innerText = firstRowDesc.innerText.replace(/Accommodation:\s*[^(\n]+/i, `Accommodation: ${val} `);
+        const rackRate = getStandardRackRate(val);
+        // Auto-update first accommodation row description & rate if it was a default accommodation row
+        const firstRow = document.querySelector('#bill-items-tbody tr:first-child');
+        if (firstRow) {
+          const firstRowDesc = firstRow.querySelector('.bill-edit-text');
+          const firstRowRateInput = firstRow.querySelector('.bill-item-rate');
+          if (firstRowDesc && firstRowDesc.innerText.includes('Accommodation:')) {
+            firstRowDesc.innerText = `Accommodation: ${val} (1 Night @ ₹${rackRate.toLocaleString('en-IN')}/nt)`;
+            if (firstRowRateInput) firstRowRateInput.value = rackRate;
+            recalculateBill();
+          }
         }
       }
     }
@@ -11040,7 +11072,7 @@
       if (gAddrEl) gAddrEl.innerText = 'Assam, India';
       if (gGstinEl) gGstinEl.innerText = 'Unregistered';
 
-      populateBillPropertyDropdown('1 BHK');
+      populateBillPropertyDropdown('1 Room / Studio');
       if (inEl) inEl.innerText = `${formatInvoiceDate(todayStr)} (02:00 PM)`;
       
       const tomorrow = new Date();
@@ -11051,16 +11083,16 @@
       if (gstEl) gstEl.innerText = '2 Guests';
       if (chEl) chEl.innerText = 'Direct / Walk-in';
 
-      // Clear & set default line item
+      // Clear & set default line item (Studio: 2500)
       const tbody = document.getElementById('bill-items-tbody');
       if (tbody) {
         tbody.innerHTML = '';
-        addBillItemRow('Accommodation: 1 BHK (1 Night)', '996311', 1, 3500);
+        addBillItemRow('Accommodation: 1 Room / Studio (1 Night @ ₹2,500/nt)', '996311', 1, 2500);
       }
 
       if (pModeEl) pModeEl.innerText = 'Cash / UPI';
       if (pStatEl) pStatEl.innerText = 'Settled';
-      if (advEl) advEl.value = (billerMode === 'gst') ? 3675 : 3500;
+      if (advEl) advEl.value = (billerMode === 'gst') ? 2625 : 2500;
       recalculateBill();
     }
 
@@ -11120,17 +11152,26 @@
         split.legs.forEach(leg => {
           const rev = getBookingRevenue(leg);
           const nts = leg.nights || 1;
-          const ratePerNight = Math.round(rev / nts);
-          const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts)`;
-          addBillItemRow(desc, '996311', nts, ratePerNight);
+          const actualRate = Math.round(rev / nts);
+          const rackRate = getStandardRackRate(leg.property, actualRate);
+
+          if (actualRate < rackRate) {
+            const discountPerNt = rackRate - actualRate;
+            const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts @ ₹${rackRate.toLocaleString('en-IN')}/nt)`;
+            addBillItemRow(desc, '996311', nts, rackRate);
+            addBillItemRow(`Special Guest Discount / Offer for ${leg.property} (-₹${discountPerNt.toLocaleString('en-IN')}/nt)`, '996311', nts, -discountPerNt);
+          } else {
+            const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts)`;
+            addBillItemRow(desc, '996311', nts, actualRate);
+          }
         });
 
         totalAdvanceAcrossChain = split.totalAdvance;
       } else {
         const fin = getBookingFinancials(b);
         const nts = b.nights || 1;
-        const ratePerNight = (fin.total > 0 && nts > 0) ? Math.round(fin.total / nts) : 3500;
-        const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts)`;
+        const actualRate = (fin.total > 0 && nts > 0) ? Math.round(fin.total / nts) : getStandardRackRate(b.property);
+        const rackRate = getStandardRackRate(b.property, actualRate);
 
         populateBillPropertyDropdown(b.property || '1 BHK');
         if (inEl) inEl.innerText = `${formatInvoiceDate(b.checkInDate)} (02:00 PM)`;
@@ -11139,7 +11180,16 @@
         if (gstEl) gstEl.innerText = `${b.guestsCount || 2} Guests`;
         if (chEl) chEl.innerText = b.platform || 'Direct';
 
-        addBillItemRow(desc, '996311', nts, ratePerNight);
+        if (actualRate < rackRate) {
+          const discountPerNt = rackRate - actualRate;
+          const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts @ ₹${rackRate.toLocaleString('en-IN')}/nt)`;
+          addBillItemRow(desc, '996311', nts, rackRate);
+          addBillItemRow(`Special Guest Discount / Offer Applied (-₹${discountPerNt.toLocaleString('en-IN')}/nt)`, '996311', nts, -discountPerNt);
+        } else {
+          const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts)`;
+          addBillItemRow(desc, '996311', nts, actualRate);
+        }
+
         totalAdvanceAcrossChain = fin.advance;
       }
 
@@ -11182,7 +11232,7 @@
           <input type="number" class="bill-num-input bill-item-qty" value="${qty}" min="1" step="1" oninput="recalculateBill()">
         </td>
         <td style="text-align: right;">
-          <input type="number" class="bill-num-input bill-item-rate" value="${rate}" min="0" step="50" oninput="recalculateBill()" style="width: 95px;">
+          <input type="number" class="bill-num-input bill-item-rate" value="${rate}" step="50" oninput="recalculateBill()" style="width: 95px;">
         </td>
         <td style="text-align: right; font-weight: 700; color: #0F172A;" class="bill-item-amount font-mono">
           ₹0.00
@@ -11193,6 +11243,11 @@
       `;
       tbody.appendChild(tr);
       recalculateBill();
+    }
+
+    // Add a discount line item
+    function addDiscountItemRow(amount = 500) {
+      addBillItemRow('Special Guest Discount / Courtesy Offer', '996311', 1, -Math.abs(amount));
     }
 
     // Delete a line item row
@@ -11218,17 +11273,34 @@
     // Core financial & GST recalculation engine
     function recalculateBill() {
       const rows = document.querySelectorAll('#bill-items-tbody tr');
-      let subtotal = 0;
+      let grossTotal = 0;
+      let discountTotal = 0;
+      let netSubtotal = 0;
 
       rows.forEach(r => {
         const qty = parseFloat(r.querySelector('.bill-item-qty')?.value) || 0;
         const rate = parseFloat(r.querySelector('.bill-item-rate')?.value) || 0;
         const amount = qty * rate;
-        subtotal += amount;
+
+        if (amount < 0) {
+          discountTotal += Math.abs(amount);
+        } else {
+          grossTotal += amount;
+        }
 
         const amtEl = r.querySelector('.bill-item-amount');
-        if (amtEl) amtEl.textContent = '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (amtEl) {
+          if (amount < 0) {
+            amtEl.textContent = '-₹' + Math.abs(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            amtEl.style.color = '#DC2626';
+          } else {
+            amtEl.textContent = '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            amtEl.style.color = '#0F172A';
+          }
+        }
       });
+
+      netSubtotal = Math.max(0, grossTotal - discountTotal);
 
       const isGst = (billerMode === 'gst');
       let cgst = 0;
@@ -11236,18 +11308,49 @@
       let totalGst = 0;
 
       if (isGst) {
-        cgst = subtotal * 0.025; // 2.5% CGST
-        sgst = subtotal * 0.025; // 2.5% SGST
-        totalGst = cgst + sgst;  // Extra 5% GST
+        cgst = netSubtotal * 0.025; // 2.5% CGST
+        sgst = netSubtotal * 0.025; // 2.5% SGST
+        totalGst = cgst + sgst;     // Extra 5% GST
       }
 
-      const grandTotal = Math.round(subtotal + totalGst);
+      const grandTotal = Math.round(netSubtotal + totalGst);
       const advancePaid = parseFloat(document.getElementById('bill-advance-paid-input')?.value) || 0;
       const balanceDue = Math.max(0, grandTotal - advancePaid);
 
+      // Update Rack Rate Gross row
+      const grossRow = document.getElementById('bill-gross-row');
+      const grossEl = document.getElementById('bill-gross-val');
+      if (grossEl) grossEl.textContent = '₹' + grossTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      // Update Discount row
+      const discRow = document.getElementById('bill-discount-row');
+      const discEl = document.getElementById('bill-discount-val');
+      const subRow = document.getElementById('bill-subtotal-row');
+      const subLabel = document.getElementById('bill-subtotal-label');
+      if (discRow) {
+        if (discountTotal > 0) {
+          discRow.style.display = 'flex';
+          if (discEl) discEl.textContent = '-₹' + discountTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          if (grossRow) grossRow.style.display = 'flex';
+          if (subRow) {
+            subRow.style.borderTop = '1px dashed #CBD5E1';
+            subRow.style.paddingTop = '6px';
+          }
+          if (subLabel) subLabel.textContent = 'Net Subtotal (Lodging & Services):';
+        } else {
+          discRow.style.display = 'none';
+          if (grossRow) grossRow.style.display = 'none';
+          if (subRow) {
+            subRow.style.borderTop = 'none';
+            subRow.style.paddingTop = '0';
+          }
+          if (subLabel) subLabel.textContent = 'Subtotal (Lodging & Services):';
+        }
+      }
+
       // Update Subtotal and GST fields
       const subEl = document.getElementById('bill-subtotal-val');
-      if (subEl) subEl.textContent = '₹' + subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (subEl) subEl.textContent = '₹' + netSubtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
       const gstWrap = document.getElementById('bill-gst-rows-wrap');
       if (gstWrap) gstWrap.style.display = isGst ? 'block' : 'none';
