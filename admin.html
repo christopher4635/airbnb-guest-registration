@@ -3063,6 +3063,40 @@
       opacity: 1;
       background: #FEE2E2;
     }
+    .btn-bill-type {
+      background: transparent;
+      color: #475569;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-bill-type.active {
+      background: #0F172A;
+      color: #FFFFFF;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .bill-prop-select {
+      height: 30px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #4338CA;
+      border: 1.5px solid #C7D2FE;
+      border-radius: 6px;
+      padding: 2px 8px;
+      background: #EEF2FF;
+      cursor: pointer;
+      outline: none;
+    }
+    .bill-prop-select:hover {
+      border-color: #818CF8;
+    }
+    .bill-prop-select:focus {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
 
     /* Print Stylesheet for Pristine Invoicing */
     @media print {
@@ -3077,6 +3111,16 @@
         padding: 0 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+      }
+      select.bill-prop-select {
+        border: none !important;
+        background: transparent !important;
+        color: #000000 !important;
+        font-weight: 700 !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        padding: 0 !important;
       }
       /* Hide all portal navigation, sidebars and headers */
       .header,
@@ -4315,16 +4359,19 @@
             </div>
 
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 6px; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 6px;">
-                <label for="biller-apply-gst" style="font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 6px; margin: 0;">
-                  <input type="checkbox" id="biller-apply-gst" checked onchange="recalculateBill()" style="width: 15px; height: 15px; cursor: pointer;">
-                  <span>Extra 5% GST</span>
-                </label>
+              <!-- Option for GST and Non GST Bill -->
+              <div style="display: inline-flex; border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; background: #F1F5F9; padding: 2px;">
+                <button type="button" id="btn-bill-type-gst" onclick="setBillerMode('gst')" class="btn-bill-type active">
+                  🧾 GST Bill (5% Tax)
+                </button>
+                <button type="button" id="btn-bill-type-nongst" onclick="setBillerMode('nongst')" class="btn-bill-type">
+                  📄 Non-GST Bill
+                </button>
               </div>
 
-              <div style="display: flex; align-items: center; gap: 4px;">
+              <div id="biller-host-gstin-wrap" style="display: flex; align-items: center; gap: 4px;">
                 <span style="font-size: 11px; font-weight: 600; color: #64748B;">Host GSTIN:</span>
-                <input type="text" id="biller-host-gstin-input" placeholder="e.g. 18ABCDE1234F1Z5" style="height: 36px; width: 170px; font-size: 12px; border-radius: 6px; border: 1px solid #CBD5E1; padding: 4px 8px; font-family: monospace; font-weight: 700;" oninput="onHostGstinInputChanged(this.value)" title="Host GST ID / GSTIN (Saved automatically)">
+                <input type="text" id="biller-host-gstin-input" value="18BSPPB3865G1ZH" placeholder="18BSPPB3865G1ZH" style="height: 36px; width: 175px; font-size: 12px; border-radius: 6px; border: 1px solid #CBD5E1; padding: 4px 8px; font-family: monospace; font-weight: 700;" oninput="onHostGstinInputChanged(this.value)" title="Host GST ID / GSTIN (Fixed: 18BSPPB3865G1ZH)">
               </div>
 
               <button type="button" class="btn btn-primary" onclick="printCustomerBill()" style="background: #2563EB; border-color: #2563EB; height: 36px; padding: 0 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
@@ -4354,18 +4401,18 @@
                   Luxury Serviced Apartments &amp; Stays
                 </div>
                 <div contenteditable="true" class="bill-edit-text" id="bill-hotel-address" style="font-size: 12px; color: #475569;">
-                  Main Road, Kokrajhar / Guwahati, Assam, India - 783370
+                  Ward No. 5, Tengapara, Kokrajhar / Guwahati, Assam, India - 783370
                 </div>
                 <div contenteditable="true" class="bill-edit-text" id="bill-hotel-contact" style="font-size: 12px; color: #475569;">
                   Phone: +91 70022 93073 • Email: stay@elitehomes.in
                 </div>
-                <div style="margin-top: 6px; font-size: 13px; font-weight: 800; color: #0F172A;">
-                  GSTIN / GST ID: <span contenteditable="true" class="bill-edit-text bill-highlight-box" id="bill-host-gstin-display" oninput="onBillHostGstinEdited(this.innerText)">18ABCDE1234F1Z5</span>
+                <div id="bill-host-gstin-row" style="margin-top: 6px; font-size: 13px; font-weight: 800; color: #0F172A;">
+                  GSTIN / GST ID: <span contenteditable="true" class="bill-edit-text bill-highlight-box" id="bill-host-gstin-display" oninput="onBillHostGstinEdited(this.innerText)">18BSPPB3865G1ZH</span>
                 </div>
               </div>
 
               <div style="text-align: right; min-width: 220px;">
-                <div style="font-size: 18px; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 1px; border: 1.5px solid #0F172A; padding: 4px 12px; border-radius: 6px; display: inline-block; margin-bottom: 8px;">
+                <div id="bill-badge-title" style="font-size: 18px; font-weight: 900; color: #0F172A; text-transform: uppercase; letter-spacing: 1px; border: 1.5px solid #0F172A; padding: 4px 12px; border-radius: 6px; display: inline-block; margin-bottom: 8px;">
                   TAX INVOICE
                 </div>
                 <div style="font-size: 12px; margin-bottom: 3px;">
@@ -4374,7 +4421,7 @@
                 <div style="font-size: 12px; margin-bottom: 3px;">
                   <strong>Invoice Date:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-invoice-date">15 Nov 2026</span>
                 </div>
-                <div style="font-size: 11.5px; color: #64748B;">
+                <div id="bill-sac-row" style="font-size: 11.5px; color: #64748B;">
                   <strong>SAC Code:</strong> 996311 (Lodging Services)
                 </div>
                 <div style="font-size: 11.5px; color: #64748B;">
@@ -4399,9 +4446,9 @@
                   <strong>Email:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-email">—</span>
                 </div>
                 <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
-                  <strong>Origin / City:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-address">India</span>
+                  <strong>Origin / City:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-address">Assam, India</span>
                 </div>
-                <div style="font-size: 12px; color: #0F172A; margin-top: 4px;">
+                <div id="bill-guest-gstin-row" style="font-size: 12px; color: #0F172A; margin-top: 4px;">
                   <strong>Guest GSTIN (B2B):</strong> <span contenteditable="true" class="bill-edit-text" id="bill-guest-gstin" style="font-family: monospace;">Unregistered</span>
                 </div>
               </div>
@@ -4410,8 +4457,12 @@
                 <div style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #64748B; margin-bottom: 6px;">
                   Reservation &amp; Stay Details
                 </div>
-                <div style="font-size: 12.5px; color: #0F172A; margin-bottom: 3px;">
-                  <strong>Room / Property:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-stay-property" style="font-weight: 700; color: #4338CA;">1 BHK Executive Suite</span>
+                <div style="font-size: 12.5px; color: #0F172A; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <strong>Room / Property:</strong>
+                  <select id="bill-stay-property-select" class="bill-prop-select" onchange="onBillPropertySelected(this.value)">
+                    <!-- Dynamically populated from getPropertiesList() -->
+                  </select>
+                  <span contenteditable="true" class="bill-edit-text font-mono" id="bill-stay-property-custom" style="display: none; font-size: 12px; font-weight: 700; color: #4338CA;" oninput="onCustomPropertyTyped(this.innerText)"></span>
                 </div>
                 <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
                   <strong>Check-in:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-stay-checkin">14 Nov 2026 (02:00 PM)</span>
@@ -4434,7 +4485,7 @@
                 <tr>
                   <th style="width: 36px; text-align: center;">#</th>
                   <th>Description / Particulars</th>
-                  <th style="width: 85px; text-align: center;">SAC</th>
+                  <th class="bill-col-sac" style="width: 85px; text-align: center;">SAC</th>
                   <th style="width: 95px; text-align: right;">Qty / Nts</th>
                   <th style="width: 110px; text-align: right;">Rate (₹)</th>
                   <th style="width: 120px; text-align: right;">Amount (₹)</th>
@@ -4470,11 +4521,11 @@
                 
                 <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
                   <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px;">
-                    Bank / UPI Details for Payment:
+                    Bank &amp; UPI Details for Payment:
                   </div>
                   <div contenteditable="true" class="bill-edit-text" id="bill-bank-info" style="font-size: 11.5px; color: #334155; line-height: 1.5;">
-                    UPI ID: <strong>7002293073@upi</strong> • Account Name: <strong>Elite Homes</strong><br>
-                    Bank: HDFC Bank • IFSC: HDFC0001234
+                    UPI ID: <strong>bobuco@ybl</strong> • Account Name: <strong>Elite Homes</strong><br>
+                    Bank: <strong>UCO Bank</strong> • A/C No: <strong>04990110124666</strong> • IFSC: <strong>UCBA0000499</strong>
                   </div>
                 </div>
 
@@ -10760,14 +10811,154 @@
       return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
+    // Global Biller Mode: 'gst' (default) | 'nongst'
+    let billerMode = localStorage.getItem('elitehomes_biller_mode') || 'gst';
+
+    // Invoice Number Generator: Starts from EH-YYYY-MM-001
+    function getNextInvoiceNumber(forBookingId = null) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const prefix = `EH-${year}-${month}-`;
+
+      if (forBookingId) {
+        const b = currentBookings.find(x => x && x.id === forBookingId);
+        if (b && b.notes) {
+          const m = b.notes.match(/Invoice\s*(?:#|No|Number)?:\s*(EH-[0-9]{4}-[0-9]{2}-[0-9]{3,})/i);
+          if (m) return m[1];
+        }
+      }
+
+      const key = `elitehomes_inv_counter_${year}_${month}`;
+      let counter = parseInt(localStorage.getItem(key), 10);
+      if (isNaN(counter) || counter < 1) counter = 1;
+      return `${prefix}${String(counter).padStart(3, '0')}`;
+    }
+
+    // Toggle between GST Bill and Non-GST Bill
+    function setBillerMode(mode) {
+      billerMode = (mode === 'nongst') ? 'nongst' : 'gst';
+      localStorage.setItem('elitehomes_biller_mode', billerMode);
+
+      const btnGst = document.getElementById('btn-bill-type-gst');
+      const btnNonGst = document.getElementById('btn-bill-type-nongst');
+      const badgeTitle = document.getElementById('bill-badge-title');
+      const hostGstinRow = document.getElementById('bill-host-gstin-row');
+      const hostGstinWrap = document.getElementById('biller-host-gstin-wrap');
+      const sacRow = document.getElementById('bill-sac-row');
+      const guestGstinRow = document.getElementById('bill-guest-gstin-row');
+      const gstRowsWrap = document.getElementById('bill-gst-rows-wrap');
+      const sacCols = document.querySelectorAll('.bill-col-sac');
+
+      if (billerMode === 'nongst') {
+        if (btnGst) btnGst.classList.remove('active');
+        if (btnNonGst) btnNonGst.classList.add('active');
+        if (badgeTitle) badgeTitle.textContent = 'BILL OF SUPPLY / GUEST INVOICE';
+        if (hostGstinRow) hostGstinRow.style.display = 'none';
+        if (hostGstinWrap) hostGstinWrap.style.display = 'none';
+        if (sacRow) sacRow.style.display = 'none';
+        if (guestGstinRow) guestGstinRow.style.display = 'none';
+        if (gstRowsWrap) gstRowsWrap.style.display = 'none';
+        sacCols.forEach(el => el.style.display = 'none');
+      } else {
+        if (btnGst) btnGst.classList.add('active');
+        if (btnNonGst) btnNonGst.classList.remove('active');
+        if (badgeTitle) badgeTitle.textContent = 'TAX INVOICE';
+        if (hostGstinRow) hostGstinRow.style.display = 'block';
+        if (hostGstinWrap) hostGstinWrap.style.display = 'flex';
+        if (sacRow) sacRow.style.display = 'block';
+        if (guestGstinRow) guestGstinRow.style.display = 'block';
+        if (gstRowsWrap) gstRowsWrap.style.display = 'block';
+        sacCols.forEach(el => el.style.display = '');
+      }
+
+      recalculateBill();
+    }
+
+    // Populate Room Property Dropdown from configured rooms
+    function populateBillPropertyDropdown(currentVal = '') {
+      const select = document.getElementById('bill-stay-property-select');
+      if (!select) return;
+      select.innerHTML = '';
+
+      const props = getPropertiesList();
+      let matched = false;
+
+      props.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        if (currentVal && matchesProperty(p, currentVal)) {
+          opt.selected = true;
+          matched = true;
+        }
+        select.appendChild(opt);
+      });
+
+      // Custom option
+      const customOpt = document.createElement('option');
+      customOpt.value = '__custom__';
+      customOpt.textContent = '✏️ Custom / Other Room Name...';
+      select.appendChild(customOpt);
+
+      const customSpan = document.getElementById('bill-stay-property-custom');
+      if (!matched && currentVal) {
+        select.value = '__custom__';
+        if (customSpan) {
+          customSpan.style.display = 'inline-block';
+          customSpan.innerText = currentVal;
+        }
+      } else {
+        if (customSpan) customSpan.style.display = 'none';
+      }
+    }
+
+    function onBillPropertySelected(val) {
+      const customSpan = document.getElementById('bill-stay-property-custom');
+      if (val === '__custom__') {
+        if (customSpan) {
+          customSpan.style.display = 'inline-block';
+          if (!customSpan.innerText.trim()) customSpan.innerText = 'Suite / Special Unit';
+          setTimeout(() => customSpan.focus(), 50);
+        }
+      } else {
+        if (customSpan) customSpan.style.display = 'none';
+        // Auto-update first accommodation row description
+        const firstRowDesc = document.querySelector('#bill-items-tbody tr:first-child .bill-edit-text');
+        if (firstRowDesc && firstRowDesc.innerText.includes('Accommodation:')) {
+          firstRowDesc.innerText = firstRowDesc.innerText.replace(/Accommodation:\s*[^(\n]+/i, `Accommodation: ${val} `);
+        }
+      }
+    }
+
+    function onCustomPropertyTyped(val) {
+      const firstRowDesc = document.querySelector('#bill-items-tbody tr:first-child .bill-edit-text');
+      if (firstRowDesc && firstRowDesc.innerText.includes('Accommodation:')) {
+        firstRowDesc.innerText = firstRowDesc.innerText.replace(/Accommodation:\s*[^(\n]+/i, `Accommodation: ${val.trim() || 'Room'} `);
+      }
+    }
+
     // Initialize Biller View
     function initBillerView(prefillBookingId = null) {
-      // 1. Populate Host GSTIN from localStorage
-      const savedGstin = localStorage.getItem('elitehomes_host_gstin') || '18ABCDE1234F1Z5';
+      // 1. Populate fixed Host GSTIN & Address
+      const fixedGstin = '18BSPPB3865G1ZH';
+      const fixedAddress = 'Ward No. 5, Tengapara, Kokrajhar / Guwahati, Assam, India - 783370';
+
       const inputGstin = document.getElementById('biller-host-gstin-input');
       const displayGstin = document.getElementById('bill-host-gstin-display');
-      if (inputGstin) inputGstin.value = savedGstin;
-      if (displayGstin) displayGstin.innerText = savedGstin;
+      const addrEl = document.getElementById('bill-hotel-address');
+      const bankInfoEl = document.getElementById('bill-bank-info');
+
+      if (inputGstin) inputGstin.value = fixedGstin;
+      if (displayGstin) displayGstin.innerText = fixedGstin;
+      if (addrEl) addrEl.innerText = fixedAddress;
+
+      if (bankInfoEl) {
+        bankInfoEl.innerHTML = `UPI ID: <strong>bobuco@ybl</strong> • Account Name: <strong>Elite Homes</strong><br>Bank: <strong>UCO Bank</strong> • A/C No: <strong>04990110124666</strong> • IFSC: <strong>UCBA0000499</strong>`;
+      }
+
+      // Apply GST / Non-GST mode
+      setBillerMode(billerMode);
 
       // 2. Populate Booking Select Dropdown
       const select = document.getElementById('biller-booking-select');
@@ -10803,17 +10994,17 @@
 
     // Handler when Host GSTIN is edited
     function onHostGstinInputChanged(val) {
-      const g = (val || '').trim();
+      const g = (val || '').trim() || '18BSPPB3865G1ZH';
       const display = document.getElementById('bill-host-gstin-display');
-      if (display) display.innerText = g || '18ABCDE1234F1Z5';
-      localStorage.setItem('elitehomes_host_gstin', g || '18ABCDE1234F1Z5');
+      if (display) display.innerText = g;
+      localStorage.setItem('elitehomes_host_gstin', g);
     }
 
     function onBillHostGstinEdited(val) {
-      const g = (val || '').trim();
+      const g = (val || '').trim() || '18BSPPB3865G1ZH';
       const input = document.getElementById('biller-host-gstin-input');
       if (input) input.value = g;
-      localStorage.setItem('elitehomes_host_gstin', g || '18ABCDE1234F1Z5');
+      localStorage.setItem('elitehomes_host_gstin', g);
     }
 
     // Reset to blank template for walk-in / manual billing
@@ -10823,7 +11014,7 @@
       if (select) select.value = '';
 
       const todayStr = new Date().toISOString().slice(0, 10);
-      const invNo = 'EH-' + new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + Math.floor(100 + Math.random() * 900);
+      const invNo = getNextInvoiceNumber();
 
       const invNoEl = document.getElementById('bill-invoice-no');
       const invDateEl = document.getElementById('bill-invoice-date');
@@ -10832,7 +11023,6 @@
       const gEmailEl = document.getElementById('bill-guest-email');
       const gAddrEl = document.getElementById('bill-guest-address');
       const gGstinEl = document.getElementById('bill-guest-gstin');
-      const propEl = document.getElementById('bill-stay-property');
       const inEl = document.getElementById('bill-stay-checkin');
       const outEl = document.getElementById('bill-stay-checkout');
       const ntsEl = document.getElementById('bill-stay-nights');
@@ -10850,7 +11040,7 @@
       if (gAddrEl) gAddrEl.innerText = 'Assam, India';
       if (gGstinEl) gGstinEl.innerText = 'Unregistered';
 
-      if (propEl) propEl.innerText = '1 BHK / Studio Room';
+      populateBillPropertyDropdown('1 BHK');
       if (inEl) inEl.innerText = `${formatInvoiceDate(todayStr)} (02:00 PM)`;
       
       const tomorrow = new Date();
@@ -10865,12 +11055,12 @@
       const tbody = document.getElementById('bill-items-tbody');
       if (tbody) {
         tbody.innerHTML = '';
-        addBillItemRow('Room Accommodation Charges (1 Night)', '996311', 1, 3500);
+        addBillItemRow('Accommodation: 1 BHK (1 Night)', '996311', 1, 3500);
       }
 
       if (pModeEl) pModeEl.innerText = 'Cash / UPI';
       if (pStatEl) pStatEl.innerText = 'Settled';
-      if (advEl) advEl.value = 3675; // 3500 + 5% GST = 3675
+      if (advEl) advEl.value = (billerMode === 'gst') ? 3675 : 3500;
       recalculateBill();
     }
 
@@ -10888,7 +11078,7 @@
       // Split Stay Detection: If Kamal or other guest stayed across rooms, pull all legs!
       const split = getSplitStayInfo(b, currentBookings);
 
-      const invNo = 'EH-' + new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + (b.id.replace(/[^0-9]/g, '').slice(-3) || Math.floor(100 + Math.random() * 900));
+      const invNo = getNextInvoiceNumber(b.id);
       const invNoEl = document.getElementById('bill-invoice-no');
       const invDateEl = document.getElementById('bill-invoice-date');
       const gNameEl = document.getElementById('bill-guest-name');
@@ -10896,7 +11086,6 @@
       const gEmailEl = document.getElementById('bill-guest-email');
       const gAddrEl = document.getElementById('bill-guest-address');
       const gGstinEl = document.getElementById('bill-guest-gstin');
-      const propEl = document.getElementById('bill-stay-property');
       const inEl = document.getElementById('bill-stay-checkin');
       const outEl = document.getElementById('bill-stay-checkout');
       const ntsEl = document.getElementById('bill-stay-nights');
@@ -10912,7 +11101,7 @@
       if (gNameEl) gNameEl.innerText = b.guestName || 'Valued Guest';
       if (gPhoneEl) gPhoneEl.innerText = b.phone || '—';
       if (gEmailEl) gEmailEl.innerText = b.email || '—';
-      if (gAddrEl) gAddrEl.innerText = 'India';
+      if (gAddrEl) gAddrEl.innerText = 'Assam, India';
       if (gGstinEl) gGstinEl.innerText = 'Unregistered';
 
       const tbody = document.getElementById('bill-items-tbody');
@@ -10921,7 +11110,7 @@
       let totalAdvanceAcrossChain = 0;
 
       if (split.isSplit) {
-        if (propEl) propEl.innerText = split.legs.map(l => l.property).join(' ➔ ') + ' (Split Stay)';
+        populateBillPropertyDropdown(split.legs.map(l => l.property).join(' ➔ ') + ' (Split Stay)');
         if (inEl) inEl.innerText = `${formatInvoiceDate(split.overallCheckIn)} (02:00 PM)`;
         if (outEl) outEl.innerText = `${formatInvoiceDate(split.overallCheckOut)} (11:00 AM)`;
         if (ntsEl) ntsEl.innerText = `${split.totalNights} Nights Total (${split.legs.length} Rooms)`;
@@ -10943,7 +11132,7 @@
         const ratePerNight = (fin.total > 0 && nts > 0) ? Math.round(fin.total / nts) : 3500;
         const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts)`;
 
-        if (propEl) propEl.innerText = b.property || 'Elite Homes Suite';
+        populateBillPropertyDropdown(b.property || '1 BHK');
         if (inEl) inEl.innerText = `${formatInvoiceDate(b.checkInDate)} (02:00 PM)`;
         if (outEl) outEl.innerText = `${formatInvoiceDate(b.checkOutDate)} (11:00 AM)`;
         if (ntsEl) ntsEl.innerText = `${nts} Night${nts > 1 ? 's' : ''}`;
@@ -10986,7 +11175,7 @@
         <td>
           <div contenteditable="true" class="bill-edit-text" style="width: 100%; font-weight: 600; color: #0F172A;" oninput="recalculateBill()">${escapeHtml(desc)}</div>
         </td>
-        <td style="text-align: center; color: #64748B; font-family: monospace;">
+        <td class="bill-col-sac" style="text-align: center; color: #64748B; font-family: monospace; ${billerMode === 'nongst' ? 'display: none;' : ''}">
           <div contenteditable="true" class="bill-edit-text" style="text-align: center;">${escapeHtml(sac)}</div>
         </td>
         <td style="text-align: right;">
@@ -11041,12 +11230,12 @@
         if (amtEl) amtEl.textContent = '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       });
 
-      const applyGst = document.getElementById('biller-apply-gst')?.checked ?? true;
+      const isGst = (billerMode === 'gst');
       let cgst = 0;
       let sgst = 0;
       let totalGst = 0;
 
-      if (applyGst) {
+      if (isGst) {
         cgst = subtotal * 0.025; // 2.5% CGST
         sgst = subtotal * 0.025; // 2.5% SGST
         totalGst = cgst + sgst;  // Extra 5% GST
@@ -11061,7 +11250,7 @@
       if (subEl) subEl.textContent = '₹' + subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
       const gstWrap = document.getElementById('bill-gst-rows-wrap');
-      if (gstWrap) gstWrap.style.display = applyGst ? 'block' : 'none';
+      if (gstWrap) gstWrap.style.display = isGst ? 'block' : 'none';
 
       const cgstEl = document.getElementById('bill-cgst-val');
       if (cgstEl) cgstEl.textContent = '₹' + cgst.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -11137,6 +11326,15 @@
 
     // Print / PDF execution
     window.printCustomerBill = function() {
+      // Auto increment counter for next invoice if not loaded from existing booking
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const key = `elitehomes_inv_counter_${year}_${month}`;
+      let counter = parseInt(localStorage.getItem(key), 10);
+      if (isNaN(counter) || counter < 1) counter = 1;
+      localStorage.setItem(key, String(counter + 1));
+
       window.print();
     };
 
