@@ -1757,6 +1757,42 @@
       background: #DBEAFE;
       color: #1E40AF;
     }
+    .sm-co-transfer-pill {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sm-co-split-tag {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: #FDF4FF;
+      color: #86198F;
+      border: 1px solid #F0ABFC;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sm-transfer-badge {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1E40AF;
+      background: #DBEAFE;
+      border: 1px solid #93C5FD;
+      padding: 5px 11px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
     .sm-co-stay-meta {
       font-size: 11px;
       color: #64748B;
@@ -5016,17 +5052,167 @@
       return false;
     }
 
+    // Helper: Detect and trace continuous split stays (room transfers)
+    function getSplitStayInfo(booking, allBookings) {
+      if (!booking || booking.status === 'Cancelled') {
+        const fin = getBookingFinancials(booking);
+        return {
+          isSplit: false,
+          isIntermediate: false,
+          isFinal: true,
+          legs: booking ? [booking] : [],
+          finalLeg: booking,
+          nextLeg: null,
+          prevLeg: null,
+          overallCheckIn: booking?.checkInDate,
+          overallCheckOut: booking?.checkOutDate,
+          totalNights: booking?.nights || 1,
+          totalAmount: fin.total,
+          totalAdvance: fin.advance,
+          combinedBalance: fin.balance
+        };
+      }
+
+      const list = (allBookings || currentBookings || []).filter(x => x && x.status !== 'Cancelled');
+
+      function matchGuest(n1, n2, p1, p2) {
+        if (p1 && p2) {
+          const c1 = String(p1).replace(/[^0-9]/g, '');
+          const c2 = String(p2).replace(/[^0-9]/g, '');
+          if (c1 && c2 && c1.length >= 7 && c1 === c2) return true;
+        }
+        const clean1 = (n1 || '').trim().toLowerCase();
+        const clean2 = (n2 || '').trim().toLowerCase();
+        if (!clean1 || !clean2) return false;
+        if (clean1 === clean2) return true;
+        const first1 = clean1.split(' ')[0];
+        const first2 = clean2.split(' ')[0];
+        return (first1.length >= 3 && first1 === first2);
+      }
+
+      // Check if another leg continues immediately on booking.checkOutDate
+      const nextLeg = list.find(x => x.id !== booking.id && x.checkInDate === booking.checkOutDate && matchGuest(x.guestName, booking.guestName, x.phone, booking.phone));
+
+      // Check if a previous leg checked out on booking.checkInDate
+      const prevLeg = list.find(x => x.id !== booking.id && x.checkOutDate === booking.checkInDate && matchGuest(x.guestName, booking.guestName, x.phone, booking.phone));
+
+      if (!nextLeg && !prevLeg) {
+        const fin = getBookingFinancials(booking);
+        return {
+          isSplit: false,
+          isIntermediate: false,
+          isFinal: true,
+          legs: [booking],
+          finalLeg: booking,
+          nextLeg: null,
+          prevLeg: null,
+          overallCheckIn: booking.checkInDate,
+          overallCheckOut: booking.checkOutDate,
+          totalNights: booking.nights || 1,
+          totalAmount: fin.total,
+          totalAdvance: fin.advance,
+          combinedBalance: fin.balance
+        };
+      }
+
+      // Build continuous chain of legs
+      const chain = [];
+      let curr = booking;
+      while (curr) {
+        chain.unshift(curr);
+        const p = list.find(x => x.id !== curr.id && x.checkOutDate === curr.checkInDate && matchGuest(x.guestName, curr.guestName, x.phone, curr.phone));
+        if (p && !chain.some(c => c.id === p.id)) {
+          curr = p;
+        } else {
+          break;
+        }
+      }
+      curr = booking;
+      while (curr) {
+        const n = list.find(x => x.id !== curr.id && x.checkInDate === curr.checkOutDate && matchGuest(x.guestName, curr.guestName, x.phone, curr.phone));
+        if (n && !chain.some(c => c.id === n.id)) {
+          chain.push(n);
+          curr = n;
+        } else {
+          break;
+        }
+      }
+
+      const isIntermediate = Boolean(nextLeg);
+      const isFinal = !nextLeg;
+      const finalLeg = chain[chain.length - 1];
+
+      let totalAmount = 0;
+      let totalAdvance = 0;
+      chain.forEach(leg => {
+        const rev = getBookingRevenue(leg);
+        totalAmount += rev;
+        let adv = 0;
+        if (leg.advancePaid !== undefined && leg.advancePaid !== null && leg.advancePaid !== '') {
+          adv = parseFloat(String(leg.advancePaid).replace(/[^0-9.]/g, '')) || 0;
+        } else if (leg.advance !== undefined && leg.advance !== null && leg.advance !== '') {
+          adv = parseFloat(String(leg.advance).replace(/[^0-9.]/g, '')) || 0;
+        } else if (leg.notes) {
+          const m = leg.notes.match(/Advance(?:\s*Paid)?:\s*₹?\s*([0-9,]+)/i);
+          if (m) adv = parseFloat(m[1].replace(/,/g, '')) || 0;
+        }
+        const platLower = (leg.platform || '').toLowerCase();
+        const payStatus = (leg.paymentStatus || '').trim().toLowerCase();
+        if (platLower.includes('airbnb') || payStatus === 'paid in full' || payStatus === 'paid') {
+          adv = rev;
+        }
+        totalAdvance += adv;
+      });
+
+      let combinedBalance = Math.max(0, totalAmount - totalAdvance);
+      if (finalLeg.manualCollectionAmount !== undefined && finalLeg.manualCollectionAmount !== null && finalLeg.manualCollectionAmount !== '') {
+        combinedBalance = Math.max(0, parseFloat(finalLeg.manualCollectionAmount) || 0);
+      }
+
+      return {
+        isSplit: true,
+        isIntermediate,
+        isFinal,
+        legs: chain,
+        finalLeg,
+        nextLeg,
+        prevLeg,
+        overallCheckIn: chain[0].checkInDate,
+        overallCheckOut: finalLeg.checkOutDate,
+        totalNights: chain.reduce((sum, l) => sum + (l.nights || 1), 0),
+        totalAmount,
+        totalAdvance,
+        combinedBalance
+      };
+    }
+
     // Manual Checkout Collection Handlers (Changeable / Corrected Manually by Host)
     function saveManualCollectionAmount(bookingId, newAmount) {
       const b = currentBookings.find(x => x.id === bookingId);
       if (!b) return;
       const num = Math.max(0, parseFloat(newAmount) || 0);
-      b.manualCollectionAmount = num;
 
-      if (num === 0) {
-        b.paymentStatus = 'Paid in Full';
-      } else if (b.paymentStatus === 'Paid in Full') {
-        b.paymentStatus = 'Deposit Paid';
+      const split = getSplitStayInfo(b, currentBookings);
+      if (split.isSplit && split.isFinal) {
+        b.manualCollectionAmount = num;
+        if (num === 0) {
+          split.legs.forEach(leg => {
+            leg.manualCollectionAmount = 0;
+            leg.paymentStatus = 'Paid in Full';
+            if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
+              window.AirbnbAPI.saveBooking(leg).catch(err => console.warn('D1 sync notice:', err));
+            }
+          });
+        } else {
+          b.paymentStatus = 'Deposit Paid';
+        }
+      } else {
+        b.manualCollectionAmount = num;
+        if (num === 0) {
+          b.paymentStatus = 'Paid in Full';
+        } else if (b.paymentStatus === 'Paid in Full') {
+          b.paymentStatus = 'Deposit Paid';
+        }
       }
 
       // Append/update manual collection note
@@ -5051,25 +5237,30 @@
     function markGuestFullyPaid(bookingId) {
       const b = currentBookings.find(x => x.id === bookingId);
       if (!b) return;
-      b.manualCollectionAmount = 0;
-      b.paymentStatus = 'Paid in Full';
 
-      const tag = `Collect: ₹0 (Paid in Full)`;
-      if (b.notes && b.notes.includes('Collect:')) {
-        b.notes = b.notes.replace(/Collect:\s*₹?[0-9,]+/i, tag);
-      } else if (b.notes) {
-        b.notes += ` | ${tag}`;
-      } else {
-        b.notes = tag;
-      }
+      const split = getSplitStayInfo(b, currentBookings);
+      const targetLegs = split.isSplit ? split.legs : [b];
+
+      targetLegs.forEach(leg => {
+        leg.manualCollectionAmount = 0;
+        leg.paymentStatus = 'Paid in Full';
+        const tag = `Collect: ₹0 (Paid in Full)`;
+        if (leg.notes && leg.notes.includes('Collect:')) {
+          leg.notes = leg.notes.replace(/Collect:\s*₹?[0-9,]+/i, tag);
+        } else if (leg.notes) {
+          leg.notes += ` | ${tag}`;
+        } else {
+          leg.notes = tag;
+        }
+
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
+          window.AirbnbAPI.saveBooking(leg).catch(err => console.warn('D1 sync notice:', err));
+        }
+      });
 
       saveBookings();
       renderBookingsPortal();
-      showToast(`🎉 Marked ${b.guestName} as Paid in Full!`);
-
-      if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
-        window.AirbnbAPI.saveBooking(b).catch(err => console.warn('D1 sync notice:', err));
-      }
+      showToast(split.isSplit ? `🎉 Marked full split stay for ${b.guestName} (${split.legs.length} rooms) as Paid in Full!` : `🎉 Marked ${b.guestName} as Paid in Full!`);
     }
 
     let showUpcomingCheckouts = false;
@@ -5093,6 +5284,7 @@
 
       const isBlocked = (b.status === 'Blocked' || b.platform === 'Blocked');
       const fin = getBookingFinancials(b);
+      const split = getSplitStayInfo(b, currentBookings);
       const platLower = (b.platform || '').toLowerCase();
       let badgeBg = '#E0E7FF', badgeColor = '#3730A3', badgeText = b.platform || 'Direct';
 
@@ -5116,6 +5308,37 @@
           <div class="cal-popup-balance-box is-blocked">
             <span>🔒 Status:</span>
             <span>Unavailable / Blocked</span>
+          </div>
+        `;
+      } else if (split.isSplit) {
+        const chainProps = split.legs.map(l => l.property).join(' → ');
+        const finalDate = split.overallCheckOut;
+        finHtml = `
+          <div style="background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 8px; padding: 6px 8px; margin: 6px 0; font-size: 11px;">
+            <div style="font-weight: 800; color: #7E22CE; display: flex; align-items: center; gap: 4px;">
+              <span>🔄 Continuous Split Stay</span>
+              <span style="font-weight: 600; opacity: 0.85;">(${split.totalNights} nights total)</span>
+            </div>
+            <div style="color: #581C87; font-weight: 700; margin-top: 2px;">
+              ${escapeHtml(chainProps)}
+            </div>
+            <div style="color: #6B7280; font-size: 10px; margin-top: 2px;">
+              ${split.legs.map(l => `${escapeHtml(l.property)} (₹${formatCurrency(getBookingRevenue(l))})`).join(' + ')}
+            </div>
+          </div>
+          <div class="cal-popup-fin-grid">
+            <div class="cal-popup-fin-item">
+              <div class="cal-popup-fin-label">Total Split Stay</div>
+              <div class="cal-popup-fin-val">₹${split.totalAmount.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="cal-popup-fin-item">
+              <div class="cal-popup-fin-label">Advance Paid</div>
+              <div class="cal-popup-fin-val">₹${split.totalAdvance.toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+          <div class="cal-popup-balance-box ${split.combinedBalance > 0 ? 'is-due' : 'is-paid'}">
+            <span>${split.isIntermediate ? '🔄 Collect on Final Checkout (' + finalDate + '):' : '💵 Collect on Checkout:'}</span>
+            <span class="cal-popup-balance-val">${split.combinedBalance > 0 ? '₹' + split.combinedBalance.toLocaleString('en-IN') : '₹0 (Paid in Full)'}</span>
           </div>
         `;
       } else {
@@ -6073,8 +6296,20 @@
       const checkInsCount = inBookings.length;
       const checkOutsCount = outBookings.length;
       let totalToCollect = 0;
+      let roomTransfersCount = 0;
+
       outBookings.forEach(b => {
-        totalToCollect += getBookingFinancials(b).balance;
+        const split = getSplitStayInfo(b, currentBookings);
+        if (split.isSplit && split.isIntermediate) {
+          // Continuous split stay: Guest transfers to next room today!
+          // Balance rolls over to final checkout date. Do not collect today.
+          roomTransfersCount++;
+        } else if (split.isSplit && split.isFinal) {
+          // Final checkout of split stay: Collect combined balance across all rooms!
+          totalToCollect += split.combinedBalance;
+        } else {
+          totalToCollect += getBookingFinancials(b).balance;
+        }
       });
 
       // 2. Summary Stats Bar (5-Card Grid with Occupancy % & Turnovers Today)
@@ -6102,7 +6337,7 @@
         <div class="sm-stat-card ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-highlight' : ''}" style="cursor: pointer;" onclick="document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth' });" title="Click to view departing guests and collect balance">
           <span class="sm-stat-label ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-label' : ''}">🛎️ Turnovers (${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate})</span>
           <div class="sm-stat-occ-row">
-            <span class="sm-stat-value font-mono text-indigo-950">${checkInsCount} In · ${checkOutsCount} Out</span>
+            <span class="sm-stat-value font-mono text-indigo-950">${checkInsCount} In · ${checkOutsCount} Out ${roomTransfersCount > 0 ? `<span style="font-size: 11px; font-weight: 700; color: #2563EB;">(${roomTransfersCount} Transfer)</span>` : ''}</span>
           </div>
           <div class="sm-stat-sub">
             To Collect: <strong style="color: ${totalToCollect > 0 ? '#B91C1C' : '#059669'}; font-family: 'JetBrains Mono', monospace;">₹${formatCurrency(totalToCollect)}</strong>
@@ -6129,12 +6364,139 @@
         }
 
         function renderCheckoutRow(bk) {
-          const fin = getBookingFinancials(bk);
+          const split = getSplitStayInfo(bk, currentBookings);
           const platLower = (bk.platform || '').toLowerCase();
           let platClass = 'is-direct';
           if (platLower.includes('airbnb')) platClass = 'is-airbnb';
           else if (platLower.includes('booking')) platClass = 'is-booking';
 
+          // Case A: Intermediate Leg of Split Stay (Room Transfer Today - Balance rolls over)
+          if (split.isSplit && split.isIntermediate) {
+            const nextRoom = split.nextLeg?.property || 'Next Room';
+            const finalOut = split.overallCheckOut;
+            const legFin = getBookingFinancials(bk);
+
+            return `
+              <div class="sm-checkout-row is-room-transfer" style="background: #F0FDF4; border-color: #BBF7D0;">
+                <div class="sm-co-guest-info">
+                  <div class="sm-co-guest-name">
+                    <span class="sm-co-prop-pill" style="background: #FEF3C7; color: #92400E; border-color: #FDE68A;">
+                      ${escapeHtml(bk.property)}
+                    </span>
+                    <strong>${escapeHtml(bk.guestName)}</strong>
+                    <span class="sm-co-transfer-pill">🔄 Room Transfer → ${escapeHtml(nextRoom)}</span>
+                    <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
+                  </div>
+                  <div class="sm-co-stay-meta">
+                    <span>📅 Check-out: ${escapeHtml(bk.property)} (${bk.checkInDate} → ${bk.checkOutDate})</span>
+                    <span>• <strong>Moving to ${escapeHtml(nextRoom)} today</strong></span>
+                    <span>• Total Stay: ${split.overallCheckIn} → ${finalOut} (${split.totalNights} nights)</span>
+                    <span style="color: #4338CA; font-weight: 700;">🔄 Balance ₹${formatCurrency(legFin.balance)} rolls over to final checkout on ${finalOut}</span>
+                  </div>
+                </div>
+                <div class="sm-co-actions">
+                  <span class="sm-transfer-badge" title="No payment needed today. Balance will be collected at final checkout from ${escapeHtml(nextRoom)} on ${finalOut}.">
+                    🔄 Collect at Final Checkout (${finalOut})
+                  </span>
+                  <button
+                    type="button"
+                    class="sm-tool-pill-btn"
+                    onclick="openEditBookingModal('${bk.id}')"
+                    title="View this stay leg"
+                    style="padding: 5px 8px;"
+                  >
+                    ✏️ View
+                  </button>
+                  ${split.nextLeg ? `
+                    <button
+                      type="button"
+                      class="sm-tool-pill-btn"
+                      onclick="openEditBookingModal('${split.nextLeg.id}')"
+                      title="View next leg (${escapeHtml(split.nextLeg.property)})"
+                      style="padding: 5px 8px; background: #EEF2FF; color: #4338CA;"
+                    >
+                      🚪 View ${escapeHtml(split.nextLeg.property)}
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }
+
+          // Case B: Final Leg of Split Stay (Departing Property Today - Collect Combined Balance!)
+          if (split.isSplit && split.isFinal) {
+            const chainProps = split.legs.map(l => l.property).join(' → ');
+            const legBreakdown = split.legs.map(l => `${l.property} (₹${formatCurrency(getBookingRevenue(l))})`).join(' + ');
+            const dueAmt = split.combinedBalance;
+            const isSettled = (dueAmt === 0 && split.totalAmount > 0);
+
+            return `
+              <div class="sm-checkout-row is-split-final" style="background: #FAF5FF; border-color: #E9D5FF;">
+                <div class="sm-co-guest-info">
+                  <div class="sm-co-guest-name">
+                    <span class="sm-co-prop-pill" style="background: #F3E8FF; color: #6B21A8; border-color: #D8B4FE;">
+                      ${escapeHtml(bk.property)}
+                    </span>
+                    <strong>${escapeHtml(bk.guestName)}</strong>
+                    <span class="sm-co-split-tag">🔄 Split Stay (${escapeHtml(chainProps)})</span>
+                    <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
+                  </div>
+                  <div class="sm-co-stay-meta">
+                    <span>📅 Final Departure: ${split.overallCheckIn} → ${bk.checkOutDate} (${split.totalNights} nights total across ${split.legs.length} rooms)</span>
+                    <span>• Combined Stay: ₹${formatCurrency(split.totalAmount)} [${escapeHtml(legBreakdown)}]</span>
+                    <span>• Recv: ₹${formatCurrency(split.totalAdvance)}</span>
+                    ${isSettled ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : `<span style="color:#DC2626; font-weight:800;">Combined Due: ₹${formatCurrency(dueAmt)}</span>`}
+                  </div>
+                </div>
+                <div class="sm-co-actions">
+                  <label class="sm-co-label" for="co-input-${bk.id}" style="color: #6B21A8;">Total Balance to Collect:</label>
+                  <div class="sm-co-input-wrap">
+                    <span class="sm-co-prefix">₹</span>
+                    <input
+                      type="number"
+                      id="co-input-${bk.id}"
+                      class="sm-co-input"
+                      value="${dueAmt}"
+                      min="0"
+                      step="100"
+                      placeholder="0"
+                      title="Total balance to collect across all rooms in split stay for ${escapeHtml(bk.guestName)}"
+                      style="border-color: #C084FC; color: #581C87; font-weight: 800;"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    class="sm-co-save-btn"
+                    onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)"
+                    title="Save corrected total collection amount"
+                    style="background: #7C3AED;"
+                  >
+                    💾 Save
+                  </button>
+                  <button
+                    type="button"
+                    class="sm-co-paid-btn"
+                    onclick="markGuestFullyPaid('${bk.id}')"
+                    title="Mark entire split stay as fully paid"
+                  >
+                    ✔ Paid
+                  </button>
+                  <button
+                    type="button"
+                    class="sm-tool-pill-btn"
+                    onclick="openEditBookingModal('${bk.id}')"
+                    title="View complete booking details"
+                    style="padding: 5px 8px;"
+                  >
+                    ✏️ View
+                  </button>
+                </div>
+              </div>
+            `;
+          }
+
+          // Case C: Standard Normal Booking Checkout
+          const fin = getBookingFinancials(bk);
           return `
             <div class="sm-checkout-row">
               <div class="sm-co-guest-info">
