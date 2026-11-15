@@ -310,6 +310,31 @@ export async function executeIcalSync(env: Bindings, targetProperty?: string | n
           `).bind(uid).first();
 
           if (existingByUid) {
+            // Check if this existing iCal booking collides with an active primary website booking
+            const primaryConflict = await env.DB.prepare(`
+              SELECT * FROM bookings 
+              WHERE property = ? 
+                AND id != ?
+                AND status != 'Cancelled'
+                AND (LOWER(platform) IN ('direct', 'manual', 'walk-in', 'offline', 'website') 
+                     OR (external_uid IS NULL AND id NOT LIKE 'bk_ical_%' AND LOWER(platform) NOT LIKE '%airbnb%' AND LOWER(platform) NOT LIKE '%booking%'))
+                AND check_in_date < ? 
+                AND check_out_date > ?
+            `).bind(prop.name, existingByUid.id, checkOut, checkIn).first();
+
+            if (primaryConflict) {
+              // Website booking is primary: cancel the colliding iCal record so it never overlaps
+              await env.DB.prepare(`
+                UPDATE bookings SET
+                  status = 'Cancelled',
+                  notes = coalesce(notes, '') || ' [Superseded by primary website booking]',
+                  updated_at = datetime('now')
+                WHERE id = ?
+              `).bind(existingByUid.id).run();
+              totalSkipped++;
+              continue;
+            }
+
             await env.DB.prepare(`
               UPDATE bookings SET
                 property = ?, guest_name = ?, check_in_date = ?, check_out_date = ?,
@@ -320,7 +345,37 @@ export async function executeIcalSync(env: Bindings, targetProperty?: string | n
             continue;
           }
 
-          // 2. Cross-Channel Duplicate & Overlap Prevention
+          // 2. Primary Website Booking Precedence:
+          // Whatever entered in website is primary! Do not overlap or mutate with Airbnb/Booking.com.
+          const primaryWebsiteBooking = await env.DB.prepare(`
+            SELECT * FROM bookings 
+            WHERE property = ? 
+              AND status != 'Cancelled'
+              AND (LOWER(platform) IN ('direct', 'manual', 'walk-in', 'offline', 'website') 
+                   OR (external_uid IS NULL AND id NOT LIKE 'bk_ical_%' AND LOWER(platform) NOT LIKE '%airbnb%' AND LOWER(platform) NOT LIKE '%booking%'))
+              AND check_in_date < ? 
+              AND check_out_date > ?
+          `).bind(prop.name, checkOut, checkIn).first();
+
+          if (primaryWebsiteBooking) {
+            // Website customer reservation is primary!
+            // The incoming iCal block is an echo/reflection of the room closure on OTA.
+            // Do not insert a duplicate booking. Do not alter the customer's name, platform, or status.
+            const oldNotes = (primaryWebsiteBooking.notes as string) || '';
+            const syncTag = `[${feed.platform} verified blocked]`;
+            if (!oldNotes.includes(syncTag)) {
+              await env.DB.prepare(`
+                UPDATE bookings SET
+                  notes = trim(coalesce(notes, '') || ' ' || ?),
+                  updated_at = datetime('now')
+                WHERE id = ?
+              `).bind(syncTag, primaryWebsiteBooking.id).run();
+            }
+            totalSkipped++;
+            continue;
+          }
+
+          // 3. Cross-Channel Duplicate & Overlap Prevention (for between OTAs)
           const overlapping = await env.DB.prepare(`
             SELECT * FROM bookings 
             WHERE property = ? 
@@ -361,7 +416,7 @@ export async function executeIcalSync(env: Bindings, targetProperty?: string | n
             continue;
           }
 
-          // 3. Clean fresh booking insert
+          // 4. Clean fresh booking insert
           const newId = `bk_ical_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
           await env.DB.prepare(`
             INSERT INTO bookings (

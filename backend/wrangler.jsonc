@@ -18,7 +18,7 @@
   "r2_buckets": [
     {
       "binding": "IMAGES_BUCKET",
-      "bucket_name": "airbnb-guest-images" // Created via: npx wrangler r2 bucket create airbnb-guest-images
+      "bucket_name": "xsquareguestid"
     }
   ],
 

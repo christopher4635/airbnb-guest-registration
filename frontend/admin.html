@@ -2994,6 +2994,10 @@
                     <option value="">All Properties</option>
                   </select>
                 </div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; padding: 0 4px;">
+                  <span>Bookings:</span>
+                  <span id="list-count-badge" class="badge-pill" style="background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE; font-size: 12px; padding: 2px 8px; border-radius: 8px;">0</span>
+                </div>
               </div>
             </div>
 
@@ -5000,6 +5004,18 @@
       };
     }
 
+    // Helper to identify bookings manually typed/entered in website (Primary reference)
+    function isPrimaryWebsiteBooking(b) {
+      if (!b || b.status === 'Cancelled') return false;
+      if (b.isPrimary === true || b.isManual === true || b.source === 'website' || b.source === 'manual') return true;
+      const p = (b.platform || '').trim().toLowerCase();
+      if (p === 'direct' || p === 'manual' || p === 'walk-in' || p === 'offline' || p === 'website' || p === 'host') return true;
+      if (!b.external_uid && !b.externalUid && !(b.id || '').startsWith('bk_ical_') && !p.startsWith('airbnb') && !p.startsWith('booking')) {
+        return true;
+      }
+      return false;
+    }
+
     // Manual Checkout Collection Handlers (Changeable / Corrected Manually by Host)
     function saveManualCollectionAmount(bookingId, newAmount) {
       const b = currentBookings.find(x => x.id === bookingId);
@@ -6317,7 +6333,7 @@
                         // Active bookings covering this night:
                         // Standard stays: checkInDate <= dateStr && checkOutDate > dateStr
                         // Single-day same checkIn/checkOut: checkInDate === dateStr && checkOutDate === dateStr
-                        const cellBookings = currentBookings.filter(b => {
+                        let cellBookings = currentBookings.filter(b => {
                           if (b.status === 'Cancelled') return false;
                           if (!matchesProperty(b.property, prop)) return false;
                           if (b.checkInDate <= dateStr && b.checkOutDate > dateStr) return true;
@@ -6325,15 +6341,24 @@
                           return false;
                         });
 
+                        // Primary website rule: whatever entered in website is primary
+                        // If a customer was manually typed in website, suppress secondary OTA shadow blocks
+                        const primaryBooking = cellBookings.find(b => isPrimaryWebsiteBooking(b));
+                        if (primaryBooking) {
+                          cellBookings = cellBookings.filter(b => isPrimaryWebsiteBooking(b));
+                        }
+
                         const count = cellBookings.length;
 
                         if (count === 0) {
                           // Check if departing guest on checkout morning
-                          const departingBooking = currentBookings.find(b => {
+                          let departingBookings = currentBookings.filter(b => {
                             if (b.status === 'Cancelled') return false;
                             if (!matchesProperty(b.property, prop)) return false;
                             return b.checkOutDate === dateStr;
                           });
+                          const primaryDepart = departingBookings.find(b => isPrimaryWebsiteBooking(b));
+                          const departingBooking = primaryDepart || departingBookings[0];
 
                           return `
                             <td
@@ -6454,11 +6479,20 @@
               const dateStr = `${currentMonthPrefix}-${dayStr}`;
               const isToday = (dateStr === todayIso);
 
-              const dateBookings = currentBookings.filter(b => {
+              let dateBookings = currentBookings.filter(b => {
                 if (b.status === 'Cancelled') return false;
                 if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
                 return (b.checkInDate <= dateStr && b.checkOutDate > dateStr) || (b.checkInDate === dateStr && b.checkOutDate === dateStr);
               });
+
+              // Primary website rule: per property, if a website/manual customer booking exists, suppress OTA shadow blocks
+              const propPrimaryMap = new Set();
+              dateBookings.forEach(b => {
+                if (isPrimaryWebsiteBooking(b)) propPrimaryMap.add(b.property);
+              });
+              if (propPrimaryMap.size > 0) {
+                dateBookings = dateBookings.filter(b => isPrimaryWebsiteBooking(b) || !propPrimaryMap.has(b.property));
+              }
 
               const totalDay = dateBookings.reduce((s, b) => s + parsePayoutNumber(b.payout), 0);
               const bookedUnitsCount = dateBookings.length;
@@ -6980,16 +7014,28 @@
 
     function isBookingOverlapping(b, allBookings) {
       if (!b || b.status === 'Cancelled') return false;
-      // Real merged multi-channel reservation confirmed on both channels
-      if (b.platform && (b.platform.includes(' + ') || b.platform.includes(' & '))) return true;
-
-      // Real date collision with another active booking on the exact same property
       const list = allBookings || currentBookings || [];
+
+      // Whatever entered in website is primary:
+      // An OTA shadow block from Airbnb / Booking.com does NOT count as an overlap conflict against a primary website customer booking
+      const isPrimary = isPrimaryWebsiteBooking(b);
+
       return list.some(other => {
         if (!other || other.id === b.id) return false;
         if (other.status === 'Cancelled') return false;
         if (!matchesProperty(other.property, b.property)) return false;
-        return (b.checkInDate < other.checkOutDate && b.checkOutDate > other.checkInDate);
+
+        const hasDateCollision = (b.checkInDate < other.checkOutDate && b.checkOutDate > other.checkInDate);
+        if (!hasDateCollision) return false;
+
+        const otherIsPrimary = isPrimaryWebsiteBooking(other);
+        // If one is primary website booking and the other is an OTA block, the primary website booking wins
+        // and suppresses the overlap conflict
+        if (isPrimary && !otherIsPrimary) return false;
+        if (!isPrimary && otherIsPrimary) return false;
+
+        // Genuine collision between two primary website bookings or two real OTA reservations
+        return true;
       });
     }
 
@@ -7235,6 +7281,17 @@
           if (b.status === 'Cancelled') return false;
           return (b.checkInDate <= monthEndStr && b.checkOutDate >= monthStartStr);
         });
+
+        // Primary website rule: whatever entered in website is primary
+        // Suppress any secondary OTA blocks that collide with a primary website customer booking
+        const primaryStays = propBookings.filter(b => isPrimaryWebsiteBooking(b));
+        if (primaryStays.length > 0) {
+          propBookings = propBookings.filter(b => {
+            if (isPrimaryWebsiteBooking(b)) return true;
+            const collides = primaryStays.some(p => (b.checkInDate < p.checkOutDate && b.checkOutDate > p.checkInDate));
+            return !collides;
+          });
+        }
 
         // Apply quick issue filter if selected
         if (currentCalendarFilter === 'overlaps') {
@@ -7563,9 +7620,11 @@
       // Sort by checkInDate descending
       filtered.sort((a, b) => b.checkInDate.localeCompare(a.checkInDate));
 
-      document.getElementById('list-count-badge').textContent = filtered.length;
+      const countBadge = document.getElementById('list-count-badge');
+      if (countBadge) countBadge.textContent = filtered.length;
 
       const tbody = document.getElementById('bookings-table-body');
+      if (!tbody) return;
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
@@ -7963,12 +8022,40 @@
         paymentStatus: document.getElementById('mb-pay-status').value,
         status: document.getElementById('mb-status').value,
         notes: finalNotes,
+        isPrimary: true,
+        isManual: true,
+        source: 'website',
         updatedAt: new Date().toISOString()
       };
+
+      // Whatever entered in website is primary:
+      // If customer dates were manually typed in website, remove/supersede any colliding OTA shadow blocks
+      const collidingOtaBookings = currentBookings.filter(b => {
+        if (!b || b.id === bookingId || b.status === 'Cancelled') return false;
+        if (!matchesProperty(b.property, prop)) return false;
+        const isOtaShadow = (b.id && b.id.startsWith('bk_ical_')) || 
+          ['airbnb', 'booking.com', 'booking'].some(ch => (b.platform || '').toLowerCase().includes(ch));
+        if (!isOtaShadow) return false;
+        return (bookingData.checkInDate < b.checkOutDate && bookingData.checkOutDate > b.checkInDate);
+      });
+
+      if (collidingOtaBookings.length > 0) {
+        for (const otaBk of collidingOtaBookings) {
+          otaBk.status = 'Cancelled';
+          otaBk.notes = (otaBk.notes || '') + ` [Superseded by primary website booking for ${name}]`;
+          if (window.AirbnbAPI && typeof window.AirbnbAPI.deleteBooking === 'function') {
+            window.AirbnbAPI.deleteBooking(otaBk.id).catch(err => console.warn('Superseded OTA cleanup:', err));
+          }
+        }
+        currentBookings = currentBookings.filter(b => !collidingOtaBookings.some(c => c.id === b.id));
+      }
 
       const saveBtn = document.getElementById('btn-save-booking');
       const origText = saveBtn ? saveBtn.textContent : '';
       if (saveBtn) { saveBtn.textContent = 'Saving to D1...'; saveBtn.disabled = true; }
+
+      let d1SaveFailed = false;
+      let d1Error = null;
 
       try {
         // Direct Cloudflare D1 persistence
@@ -7983,38 +8070,38 @@
             }
           }
         }
+      } catch(apiErr) {
+        d1SaveFailed = true;
+        d1Error = apiErr;
+        console.warn("Could not sync booking to Cloudflare D1:", apiErr);
+      }
 
-        // Update local memory
-        if (editingBookingId) {
-          const idx = currentBookings.findIndex(x => x.id === editingBookingId);
-          if (idx >= 0) currentBookings[idx] = Object.assign(currentBookings[idx], bookingData);
-          showToast("✅ Booking updated & saved to Cloudflare D1!");
-        } else {
-          bookingData.createdAt = new Date().toISOString();
-          currentBookings.push(bookingData);
-          showToast("✅ New booking created & saved to Cloudflare D1!");
-        }
+      // Update local memory
+      if (editingBookingId) {
+        const idx = currentBookings.findIndex(x => x.id === editingBookingId);
+        if (idx >= 0) currentBookings[idx] = Object.assign(currentBookings[idx], bookingData);
+      } else {
+        bookingData.createdAt = new Date().toISOString();
+        currentBookings.push(bookingData);
+      }
 
-        saveBookings();
-        closeBookingModal();
+      saveBookings();
+      closeBookingModal();
+
+      try {
         renderBookingsPortal();
         if (typeof loadFinancialData === 'function') loadFinancialData();
-      } catch(err) {
-        console.error("Error saving booking to Cloudflare D1:", err);
-        alert("Warning: Could not save to Cloudflare D1 (" + err.message + "). Saved locally.");
-        if (editingBookingId) {
-          const idx = currentBookings.findIndex(x => x.id === editingBookingId);
-          if (idx >= 0) currentBookings[idx] = Object.assign(currentBookings[idx], bookingData);
-        } else {
-          bookingData.createdAt = new Date().toISOString();
-          currentBookings.push(bookingData);
-        }
-        saveBookings();
-        closeBookingModal();
-        renderBookingsPortal();
-      } finally {
-        if (saveBtn) { saveBtn.textContent = origText; saveBtn.disabled = false; }
+      } catch(renderErr) {
+        console.error("UI Render error after booking save:", renderErr);
       }
+
+      if (d1SaveFailed) {
+        showToast(`⚠️ Saved locally (D1 sync notice: ${d1Error?.message || 'offline'})`);
+      } else {
+        showToast(editingBookingId ? "✅ Booking updated & saved to Cloudflare D1!" : "✅ New booking created & saved to Cloudflare D1!");
+      }
+
+      if (saveBtn) { saveBtn.textContent = origText; saveBtn.disabled = false; }
     }
 
     async function deleteCurrentBooking() {
@@ -8033,8 +8120,13 @@
       currentBookings = currentBookings.filter(x => x.id !== idToDelete);
       saveBookings();
       closeBookingModal();
-      renderBookingsPortal();
-      if (typeof loadFinancialData === 'function') loadFinancialData();
+
+      try {
+        renderBookingsPortal();
+        if (typeof loadFinancialData === 'function') loadFinancialData();
+      } catch(renderErr) {
+        console.error("UI render error after delete:", renderErr);
+      }
       showToast("Booking deleted from Cloudflare D1 & calendar.");
     }
 
