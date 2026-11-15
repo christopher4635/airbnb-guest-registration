@@ -4480,31 +4480,34 @@
             </div>
 
             <!-- Items & Services Table -->
-            <table class="bill-table" id="bill-table">
-              <thead>
-                <tr>
-                  <th style="width: 36px; text-align: center;">#</th>
-                  <th>Description / Particulars</th>
-                  <th class="bill-col-sac" style="width: 85px; text-align: center;">SAC</th>
-                  <th style="width: 95px; text-align: right;">Qty / Nts</th>
-                  <th style="width: 110px; text-align: right;">Rate (₹)</th>
-                  <th style="width: 120px; text-align: right;">Amount (₹)</th>
-                  <th class="biller-no-print" style="width: 38px; text-align: center;"></th>
-                </tr>
-              </thead>
-              <tbody id="bill-items-tbody">
-                <!-- Dynamically populated rows -->
-              </tbody>
-            </table>
+            <div style="overflow-x: auto;">
+              <table class="bill-table" id="bill-table">
+                <thead>
+                  <tr>
+                    <th style="width: 36px; text-align: center;">#</th>
+                    <th>Description / Particulars</th>
+                    <th class="bill-col-sac" style="width: 80px; text-align: center;">SAC</th>
+                    <th style="width: 85px; text-align: right;">Qty / Nts</th>
+                    <th style="width: 100px; text-align: right;">Rate (₹)</th>
+                    <th style="width: 95px; text-align: right; color: #DC2626;">Disc (₹)</th>
+                    <th style="width: 115px; text-align: right;">Amount (₹)</th>
+                    <th class="biller-no-print" style="width: 36px; text-align: center;"></th>
+                  </tr>
+                </thead>
+                <tbody id="bill-items-tbody">
+                  <!-- Dynamically populated rows -->
+                </tbody>
+              </table>
+            </div>
 
             <!-- Add Row Action (Hidden on print) -->
-            <div class="biller-no-print" style="margin-top: -8px; margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <div class="biller-no-print" style="margin-top: -8px; margin-bottom: 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
               <button type="button" class="btn btn-outline" onclick="addBillItemRow()" style="font-size: 12px; height: 32px; padding: 0 12px; border-style: dashed;">
                 ➕ Add Line Item (Extra Guest, Meals, Airport Cab...)
               </button>
-              <button type="button" class="btn btn-outline" onclick="addDiscountItemRow(500)" style="font-size: 12px; height: 32px; padding: 0 12px; border-style: dashed; color: #DC2626; border-color: #FECACA; background: #FEF2F2;" title="Add a discount line (e.g. -₹500)">
-                🏷️ Add Discount (-₹500)
-              </button>
+              <span style="font-size: 11.5px; color: var(--text-muted);">
+                💡 Tip: Set discounts in the <strong>Disc (₹)</strong> column of any stay row to apply concessions cleanly without creating separate items.
+              </span>
             </div>
 
             <!-- Financial Summary & Tax Calculation -->
@@ -10954,9 +10957,11 @@
         if (firstRow) {
           const firstRowDesc = firstRow.querySelector('.bill-edit-text');
           const firstRowRateInput = firstRow.querySelector('.bill-item-rate');
+          const firstRowDiscInput = firstRow.querySelector('.bill-item-disc');
           if (firstRowDesc && firstRowDesc.innerText.includes('Accommodation:')) {
-            firstRowDesc.innerText = `Accommodation: ${val} (1 Night @ ₹${rackRate.toLocaleString('en-IN')}/nt)`;
+            firstRowDesc.innerText = `Accommodation: ${val} (1 Night)`;
             if (firstRowRateInput) firstRowRateInput.value = rackRate;
+            if (firstRowDiscInput) firstRowDiscInput.value = 0;
             recalculateBill();
           }
         }
@@ -11087,7 +11092,7 @@
       const tbody = document.getElementById('bill-items-tbody');
       if (tbody) {
         tbody.innerHTML = '';
-        addBillItemRow('Accommodation: 1 Room / Studio (1 Night @ ₹2,500/nt)', '996311', 1, 2500);
+        addBillItemRow('Accommodation: 1 Room / Studio (1 Night)', '996311', 1, 2500, 0);
       }
 
       if (pModeEl) pModeEl.innerText = 'Cash / UPI';
@@ -11154,16 +11159,9 @@
           const nts = leg.nights || 1;
           const actualRate = Math.round(rev / nts);
           const rackRate = getStandardRackRate(leg.property, actualRate);
-
-          if (actualRate < rackRate) {
-            const discountPerNt = rackRate - actualRate;
-            const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts @ ₹${rackRate.toLocaleString('en-IN')}/nt)`;
-            addBillItemRow(desc, '996311', nts, rackRate);
-            addBillItemRow(`Special Guest Discount / Offer for ${leg.property} (-₹${discountPerNt.toLocaleString('en-IN')}/nt)`, '996311', nts, -discountPerNt);
-          } else {
-            const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts)`;
-            addBillItemRow(desc, '996311', nts, actualRate);
-          }
+          const discPerNt = (actualRate < rackRate) ? (rackRate - actualRate) : 0;
+          const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts)`;
+          addBillItemRow(desc, '996311', nts, rackRate, discPerNt);
         });
 
         totalAdvanceAcrossChain = split.totalAdvance;
@@ -11172,6 +11170,7 @@
         const nts = b.nights || 1;
         const actualRate = (fin.total > 0 && nts > 0) ? Math.round(fin.total / nts) : getStandardRackRate(b.property);
         const rackRate = getStandardRackRate(b.property, actualRate);
+        const discPerNt = (actualRate < rackRate) ? (rackRate - actualRate) : 0;
 
         populateBillPropertyDropdown(b.property || '1 BHK');
         if (inEl) inEl.innerText = `${formatInvoiceDate(b.checkInDate)} (02:00 PM)`;
@@ -11180,15 +11179,8 @@
         if (gstEl) gstEl.innerText = `${b.guestsCount || 2} Guests`;
         if (chEl) chEl.innerText = b.platform || 'Direct';
 
-        if (actualRate < rackRate) {
-          const discountPerNt = rackRate - actualRate;
-          const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts @ ₹${rackRate.toLocaleString('en-IN')}/nt)`;
-          addBillItemRow(desc, '996311', nts, rackRate);
-          addBillItemRow(`Special Guest Discount / Offer Applied (-₹${discountPerNt.toLocaleString('en-IN')}/nt)`, '996311', nts, -discountPerNt);
-        } else {
-          const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts)`;
-          addBillItemRow(desc, '996311', nts, actualRate);
-        }
+        const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts)`;
+        addBillItemRow(desc, '996311', nts, rackRate, discPerNt);
 
         totalAdvanceAcrossChain = fin.advance;
       }
@@ -11214,7 +11206,7 @@
     }
 
     // Add a line item row to the bill table
-    function addBillItemRow(desc = 'Extra Service / Line Item', sac = '996311', qty = 1, rate = 0) {
+    function addBillItemRow(desc = 'Extra Service / Line Item', sac = '996311', qty = 1, rate = 0, disc = 0) {
       const tbody = document.getElementById('bill-items-tbody');
       if (!tbody) return;
 
@@ -11229,10 +11221,13 @@
           <div contenteditable="true" class="bill-edit-text" style="text-align: center;">${escapeHtml(sac)}</div>
         </td>
         <td style="text-align: right;">
-          <input type="number" class="bill-num-input bill-item-qty" value="${qty}" min="1" step="1" oninput="recalculateBill()">
+          <input type="number" class="bill-num-input bill-item-qty" value="${qty}" min="1" step="1" oninput="recalculateBill()" style="width: 65px;">
         </td>
         <td style="text-align: right;">
-          <input type="number" class="bill-num-input bill-item-rate" value="${rate}" step="50" oninput="recalculateBill()" style="width: 95px;">
+          <input type="number" class="bill-num-input bill-item-rate" value="${rate}" min="0" step="50" oninput="recalculateBill()" style="width: 85px;">
+        </td>
+        <td style="text-align: right;">
+          <input type="number" class="bill-num-input bill-item-disc" value="${disc}" min="0" step="50" oninput="recalculateBill()" style="width: 80px; color: ${disc > 0 ? '#DC2626' : '#64748B'}; font-weight: ${disc > 0 ? '700' : 'normal'};" title="Discount per night/unit">
         </td>
         <td style="text-align: right; font-weight: 700; color: #0F172A;" class="bill-item-amount font-mono">
           ₹0.00
@@ -11243,11 +11238,6 @@
       `;
       tbody.appendChild(tr);
       recalculateBill();
-    }
-
-    // Add a discount line item
-    function addDiscountItemRow(amount = 500) {
-      addBillItemRow('Special Guest Discount / Courtesy Offer', '996311', 1, -Math.abs(amount));
     }
 
     // Delete a line item row
@@ -11280,23 +11270,25 @@
       rows.forEach(r => {
         const qty = parseFloat(r.querySelector('.bill-item-qty')?.value) || 0;
         const rate = parseFloat(r.querySelector('.bill-item-rate')?.value) || 0;
-        const amount = qty * rate;
+        const disc = Math.max(0, parseFloat(r.querySelector('.bill-item-disc')?.value) || 0);
 
-        if (amount < 0) {
-          discountTotal += Math.abs(amount);
-        } else {
-          grossTotal += amount;
+        const lineGross = qty * rate;
+        const lineDisc = qty * disc;
+        const lineNet = Math.max(0, lineGross - lineDisc);
+
+        grossTotal += lineGross;
+        discountTotal += lineDisc;
+
+        const discInput = r.querySelector('.bill-item-disc');
+        if (discInput) {
+          discInput.style.color = disc > 0 ? '#DC2626' : '#64748B';
+          discInput.style.fontWeight = disc > 0 ? '700' : 'normal';
         }
 
         const amtEl = r.querySelector('.bill-item-amount');
         if (amtEl) {
-          if (amount < 0) {
-            amtEl.textContent = '-₹' + Math.abs(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            amtEl.style.color = '#DC2626';
-          } else {
-            amtEl.textContent = '₹' + amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            amtEl.style.color = '#0F172A';
-          }
+          amtEl.textContent = '₹' + lineNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          amtEl.style.color = '#0F172A';
         }
       });
 
