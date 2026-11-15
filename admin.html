@@ -1260,7 +1260,7 @@
     /* 2. Summary Stats Bar */
     .sm-stats-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
       gap: 12px;
     }
     @media (max-width: 768px) {
@@ -3190,6 +3190,24 @@
               🌙 1 Night Stay
             </div>
 
+            <!-- Split Stay / Room Transfer Linking Box -->
+            <div id="mb-split-stay-box" style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; transition: all 0.2s ease;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                  <span>🔄 Split Stay / Room Transfer</span>
+                </div>
+                <span id="mb-split-badge" class="badge-pill" style="font-size: 10px; background: #E2E8F0; color: #475569;">Standalone Stay</span>
+              </div>
+              <div id="mb-split-desc" style="font-size: 12px; color: #64748B; margin-bottom: 8px; line-height: 1.4;">
+                Consecutive bookings with the same guest name are automatically linked. You can also explicitly link to another stay below:
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="mb-linked-booking" style="width: 100%; height: 34px; font-size: 12px; border: 1px solid #CBD5E1; border-radius: 6px; padding: 4px 8px; background: #FFFFFF;" onchange="onSplitLinkSelectChange()">
+                  <option value="">✨ Auto-detect consecutive stay by guest name &amp; dates</option>
+                </select>
+              </div>
+            </div>
+
             <!-- Pricing, Mode & Financials -->
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px;">
               <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
@@ -3752,7 +3770,7 @@
           </div>
         </div>
 
-        <!-- 4 KPI Summary Cards -->
+        <!-- 6 KPI Summary Cards: Revenue, Received, Receivables, Expenses, Profit & Margin -->
         <div class="portal-kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
           <div class="kpi-card" style="border-left: 4px solid #10B981;">
             <div>
@@ -3760,6 +3778,22 @@
               <div class="kpi-value" id="fin-kpi-revenue" style="color: #065F46;">₹0</div>
             </div>
             <div class="kpi-sub" id="fin-kpi-revenue-sub">0 bookings in month</div>
+          </div>
+
+          <div class="kpi-card" style="border-left: 4px solid #059669; background: #F0FDF4;">
+            <div>
+              <div class="kpi-label" style="color: #166534;">🟢 Amount Received (Collected)</div>
+              <div class="kpi-value" id="fin-kpi-received" style="color: #047857;">₹0</div>
+            </div>
+            <div class="kpi-sub" id="fin-kpi-received-sub">Advances &amp; full payments collected</div>
+          </div>
+
+          <div class="kpi-card" style="border-left: 4px solid #D97706; background: #FFFBEB;">
+            <div>
+              <div class="kpi-label" style="color: #92400E;">⏳ Receivables (Pending Collection)</div>
+              <div class="kpi-value" id="fin-kpi-receivables" style="color: #B45309;">₹0</div>
+            </div>
+            <div class="kpi-sub" id="fin-kpi-receivables-sub">Balance due on guest checkout</div>
           </div>
 
           <div class="kpi-card" style="border-left: 4px solid #E11D48;">
@@ -5087,14 +5121,24 @@
 
       const list = (allBookings || currentBookings || []).filter(x => x && x.status !== 'Cancelled');
 
-      function matchGuest(n1, n2, p1, p2) {
-        if (p1 && p2) {
-          const c1 = String(p1).replace(/[^0-9]/g, '');
-          const c2 = String(p2).replace(/[^0-9]/g, '');
+      function matchGuest(b1, b2) {
+        if (!b1 || !b2) return false;
+        // 1. Explicit link via linkedBookingId or notes
+        if (b1.linkedBookingId && (b1.linkedBookingId === b2.id || b2.linkedBookingId === b1.id)) return true;
+        if (b1.splitStayId && b2.splitStayId && b1.splitStayId === b2.splitStayId) return true;
+        if (b1.notes && b2.id && b1.notes.includes(b2.id)) return true;
+        if (b2.notes && b1.id && b2.notes.includes(b1.id)) return true;
+
+        // 2. Phone match
+        if (b1.phone && b2.phone) {
+          const c1 = String(b1.phone).replace(/[^0-9]/g, '');
+          const c2 = String(b2.phone).replace(/[^0-9]/g, '');
           if (c1 && c2 && c1.length >= 7 && c1 === c2) return true;
         }
-        const clean1 = (n1 || '').trim().toLowerCase();
-        const clean2 = (n2 || '').trim().toLowerCase();
+
+        // 3. Name match
+        const clean1 = (b1.guestName || '').trim().toLowerCase();
+        const clean2 = (b2.guestName || '').trim().toLowerCase();
         if (!clean1 || !clean2) return false;
         if (clean1 === clean2) return true;
         const first1 = clean1.split(' ')[0];
@@ -5103,10 +5147,10 @@
       }
 
       // Check if another leg continues immediately on booking.checkOutDate
-      const nextLeg = list.find(x => x.id !== booking.id && x.checkInDate === booking.checkOutDate && matchGuest(x.guestName, booking.guestName, x.phone, booking.phone));
+      const nextLeg = list.find(x => x.id !== booking.id && x.checkInDate === booking.checkOutDate && matchGuest(x, booking));
 
       // Check if a previous leg checked out on booking.checkInDate
-      const prevLeg = list.find(x => x.id !== booking.id && x.checkOutDate === booking.checkInDate && matchGuest(x.guestName, booking.guestName, x.phone, booking.phone));
+      const prevLeg = list.find(x => x.id !== booking.id && x.checkOutDate === booking.checkInDate && matchGuest(x, booking));
 
       if (!nextLeg && !prevLeg) {
         const fin = getBookingFinancials(booking);
@@ -5132,7 +5176,7 @@
       let curr = booking;
       while (curr) {
         chain.unshift(curr);
-        const p = list.find(x => x.id !== curr.id && x.checkOutDate === curr.checkInDate && matchGuest(x.guestName, curr.guestName, x.phone, curr.phone));
+        const p = list.find(x => x.id !== curr.id && x.checkOutDate === curr.checkInDate && matchGuest(x, curr));
         if (p && !chain.some(c => c.id === p.id)) {
           curr = p;
         } else {
@@ -5141,7 +5185,7 @@
       }
       curr = booking;
       while (curr) {
-        const n = list.find(x => x.id !== curr.id && x.checkInDate === curr.checkOutDate && matchGuest(x.guestName, curr.guestName, x.phone, curr.phone));
+        const n = list.find(x => x.id !== curr.id && x.checkInDate === curr.checkOutDate && matchGuest(x, curr));
         if (n && !chain.some(c => c.id === n.id)) {
           chain.push(n);
           curr = n;
@@ -6188,19 +6232,26 @@
 
       let directTotal = 0;
       let otaTotal = 0;
+      let monthReceivedTotal = 0;
+      let monthReceivablesTotal = 0;
       monthCheckInBookings.forEach(b => {
         const amt = getBookingRevenue(b);
+        const fin = getBookingFinancials(b);
         const platLower = (b.platform || '').toLowerCase();
         if (platLower.includes('airbnb') || platLower.includes('booking')) {
           otaTotal += amt;
         } else {
           directTotal += amt;
         }
+        monthReceivedTotal += fin.advance;
+        monthReceivablesTotal += fin.balance;
       });
 
       const monthLodgingTotal = directTotal + otaTotal;
       const occupancyPct = totalAvailableNights > 0 ? Math.min(100, Math.round((totalBookedNights / totalAvailableNights) * 100)) : 0;
       const isOccGreen = occupancyPct > 50;
+      const receivedPct = monthLodgingTotal > 0 ? Math.round((monthReceivedTotal / monthLodgingTotal) * 100) : 0;
+      const pendingStaysCount = monthCheckInBookings.filter(b => getBookingFinancials(b).balance > 0).length;
 
       // 1. Controls Bar (Pill design matching Staff Management)
       controlsEl.innerHTML = `
@@ -6354,6 +6405,16 @@
           <span class="sm-stat-label text-indigo-600">Lodging Total</span>
           <span class="sm-stat-value font-mono text-indigo-950">₹${formatCurrency(monthLodgingTotal)}</span>
           <div class="sm-stat-sub">Dir: ₹${formatCurrency(directTotal)} · OTAs: ₹${formatCurrency(otaTotal)}</div>
+        </div>
+        <div class="sm-stat-card" style="background: #F0FDF4; border-color: #86EFAC;">
+          <span class="sm-stat-label" style="color: #166534; font-weight: 700;">🟢 Amount Received</span>
+          <span class="sm-stat-value font-mono" style="color: #15803D;">₹${formatCurrency(monthReceivedTotal)}</span>
+          <div class="sm-stat-sub" style="color: #166534;">${receivedPct}% collected · Advances &amp; Paid</div>
+        </div>
+        <div class="sm-stat-card" style="background: #FFFBEB; border-color: #FDE68A;">
+          <span class="sm-stat-label" style="color: #92400E; font-weight: 700;">⏳ Receivables (Pending)</span>
+          <span class="sm-stat-value font-mono" style="color: #B45309;">₹${formatCurrency(monthReceivablesTotal)}</span>
+          <div class="sm-stat-sub" style="color: #92400E;">${pendingStaysCount} stay${pendingStaysCount === 1 ? '' : 's'} with balance due</div>
         </div>
         <div class="sm-stat-card ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-highlight' : ''}" style="cursor: pointer;" onclick="document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth' });" title="Click to view departing guests and collect balance">
           <span class="sm-stat-label ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-label' : ''}">🛎️ Turnovers (${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate})</span>
@@ -8216,6 +8277,10 @@
       document.getElementById('mb-checkin').value = start;
       document.getElementById('mb-checkout').value = end;
 
+      if (document.getElementById('mb-linked-booking')) {
+        document.getElementById('mb-linked-booking').value = '';
+      }
+
       onBookingDateOrPropChange();
       document.getElementById('modal-booking').style.display = 'flex';
       setTimeout(() => document.getElementById('mb-guest-name').focus(), 100);
@@ -8360,6 +8425,15 @@
       }
       renderBookingModeOptions(detectedMode);
 
+      let linkedVal = b.linkedBookingId || '';
+      if (!linkedVal && b.notes && b.notes.includes('[Split Stay Link:')) {
+        const matchLink = b.notes.match(/\[Split Stay Link:\s*([^\]]+)\]/i);
+        if (matchLink) linkedVal = matchLink[1].trim();
+      }
+      if (document.getElementById('mb-linked-booking')) {
+        document.getElementById('mb-linked-booking').value = linkedVal;
+      }
+
       onBookingDateOrPropChange();
       document.getElementById('modal-booking').style.display = 'flex';
       setTimeout(() => document.getElementById('mb-guest-name')?.focus(), 80);
@@ -8368,6 +8442,83 @@
     function closeBookingModal() {
       document.getElementById('modal-booking').style.display = 'none';
       editingBookingId = null;
+    }
+
+    function onSplitLinkSelectChange() {
+      updateModalSplitStaySection();
+    }
+
+    function updateModalSplitStaySection() {
+      const checkIn = document.getElementById('mb-checkin')?.value;
+      const checkOut = document.getElementById('mb-checkout')?.value;
+      const guestName = (document.getElementById('mb-guest-name')?.value || '').trim();
+      const select = document.getElementById('mb-linked-booking');
+      const box = document.getElementById('mb-split-stay-box');
+      const badge = document.getElementById('mb-split-badge');
+      const desc = document.getElementById('mb-split-desc');
+      if (!select || !box || !badge || !desc) return;
+
+      const currentVal = select.value;
+      const bTemp = {
+        id: editingBookingId || 'temp_current',
+        guestName,
+        phone: document.getElementById('mb-phone')?.value.trim() || '',
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        linkedBookingId: currentVal
+      };
+
+      const split = getSplitStayInfo(bTemp, currentBookings);
+
+      // Re-populate options preserving selection
+      select.innerHTML = '<option value="">✨ Auto-detect consecutive stay by guest name &amp; dates</option>';
+
+      // Find candidates: any other bookings that touch checkIn or checkOut, or share guest name
+      const candidates = currentBookings.filter(x => {
+        if (editingBookingId && x.id === editingBookingId) return false;
+        if (x.status === 'Cancelled') return false;
+        return (x.checkOutDate === checkIn || x.checkInDate === checkOut || (guestName && x.guestName && x.guestName.toLowerCase().includes(guestName.toLowerCase())));
+      });
+
+      candidates.forEach(cand => {
+        const isTransferFrom = cand.checkOutDate === checkIn;
+        const isTransferTo = cand.checkInDate === checkOut;
+        let prefix = '🔗 Link to:';
+        if (isTransferFrom) prefix = '⬅️ Transfer from (Previous stay):';
+        else if (isTransferTo) prefix = '➡️ Transfer to (Next stay):';
+
+        const opt = document.createElement('option');
+        opt.value = cand.id;
+        opt.textContent = `${prefix} ${cand.guestName} [${cand.property}] (${cand.checkInDate} → ${cand.checkOutDate})`;
+        select.appendChild(opt);
+      });
+
+      if (currentVal) {
+        select.value = currentVal;
+      }
+
+      if (split.isSplit) {
+        box.style.background = '#FAF5FF';
+        box.style.borderColor = '#C084FC';
+        badge.style.background = '#F3E8FF';
+        badge.style.color = '#7E22CE';
+        badge.textContent = split.isIntermediate ? '🔄 Room Transfer Today (Intermediate)' : '🏁 Final Checkout Leg';
+        const chainStr = split.legs.map(l => `${l.property} (${l.checkInDate} → ${l.checkOutDate})`).join(' ➔ ');
+        desc.innerHTML = `
+          <div style="margin-bottom: 3px;"><strong style="color: #6B21A8;">Stay Chain:</strong> ${escapeHtml(chainStr)}</div>
+          <div style="margin-bottom: 3px;"><strong style="color: #6B21A8;">Total Combined Stay:</strong> ${split.totalNights} nights • ₹${split.totalAmount.toLocaleString('en-IN')} total revenue</div>
+          <div style="color: #7E22CE; font-weight: 700;">
+            ${split.isIntermediate ? `🔄 Balance ₹${formatCurrency(split.combinedBalance)} rolls over to final checkout on ${split.overallCheckOut}` : `💵 Collect combined total balance of ₹${formatCurrency(split.combinedBalance)} at this checkout`}
+          </div>
+        `;
+      } else {
+        box.style.background = '#F8FAFC';
+        box.style.borderColor = '#CBD5E1';
+        badge.style.background = '#E2E8F0';
+        badge.style.color = '#475569';
+        badge.textContent = 'Standalone Stay';
+        desc.textContent = 'Consecutive bookings with the same guest name are automatically linked. You can also explicitly link to another stay below:';
+      }
     }
 
     // Real-Time Overlap / Double-Booking Conflict Detection & Nights Calculation
@@ -8393,6 +8544,9 @@
 
       // Automatically recalculate total amount = nightly rate * nights
       calculatePricingAndBalance(true);
+
+      // Update split stay detection
+      updateModalSplitStaySection();
 
       // Check for overlap conflicts on the same property
       const conflictAlert = document.getElementById('modal-conflict-alert');
@@ -8454,7 +8608,15 @@
       let userNotes = document.getElementById('mb-notes').value.trim();
       userNotes = userNotes.replace(/^Booked Rate:[^\n]+\n?/m, '').trim();
       const metaLine = `Booked Rate: ₹${nightlyRate.toLocaleString('en-IN')}/night (Total: ₹${totalAmount.toLocaleString('en-IN')}) | Advance Paid: ₹${advance.toLocaleString('en-IN')} | Booking Mode: ${mode}`;
-      const finalNotes = userNotes ? `${metaLine}\n${userNotes}` : metaLine;
+      let finalNotes = userNotes ? `${metaLine}\n${userNotes}` : metaLine;
+
+      const linkedVal = document.getElementById('mb-linked-booking')?.value || '';
+      if (linkedVal) {
+        finalNotes = finalNotes.replace(/\n?\[Split Stay Link:[^\]]+\]/gi, '').trim();
+        finalNotes = `${finalNotes}\n[Split Stay Link: ${linkedVal}]`;
+      } else {
+        finalNotes = finalNotes.replace(/\n?\[Split Stay Link:[^\]]+\]/gi, '').trim();
+      }
 
       let platformVal = mode;
       const matchedCh = loadedChannels.find(c => c.name.toLowerCase() === mode.toLowerCase());
@@ -8481,6 +8643,7 @@
         payout: payoutStr,
         paymentStatus: document.getElementById('mb-pay-status').value,
         status: document.getElementById('mb-status').value,
+        linkedBookingId: linkedVal || null,
         notes: finalNotes,
         isPrimary: true,
         isManual: true,
@@ -8545,6 +8708,19 @@
         currentBookings.push(bookingData);
       }
 
+      // Bidirectional split stay linking:
+      if (linkedVal) {
+        const partner = currentBookings.find(x => x && x.id === linkedVal);
+        if (partner && partner.linkedBookingId !== bookingId) {
+          partner.linkedBookingId = bookingId;
+          let partnerNotes = (partner.notes || '').replace(/\n?\[Split Stay Link:[^\]]+\]/gi, '').trim();
+          partner.notes = partnerNotes ? `${partnerNotes}\n[Split Stay Link: ${bookingId}]` : `[Split Stay Link: ${bookingId}]`;
+          if (window.AirbnbAPI && typeof window.AirbnbAPI.updateBooking === 'function') {
+            window.AirbnbAPI.updateBooking(partner.id, partner).catch(e => console.warn('Partner split link sync:', e));
+          }
+        }
+      }
+
       saveBookings();
       closeBookingModal();
 
@@ -8585,6 +8761,17 @@
       }
 
       currentBookings = currentBookings.filter(x => x.id !== idToDelete);
+
+      // Clean up reverse split link if another booking was linked to this one
+      const oldPartner = currentBookings.find(x => x && x.linkedBookingId === idToDelete);
+      if (oldPartner) {
+        oldPartner.linkedBookingId = null;
+        oldPartner.notes = (oldPartner.notes || '').replace(/\n?\[Split Stay Link:[^\]]+\]/gi, '').trim();
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.updateBooking === 'function') {
+          window.AirbnbAPI.updateBooking(oldPartner.id, oldPartner).catch(e => console.warn('Old partner split link cleanup:', e));
+        }
+      }
+
       localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
       saveBookings();
       closeBookingModal();
@@ -8805,10 +8992,15 @@
       monthBookings.sort((a, b) => a.checkInDate.localeCompare(b.checkInDate));
 
       let totalRevenue = 0;
+      let totalReceived = 0;
+      let totalReceivables = 0;
       monthBookings.forEach(b => {
         const amt = getBookingRevenue(b);
+        const fin = getBookingFinancials(b);
         b._calcAmount = amt;
         totalRevenue += amt;
+        totalReceived += fin.advance;
+        totalReceivables += fin.balance;
       });
 
       // Calculate Expenses
@@ -8829,6 +9021,10 @@
       // Update KPI Cards in Finances View
       const revEl = document.getElementById('fin-kpi-revenue');
       const revSubEl = document.getElementById('fin-kpi-revenue-sub');
+      const recvEl = document.getElementById('fin-kpi-received');
+      const recvSubEl = document.getElementById('fin-kpi-received-sub');
+      const pendEl = document.getElementById('fin-kpi-receivables');
+      const pendSubEl = document.getElementById('fin-kpi-receivables-sub');
       const expEl = document.getElementById('fin-kpi-expenses');
       const expSubEl = document.getElementById('fin-kpi-expenses-sub');
       const profEl = document.getElementById('fin-kpi-profit');
@@ -8839,6 +9035,15 @@
 
       if (revEl) revEl.textContent = '₹' + totalRevenue.toLocaleString('en-IN');
       if (revSubEl) revSubEl.textContent = `${monthBookings.length} bookings in ${document.getElementById('finance-month-label')?.textContent || monthKey}`;
+      
+      const receivedPct = totalRevenue > 0 ? Math.round((totalReceived / totalRevenue) * 100) : 0;
+      if (recvEl) recvEl.textContent = '₹' + totalReceived.toLocaleString('en-IN');
+      if (recvSubEl) recvSubEl.textContent = `${receivedPct}% collected (${monthBookings.filter(b => getBookingFinancials(b).advance > 0).length} stays)`;
+
+      const pendingGuestsCount = monthBookings.filter(b => getBookingFinancials(b).balance > 0).length;
+      if (pendEl) pendEl.textContent = '₹' + totalReceivables.toLocaleString('en-IN');
+      if (pendSubEl) pendSubEl.textContent = `${pendingGuestsCount} stay${pendingGuestsCount === 1 ? '' : 's'} with balance due`;
+
       if (expEl) expEl.textContent = '₹' + totalExpenses.toLocaleString('en-IN');
       if (expSubEl) expSubEl.textContent = `${expenses.length} bills / expenses recorded`;
       if (profEl) {
