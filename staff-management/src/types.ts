@@ -144,6 +144,7 @@ export interface RoomBooking {
 	cash_amount?: number | null;
 	online_amount?: number | null;
 	guest_name?: string | null;
+	guest_phone?: string | null;
 	guest_count?: number | null;
 	guests_json?: string | null;
 	guest_id_image?: string | null;

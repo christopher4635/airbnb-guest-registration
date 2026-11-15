@@ -469,6 +469,7 @@ export default {
 					(path === "/api/staff" && method === "GET") ||
 					(path === "/api/rooms" && method === "GET") ||
 					path.startsWith("/api/room-bookings") ||
+					path.startsWith("/api/guest-history") ||
 					path.startsWith("/api/guest-ids") ||
 					path.startsWith("/api/sync/airbnb") ||
 					path.startsWith("/api/attendance") || // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
@@ -1609,6 +1610,7 @@ export default {
 
 				const roomId = bookingInput.room_id?.trim() || "";
 				const guestName = bookingInput.guest_name?.trim() || null;
+				const guestPhone = bookingInput.guest_phone ? String(bookingInput.guest_phone).trim() : null;
 				const guestsJson = bookingInput.guests_json ? (typeof bookingInput.guests_json === "string" ? bookingInput.guests_json.trim() : JSON.stringify(bookingInput.guests_json)) : null;
 				let parsedNamesCount = 0;
 				if (guestsJson) {
@@ -1785,11 +1787,11 @@ export default {
 
 					await env.DB.prepare(`
 						INSERT INTO room_bookings (
-							id, property_id, room_id, date, amount, payment_mode, cash_amount, online_amount, guest_name, guest_count, guests_json, guest_id_image, notes, slot_number,
+							id, property_id, room_id, date, amount, payment_mode, cash_amount, online_amount, guest_name, guest_phone, guest_count, guests_json, guest_id_image, notes, slot_number,
 							group_booking_id, check_in_date, check_out_date, total_stay_amount, platform, created_by, created_at, updated_at
-						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					`).bind(
-						id, propertyId, roomId, stayDate, dayAmount, dbPaymentMode, dayCash, dayOnline, guestName, guestCount, guestsJson, guestIdImage, notes, slotNumber,
+						id, propertyId, roomId, stayDate, dayAmount, dbPaymentMode, dayCash, dayOnline, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, slotNumber,
 						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, bookingInput.platform || "Direct", submittedBy
 					).run();
 
@@ -1820,7 +1822,7 @@ export default {
 						await pushBookingToAirbnbPortal(env, {
 							roomName,
 							guestName: guestName || "Guest",
-							phone: "",
+							phone: guestPhone || "",
 							checkInDate,
 							checkOutDate: actualCheckOut,
 							nights: dates.length,
@@ -1906,6 +1908,7 @@ export default {
 				const dbPaymentMode: "online" | "cash" = (cashAmount > 0 && onlineAmount === 0) ? "cash" : "online";
 
 				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
+				const guestPhone = body.guest_phone !== undefined ? (body.guest_phone ? String(body.guest_phone).trim() : null) : existing.guest_phone;
 				const guestCount = body.guest_count !== undefined ? Math.max(1, Math.round(Number(body.guest_count) || 1)) : (existing.guest_count || 1);
 				const guestsJson = body.guests_json !== undefined ? (typeof body.guests_json === "string" ? body.guests_json.trim() : JSON.stringify(body.guests_json)) : (existing as any).guests_json;
 				const rawGuestIdImage = body.guest_id_image !== undefined ? (typeof body.guest_id_image === "string" ? body.guest_id_image?.trim() : JSON.stringify(body.guest_id_image)) : existing.guest_id_image;
@@ -1916,9 +1919,9 @@ export default {
 				if (updateGroup && existing.group_booking_id) {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_phone = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE group_booking_id = ?
-					`).bind(dbPaymentMode, cashAmount, onlineAmount, guestName, guestCount, guestsJson, guestIdImage, notes, existing.group_booking_id).run();
+					`).bind(dbPaymentMode, cashAmount, onlineAmount, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, existing.group_booking_id).run();
 
 					// Re-sync lodging across all affected dates
 					const groupBookings = await env.DB.prepare("SELECT DISTINCT property_id, date FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ property_id: string; date: string }>();
@@ -1928,9 +1931,9 @@ export default {
 				} else {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET amount = ?, payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET amount = ?, payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_phone = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
 						WHERE id = ?
-					`).bind(amount, dbPaymentMode, cashAmount, onlineAmount, guestName, guestCount, guestsJson, guestIdImage, notes, bookingId).run();
+					`).bind(amount, dbPaymentMode, cashAmount, onlineAmount, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, bookingId).run();
 
 					// Re-sync lodging in daily_finances
 					await syncDailyFinanceLodging(env, existing.property_id, existing.date);
@@ -1983,6 +1986,150 @@ export default {
 				const totals = await syncDailyFinanceLodging(env, existing.property_id, existing.date);
 
 				return jsonResponse({ success: true, lodgingTotals: totals });
+			}
+
+			// GET /api/guest-history (Look up guest stay history, stats, and past stays by phone or search query)
+			if (path === "/api/guest-history" && method === "GET") {
+				const phoneParam = url.searchParams.get("phone")?.trim() || "";
+				const queryParam = url.searchParams.get("query")?.trim() || url.searchParams.get("q")?.trim() || "";
+				const nameParam = url.searchParams.get("name")?.trim() || "";
+				const search = phoneParam || queryParam || nameParam;
+
+				let propertyFilter = "";
+				const params: any[] = [];
+				if (auth.role === "manager" && auth.manager?.property_id) {
+					propertyFilter = " AND b.property_id = ?";
+					params.push(auth.manager.property_id);
+				}
+
+				// If no search query provided, return recent returning guests with contact info
+				if (!search) {
+					const recentGuests = await env.DB.prepare(`
+						SELECT 
+							b.guest_phone,
+							MAX(b.guest_name) AS guest_name,
+							COUNT(DISTINCT COALESCE(b.group_booking_id, b.id)) AS total_stays,
+							COUNT(b.id) AS total_nights,
+							SUM(b.amount) AS total_spend,
+							MIN(b.date) AS first_stay,
+							MAX(b.date) AS last_stay
+						FROM room_bookings b
+						JOIN properties p ON b.property_id = p.id
+						WHERE (p.active IS NULL OR p.active = 1)
+						  AND b.guest_phone IS NOT NULL AND b.guest_phone != ''
+						  ${propertyFilter}
+						GROUP BY b.guest_phone
+						ORDER BY last_stay DESC
+						LIMIT 50
+					`).bind(...params).all<any>();
+
+					return jsonResponse({
+						results: recentGuests.results || [],
+						count: (recentGuests.results || []).length
+					});
+				}
+
+				// Normalize search term:
+				const cleanDigits = search.replace(/\D/g, "");
+				const isPhoneSearch = cleanDigits.length >= 6;
+
+				let whereClause = "";
+				const searchParams: any[] = [...params];
+
+				if (phoneParam) {
+					// Specific phone lookup: check exact or suffix (last 10 digits)
+					if (cleanDigits.length >= 10) {
+						const last10 = cleanDigits.slice(-10);
+						whereClause = `AND (b.guest_phone = ? OR b.guest_phone LIKE '%' || ? OR replace(replace(replace(b.guest_phone, ' ', ''), '-', ''), '+', '') LIKE '%' || ?)`;
+						searchParams.push(phoneParam, last10, last10);
+					} else {
+						whereClause = `AND (b.guest_phone = ? OR b.guest_phone LIKE '%' || ? || '%')`;
+						searchParams.push(phoneParam, cleanDigits);
+					}
+				} else if (isPhoneSearch) {
+					// Query contains phone digits: match phone OR guest name
+					const last10 = cleanDigits.slice(-10);
+					whereClause = `AND (b.guest_phone LIKE '%' || ? || '%' OR b.guest_phone LIKE '%' || ? OR b.guest_name LIKE '%' || ? || '%')`;
+					searchParams.push(cleanDigits, last10, search);
+				} else {
+					// Name / text query
+					whereClause = `AND (b.guest_name LIKE '%' || ? || '%' OR b.notes LIKE '%' || ? || '%')`;
+					searchParams.push(search, search);
+				}
+
+				const query = `
+					SELECT b.*, r.room_number, r.room_type, p.name AS property_name
+					FROM room_bookings b
+					JOIN rooms r ON b.room_id = r.id
+					JOIN properties p ON b.property_id = p.id
+					WHERE (p.active IS NULL OR p.active = 1)
+					  ${propertyFilter}
+					  ${whereClause}
+					ORDER BY b.date DESC, b.created_at DESC
+				`;
+
+				const { results } = await env.DB.prepare(query).bind(...searchParams).all<RoomBooking>();
+				const bookings = (results || []).map(b => ({
+					...b,
+					payment_mode: (Number(b.cash_amount || 0) > 0 && Number(b.online_amount || 0) > 0) ? "split" : b.payment_mode
+				}));
+
+				if (bookings.length === 0) {
+					return jsonResponse({
+						found: false,
+						search,
+						guest_phone: phoneParam || (isPhoneSearch ? search : null),
+						guest_name: null,
+						total_stays: 0,
+						total_nights: 0,
+						total_spend: 0,
+						bookings: []
+					});
+				}
+
+				// Aggregate stats
+				const guestNames = new Set<string>();
+				const phones = new Set<string>();
+				const roomFrequency = new Map<string, number>();
+				const distinctStayIds = new Set<string>();
+				let totalSpend = 0;
+				let firstStay = bookings[0].date;
+				let lastStay = bookings[0].date;
+
+				for (const b of bookings) {
+					if (b.guest_name) guestNames.add(b.guest_name.trim());
+					if (b.guest_phone) phones.add(b.guest_phone.trim());
+					const roomKey = (b as any).room_number || "Room";
+					roomFrequency.set(roomKey, (roomFrequency.get(roomKey) || 0) + 1);
+					distinctStayIds.add(b.group_booking_id || b.id);
+					totalSpend += Number(b.amount || 0);
+
+					if (b.date < firstStay) firstStay = b.date;
+					if (b.date > lastStay) lastStay = b.date;
+				}
+
+				const preferredRooms = Array.from(roomFrequency.entries())
+					.map(([room_number, count]) => ({ room_number, count }))
+					.sort((a, b) => b.count - a.count);
+
+				const latestBookingWithPhone = bookings.find(b => b.guest_phone);
+				const latestBookingWithName = bookings.find(b => b.guest_name);
+
+				return jsonResponse({
+					found: true,
+					search,
+					guest_phone: phoneParam || latestBookingWithPhone?.guest_phone || null,
+					guest_name: latestBookingWithName?.guest_name || Array.from(guestNames)[0] || "Guest",
+					all_names: Array.from(guestNames),
+					all_phones: Array.from(phones),
+					total_stays: distinctStayIds.size,
+					total_nights: bookings.length,
+					total_spend: totalSpend,
+					first_stay: firstStay,
+					last_stay: lastStay,
+					preferred_rooms: preferredRooms,
+					bookings
+				});
 			}
 
 			// GET /api/sync/airbnb (Check sync status & last sync timestamp)

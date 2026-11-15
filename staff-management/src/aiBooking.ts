@@ -16,6 +16,7 @@ export interface BookingChatDraft {
 	room_number?: string | null;
 	guest_name?: string | null;
 	guest_names?: string[];
+	guest_phone?: string | null;
 	guest_count?: number | null;
 	check_in_date?: string | null;
 	check_out_date?: string | null;
@@ -35,6 +36,7 @@ export interface CreateRoomBookingInput {
 	cash_amount?: number | null;
 	online_amount?: number | null;
 	guest_name?: string | null;
+	guest_phone?: string | null;
 	guest_count?: number | null;
 	guests_json?: string | null;
 	guest_id_image?: string | null;
@@ -73,6 +75,8 @@ interface ParsedAiJson {
 	intent?: "create_booking" | "check_availability" | "cancel" | "chat";
 	customer_name?: string | null;
 	guest_names?: string[] | null;
+	phone?: string | null;
+	guest_phone?: string | null;
 	room_number?: string | null;
 	property_name?: string | null;
 	guest_count?: number | null;
@@ -175,8 +179,8 @@ export function parseDeterministicBooking(
 
 	// 1. Key-value line extraction (works across newlines, commas, or inline labels)
 	const normalizedForKv = trimmed
-		.replace(/,\s*(?=(?:customer\s*name|guest\s*name|name|room\s*no\.?|room\s*number|room|number\s*of\s*persons?|no\.?\s*of\s*persons?|persons?|guests?|pax|number\s*of\s*days?|no\.?\s*of\s*days?|number\s*of\s*nights?|no\.?\s*of\s*nights?|days?|nights?|stay\s*(?:duration|days?|nights?|period)?|duration|check[\s-]*in|check[\s-]*out|from|to|date|amount|price|rate|payment(?:\s*mode)?|notes?)\b)/gi, "\n")
-		.replace(/\s+(?=(?:customer\s*name|guest\s*name|room\s*no\.?|room\s*number|number\s*of\s*persons?|no\.?\s*of\s*persons?|number\s*of\s*days?|no\.?\s*of\s*days?|number\s*of\s*nights?|no\.?\s*of\s*nights?|check[\s-]*in(?:\s*date)?|check[\s-]*out(?:\s*date)?|payment\s*mode|payment\s*method)\b)/gi, "\n");
+		.replace(/,\s*(?=(?:customer\s*name|guest\s*name|name|phone(?:\s*no\.?|\s*number)?|mobile(?:\s*no\.?|\s*number)?|contact(?:\s*no\.?|\s*number)?|room\s*no\.?|room\s*number|room|number\s*of\s*persons?|no\.?\s*of\s*persons?|persons?|guests?|pax|number\s*of\s*days?|no\.?\s*of\s*days?|number\s*of\s*nights?|no\.?\s*of\s*nights?|days?|nights?|stay\s*(?:duration|days?|nights?|period)?|duration|check[\s-]*in|check[\s-]*out|from|to|date|amount|price|rate|payment(?:\s*mode)?|notes?)\b)/gi, "\n")
+		.replace(/\s+(?=(?:customer\s*name|guest\s*name|phone(?:\s*no\.?|\s*number)?|mobile(?:\s*no\.?|\s*number)?|contact(?:\s*no\.?|\s*number)?|room\s*no\.?|room\s*number|number\s*of\s*persons?|no\.?\s*of\s*persons?|number\s*of\s*days?|no\.?\s*of\s*days?|number\s*of\s*nights?|no\.?\s*of\s*nights?|check[\s-]*in(?:\s*date)?|check[\s-]*out(?:\s*date)?|payment\s*mode|payment\s*method)\b)/gi, "\n");
 	const kvLines = normalizedForKv.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
 	for (const line of kvLines) {
@@ -188,6 +192,14 @@ export function parseDeterministicBooking(
 				result.guest_name = val;
 				const splitNames = val.split(/\s*(?:,|&|\band\b)\s*/i).map((s) => s.trim()).filter(Boolean);
 				if (splitNames.length > 0) result.guest_names = splitNames;
+			}
+			continue;
+		}
+
+		if ((m = line.match(/^(?:phone(?:\s*number|\s*no\.?)?|mobile(?:\s*number|\s*no\.?)?|contact(?:\s*number|\s*no\.?)?|whatsapp(?:\s*no\.?)?|ph|tel)\s*[:=\-.]\s*(.+)$/i))) {
+			const val = m[1].trim();
+			if (val && !/^(?:n\/a|none|-)$/i.test(val)) {
+				result.guest_phone = val;
 			}
 			continue;
 		}
@@ -289,6 +301,13 @@ export function parseDeterministicBooking(
 		}
 	}
 
+	if (!result.guest_phone) {
+		const inlinePhone = trimmed.match(/(?:(?:\+|00)91[\s\-]?)?([6-9]\d{9})\b/);
+		if (inlinePhone) {
+			result.guest_phone = inlinePhone[0].trim();
+		}
+	}
+
 	if (!result.guest_count) {
 		const inlineCount = trimmed.match(/\b(\d{1,2})\s*(?:persons?|people|guests?|pax|adults?|members?)\b/i);
 		if (inlineCount?.[1]) {
@@ -349,6 +368,7 @@ export function parseDeterministicBooking(
 	// Amount extraction (strip date strings so years like 2026 or days are never parsed as money)
 	if (!result.amount) {
 		const cleanNoDates = trimmed
+			.replace(/(?:(?:\+|00)91[\s\-]?)?[6-9]\d{9}\b/g, " ")
 			.replace(/\d{4}-\d{2}-\d{2}/g, " ")
 			.replace(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/g, " ")
 			.replace(/\d{1,2}(?:st|nd|rd|th)?\s+[a-z]{3,9}/gi, " ");
@@ -456,6 +476,7 @@ async function parseWithWorkersAI(
 		'  "intent": "create_booking" | "check_availability" | "cancel" | "chat",',
 		'  "customer_name": string | null,',
 		'  "guest_names": string[] | null,',
+		'  "guest_phone": string | null,',
 		'  "room_number": string | null,',
 		'  "property_name": string | null,',
 		'  "guest_count": number | null,',
@@ -746,6 +767,7 @@ export async function handleAiBookingChat(
 		...(Array.isArray(aiParsed?.guest_names) && aiParsed!.guest_names!.length > 0
 			? { guest_names: aiParsed!.guest_names!.map((s) => String(s).trim()).filter(Boolean) }
 			: {}),
+		...(aiParsed?.guest_phone ? { guest_phone: aiParsed.guest_phone.trim() } : aiParsed?.phone ? { guest_phone: aiParsed.phone.trim() } : {}),
 		...(aiParsed?.room_number ? { room_number: String(aiParsed.room_number).trim() } : {}),
 		...(aiParsed?.guest_count && aiParsed.guest_count > 0 ? { guest_count: Math.round(aiParsed.guest_count) } : {}),
 		...(aiParsed?.check_in_date && /^\d{4}-\d{2}-\d{2}$/.test(aiParsed.check_in_date)
@@ -915,6 +937,7 @@ export async function handleAiBookingChat(
 		cash_amount: cashAmount,
 		online_amount: onlineAmount,
 		guest_name: merged.guest_name!,
+		guest_phone: merged.guest_phone || null,
 		guest_count: guestCount,
 		guests_json: JSON.stringify(namesList),
 		notes: merged.notes || null,
@@ -946,6 +969,7 @@ export async function handleAiBookingChat(
 			reply:
 				`Room ${room.room_number} booked successfully!\n` +
 				`• Customer: ${merged.guest_name}\n` +
+				(merged.guest_phone ? `• Phone: ${merged.guest_phone}\n` : "") +
 				`• Room: ${room.room_number} (${room.room_type || "Standard"})\n` +
 				`• Persons: ${guestCount}\n` +
 				`• Stay: ${staySummary}\n` +

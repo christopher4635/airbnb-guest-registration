@@ -1742,6 +1742,44 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
+        <!-- Guest Contact / Phone Number (Optional) with Live Returning Guest History Detection -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="phone" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Guest Phone Number (Optional)</span>
+            </label>
+            <span class="text-[10px] text-slate-400 font-medium">Auto-tracks travel history</span>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs pointer-events-none">
+              <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+            </span>
+            <input
+              type="tel"
+              id="modalBookingGuestPhone"
+              placeholder="e.g. 9876543210"
+              oninput="onBookingPhoneInput(this.value)"
+              class="w-full pl-8 pr-3 py-2 text-xs font-mono font-bold text-slate-900 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+            />
+          </div>
+          <!-- Live Returning Guest History Badge / Pill -->
+          <div id="bookingGuestHistoryPill" class="hidden mt-1.5 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 flex items-center justify-between gap-2 shadow-2xs animate-in fade-in duration-150">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-amber-600 font-bold shrink-0">⭐ Returning Guest:</span>
+              <span id="bookingGuestHistorySummary" class="font-semibold text-slate-900 truncate"></span>
+            </div>
+            <button
+              type="button"
+              id="btnViewHistoryFromModal"
+              onclick="openGuestTravelHistoryModal(document.getElementById('modalBookingGuestPhone').value)"
+              class="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 underline cursor-pointer shrink-0"
+            >
+              Travel History →
+            </button>
+          </div>
+        </div>
+
         <!-- Guest Names (Supports multiple guests) & Total Persons -->
         <div>
           <div class="flex items-center justify-between mb-1.5 gap-2">
@@ -1864,6 +1902,74 @@ export function getDashboardHtml(): string {
           <span>Book This Room Again</span>
         </button>
         <button type="button" onclick="closeRoomDayDetailModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guest Travel History Modal -->
+  <div id="guestTravelHistoryModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-2xl rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh]">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+            <i data-lucide="history" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+              Guest Travel History
+            </h3>
+            <p class="text-xs text-slate-500">Track past visits, room preferences &amp; total stays by phone or name</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeGuestTravelHistoryModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs pointer-events-none">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </span>
+          <input
+            type="text"
+            id="guestHistorySearchInput"
+            placeholder="Search by Phone Number or Guest Name..."
+            onkeydown="if(event.key==='Enter'){event.preventDefault(); triggerGuestHistorySearch();}"
+            class="w-full pl-9 pr-8 py-2.5 text-xs font-semibold rounded-2xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+          />
+          <button
+            type="button"
+            onclick="clearGuestHistorySearch()"
+            id="btnClearGuestHistorySearch"
+            class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+          >
+            <i data-lucide="x-circle" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <button
+          type="button"
+          onclick="triggerGuestHistorySearch()"
+          class="px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xs transition cursor-pointer flex items-center gap-1.5 shrink-0"
+        >
+          <i data-lucide="search" class="w-3.5 h-3.5"></i>
+          <span>Search</span>
+        </button>
+      </div>
+
+      <!-- Scrollable Content Body -->
+      <div id="guestHistoryContentBody" class="space-y-4 overflow-y-auto pr-1 flex-1">
+        <!-- Rendered by JS: Profile summary card, stay stats, and timeline of bookings -->
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0">
+        <div id="guestHistoryFooterStats" class="text-xs text-slate-500 font-medium"></div>
+        <button type="button" onclick="closeGuestTravelHistoryModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
           Close
         </button>
       </div>
@@ -7790,6 +7896,16 @@ export function getDashboardHtml(): string {
 
               <button
                 type="button"
+                onclick="openGuestTravelHistoryModal()"
+                title="Search Guest Travel & Stay History"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition cursor-pointer"
+              >
+                <i data-lucide="history" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>Guest History</span>
+              </button>
+
+              <button
+                type="button"
                 onclick="openRoomBookingModal(null, null, null)"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
               >
@@ -9426,6 +9542,7 @@ export function getDashboardHtml(): string {
       const backgroundModalIds = [
         "roomDayDetailModal",
         "roomBookingModal",
+        "guestTravelHistoryModal",
         "manageRoomModal",
         "financeModal",
         "businessConfigModal",
@@ -9741,6 +9858,10 @@ export function getDashboardHtml(): string {
           modalGuestIdList = parseGuestIdImages(bk.guest_id_image);
           renderModalGuestIdGallery();
 
+          const phoneInput = document.getElementById("modalBookingGuestPhone");
+          if (phoneInput) phoneInput.value = bk.guest_phone || "";
+          onBookingPhoneInput(bk.guest_phone || "");
+
           const cashVal = Number(bk.cash_amount !== undefined && bk.cash_amount !== null ? bk.cash_amount : (bk.payment_mode === "cash" ? bk.amount : 0)) || 0;
           const onlineVal = Number(bk.online_amount !== undefined && bk.online_amount !== null ? bk.online_amount : (bk.payment_mode === "online" ? bk.amount : 0)) || 0;
           const cashInp = document.getElementById("modalBookingCashAmount");
@@ -9789,6 +9910,11 @@ export function getDashboardHtml(): string {
         const guestCountInput = document.getElementById("modalBookingGuestCount");
         if (guestCountInput) guestCountInput.value = 1;
         clearModalGuestIds();
+
+        const phoneInput = document.getElementById("modalBookingGuestPhone");
+        if (phoneInput) phoneInput.value = "";
+        const histPill = document.getElementById("bookingGuestHistoryPill");
+        if (histPill) histPill.classList.add("hidden");
 
         const cashInp = document.getElementById("modalBookingCashAmount");
         const onlineInp = document.getElementById("modalBookingOnlineAmount");
@@ -9869,6 +9995,10 @@ export function getDashboardHtml(): string {
       clearModalGuestIds();
       modalGuestNameRows = [""];
       renderModalGuestNameRows();
+      const phoneInput = document.getElementById("modalBookingGuestPhone");
+      if (phoneInput) phoneInput.value = "";
+      const histPill = document.getElementById("bookingGuestHistoryPill");
+      if (histPill) histPill.classList.add("hidden");
     }
 
     function openEditBookingModal(bookingId) {
@@ -9906,6 +10036,7 @@ export function getDashboardHtml(): string {
       const cleanModalIds = modalGuestIdList.map(item => ({ url: item.rawUrl || item.url, key: item.key, label: item.label }));
       const guest_id_image = cleanModalIds.length > 0 ? JSON.stringify(cleanModalIds) : (document.getElementById("modalBookingGuestIdData")?.value?.trim() || null);
       const notes = document.getElementById("modalBookingNotes")?.value?.trim() || "";
+      const guest_phone = document.getElementById("modalBookingGuestPhone")?.value?.trim() || null;
 
       if (!property_id || !room_id) {
         return showToast("Please select a room");
@@ -9919,6 +10050,7 @@ export function getDashboardHtml(): string {
         online_amount,
         amount: total_amount,
         guest_name,
+        guest_phone,
         guest_count,
         guests_json,
         guest_id_image,
@@ -10058,6 +10190,26 @@ export function getDashboardHtml(): string {
                     Guest: \${escapeHtml(b.guest_name || 'Walk-in')}\${b.guest_count ? \` · \${b.guest_count} person\${b.guest_count > 1 ? 's' : ''}\` : ''}
                     \${b.notes ? \` · \${escapeHtml(b.notes)}\` : ''}
                   </div>
+                  \${b.guest_phone ? \`
+                    <div class="flex items-center gap-1.5 mt-1 text-[11px] text-slate-700 flex-wrap">
+                      <span class="font-bold font-mono flex items-center gap-1 text-slate-900 bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
+                        <i data-lucide="phone" class="w-3 h-3 text-indigo-600"></i>
+                        \${escapeHtml(b.guest_phone)}
+                      </span>
+                      <a href="tel:\${b.guest_phone.replace(/[^\\d+]/g, '')}" class="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[10px] transition">📞 Call</a>
+                      <a href="https://wa.me/\${b.guest_phone.replace(/\\D/g, '').length === 10 ? '91' + b.guest_phone.replace(/\\D/g, '') : b.guest_phone.replace(/\\D/g, '')}" target="_blank" rel="noopener noreferrer" class="px-2 py-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-[10px] transition">💬 WhatsApp</a>
+                      <button type="button" onclick="closeRoomDayDetailModal(); openGuestTravelHistoryModal('\${escapeHtml(b.guest_phone)}', '\${escapeHtml(b.guest_name || '')}')" class="px-2 py-0.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10px] cursor-pointer transition border border-indigo-200">
+                        📜 Travel History
+                      </button>
+                    </div>
+                  \` : (b.guest_name && b.guest_name.toLowerCase() !== 'walk-in' ? \`
+                    <div class="mt-1">
+                      <button type="button" onclick="closeRoomDayDetailModal(); openGuestTravelHistoryModal('', '\${escapeHtml(b.guest_name)}')" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer underline flex items-center gap-1">
+                        <i data-lucide="history" class="w-3 h-3"></i>
+                        <span>Search Travel History for \${escapeHtml(b.guest_name)}</span>
+                      </button>
+                    </div>
+                  \` : '')}
                   <div class="text-[10px] text-slate-400 mt-0.5">
                     Created: \${escapeHtml(b.created_by || 'Staff')}
                     \${b.external_booking_id ? \` · External ID: \${escapeHtml(b.external_booking_id)}\` : ''}
@@ -10136,6 +10288,433 @@ export function getDashboardHtml(): string {
     function closeRoomDayDetailModal() {
       document.getElementById("roomDayDetailModal").classList.add("hidden");
       document.getElementById("roomDayDetailModal").classList.remove("flex");
+    }
+
+    let guestHistoryDebounceTimer = null;
+
+    function onBookingPhoneInput(phone) {
+      const pill = document.getElementById("bookingGuestHistoryPill");
+      const summary = document.getElementById("bookingGuestHistorySummary");
+      if (!pill || !summary) return;
+
+      const clean = (phone || "").replace(/\D/g, "");
+      if (clean.length < 6) {
+        pill.classList.add("hidden");
+        return;
+      }
+
+      // 1. Instant client-side lookup from loaded bookings in memory
+      const localMatches = (roomBookingsList || []).filter(b => {
+        if (!b.guest_phone) return false;
+        const bClean = b.guest_phone.replace(/\D/g, "");
+        return bClean === clean || (clean.length >= 10 && bClean.endsWith(clean.slice(-10)));
+      });
+
+      if (localMatches.length > 0) {
+        const latestWithName = localMatches.find(b => b.guest_name) || localMatches[0];
+        const gName = latestWithName.guest_name || "Guest";
+        summary.innerText = \`\${gName} (\${localMatches.length} stay\${localMatches.length > 1 ? "s" : ""})\`;
+        pill.classList.remove("hidden");
+
+        const firstGuestInput = document.querySelector(".modal-guest-name-input");
+        if (firstGuestInput && !firstGuestInput.value.trim() && gName && gName !== "Guest" && gName !== "Walk-in") {
+          firstGuestInput.value = gName;
+          modalGuestNameRows = [gName];
+        }
+      }
+
+      // 2. Debounced all-time server lookup
+      if (guestHistoryDebounceTimer) clearTimeout(guestHistoryDebounceTimer);
+      guestHistoryDebounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(\`/api/guest-history?phone=\${encodeURIComponent(phone.trim())}\`, {
+            headers: getAuthHeaders()
+          });
+          if (res.status === 401) return;
+          const data = await res.json();
+          if (data && data.found && data.total_stays > 0) {
+            summary.innerText = \`\${data.guest_name || "Guest"} (\${data.total_stays} stay\${data.total_stays > 1 ? "s" : ""} · \${data.total_nights} night\${data.total_nights > 1 ? "s" : ""} · ₹\${formatCurrency(data.total_spend)})\`;
+            pill.classList.remove("hidden");
+
+            const firstGuestInput = document.querySelector(".modal-guest-name-input");
+            if (firstGuestInput && !firstGuestInput.value.trim() && data.guest_name && data.guest_name !== "Guest" && data.guest_name !== "Walk-in") {
+              firstGuestInput.value = data.guest_name;
+              modalGuestNameRows = [data.guest_name];
+            }
+          } else if (localMatches.length === 0) {
+            pill.classList.add("hidden");
+          }
+        } catch (e) {
+          console.warn("Guest history phone lookup error:", e);
+        }
+      }, 350);
+    }
+
+    async function openGuestTravelHistoryModal(phoneOrQuery = "", guestName = "") {
+      const modal = document.getElementById("guestTravelHistoryModal");
+      if (!modal) return;
+
+      const input = document.getElementById("guestHistorySearchInput");
+      const clearBtn = document.getElementById("btnClearGuestHistorySearch");
+
+      const searchTerm = phoneOrQuery?.trim() || guestName?.trim() || "";
+      if (input) input.value = searchTerm;
+      if (clearBtn) {
+        if (searchTerm) clearBtn.classList.remove("hidden");
+        else clearBtn.classList.add("hidden");
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      refreshIcons();
+
+      if (searchTerm) {
+        await loadGuestTravelHistory(searchTerm);
+      } else {
+        await loadRecentGuestsList();
+      }
+    }
+
+    function closeGuestTravelHistoryModal() {
+      const modal = document.getElementById("guestTravelHistoryModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function clearGuestHistorySearch() {
+      const input = document.getElementById("guestHistorySearchInput");
+      const clearBtn = document.getElementById("btnClearGuestHistorySearch");
+      if (input) input.value = "";
+      if (clearBtn) clearBtn.classList.add("hidden");
+      loadRecentGuestsList();
+    }
+
+    async function triggerGuestHistorySearch() {
+      const input = document.getElementById("guestHistorySearchInput");
+      const query = input?.value?.trim() || "";
+      const clearBtn = document.getElementById("btnClearGuestHistorySearch");
+      if (clearBtn) {
+        if (query) clearBtn.classList.remove("hidden");
+        else clearBtn.classList.add("hidden");
+      }
+      if (query) {
+        await loadGuestTravelHistory(query);
+      } else {
+        await loadRecentGuestsList();
+      }
+    }
+
+    async function loadGuestTravelHistory(query) {
+      const content = document.getElementById("guestHistoryContentBody");
+      const footer = document.getElementById("guestHistoryFooterStats");
+      if (!content) return;
+
+      content.innerHTML = \`
+        <div class="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
+          <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-indigo-600"></i>
+          <span class="text-xs font-semibold">Retrieving guest travel history...</span>
+        </div>
+      \`;
+      refreshIcons();
+
+      try {
+        const isDigits = query.replace(/\\D/g, "").length >= 6;
+        const param = isDigits ? \`phone=\${encodeURIComponent(query)}\` : \`query=\${encodeURIComponent(query)}\`;
+        const res = await fetch(\`/api/guest-history?\${param}\`, {
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+
+        if (!data || !data.found || (data.bookings || []).length === 0) {
+          content.innerHTML = \`
+            <div class="py-12 text-center text-slate-400 space-y-2">
+              <i data-lucide="user-x" class="w-8 h-8 mx-auto text-slate-300"></i>
+              <div class="text-sm font-bold text-slate-700">No Stay History Found</div>
+              <p class="text-xs text-slate-500 max-w-sm mx-auto">
+                No past or upcoming bookings matched "\${escapeHtml(query)}". Check the phone number or name and try again.
+              </p>
+              <button
+                type="button"
+                onclick="loadRecentGuestsList()"
+                class="mt-2 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition cursor-pointer"
+              >
+                ← View Recent Guests
+              </button>
+            </div>
+          \`;
+          if (footer) footer.innerText = "0 bookings found";
+          refreshIcons();
+          return;
+        }
+
+        renderGuestHistoryTimeline(data);
+      } catch (err) {
+        content.innerHTML = \`
+          <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+            Failed to load guest history: \${escapeHtml(err.message || String(err))}
+          </div>
+        \`;
+      }
+    }
+
+    async function loadRecentGuestsList() {
+      const content = document.getElementById("guestHistoryContentBody");
+      const footer = document.getElementById("guestHistoryFooterStats");
+      if (!content) return;
+
+      content.innerHTML = \`
+        <div class="py-12 flex flex-col items-center justify-center gap-2 text-slate-400">
+          <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-indigo-600"></i>
+          <span class="text-xs font-semibold">Loading recent guests...</span>
+        </div>
+      \`;
+      refreshIcons();
+
+      try {
+        const res = await fetch("/api/guest-history", {
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        const results = data.results || [];
+
+        if (results.length === 0) {
+          content.innerHTML = \`
+            <div class="py-12 text-center text-slate-400 space-y-2">
+              <i data-lucide="users" class="w-8 h-8 mx-auto text-slate-300"></i>
+              <div class="text-sm font-bold text-slate-700">No Guests with Phone Numbers Yet</div>
+              <p class="text-xs text-slate-500 max-w-sm mx-auto">
+                When recording new bookings, enter the guest phone number to automatically retain their stay history.
+              </p>
+            </div>
+          \`;
+          if (footer) footer.innerText = "0 guests";
+          refreshIcons();
+          return;
+        }
+
+        if (footer) footer.innerText = \`\${results.length} returning guest(s) recorded\`;
+
+        content.innerHTML = \`
+          <div class="space-y-3">
+            <div class="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
+              <span>Recent Guests with Contact Details</span>
+              <span>Click a guest to view full stay timeline</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              \${results.map(g => \`
+                <div
+                  onclick="openGuestTravelHistoryModal('\${escapeHtml(g.guest_phone || '')}', '\${escapeHtml(g.guest_name || '')}')"
+                  class="p-3.5 rounded-2xl bg-slate-50 hover:bg-indigo-50/60 border border-slate-200 hover:border-indigo-200 transition cursor-pointer flex items-center justify-between gap-3 shadow-2xs group"
+                >
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-xs font-black text-slate-900 group-hover:text-indigo-700 truncate">
+                        \${escapeHtml(g.guest_name || 'Guest')}
+                      </span>
+                      <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 shrink-0">
+                        \${g.total_stays} stay\${g.total_stays > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div class="text-[11px] font-mono text-slate-500 flex items-center gap-1 mt-0.5">
+                      <i data-lucide="phone" class="w-3 h-3 text-slate-400"></i>
+                      <span>\${escapeHtml(g.guest_phone)}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-1">
+                      Last stay: <span class="font-semibold text-slate-600">\${g.last_stay || ''}</span> · \${g.total_nights || 1} nights
+                    </div>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <div class="text-xs font-black font-mono text-slate-800">
+                      ₹\${formatCurrency(g.total_spend || 0)}
+                    </div>
+                    <span class="text-[10px] text-indigo-600 font-bold group-hover:underline mt-1 inline-block">
+                      View History →
+                    </span>
+                  </div>
+                </div>
+              \`).join("")}
+            </div>
+          </div>
+        \`;
+        refreshIcons();
+      } catch (err) {
+        content.innerHTML = \`
+          <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+            Failed to load recent guests: \${escapeHtml(err.message || String(err))}
+          </div>
+        \`;
+      }
+    }
+
+    function renderGuestHistoryTimeline(data) {
+      const content = document.getElementById("guestHistoryContentBody");
+      const footer = document.getElementById("guestHistoryFooterStats");
+      if (!content) return;
+
+      const bookings = data.bookings || [];
+      const cleanPhone = (data.guest_phone || "").replace(/\\D/g, "");
+      const waNumber = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
+      const prefRoomsDesc = (data.preferred_rooms || [])
+        .slice(0, 3)
+        .map(r => \`Room \${r.room_number} (\${r.count}x)\`)
+        .join(" · ");
+
+      if (footer) {
+        footer.innerText = \`Total: \${data.total_stays} stay(s) · \${data.total_nights} room-night(s) · ₹\${formatCurrency(data.total_spend)}\`;
+      }
+
+      content.innerHTML = \`
+        <!-- Guest Profile Summary Banner -->
+        <div class="p-4 rounded-3xl bg-gradient-to-br from-indigo-50 via-slate-50 to-purple-50 border border-indigo-200 shadow-2xs space-y-3">
+          <div class="flex items-start justify-between flex-wrap gap-2">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h4 class="text-base font-black text-slate-900">\${escapeHtml(data.guest_name || 'Guest')}</h4>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1">
+                  ⭐ \${data.total_stays} Stay\${data.total_stays > 1 ? 's' : ''}
+                </span>
+                \${data.all_names && data.all_names.length > 1 ? \`
+                  <span class="text-[10px] text-slate-500 font-medium" title="Other names used: \${escapeHtml(data.all_names.join(', '))}">
+                    (\${data.all_names.length} names on record)
+                  </span>
+                \` : ''}
+              </div>
+              \${data.guest_phone ? \`
+                <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <span class="text-xs font-bold font-mono text-slate-700 flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
+                    <i data-lucide="phone" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    \${escapeHtml(data.guest_phone)}
+                  </span>
+                  <a href="tel:\${data.guest_phone.replace(/[^\\d+]/g, '')}" class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold text-[10px] border border-slate-200 transition shadow-2xs">📞 Call</a>
+                  <a href="https://wa.me/\${waNumber}" target="_blank" rel="noopener noreferrer" class="px-2 py-0.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] transition shadow-2xs flex items-center gap-1">
+                    <span>💬 WhatsApp</span>
+                  </a>
+                </div>
+              \` : ''}
+            </div>
+
+            <button
+              type="button"
+              onclick="loadRecentGuestsList()"
+              class="px-2.5 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 transition cursor-pointer"
+            >
+              ← Back to Guest List
+            </button>
+          </div>
+
+          <!-- Stats 4-Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+            <div class="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Stays</span>
+              <span class="text-sm sm:text-base font-black text-indigo-700">\${data.total_stays}</span>
+            </div>
+            <div class="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Nights</span>
+              <span class="text-sm sm:text-base font-black text-slate-900">\${data.total_nights}</span>
+            </div>
+            <div class="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Spend</span>
+              <span class="text-sm sm:text-base font-black font-mono text-emerald-700">₹\${formatCurrency(data.total_spend)}</span>
+            </div>
+            <div class="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Preferred Room</span>
+              <span class="text-xs font-bold text-slate-800 truncate block mt-0.5">\${escapeHtml(prefRoomsDesc || 'None')}</span>
+            </div>
+          </div>
+
+          <div class="text-[10px] text-slate-500 flex items-center justify-between px-1">
+            <span>First Stay: <b class="text-slate-700">\${data.first_stay}</b></span>
+            <span>Latest Stay: <b class="text-slate-700">\${data.last_stay}</b></span>
+          </div>
+        </div>
+
+        <!-- Stay Timeline Section -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-800 px-1">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Stay Timeline (\${bookings.length} record\${bookings.length > 1 ? 's' : ''})</span>
+            </span>
+            <span class="text-[11px] text-slate-400 font-normal">Sorted newest first</span>
+          </div>
+
+          <div class="space-y-2">
+            \${bookings.map(b => {
+              const isMultiDay = !!b.group_booking_id;
+              const ids = parseGuestIdImages(b.guest_id_image);
+              const isOnline = b.payment_mode === "online";
+              return \`
+                <div class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-indigo-200 transition shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span class="text-xs font-black text-slate-900">
+                        Room \${escapeHtml(b.room_number || '')}
+                      </span>
+                      <span class="text-[10px] text-slate-500 font-medium">(\${escapeHtml(b.room_type || 'Standard')})</span>
+                      \${renderBookingPaymentBadge(b)}
+                      \${isMultiDay ? \`
+                        <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-purple-100 text-purple-800 flex items-center gap-1">
+                          <i data-lucide="layers" class="w-2.5 h-2.5"></i>
+                          <span>Stay: \${b.check_in_date || b.date} → \${b.check_out_date || b.date}</span>
+                        </span>
+                      \` : ''}
+                      \${b.platform ? \`
+                        <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-700">
+                          \${escapeHtml(b.platform)}
+                        </span>
+                      \` : ''}
+                    </div>
+
+                    <div class="text-xs text-slate-700 flex items-center gap-2 flex-wrap">
+                      <span class="font-bold text-indigo-900">📅 \${b.date}</span>
+                      <span>· Guest: <b>\${escapeHtml(b.guest_name || 'Walk-in')}</b></span>
+                      \${b.guest_count ? \`<span>· \${b.guest_count} person\${b.guest_count > 1 ? 's' : ''}</span>\` : ''}
+                    </div>
+
+                    \${b.notes ? \`
+                      <div class="text-[11px] text-slate-500 italic">
+                        📝 "\${escapeHtml(b.notes)}"
+                      </div>
+                    \` : ''}
+
+                    <div class="flex items-center gap-2 pt-1 flex-wrap">
+                      \${ids.length > 0 ? \`
+                        <button
+                          type="button"
+                          onclick="openGuestIdViewer('\${b.id}')"
+                          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-bold border border-indigo-200 transition cursor-pointer"
+                        >
+                          <i data-lucide="id-card" class="w-3 h-3"></i>
+                          <span>🪪 ID Attached (\${ids.length})</span>
+                        </button>
+                      \` : ''}
+                      <span class="text-[10px] text-slate-400">Created by: \${escapeHtml(b.created_by || 'Staff')}</span>
+                    </div>
+                  </div>
+
+                  <div class="text-right sm:border-l sm:border-slate-100 sm:pl-3 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1 shrink-0">
+                    <div class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
+                      ₹\${formatCurrency(b.amount)}
+                    </div>
+                    <button
+                      type="button"
+                      onclick="closeGuestTravelHistoryModal(); openEditBookingModal('\${b.id}')"
+                      class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+                    >
+                      Edit Booking ✏️
+                    </button>
+                  </div>
+                </div>
+              \`;
+            }).join("")}
+          </div>
+        </div>
+      \`;
+      refreshIcons();
     }
 
     let isSyncingAirbnb = false;
