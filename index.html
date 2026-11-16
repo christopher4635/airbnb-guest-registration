@@ -984,11 +984,13 @@
         }
       }
       applyConfigToForm();
+      applyUrlParams();
     }
 
     function applyConfigToForm() {
       // 1. Populate Property Options
       const propSelect = document.getElementById('propertyOption');
+      const prevVal = propSelect ? propSelect.value : '';
       if (propSelect && appConfig.propertyOptions && appConfig.propertyOptions.length > 0) {
         propSelect.innerHTML = '<option value="" disabled selected>Select property / room type...</option>';
         appConfig.propertyOptions.forEach(opt => {
@@ -997,6 +999,12 @@
           el.textContent = opt;
           propSelect.appendChild(el);
         });
+        if (prevVal) {
+          const matched = matchPropertyOption(prevVal, appConfig.propertyOptions);
+          if (matched) {
+            propSelect.value = matched;
+          }
+        }
       }
 
       // 2. Standard field visibility & requirement
@@ -1081,54 +1089,128 @@
       }
     }
 
-    // Pre-fill from URL parameters (e.g. ?prop=1+BHK&code=HM12345&name=Sarah)
-    window.addEventListener('DOMContentLoaded', () => {
-      initConfig();
-      const urlParams = new URLSearchParams(window.location.search);
-      const codeParam = urlParams.get('code') || urlParams.get('resCode') || '';
-      if (codeParam && document.getElementById('reservationCode')) {
-        document.getElementById('reservationCode').value = codeParam;
+    // Robust property matcher supporting aliases (e.g. Studio, Luna -> 1 Room / Studio; Ripple -> 1 BHK)
+    function matchPropertyOption(targetProp, optionsList) {
+      if (!targetProp || !optionsList || optionsList.length === 0) return null;
+      const t = String(targetProp).trim().toLowerCase();
+      if (!t) return null;
+
+      const isStudio = t.includes('studio') || t.includes('luna') || t.includes('1 room') || t.includes('room / studio');
+      const is1Bhk = (t.includes('1') && t.includes('bhk')) || t.includes('ripple');
+      const is2Bhk = (t.includes('2') && t.includes('bhk'));
+      const is3Bhk = (t.includes('3') && t.includes('bhk'));
+      const isVilla = t.includes('villa') || t.includes('house') || t.includes('entire');
+
+      // 1. Exact match (case-insensitive)
+      for (const opt of optionsList) {
+        if (!opt) continue;
+        if (opt.trim().toLowerCase() === t) return opt;
       }
-      const propParam = urlParams.get('prop') || urlParams.get('property') || '';
+
+      // 2. Semantic room category match
+      for (const opt of optionsList) {
+        if (!opt) continue;
+        const o = opt.trim().toLowerCase();
+        if (isStudio && (o.includes('studio') || o.includes('1 room') || o.includes('luna'))) return opt;
+        if (is1Bhk && o.includes('1') && o.includes('bhk')) return opt;
+        if (is2Bhk && o.includes('2') && o.includes('bhk')) return opt;
+        if (is3Bhk && o.includes('3') && o.includes('bhk')) return opt;
+        if (isVilla && (o.includes('villa') || o.includes('house'))) return opt;
+      }
+
+      // 3. Substring match (skipping empty)
+      for (const opt of optionsList) {
+        if (!opt) continue;
+        const o = opt.trim().toLowerCase();
+        if (o && (t.includes(o) || o.includes(t))) return opt;
+      }
+
+      return null;
+    }
+
+    // Auto-fill and auto-select all recorded stay and guest details from shareable URL params
+    function applyUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // 1. Booking / Reservation Code
+      const codeParam = urlParams.get('code') || urlParams.get('resCode') || '';
+      if (codeParam) {
+        const codeInput = document.getElementById('reservationCode');
+        if (codeInput) codeInput.value = codeParam;
+      }
+
+      // 2. Auto-select Property / Room Type
+      const propParam = urlParams.get('prop') || urlParams.get('property') || urlParams.get('room') || '';
       if (propParam) {
-        document.getElementById('property-title').textContent = propParam + " — Guest Registration";
+        const titleEl = document.getElementById('property-title');
         const propSelect = document.getElementById('propertyOption');
         if (propSelect) {
-          let found = false;
-          for (let i = 0; i < propSelect.options.length; i++) {
-            if (propSelect.options[i].value.toLowerCase().includes(propParam.toLowerCase()) || propParam.toLowerCase().includes(propSelect.options[i].value.toLowerCase())) {
-              propSelect.selectedIndex = i;
-              found = true;
-              break;
+          const availableOptions = Array.from(propSelect.options).map(o => o.value).filter(Boolean);
+          const matched = matchPropertyOption(propParam, availableOptions);
+          if (matched) {
+            propSelect.value = matched;
+            if (titleEl) titleEl.textContent = `${matched} — Guest Registration`;
+          } else {
+            let exists = Array.from(propSelect.options).some(o => o.value.toLowerCase() === propParam.toLowerCase());
+            if (!exists) {
+              const opt = document.createElement('option');
+              opt.value = propParam;
+              opt.textContent = propParam;
+              propSelect.appendChild(opt);
             }
-          }
-          if (!found) {
-            const opt = document.createElement('option');
-            opt.value = propParam;
-            opt.textContent = propParam;
-            propSelect.appendChild(opt);
             propSelect.value = propParam;
+            if (titleEl) titleEl.textContent = `${propParam} — Guest Registration`;
           }
         }
       }
+
+      // 3. Check-in & Check-out Dates
       const checkinParam = urlParams.get('checkin') || urlParams.get('checkInDate') || '';
-      if (checkinParam && document.getElementById('checkInDate')) {
-        document.getElementById('checkInDate').value = checkinParam;
+      if (checkinParam) {
+        const inEl = document.getElementById('checkInDate');
+        if (inEl) inEl.value = checkinParam;
       }
       const checkoutParam = urlParams.get('checkout') || urlParams.get('checkOutDate') || '';
-      if (checkoutParam && document.getElementById('checkOutDate')) {
-        document.getElementById('checkOutDate').value = checkoutParam;
+      if (checkoutParam) {
+        const outEl = document.getElementById('checkOutDate');
+        if (outEl) outEl.value = checkoutParam;
       }
-      renderGuestCards();
-      setupSignaturePad();
+
+      // 4. Total Number of Guests (updates stepper and renders corresponding guest cards)
+      const guestsParam = parseInt(urlParams.get('guests') || urlParams.get('totalGuests') || urlParams.get('guestsCount'), 10);
+      if (!isNaN(guestsParam) && guestsParam >= 1 && guestsParam <= MAX_GUESTS) {
+        totalGuests = guestsParam;
+        updateGuestCount();
+      } else {
+        renderGuestCards();
+      }
+
+      // 5. Primary Guest Legal Name, Phone & Email
       const nameParam = urlParams.get('name') || urlParams.get('guestName') || '';
-      if (nameParam && document.getElementById('guest_1_name')) {
-        document.getElementById('guest_1_name').value = nameParam;
+      if (nameParam) {
+        const nameEl = document.getElementById('guest_1_name');
+        if (nameEl) nameEl.value = nameParam;
       }
+
       const phoneParam = urlParams.get('phone') || '';
-      if (phoneParam && document.getElementById('guest_1_phone')) {
-        document.getElementById('guest_1_phone').value = phoneParam;
+      if (phoneParam) {
+        const phoneEl = document.getElementById('guest_1_phone');
+        if (phoneEl) phoneEl.value = phoneParam.trim();
       }
+
+      const emailParam = urlParams.get('email') || '';
+      if (emailParam) {
+        const emailEl = document.getElementById('guest_1_email');
+        if (emailEl) emailEl.value = emailParam.trim();
+      }
+    }
+
+    // Pre-fill from URL parameters (e.g. ?prop=1+BHK&code=HM12345&name=Sarah)
+    window.addEventListener('DOMContentLoaded', async () => {
+      applyConfigToForm();
+      applyUrlParams();
+      setupSignaturePad();
+      await initConfig();
     });
 
     // Stepper logic
