@@ -212,6 +212,15 @@
       }
     },
 
+    syncSubmissionsToBookings: async function() {
+      try {
+        return await this.request('/api/submissions/sync-bookings', { method: 'POST' });
+      } catch (e) {
+        console.warn('Sync submissions to bookings failed:', e);
+        return { success: false, error: e.message };
+      }
+    },
+
     // --------------------------------------------------------------------------
     // Cloudflare R2 Image Uploads
     // --------------------------------------------------------------------------

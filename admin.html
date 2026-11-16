@@ -6731,6 +6731,18 @@
       renderBookingsPortal();
       if (typeof loadFinancialData === 'function') loadFinancialData();
 
+      // Silently pre-load guest submissions and trigger D1 bookings sync in background
+      setTimeout(async () => {
+        try {
+          if (typeof fetchSubmissions === 'function') await fetchSubmissions();
+          if (window.AirbnbAPI && typeof window.AirbnbAPI.syncSubmissionsToBookings === 'function') {
+            await window.AirbnbAPI.syncSubmissionsToBookings();
+          }
+        } catch (e) {
+          console.warn("Background guest form sync notice:", e);
+        }
+      }, 500);
+
       // Navigation listeners
       const btnPrev = document.getElementById('btn-cal-prev');
       if (btnPrev) {
@@ -8818,6 +8830,34 @@
           } catch (e) {}
         }
 
+        // Also check if any matching submissions in allSubmissions
+        if (!hasIds && Array.isArray(allSubmissions) && allSubmissions.length > 0) {
+          const bkCode = (b.reservationCode || b.id || '').toLowerCase().trim();
+          const bkName = (b.guestName || '').toLowerCase().trim();
+          const bkIn = b.checkInDate || '';
+          const matchingSubs = allSubmissions.filter(s => {
+            const sCode = (s['Reservation Code'] || s.id || '').toLowerCase().trim();
+            const sName = (s['Guest Legal Name'] || '').toLowerCase().trim();
+            const sIn = s['Check-in Date'] || '';
+            if (bkCode && sCode && sCode !== 'direct' && (bkCode === sCode || sCode.includes(bkCode) || bkCode.includes(sCode))) return true;
+            if (bkName && sName) {
+              const firstBk = bkName.split(/\s+/)[0];
+              const firstS = sName.split(/\s+/)[0];
+              const nameMatch = sName.includes(bkName) || bkName.includes(sName) ||
+                (firstBk.length >= 3 && sName.includes(firstBk)) ||
+                (firstS.length >= 3 && bkName.includes(firstS));
+              if (nameMatch) {
+                if (!bkIn || !sIn || bkIn === sIn) return true;
+              }
+            }
+            return false;
+          });
+          if (matchingSubs.length > 0) {
+            hasIds = true;
+            idCount = matchingSubs.reduce((acc, sub) => acc + (sub['Front ID Photo'] ? 1 : 0) + (sub['Back ID Photo'] ? 1 : 0), 0);
+          }
+        }
+
         tr.innerHTML = `
           <td>
             <span class="badge-pill" style="background:${theme.bg}; color:${theme.text}; border: 1px solid ${theme.border};">
@@ -9084,6 +9124,7 @@
         card.style.cssText = 'position: relative; border-radius: 8px; border: 1px solid #CBD5E1; background: #FFFFFF; padding: 6px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); max-width: 240px; min-width: 170px;';
 
         const isPdf = (doc.name && doc.name.toLowerCase().endsWith('.pdf')) || (doc.type && doc.type.includes('pdf'));
+        const isFromGuestForm = doc.source === 'guest_form' || (doc.id && String(doc.id).startsWith('sub_'));
 
         card.innerHTML = `
           <div style="width: 52px; height: 40px; border-radius: 6px; overflow: hidden; background: #F1F5F9; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; border: 1px solid #E2E8F0;"
@@ -9096,8 +9137,9 @@
             `}
           </div>
           <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 11px; font-weight: 700; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(doc.name || 'Guest ID')}">
-              ${escapeHtml(doc.name || ('Guest ID #' + (idx + 1)))}
+            <div style="font-size: 11px; font-weight: 700; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px;" title="${escapeHtml(doc.name || 'Guest ID')}">
+              <span style="overflow: hidden; text-overflow: ellipsis;">${escapeHtml(doc.name || ('Guest ID #' + (idx + 1)))}</span>
+              ${isFromGuestForm ? `<span class="badge-pill" style="font-size: 8px; background: #DCFCE7; color: #15803D; padding: 1px 4px; border: 1px solid #BBF7D0; flex-shrink: 0;" title="Uploaded by guest via Check-in Verification Form">Guest Form</span>` : ''}
             </div>
             <div style="display: flex; gap: 6px; margin-top: 4px;">
               <button type="button" class="btn-action-pill" style="font-size: 10px; padding: 2px 6px; color: #0369A1; background: #E0F2FE; border-color: #BAE6FD; cursor: pointer;"
@@ -9326,6 +9368,117 @@
         } catch (e) {}
       }
       currentModalGuestIds = Array.isArray(docs) ? [...docs] : [];
+
+      // If submissions are not yet loaded, load them
+      if ((!allSubmissions || allSubmissions.length === 0) && window.AirbnbAPI && typeof window.AirbnbAPI.getSubmissions === 'function') {
+        try {
+          const d1Subs = await window.AirbnbAPI.getSubmissions();
+          if (Array.isArray(d1Subs)) {
+            allSubmissions = d1Subs.map(s => ({
+              'id': s.id,
+              'Timestamp': s.createdAt || '',
+              'Reservation Code': s.reservationCode || '',
+              'Property Option': s.propertyOption || '',
+              'Check-in Date': s.checkInDate || '',
+              'Check-out Date': s.checkOutDate || '',
+              'Arrival Time': s.arrivalTime || '',
+              'Total Guests': s.totalGuests || 1,
+              'Guest #': s.guestNumber || '',
+              'Guest Legal Name': s.guestName || '',
+              'Age': s.age || '',
+              'Phone / WhatsApp': s.phone || '',
+              'Email Address': s.email || '',
+              'Coming From': s.comingFrom || '',
+              'Going To': s.goingTo || '',
+              'Purpose of Visit': s.purposeOfVisit || '',
+              'customDetails': s.customDetails,
+              'ID Type': s.idType || 'Aadhaar Card',
+              'ID Number': s.idNumber || '',
+              'Front ID Photo': s.frontPhotoUrl || '',
+              'Back ID Photo': s.backPhotoUrl || '',
+              'Digital Signature': s.signatureUrl || ''
+            }));
+          }
+        } catch (e) {}
+      }
+
+      // Automatically cross-sync any photos uploaded by guest via check-in verification form
+      if (Array.isArray(allSubmissions) && allSubmissions.length > 0) {
+        const bkCode = (b.reservationCode || b.id || '').toLowerCase().trim();
+        const bkName = (b.guestName || '').toLowerCase().trim();
+        const bkIn = b.checkInDate || '';
+        const bkOut = b.checkOutDate || '';
+
+        const matchingSubs = allSubmissions.filter(s => {
+          const sCode = (s['Reservation Code'] || s.id || '').toLowerCase().trim();
+          const sName = (s['Guest Legal Name'] || '').toLowerCase().trim();
+          const sIn = s['Check-in Date'] || '';
+          const sOut = s['Check-out Date'] || '';
+
+          if (bkCode && sCode && sCode !== 'direct' && (bkCode === sCode || sCode.includes(bkCode) || bkCode.includes(sCode))) {
+            return true;
+          }
+          if (bkName && sName) {
+            const firstBk = bkName.split(/\s+/)[0];
+            const firstS = sName.split(/\s+/)[0];
+            const nameMatch = sName.includes(bkName) || bkName.includes(sName) ||
+              (firstBk.length >= 3 && sName.includes(firstBk)) ||
+              (firstS.length >= 3 && bkName.includes(firstS));
+            if (nameMatch) {
+              if (!bkIn || !sIn || bkIn === sIn || bkOut === sOut) return true;
+            }
+          }
+          return false;
+        });
+
+        matchingSubs.forEach(sub => {
+          const subGuestName = sub['Guest Legal Name'] || 'Guest';
+          const subType = sub['ID Type'] || 'ID Card';
+
+          if (sub['Front ID Photo']) {
+            const frontUrl = sub['Front ID Photo'];
+            const exists = currentModalGuestIds.some(d => d.url === frontUrl || (d.name && d.name.includes(subGuestName) && d.name.includes('Front')));
+            if (!exists) {
+              currentModalGuestIds.push({
+                id: 'sub_doc_front_' + (sub.id || Math.random().toString(36).substr(2, 6)),
+                name: `${subGuestName} - Front ID (${subType})`,
+                url: frontUrl,
+                uploadedAt: sub.Timestamp || new Date().toISOString(),
+                source: 'guest_form'
+              });
+            }
+          }
+
+          if (sub['Back ID Photo']) {
+            const backUrl = sub['Back ID Photo'];
+            const exists = currentModalGuestIds.some(d => d.url === backUrl || (d.name && d.name.includes(subGuestName) && d.name.includes('Back')));
+            if (!exists) {
+              currentModalGuestIds.push({
+                id: 'sub_doc_back_' + (sub.id || Math.random().toString(36).substr(2, 6)),
+                name: `${subGuestName} - Back ID`,
+                url: backUrl,
+                uploadedAt: sub.Timestamp || new Date().toISOString(),
+                source: 'guest_form'
+              });
+            }
+          }
+
+          if (sub['Digital Signature']) {
+            const sigUrl = sub['Digital Signature'];
+            const exists = currentModalGuestIds.some(d => d.url === sigUrl || (d.name && d.name.includes(subGuestName) && d.name.includes('Signature')));
+            if (!exists) {
+              currentModalGuestIds.push({
+                id: 'sub_doc_sig_' + (sub.id || Math.random().toString(36).substr(2, 6)),
+                name: `${subGuestName} - Digital Signature`,
+                url: sigUrl,
+                uploadedAt: sub.Timestamp || new Date().toISOString(),
+                source: 'guest_form'
+              });
+            }
+          }
+        });
+      }
+
       renderModalGuestIds();
 
       onBookingDateOrPropChange();

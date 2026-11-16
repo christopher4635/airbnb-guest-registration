@@ -1081,18 +1081,54 @@
       }
     }
 
-    // Pre-fill from URL parameters (e.g. ?code=HM12345&property=Sunset+Villa)
+    // Pre-fill from URL parameters (e.g. ?prop=1+BHK&code=HM12345&name=Sarah)
     window.addEventListener('DOMContentLoaded', () => {
       initConfig();
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('code')) {
-        document.getElementById('reservationCode').value = urlParams.get('code');
+      const codeParam = urlParams.get('code') || urlParams.get('resCode') || '';
+      if (codeParam && document.getElementById('reservationCode')) {
+        document.getElementById('reservationCode').value = codeParam;
       }
-      if (urlParams.get('property')) {
-        document.getElementById('property-title').textContent = urlParams.get('property') + " — Guest Registration";
+      const propParam = urlParams.get('prop') || urlParams.get('property') || '';
+      if (propParam) {
+        document.getElementById('property-title').textContent = propParam + " — Guest Registration";
+        const propSelect = document.getElementById('propertyOption');
+        if (propSelect) {
+          let found = false;
+          for (let i = 0; i < propSelect.options.length; i++) {
+            if (propSelect.options[i].value.toLowerCase().includes(propParam.toLowerCase()) || propParam.toLowerCase().includes(propSelect.options[i].value.toLowerCase())) {
+              propSelect.selectedIndex = i;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            const opt = document.createElement('option');
+            opt.value = propParam;
+            opt.textContent = propParam;
+            propSelect.appendChild(opt);
+            propSelect.value = propParam;
+          }
+        }
+      }
+      const checkinParam = urlParams.get('checkin') || urlParams.get('checkInDate') || '';
+      if (checkinParam && document.getElementById('checkInDate')) {
+        document.getElementById('checkInDate').value = checkinParam;
+      }
+      const checkoutParam = urlParams.get('checkout') || urlParams.get('checkOutDate') || '';
+      if (checkoutParam && document.getElementById('checkOutDate')) {
+        document.getElementById('checkOutDate').value = checkoutParam;
       }
       renderGuestCards();
       setupSignaturePad();
+      const nameParam = urlParams.get('name') || urlParams.get('guestName') || '';
+      if (nameParam && document.getElementById('guest_1_name')) {
+        document.getElementById('guest_1_name').value = nameParam;
+      }
+      const phoneParam = urlParams.get('phone') || '';
+      if (phoneParam && document.getElementById('guest_1_phone')) {
+        document.getElementById('guest_1_phone').value = phoneParam;
+      }
     });
 
     // Stepper logic

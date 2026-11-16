@@ -283,6 +283,311 @@ async function sendNotificationEmail(
   return { sent: false, error: 'No active email provider credential set' };
 }
 
+// Automatically notify StaffSync Hub to synchronize Elite Homes room calendar & daily finances
+function notifyStaffSync(c: any) {
+  try {
+    const p = fetch('https://staff-management.elitehomes-portal.workers.dev/api/sync/airbnb', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Auth-PIN': c.env.ADMIN_PIN || '4635'
+      }
+    }).catch(e => console.error('StaffSync notification error:', e));
+
+    if (c.executionCtx && typeof c.executionCtx.waitUntil === 'function') {
+      c.executionCtx.waitUntil(p);
+    }
+  } catch (e) {
+    console.error('Failed to notify StaffSync:', e);
+  }
+}
+
+// Helper to synchronize guest form submission ID photos & details directly into matching booking in bookings table
+async function syncSubmissionWithBookings(
+  env: Bindings,
+  payload: CheckInPayload,
+  insertedRows: Submission[]
+): Promise<{ synced: boolean; count?: number }> {
+  try {
+    const reservationCode = (payload.reservationCode || '').trim();
+    const primaryGuest = (payload.guests && payload.guests[0]) || { name: '' };
+    const guestName = (primaryGuest.name || '').trim();
+    const checkInDate = (payload.checkInDate || '').trim();
+    const checkOutDate = (payload.checkOutDate || '').trim();
+    const propertyOption = (payload.propertyOption || '').trim();
+    const phone = (primaryGuest.phone || '').trim();
+
+    // 1. Find matching booking(s) in D1 bookings table
+    let candidateBookings: any[] = [];
+
+    // Strategy A: By exact reservation_code or booking id
+    if (reservationCode && reservationCode.toUpperCase() !== 'DIRECT') {
+      const { results } = await env.DB.prepare(`
+        SELECT * FROM bookings 
+        WHERE lower(trim(reservation_code)) = lower(trim(?)) 
+           OR lower(trim(id)) = lower(trim(?))
+      `).bind(reservationCode, reservationCode).all();
+      if (results && results.length > 0) {
+        candidateBookings.push(...results);
+      }
+    }
+
+    // Collect all guest names in this submission
+    const guestNames: string[] = [];
+    if (Array.isArray(payload.guests)) {
+      payload.guests.forEach(g => {
+        if (g.name && g.name.trim()) guestNames.push(g.name.trim());
+      });
+    }
+    if (Array.isArray(insertedRows)) {
+      insertedRows.forEach(r => {
+        if (r.guestName && r.guestName.trim() && !guestNames.includes(r.guestName.trim())) {
+          guestNames.push(r.guestName.trim());
+        }
+      });
+    }
+
+    // Strategy B: By guest names and dates
+    if (candidateBookings.length === 0 && (checkInDate || checkOutDate)) {
+      const { results: dateBks } = await env.DB.prepare(`
+        SELECT * FROM bookings 
+        WHERE status != 'Cancelled'
+          AND (
+            check_in_date = ? 
+            OR check_out_date = ? 
+            OR (check_in_date <= ? AND check_out_date >= ?)
+          )
+      `).bind(checkInDate || checkOutDate, checkOutDate || checkInDate, checkOutDate || checkInDate, checkInDate || checkOutDate).all();
+
+      if (dateBks && dateBks.length > 0) {
+        for (const bk of dateBks) {
+          const bkName = ((bk.guest_name as string) || '').toLowerCase().trim();
+          const nameMatched = guestNames.some(gn => {
+            const lowGn = gn.toLowerCase().trim();
+            const firstGn = lowGn.split(/\s+/)[0];
+            const firstBk = bkName.split(/\s+/)[0];
+            return bkName.includes(lowGn) || lowGn.includes(bkName) ||
+              (firstGn.length >= 3 && bkName.includes(firstGn)) ||
+              (firstBk.length >= 3 && lowGn.includes(firstBk));
+          });
+
+          if (nameMatched && !candidateBookings.some(m => m.id === bk.id)) {
+            candidateBookings.push(bk);
+          }
+        }
+      }
+    }
+
+    // Strategy C: By phone number matching
+    if (candidateBookings.length === 0 && phone) {
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.length >= 7) {
+        const last7 = cleanPhone.slice(-7);
+        const { results } = await env.DB.prepare(`
+          SELECT * FROM bookings 
+          WHERE phone LIKE ? AND status != 'Cancelled'
+        `).bind(`%${last7}%`).all();
+
+        if (results && results.length > 0) {
+          for (const b of results) {
+            if (!candidateBookings.some(m => m.id === b.id)) candidateBookings.push(b);
+          }
+        }
+      }
+    }
+
+    // Strategy D: By property option and exact check-in date
+    if (candidateBookings.length === 0 && checkInDate && propertyOption) {
+      const { results } = await env.DB.prepare(`
+        SELECT * FROM bookings 
+        WHERE check_in_date = ? 
+          AND status != 'Cancelled'
+          AND (lower(property) = lower(?) OR property LIKE ? OR ? LIKE ('%' || property || '%'))
+      `).bind(checkInDate, propertyOption, `%${propertyOption}%`, propertyOption).all();
+
+      if (results && results.length > 0) {
+        for (const b of results) {
+          if (!candidateBookings.some(m => m.id === b.id)) candidateBookings.push(b);
+        }
+      }
+    }
+
+    if (candidateBookings.length === 0) {
+      console.log(`No existing booking matched for guest form submission: ${guestName} (${reservationCode}, ${checkInDate})`);
+      return { synced: false };
+    }
+
+    // 2. Prepare documents array from insertedRows
+    const now = new Date().toISOString();
+    const subDocs: any[] = [];
+
+    insertedRows.forEach((row, idx) => {
+      const gName = row.guestName || `Guest ${idx + 1}`;
+      if (row.frontPhotoUrl) {
+        subDocs.push({
+          id: `sub_doc_front_${row.id || idx}`,
+          name: `${gName} - Front ID (${row.idType || 'ID Card'})`,
+          url: row.frontPhotoUrl,
+          key: row.frontPhotoKey || '',
+          uploadedAt: row.createdAt || now,
+          source: 'guest_form'
+        });
+      }
+      if (row.backPhotoUrl) {
+        subDocs.push({
+          id: `sub_doc_back_${row.id || idx}`,
+          name: `${gName} - Back ID`,
+          url: row.backPhotoUrl,
+          key: row.backPhotoKey || '',
+          uploadedAt: row.createdAt || now,
+          source: 'guest_form'
+        });
+      }
+      if (row.signatureUrl && idx === 0) {
+        subDocs.push({
+          id: `sub_doc_sig_${row.id || idx}`,
+          name: `${gName} - Digital Signature`,
+          url: row.signatureUrl,
+          key: row.signatureKey || '',
+          uploadedAt: row.createdAt || now,
+          source: 'guest_form'
+        });
+      }
+    });
+
+    if (subDocs.length === 0) {
+      return { synced: false };
+    }
+
+    // 3. Update each matched booking
+    for (const bk of candidateBookings) {
+      let existingDocs: any[] = [];
+      if (bk.id_documents) {
+        try {
+          existingDocs = typeof bk.id_documents === 'string' ? JSON.parse(bk.id_documents) : bk.id_documents;
+        } catch (e) { existingDocs = []; }
+      } else if (bk.notes && bk.notes.includes('[ID Documents:')) {
+        try {
+          const m = bk.notes.match(/\[ID Documents:\s*([^\]]+)\]/i);
+          if (m) existingDocs = JSON.parse(m[1]);
+        } catch (e) { existingDocs = []; }
+      }
+      if (!Array.isArray(existingDocs)) existingDocs = [];
+
+      // Merge: replace existing document with matching name or url, otherwise append
+      const mergedDocs = [...existingDocs];
+      for (const newDoc of subDocs) {
+        const matchIdx = mergedDocs.findIndex(d => 
+          (d.url && newDoc.url && d.url === newDoc.url) ||
+          (d.name && newDoc.name && d.name.toLowerCase().trim() === newDoc.name.toLowerCase().trim())
+        );
+
+        if (matchIdx >= 0) {
+          mergedDocs[matchIdx] = Object.assign({}, mergedDocs[matchIdx], newDoc);
+        } else {
+          mergedDocs.push(newDoc);
+        }
+      }
+
+      // Format updated notes
+      let notes = (bk.notes || '').replace(/\n?\[ID Documents:[^\]]+\]/gi, '').trim();
+      notes = `${notes}\n[ID Documents: ${JSON.stringify(mergedDocs)}]`;
+
+      const idDocsJson = JSON.stringify(mergedDocs);
+
+      await env.DB.prepare(`
+        UPDATE bookings SET
+          id_documents = ?,
+          notes = ?,
+          phone = CASE WHEN (phone IS NULL OR trim(phone) = '') THEN ? ELSE phone END,
+          email = CASE WHEN (email IS NULL OR trim(email) = '') THEN ? ELSE email END,
+          guests_count = CASE WHEN (guests_count IS NULL OR guests_count <= 1) THEN ? ELSE guests_count END,
+          updated_at = datetime('now')
+        WHERE id = ?
+      `).bind(
+        idDocsJson,
+        notes,
+        phone || '',
+        primaryGuest.email || '',
+        Math.max(Number(bk.guests_count) || 1, insertedRows.length),
+        bk.id
+      ).run();
+
+      console.log(`Synced ${subDocs.length} guest form images into booking ${bk.id} (${bk.guest_name})`);
+    }
+
+    return { synced: true, count: candidateBookings.length };
+  } catch (err: any) {
+    console.error('Error syncing submission with bookings:', err);
+    return { synced: false };
+  }
+}
+
+// Helper to backfill / sync all existing submissions in D1 into their matching bookings
+export async function syncAllSubmissionsToBookings(env: Bindings): Promise<{ syncedCount: number }> {
+  try {
+    const { results: allSubs } = await env.DB.prepare(`
+      SELECT * FROM submissions ORDER BY created_at ASC
+    `).all<any>();
+
+    if (!allSubs || allSubs.length === 0) return { syncedCount: 0 };
+
+    // Group submissions by reservation_code + check_in_date + property_option
+    const groups: { [key: string]: any[] } = {};
+    for (const sub of allSubs) {
+      const k = `${sub.reservation_code || 'DIRECT'}_${sub.check_in_date || ''}_${sub.property_option || ''}`;
+      if (!groups[k]) groups[k] = [];
+      groups[k].push(sub);
+    }
+
+    let syncedCount = 0;
+    for (const k of Object.keys(groups)) {
+      const rows = groups[k];
+      const first = rows[0];
+      const payload: any = {
+        reservationCode: first.reservation_code,
+        propertyOption: first.property_option,
+        checkInDate: first.check_in_date,
+        checkOutDate: first.check_out_date,
+        guests: rows.map(r => ({
+          name: r.guest_name,
+          phone: r.phone,
+          email: r.email,
+          idType: r.id_type
+        }))
+      };
+
+      const mappedRows: Submission[] = rows.map(r => ({
+        id: r.id,
+        reservationCode: r.reservation_code,
+        propertyOption: r.property_option,
+        checkInDate: r.check_in_date,
+        checkOutDate: r.check_out_date,
+        guestNumber: r.guest_number,
+        guestName: r.guest_name,
+        phone: r.phone,
+        email: r.email,
+        idType: r.id_type,
+        frontPhotoUrl: r.front_photo_url,
+        frontPhotoKey: r.front_photo_key,
+        backPhotoUrl: r.back_photo_url,
+        backPhotoKey: r.back_photo_key,
+        signatureUrl: r.signature_url,
+        signatureKey: r.signature_key,
+        createdAt: r.created_at
+      }));
+
+      const res = await syncSubmissionWithBookings(env, payload, mappedRows);
+      if (res.synced) syncedCount += (res.count || 1);
+    }
+
+    return { syncedCount };
+  } catch (e) {
+    console.error('syncAllSubmissionsToBookings error:', e);
+    return { syncedCount: 0 };
+  }
+}
+
 // 1. GET /api/submissions - List all guest check-in submissions
 submissionsRoute.get('/', async (c) => {
   try {
@@ -408,14 +713,37 @@ submissionsRoute.post('/', async (c) => {
       console.error('Email notification background error:', mailErr);
     }
 
+    // Sync guest form ID photos directly into matching booking in bookings table
+    try {
+      await syncSubmissionWithBookings(c.env, body, insertedRows);
+      notifyStaffSync(c);
+    } catch (syncErr) {
+      console.error('Error syncing submission with bookings:', syncErr);
+    }
+
     return c.json({
       success: true,
-      message: `Successfully registered ${guests.length} guest(s). ID cards safely stored in Cloudflare R2.`,
+      message: `Successfully registered ${guests.length} guest(s). ID cards safely stored in Cloudflare R2 and synced to bookings.`,
       reservationCode,
       data: insertedRows
     }, 201);
   } catch (err: any) {
     console.error('Submission error:', err);
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// 2b. POST /api/submissions/sync-bookings - Backfill & sync all guest check-in submissions to bookings
+submissionsRoute.post('/sync-bookings', async (c) => {
+  try {
+    const res = await syncAllSubmissionsToBookings(c.env);
+    notifyStaffSync(c);
+    return c.json({
+      success: true,
+      message: `Successfully synced ${res.syncedCount} booking(s) with guest ID submissions.`,
+      count: res.syncedCount
+    });
+  } catch (err: any) {
     return c.json({ success: false, error: err.message }, 500);
   }
 });
