@@ -757,143 +757,182 @@
 
     <form id="checkin-form">
 
-      <!-- STEP 1: Guest Count (Always First) -->
-      <section class="form-card">
-        <h2 class="section-title">
-          <span>1.</span> Total Number of Guests
-        </h2>
-        <p class="section-subtitle">
-          Select the total number of people staying in the property. Verification fields will appear for each person.
-        </p>
+      <!-- CONFIRMED RESERVATION CARD: Guest Name & Check-in / Check-out Dates already mentioned -->
+      <section class="form-card" id="confirmed-stay-card" style="background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%); border: 1.5px solid #A7F3D0; padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <span style="font-size: 11px; font-weight: 700; color: #047857; text-transform: uppercase; letter-spacing: 0.5px; background: #D1FAE5; padding: 3px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+            <span>✅</span> Confirmed Booking
+          </span>
+          <span id="display-res-code" style="font-size: 12px; font-weight: 700; color: #065F46; font-family: monospace;"></span>
+        </div>
 
-        <div class="guest-selector-box">
-          <div class="guest-selector-info">
-            <strong>Guests Staying</strong>
-            <span>Including primary booker, family & friends</span>
+        <div style="margin-bottom: 12px;">
+          <span style="font-size: 11px; color: #047857; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 2px;">Guest Name</span>
+          <div id="display-guest-name" style="font-size: 20px; font-weight: 800; color: #064E3B; letter-spacing: -0.3px;">Valued Guest</div>
+          <input type="hidden" id="guestNameInput" name="guestName">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; background: #FFFFFF; border: 1px solid #A7F3D0; border-radius: 8px; padding: 12px 16px;">
+          <div>
+            <span style="font-size: 11px; color: #64748B; display: block; font-weight: 600; text-transform: uppercase;">Check-in Date</span>
+            <strong id="display-checkin" style="font-size: 14.5px; color: #0F172A; display: block; margin-top: 2px;">—</strong>
+            <input type="hidden" id="checkInDate" name="checkInDate">
           </div>
-          <div class="stepper-controls">
-            <button type="button" class="stepper-btn" id="btn-guest-minus" disabled aria-label="Decrease guests">−</button>
-            <span class="stepper-count" id="guest-count-display">1</span>
-            <button type="button" class="stepper-btn" id="btn-guest-plus" aria-label="Increase guests">+</button>
+          <div style="font-size: 18px; color: #10B981; font-weight: 700; text-align: center;">➔</div>
+          <div style="text-align: right;">
+            <span style="font-size: 11px; color: #64748B; display: block; font-weight: 600; text-transform: uppercase;">Check-out Date</span>
+            <strong id="display-checkout" style="font-size: 14.5px; color: #0F172A; display: block; margin-top: 2px;">—</strong>
+            <input type="hidden" id="checkOutDate" name="checkOutDate">
           </div>
         </div>
-        <input type="hidden" name="totalGuests" id="totalGuestsInput" value="1">
+
+        <!-- Hidden sync inputs -->
+        <input type="hidden" id="reservationCode" name="reservationCode">
+        <input type="hidden" id="propertyOption" name="propertyOption">
+        <input type="hidden" id="guestPhone" name="guestPhone">
+        <input type="hidden" id="guestEmail" name="guestEmail">
       </section>
 
-      <!-- STEP 2: Travel Details (Coming from, Going to, Purpose of Visit) -->
+      <!-- Fallback inputs if opened without link params -->
+      <section class="form-card" id="manual-stay-card" style="display: none;">
+        <h2 class="section-title">
+          <span>📅</span> Stay Information
+        </h2>
+        <div class="form-group">
+          <label for="manualGuestName">Guest Full Name <span class="required-star">*</span></label>
+          <input type="text" id="manualGuestName" placeholder="As printed on government ID">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="manualCheckIn">Check-in Date <span class="required-star">*</span></label>
+            <input type="date" id="manualCheckIn">
+          </div>
+          <div class="form-group">
+            <label for="manualCheckOut">Check-out Date <span class="required-star">*</span></label>
+            <input type="date" id="manualCheckOut">
+          </div>
+        </div>
+      </section>
+
+      <!-- 1. COMING FROM & GOING TO -->
       <section class="form-card">
         <h2 class="section-title">
-          <span>2.</span> Travel & Stay Details
+          <span>1.</span> Coming From &amp; Going To
         </h2>
-        <p class="section-subtitle">Please let us know your travel itinerary and booking info.</p>
-
-        <!-- Property Option (1BHK / 2BHK / 1 Room / etc.) -->
-        <div class="form-group" id="field-wrap-propertyOption">
-          <label for="propertyOption">Property / Room Type <span class="required-star">*</span></label>
-          <select id="propertyOption" name="propertyOption" required>
-            <option value="" disabled selected>Select property / room type...</option>
-            <option value="1 Room / Studio">1 Room / Studio</option>
-            <option value="1 BHK">1 BHK</option>
-            <option value="2 BHK">2 BHK</option>
-            <option value="3 BHK">3 BHK</option>
-            <option value="Entire Villa / House">Entire Villa / House</option>
-          </select>
-        </div>
+        <p class="section-subtitle">Please provide your travel origin and next destination as required by hospitality regulations.</p>
 
         <div class="form-row">
           <div class="form-group" id="field-wrap-comingFrom">
             <label for="comingFrom">Coming From <span class="required-star">*</span></label>
-            <input type="text" id="comingFrom" name="comingFrom" placeholder="City / Country (Origin)" required>
+            <input type="text" id="comingFrom" name="comingFrom" placeholder="City / State (e.g. Guwahati)" required>
           </div>
           <div class="form-group" id="field-wrap-goingTo">
             <label for="goingTo">Going To <span class="required-star">*</span></label>
-            <input type="text" id="goingTo" name="goingTo" placeholder="City / Country (Next Destination)" required>
+            <input type="text" id="goingTo" name="goingTo" placeholder="City / State (e.g. Kokrajhar)" required>
           </div>
         </div>
+      </section>
+
+      <!-- 2. PURPOSE OF VISIT -->
+      <section class="form-card">
+        <h2 class="section-title">
+          <span>2.</span> Purpose of Visit
+        </h2>
+        <p class="section-subtitle">Select the primary purpose of your trip.</p>
 
         <div class="form-group" id="field-wrap-purposeOfVisit">
           <label for="purposeOfVisit">Purpose of Visit <span class="required-star">*</span></label>
           <select id="purposeOfVisit" name="purposeOfVisit" required>
-            <option value="" disabled selected>Select purpose...</option>
+            <option value="" disabled selected>Select purpose of visit...</option>
             <option value="Tourism / Vacation">Tourism / Vacation</option>
             <option value="Business / Work">Business / Work</option>
             <option value="Visiting Friends / Family">Visiting Friends / Family</option>
-            <option value="Medical / Health">Medical / Health</option>
             <option value="Transit / Layover">Transit / Layover</option>
+            <option value="Medical / Health">Medical / Health</option>
             <option value="Event / Wedding / Festival">Event / Wedding / Festival</option>
             <option value="Other">Other</option>
           </select>
         </div>
-
-        <div class="form-row">
-          <div class="form-group" id="field-wrap-checkInDate">
-            <label for="checkInDate">Check-in Date <span class="required-star">*</span></label>
-            <input type="date" id="checkInDate" name="checkInDate" required>
-          </div>
-          <div class="form-group" id="field-wrap-checkOutDate">
-            <label for="checkOutDate">Check-out Date <span class="required-star">*</span></label>
-            <input type="date" id="checkOutDate" name="checkOutDate" required>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group" id="field-wrap-reservationCode">
-            <label for="reservationCode">Booking / Reservation Code (Airbnb / Direct / OTA)</label>
-            <input type="text" id="reservationCode" name="reservationCode" placeholder="e.g. HM34XZ891 (Optional)">
-          </div>
-          <div class="form-group" id="field-wrap-arrivalTime">
-            <label for="arrivalTime">Estimated Arrival Time</label>
-            <input type="text" id="arrivalTime" name="arrivalTime" placeholder="e.g. 3:00 PM">
-          </div>
-        </div>
-
-        <!-- Dynamic Custom Fields added by Admin -->
-        <div id="dynamic-custom-fields" style="margin-top: 12px;"></div>
       </section>
 
-      <!-- STEP 3: Dynamic Guest Cards Container -->
+      <!-- 3. ID SELECTION & 4. UPLOAD ID PHOTOS FRONT AND BACK -->
       <section class="form-card">
         <h2 class="section-title">
-          <span>3.</span> Guest Information & ID Uploads
+          <span>3.</span> ID Selection &amp; Photo Upload
         </h2>
-        <p class="section-subtitle">
-          Please provide the full name, age, and a clear photo of the Government ID for each guest. Address is not required.
-        </p>
+        <p class="section-subtitle">Select your government ID type and upload clear photos of both sides.</p>
 
-        <div id="guest-cards-container">
-          <!-- Dynamically populated via JavaScript based on total guests -->
+        <!-- 3. ID Selection -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="idType">Select ID Document Type <span class="required-star">*</span></label>
+          <select id="idType" name="idType" required>
+            <option value="" disabled selected>Select ID document type...</option>
+            <option value="Aadhaar Card">Aadhaar Card (UIDAI)</option>
+            <option value="Passport">Passport</option>
+            <option value="Driving License">Driver's License</option>
+            <option value="Voter ID">Voter ID / Election Card</option>
+            <option value="Government ID">Other Government ID</option>
+          </select>
         </div>
-      </section>
 
-      <!-- STEP 4: House Rules & Digital Signature -->
-      <section class="form-card">
-        <h2 class="section-title">
-          <span>4.</span> House Rules & Declaration
-        </h2>
-        <p class="section-subtitle">Please review our basic house rules and sign below.</p>
-
-        <label class="checkbox-label">
-          <input type="checkbox" id="rulesConsent" required>
-          <span>
-            I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine.
-          </span>
-        </label>
-
-        <div class="form-group" style="margin-top: 18px;">
-          <label>Primary Guest Digital Signature <span class="required-star">*</span></label>
-          <div class="signature-area">
-            <canvas id="sig-canvas"></canvas>
-            <div class="sig-toolbar">
-              <span class="sig-hint">Sign above with your finger or mouse</span>
-              <button type="button" class="btn-clear-sig" id="btn-clear-sig">Clear</button>
+        <!-- 4. Upload ID Photos front and back -->
+        <label style="margin-bottom: 8px; display: block; font-weight: 600; font-size: 13.5px;">Upload ID Photos (Front &amp; Back) <span class="required-star">*</span></label>
+        <div class="upload-container">
+          
+          <!-- Front Slot -->
+          <div class="upload-slot" id="slot_1_front">
+            <input type="file" id="file_1_front" class="upload-file-overlay" accept="image/*,application/pdf"
+                   onchange="handleFileUpload(event, 1, 'front')" title="Tap to take photo or choose file">
+            <input type="file" id="file_1_front_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                   onchange="handleFileUpload(event, 1, 'front')">
+            
+            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+            </svg>
+            <div class="upload-title">Front of ID</div>
+            <div class="upload-hint">Tap anywhere to take photo or choose file</div>
+            
+            <div class="upload-btn-row">
+              <label for="file_1_front_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
+                📷 Take Photo
+              </label>
+              <label for="file_1_front" class="upload-pill-btn" onclick="event.stopPropagation();">
+                🖼️ Gallery / PDF
+              </label>
             </div>
           </div>
+
+          <!-- Back Slot -->
+          <div class="upload-slot" id="slot_1_back">
+            <input type="file" id="file_1_back" class="upload-file-overlay" accept="image/*,application/pdf"
+                   onchange="handleFileUpload(event, 1, 'back')" title="Tap to take photo or choose file">
+            <input type="file" id="file_1_back_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                   onchange="handleFileUpload(event, 1, 'back')">
+            
+            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+            </svg>
+            <div class="upload-title">Back of ID</div>
+            <div class="upload-hint">Tap anywhere to take photo or choose file</div>
+            
+            <div class="upload-btn-row">
+              <label for="file_1_back_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
+                📷 Take Photo
+              </label>
+              <label for="file_1_back" class="upload-pill-btn" onclick="event.stopPropagation();">
+                🖼️ Gallery / PDF
+              </label>
+            </div>
+          </div>
+
         </div>
       </section>
 
       <!-- Submit Button -->
       <button type="submit" class="btn-submit" id="btn-submit">
-        <span>Submit Verification & Complete Check-in</span>
+        <span>Submit ID Verification</span>
       </button>
 
     </form>
@@ -1191,323 +1230,114 @@
       }
     }
 
+    // Format ISO date (YYYY-MM-DD) into display format (e.g. 15 Nov 2026)
+    function formatDisplayDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        const parts = dateStr.trim().split('-');
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          if (!isNaN(d.getTime())) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+          }
+        }
+      } catch (e) {}
+      return dateStr;
+    }
+
     // Auto-fill and auto-select all recorded stay and guest details from shareable URL params
     function applyUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
 
+      const codeParam = (urlParams.get('code') || urlParams.get('resCode') || '').trim();
+      const propParam = (urlParams.get('prop') || urlParams.get('property') || urlParams.get('room') || '').trim();
+      const checkinParam = (urlParams.get('checkin') || urlParams.get('checkInDate') || '').trim();
+      const checkoutParam = (urlParams.get('checkout') || urlParams.get('checkOutDate') || '').trim();
+      const nameParam = (urlParams.get('name') || urlParams.get('guestName') || '').trim();
+      const phoneParam = (urlParams.get('phone') || '').trim();
+      const emailParam = (urlParams.get('email') || '').trim();
+
       // 1. Booking / Reservation Code
-      const codeParam = urlParams.get('code') || urlParams.get('resCode') || '';
       if (codeParam) {
         const codeInput = document.getElementById('reservationCode');
         if (codeInput) codeInput.value = codeParam;
+        const dispCode = document.getElementById('display-res-code');
+        if (dispCode) dispCode.textContent = '#' + codeParam;
       }
 
-      // 2. Property / Room Type: auto-select from calendar booking or URL param
-      const propParam = urlParams.get('prop') || urlParams.get('property') || urlParams.get('room') || '';
-      const checkinParam = urlParams.get('checkin') || urlParams.get('checkInDate') || '';
-      const checkoutParam = urlParams.get('checkout') || urlParams.get('checkOutDate') || '';
-      const nameParam = urlParams.get('name') || urlParams.get('guestName') || '';
-
+      // 2. Property / Room Type
       if (propParam) {
-        selectPropertyOption(propParam);
+        const pEl = document.getElementById('propertyOption');
+        if (pEl) pEl.value = propParam;
       } else if (codeParam || nameParam) {
         tryLookupAndSelectCalendarRoom(codeParam, nameParam, checkinParam);
       }
 
-      // 3. Check-in & Check-out Dates
-      if (checkinParam) {
-        const inEl = document.getElementById('checkInDate');
-        if (inEl) inEl.value = checkinParam;
-      }
-      if (checkoutParam) {
-        const outEl = document.getElementById('checkOutDate');
-        if (outEl) outEl.value = checkoutParam;
-      }
-
-      // 4. Total Number of Guests (updates stepper and renders corresponding guest cards)
-      const guestsParam = parseInt(urlParams.get('guests') || urlParams.get('totalGuests') || urlParams.get('guestsCount'), 10);
-      if (!isNaN(guestsParam) && guestsParam >= 1 && guestsParam <= MAX_GUESTS) {
-        totalGuests = guestsParam;
-        updateGuestCount();
-      } else {
-        renderGuestCards();
-      }
-
-      // 5. Primary Guest Legal Name, Phone & Email
-      if (nameParam) {
-        const nameEl = document.getElementById('guest_1_name');
-        if (nameEl) nameEl.value = nameParam;
-      }
-
-      const phoneParam = urlParams.get('phone') || '';
+      // 3. Contact Info
       if (phoneParam) {
-        const phoneEl = document.getElementById('guest_1_phone');
-        if (phoneEl) phoneEl.value = phoneParam.trim();
+        const phEl = document.getElementById('guestPhone');
+        if (phEl) phEl.value = phoneParam;
       }
-
-      const emailParam = urlParams.get('email') || '';
       if (emailParam) {
-        const emailEl = document.getElementById('guest_1_email');
-        if (emailEl) emailEl.value = emailParam.trim();
-      }
-    }
-
-    // Pre-fill from URL parameters (e.g. ?prop=1+BHK&code=HM12345&name=Sarah)
-    window.addEventListener('DOMContentLoaded', async () => {
-      applyConfigToForm();
-      applyUrlParams();
-      setupSignaturePad();
-      await initConfig();
-    });
-
-    // Stepper logic
-    btnGuestMinus.addEventListener('click', () => {
-      if (totalGuests > MIN_GUESTS) {
-        totalGuests--;
-        updateGuestCount();
-      }
-    });
-
-    btnGuestPlus.addEventListener('click', () => {
-      if (totalGuests < MAX_GUESTS) {
-        totalGuests++;
-        updateGuestCount();
-      }
-    });
-
-    function updateGuestCount() {
-      guestCountDisplay.textContent = totalGuests;
-      totalGuestsInput.value = totalGuests;
-      btnGuestMinus.disabled = (totalGuests <= MIN_GUESTS);
-      btnGuestPlus.disabled = (totalGuests >= MAX_GUESTS);
-      renderGuestCards();
-    }
-
-    // Dynamic Guest Cards Rendering
-    function handleAgeOrYearInput(idx) {
-      const input = document.getElementById(`guest_${idx}_age`);
-      const hint = document.getElementById(`guest_${idx}_age_hint`);
-      if (!input || !hint) return;
-
-      const raw = input.value.trim();
-      if (!raw) {
-        hint.innerHTML = '';
-        return;
+        const emEl = document.getElementById('guestEmail');
+        if (emEl) emEl.value = emailParam;
       }
 
-      const val = parseInt(raw, 10);
-      const currentYear = new Date().getFullYear();
+      // 4. Guest Name & Stay Dates (Check-in & Check-out)
+      const hasStayInfo = !!(nameParam || checkinParam);
 
-      if (isNaN(val) || val <= 0) {
-        hint.innerHTML = '';
-        return;
-      }
+      if (hasStayInfo) {
+        // Name & check-in/check-out dates already mentioned prominently in Confirmed Stay Card
+        const dispName = document.getElementById('display-guest-name');
+        const nameInput = document.getElementById('guestNameInput');
+        if (dispName) dispName.textContent = nameParam || 'Valued Guest';
+        if (nameInput) nameInput.value = nameParam || 'Guest';
 
-      // 4-digit Year of Birth entered (e.g. 1994, 2002)
-      if (val >= 1900 && val <= currentYear) {
-        const age = currentYear - val;
-        hint.innerHTML = `<span style="color: #0284c7; font-weight: 600;">✅ Age: ${age} years</span> <span style="color: var(--text-muted);">(Born ${val})</span>`;
-      } 
-      // Age in years entered (e.g. 28)
-      else if (val <= 120) {
-        const estYear = currentYear - val;
-        hint.innerHTML = `<span style="color: #059669; font-weight: 600;">✅ ${val} years old</span> <span style="color: var(--text-muted);">(Birth Year: ~${estYear})</span>`;
+        const dispIn = document.getElementById('display-checkin');
+        const inInput = document.getElementById('checkInDate');
+        if (dispIn) dispIn.textContent = formatDisplayDate(checkinParam);
+        if (inInput) inInput.value = checkinParam;
+
+        const dispOut = document.getElementById('display-checkout');
+        const outInput = document.getElementById('checkOutDate');
+        if (dispOut) dispOut.textContent = formatDisplayDate(checkoutParam);
+        if (outInput) outInput.value = checkoutParam;
+
+        const stayCard = document.getElementById('confirmed-stay-card');
+        const manualCard = document.getElementById('manual-stay-card');
+        if (stayCard) stayCard.style.display = 'block';
+        if (manualCard) manualCard.style.display = 'none';
       } else {
-        hint.innerHTML = `<span style="color: #dc2626;">Please enter age (1-120) or birth year (1900-${currentYear})</span>`;
-      }
-    }
+        // Fallback for direct walk-in / manual entry without link parameters
+        const stayCard = document.getElementById('confirmed-stay-card');
+        const manualCard = document.getElementById('manual-stay-card');
+        if (stayCard) stayCard.style.display = 'none';
+        if (manualCard) manualCard.style.display = 'block';
 
-    function renderGuestCards() {
-      // Save existing text inputs before re-rendering
-      const existingData = {};
-      for (let i = 1; i <= MAX_GUESTS; i++) {
-        const nameInput = document.getElementById(`guest_${i}_name`);
-        const ageInput = document.getElementById(`guest_${i}_age`);
-        const phoneInput = document.getElementById(`guest_${i}_phone`);
-        const emailInput = document.getElementById(`guest_${i}_email`);
-        const idTypeInput = document.getElementById(`guest_${i}_id_type`);
+        const manualName = document.getElementById('manualGuestName');
+        const manualIn = document.getElementById('manualCheckIn');
+        const manualOut = document.getElementById('manualCheckOut');
 
-        if (nameInput) existingData[i] = {
-          name: nameInput.value,
-          age: ageInput ? ageInput.value : '',
-          phone: phoneInput ? phoneInput.value : '',
-          email: emailInput ? emailInput.value : '',
-          idType: idTypeInput ? idTypeInput.value : ''
-        };
-      }
-
-      guestCardsContainer.innerHTML = '';
-
-      for (let i = 1; i <= totalGuests; i++) {
-        const isPrimary = (i === 1);
-        const card = document.createElement('div');
-        card.className = 'guest-card';
-        card.id = `guest-card-${i}`;
-
-        const previous = existingData[i] || {};
-
-        card.innerHTML = `
-          <div class="guest-card-header">
-            <span class="guest-tag">
-              Guest #${i} ${isPrimary ? '<span class="guest-badge-pill">Primary Booker</span>' : '<span class="guest-badge-pill" style="background:#F3F4F6;color:#4B5563;">Accompanying</span>'}
-            </span>
-            <span style="font-size:12px; color:var(--text-muted);">${isPrimary ? 'Main contact' : 'Guest'}</span>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="guest_${i}_name">Full Legal Name <span class="required-star">*</span></label>
-              <input type="text" id="guest_${i}_name" name="guest_${i}_name" 
-                     placeholder="As printed on ID" required value="${previous.name || ''}">
-            </div>
-            <div class="form-group">
-              <label for="guest_${i}_age">Age or Birth Year <span class="required-star">*</span></label>
-              <input type="number" id="guest_${i}_age" name="guest_${i}_age" 
-                     min="1" max="${new Date().getFullYear()}" placeholder="Age (e.g. 28) or Year (e.g. 1998)" required value="${previous.age || ''}"
-                     oninput="handleAgeOrYearInput(${i})">
-              <div id="guest_${i}_age_hint" style="font-size:11px; margin-top:4px; min-height:16px;"></div>
-            </div>
-          </div>
-
-          ${isPrimary ? `
-          <div class="form-row">
-            <div class="form-group">
-              <label for="guest_${i}_phone">Phone / WhatsApp Number <span class="required-star">*</span></label>
-              <input type="tel" id="guest_${i}_phone" name="guest_${i}_phone" 
-                     placeholder="+91 Mobile Number" required value="${previous.phone || '+91 '}">
-            </div>
-            <div class="form-group">
-              <label for="guest_${i}_email">Email Address <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">(Optional)</span></label>
-              <input type="email" id="guest_${i}_email" name="guest_${i}_email" 
-                     placeholder="name@email.com" value="${previous.email || ''}">
-            </div>
-          </div>
-          ` : ''}
-
-          <div class="form-group">
-            <label for="guest_${i}_id_type">ID Document Type <span class="required-star">*</span></label>
-            <select id="guest_${i}_id_type" name="guest_${i}_id_type" required>
-              <option value="" disabled ${!previous.idType ? 'selected' : ''}>Select ID type...</option>
-              <option value="Passport" ${previous.idType === 'Passport' ? 'selected' : ''}>Passport</option>
-              <option value="Driver License" ${previous.idType === 'Driver License' ? 'selected' : ''}>Driver's License</option>
-              <option value="National ID / Aadhaar" ${previous.idType === 'National ID / Aadhaar' ? 'selected' : ''}>National ID / Aadhaar</option>
-              <option value="Voter / State ID" ${previous.idType === 'Voter / State ID' ? 'selected' : ''}>State / Voter ID</option>
-            </select>
-          </div>
-
-          <!-- Document Upload Slots -->
-          <label style="margin-top: 6px;">Upload ID Photos <span class="required-star">*</span></label>
-          <div class="upload-container">
-            
-            <!-- Front of ID -->
-            <div class="upload-slot ${guestFiles[i]?.front ? 'has-file' : ''}" id="slot_${i}_front">
-              ${guestFiles[i]?.front ? `
-                <div class="preview-container">
-                  <img src="${guestFiles[i].front}" class="preview-img" alt="Front ID">
-                  <div class="preview-actions">
-                    <span style="font-size:11px; color:var(--success); font-weight:700;">✅ Front ID Uploaded</span>
-                    <div style="display:flex; gap:6px;">
-                      <label for="file_${i}_front" class="upload-pill-btn" style="cursor:pointer;" title="Change Photo">
-                        🔄 Retake
-                      </label>
-                      <button type="button" class="upload-pill-btn" onclick="removeFile(event, ${i}, 'front')" style="color:var(--danger); border-color:#FECACA;" title="Remove">
-                        🗑️ Remove
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <input type="file" id="file_${i}_front" class="upload-file-overlay" accept="image/*,application/pdf"
-                       onchange="handleFileUpload(event, ${i}, 'front')">
-                <input type="file" id="file_${i}_front_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
-                       onchange="handleFileUpload(event, ${i}, 'front')">
-              ` : `
-                <!-- Native interactive overlay covering the card -->
-                <input type="file" id="file_${i}_front" class="upload-file-overlay" accept="image/*,application/pdf"
-                       onchange="handleFileUpload(event, ${i}, 'front')" title="Tap to take photo or choose file">
-                <input type="file" id="file_${i}_front_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
-                       onchange="handleFileUpload(event, ${i}, 'front')">
-                
-                <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
-                </svg>
-                <div class="upload-title">Front of ID</div>
-                <div class="upload-hint">Tap anywhere to take photo or choose file</div>
-                
-                <div class="upload-btn-row">
-                  <label for="file_${i}_front_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
-                    📷 Take Photo
-                  </label>
-                  <label for="file_${i}_front" class="upload-pill-btn" onclick="event.stopPropagation();">
-                    🖼️ Gallery / PDF
-                  </label>
-                </div>
-              `}
-            </div>
-
-            <!-- Back of ID -->
-            <div class="upload-slot ${guestFiles[i]?.back ? 'has-file' : ''}" id="slot_${i}_back">
-              ${guestFiles[i]?.back ? `
-                <div class="preview-container">
-                  <img src="${guestFiles[i].back}" class="preview-img" alt="Back ID">
-                  <div class="preview-actions">
-                    <span style="font-size:11px; color:var(--success); font-weight:700;">✅ Back ID Uploaded</span>
-                    <div style="display:flex; gap:6px;">
-                      <label for="file_${i}_back" class="upload-pill-btn" style="cursor:pointer;" title="Change Photo">
-                        🔄 Retake
-                      </label>
-                      <button type="button" class="upload-pill-btn" onclick="removeFile(event, ${i}, 'back')" style="color:var(--danger); border-color:#FECACA;" title="Remove">
-                        🗑️ Remove
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <input type="file" id="file_${i}_back" class="upload-file-overlay" accept="image/*,application/pdf"
-                       onchange="handleFileUpload(event, ${i}, 'back')">
-                <input type="file" id="file_${i}_back_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
-                       onchange="handleFileUpload(event, ${i}, 'back')">
-              ` : `
-                <!-- Native interactive overlay covering the card -->
-                <input type="file" id="file_${i}_back" class="upload-file-overlay" accept="image/*,application/pdf"
-                       onchange="handleFileUpload(event, ${i}, 'back')" title="Tap to take photo or choose file">
-                <input type="file" id="file_${i}_back_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
-                       onchange="handleFileUpload(event, ${i}, 'back')">
-                
-                <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
-                </svg>
-                <div class="upload-title">Back of ID</div>
-                <div class="upload-hint">Tap anywhere to take photo or choose file</div>
-                
-                <div class="upload-btn-row">
-                  <label for="file_${i}_back_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
-                    📷 Take Photo
-                  </label>
-                  <label for="file_${i}_back" class="upload-pill-btn" onclick="event.stopPropagation();">
-                    🖼️ Gallery / PDF
-                  </label>
-                </div>
-              `}
-            </div>
-
-          </div>
-        `;
-        guestCardsContainer.appendChild(card);
-        if (previous.age) {
-          handleAgeOrYearInput(i);
+        if (manualName) {
+          manualName.oninput = () => {
+            const n = manualName.value.trim();
+            const nameInput = document.getElementById('guestNameInput');
+            if (nameInput) nameInput.value = n;
+          };
         }
-      }
-    }
-
-    // Trigger Hidden File Inputs
-    function triggerFileSelect(event, guestIdx, side, mode) {
-      if (event && event.target && (event.target.tagName === 'INPUT' || event.target.tagName === 'LABEL' || event.target.tagName === 'BUTTON')) {
-        return;
-      }
-      const input = document.getElementById(mode === 'cam' ? `file_${guestIdx}_${side}_cam` : `file_${guestIdx}_${side}`);
-      if (input) {
-        input.click();
+        if (manualIn) {
+          manualIn.onchange = () => {
+            const inInput = document.getElementById('checkInDate');
+            if (inInput) inInput.value = manualIn.value;
+          };
+        }
+        if (manualOut) {
+          manualOut.onchange = () => {
+            const outInput = document.getElementById('checkOutDate');
+            if (outInput) outInput.value = manualOut.value;
+          };
+        }
       }
     }
 
@@ -1517,9 +1347,9 @@
       if (!file) return;
 
       if (!guestFiles[guestIdx]) guestFiles[guestIdx] = {};
-      guestFiles[guestIdx][`${side}Name`] = file.name;
+      guestFiles[guestIdx][side + 'Name'] = file.name;
 
-      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      const slot = document.getElementById('slot_' + guestIdx + '_' + side);
       if (slot) {
         slot.innerHTML = `
           <div class="spinner" style="width:28px; height:28px; margin:0 auto 6px; border-width:3px;"></div>
@@ -1568,7 +1398,7 @@
             guestFiles[guestIdx][side] = compressedDataUrl;
             renderSlotPreview(guestIdx, side, 'image', compressedDataUrl);
           } catch(err) {
-            console.error("Compression error:", err);
+            console.error('Compression error:', err);
             guestFiles[guestIdx][side] = e.target.result;
             renderSlotPreview(guestIdx, side, 'image', e.target.result);
           }
@@ -1583,7 +1413,7 @@
     }
 
     function renderSlotPreview(guestIdx, side, type, data) {
-      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      const slot = document.getElementById('slot_' + guestIdx + '_' + side);
       if (!slot) return;
       slot.classList.add('has-file');
 
@@ -1627,9 +1457,9 @@
       }
       if (guestFiles[guestIdx]) {
         delete guestFiles[guestIdx][side];
-        delete guestFiles[guestIdx][`${side}Name`];
+        delete guestFiles[guestIdx][side + 'Name'];
       }
-      const slot = document.getElementById(`slot_${guestIdx}_${side}`);
+      const slot = document.getElementById('slot_' + guestIdx + '_' + side);
       if (slot) {
         slot.classList.remove('has-file');
         const title = side === 'front' ? 'Front of ID' : 'Back of ID';
@@ -1658,156 +1488,83 @@
       }
     }
 
-    // Signature Canvas Pad
-    let canvas, ctx, isDrawing = false, hasSigned = false;
+    // Pre-fill from URL parameters on load
+    window.addEventListener('DOMContentLoaded', async () => {
+      applyConfigToForm();
+      applyUrlParams();
+      await initConfig();
+    });
 
-    function setupSignaturePad() {
-      canvas = document.getElementById('sig-canvas');
-      if (!canvas) return;
-      ctx = canvas.getContext('2d');
-
-      // Adjust for device pixel ratio for smooth sharp drawing
-      function resizeCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * 2;
-        canvas.height = rect.height * 2;
-        ctx.scale(2, 2);
-        ctx.lineWidth = 2.5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = '#222222';
-      }
-      resizeCanvas();
-      window.addEventListener('resize', resizeCanvas);
-
-      function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return {
-          x: clientX - rect.left,
-          y: clientY - rect.top
-        };
-      }
-
-      function startDraw(e) {
-        isDrawing = true;
-        hasSigned = true;
-        const pos = getPos(e);
-        ctx.beginPath();
-        ctx.moveTo(pos.x, pos.y);
-      }
-
-      function draw(e) {
-        if (!isDrawing) return;
-        e.preventDefault();
-        const pos = getPos(e);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
-      }
-
-      function stopDraw() {
-        if (isDrawing) {
-          ctx.closePath();
-          isDrawing = false;
-        }
-      }
-
-      canvas.addEventListener('mousedown', startDraw);
-      canvas.addEventListener('mousemove', draw);
-      window.addEventListener('mouseup', stopDraw);
-
-      canvas.addEventListener('touchstart', startDraw, { passive: false });
-      canvas.addEventListener('touchmove', draw, { passive: false });
-      window.addEventListener('touchend', stopDraw);
-
-      document.getElementById('btn-clear-sig').addEventListener('click', () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        hasSigned = false;
-      });
-    }
-
-    // Form Submission
+    // Form Submission: Only Coming From & Going To, Purpose of Visit, ID Selection, and ID Photos
+    // Declaration not required!
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // Check ID upload completeness
-      for (let i = 1; i <= totalGuests; i++) {
-        if (!guestFiles[i]?.front) {
-          alert(`Please upload the Front ID photo for Guest #${i}.`);
-          document.getElementById(`guest-card-${i}`)?.scrollIntoView({ behavior: 'smooth' });
-          return;
-        }
-      }
+      const guestName = (document.getElementById('guestNameInput')?.value || document.getElementById('manualGuestName')?.value || 'Guest').trim();
+      const checkInDate = document.getElementById('checkInDate')?.value || document.getElementById('manualCheckIn')?.value || '';
+      const checkOutDate = document.getElementById('checkOutDate')?.value || document.getElementById('manualCheckOut')?.value || '';
+      const reservationCode = (document.getElementById('reservationCode')?.value || '').trim();
+      const comingFrom = (document.getElementById('comingFrom')?.value || '').trim();
+      const goingTo = (document.getElementById('goingTo')?.value || '').trim();
+      const purposeOfVisit = document.getElementById('purposeOfVisit')?.value || '';
+      const idType = document.getElementById('idType')?.value || '';
 
-      // Check signature
-      if (!hasSigned) {
-        alert('Please provide your digital signature in the box before submitting.');
-        canvas.scrollIntoView({ behavior: 'smooth' });
+      if (!guestName) {
+        alert('Please enter the guest legal name.');
         return;
       }
 
-      const sigBase64 = canvas.toDataURL('image/png');
+      if (!comingFrom || !goingTo) {
+        alert('Please provide both Coming From and Going To locations.');
+        document.getElementById('comingFrom')?.focus();
+        return;
+      }
 
-      // Compile payload
-      const guestsList = [];
-      const currentYear = new Date().getFullYear();
-      for (let i = 1; i <= totalGuests; i++) {
-        const rawAgeInput = (document.getElementById(`guest_${i}_age`)?.value || '').trim();
-        const numVal = parseInt(rawAgeInput, 10);
-        let finalAge = numVal;
-        let birthYear = '';
+      if (!purposeOfVisit) {
+        alert('Please select the Purpose of Visit.');
+        document.getElementById('purposeOfVisit')?.focus();
+        return;
+      }
 
-        if (!isNaN(numVal)) {
-          if (numVal >= 1900 && numVal <= currentYear) {
-            // Entered as Year of Birth (e.g. 1994)
-            finalAge = currentYear - numVal;
-            birthYear = String(numVal);
-          } else if (numVal <= 120) {
-            // Entered as Age (e.g. 32)
-            finalAge = numVal;
-            birthYear = String(currentYear - numVal);
-          }
+      if (!idType) {
+        alert('Please select your ID Document Type.');
+        document.getElementById('idType')?.focus();
+        return;
+      }
+
+      if (!guestFiles[1]?.front) {
+        alert('Please take a photo or upload the Front side of your Government ID.');
+        document.getElementById('slot_1_front')?.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+
+      const guestsList = [
+        {
+          guestNumber: 1,
+          isPrimary: true,
+          name: guestName,
+          phone: document.getElementById('guestPhone')?.value || '',
+          email: document.getElementById('guestEmail')?.value || '',
+          idType: idType,
+          idNumber: '',
+          frontPhoto: guestFiles[1]?.front || '',
+          backPhoto: guestFiles[1]?.back || ''
         }
-
-        guestsList.push({
-          guestNumber: i,
-          isPrimary: (i === 1),
-          name: document.getElementById(`guest_${i}_name`).value.trim(),
-          age: !isNaN(finalAge) ? Number(finalAge) : '',
-          birthYear: birthYear,
-          phone: document.getElementById(`guest_${i}_phone`) ? document.getElementById(`guest_${i}_phone`).value.trim() : '',
-          email: document.getElementById(`guest_${i}_email`) ? document.getElementById(`guest_${i}_email`).value.trim() : '',
-          idType: document.getElementById(`guest_${i}_id_type`).value,
-          idNumber: '', // Removed per host requirement
-          frontPhoto: guestFiles[i]?.front || '',
-          backPhoto: guestFiles[i]?.back || ''
-        });
-      }
-
-      // Gather custom fields
-      const customValues = {};
-      if (appConfig.customFields) {
-        appConfig.customFields.forEach(cf => {
-          const el = document.getElementById(cf.id);
-          if (el) customValues[cf.label] = el.value.trim();
-        });
-      }
+      ];
 
       const submission = {
         submittedAt: new Date().toISOString(),
-        totalGuests: totalGuests,
-        propertyOption: document.getElementById('propertyOption') ? document.getElementById('propertyOption').value : '',
-        comingFrom: document.getElementById('comingFrom') ? document.getElementById('comingFrom').value.trim() : '',
-        goingTo: document.getElementById('goingTo') ? document.getElementById('goingTo').value.trim() : '',
-        purposeOfVisit: document.getElementById('purposeOfVisit') ? document.getElementById('purposeOfVisit').value : '',
-        checkInDate: document.getElementById('checkInDate') ? document.getElementById('checkInDate').value : '',
-        checkOutDate: document.getElementById('checkOutDate') ? document.getElementById('checkOutDate').value : '',
-        reservationCode: document.getElementById('reservationCode') ? document.getElementById('reservationCode').value.trim() : '',
-        arrivalTime: document.getElementById('arrivalTime') ? document.getElementById('arrivalTime').value.trim() : '',
-        customDetails: customValues,
-        guests: guestsList,
-        signature: sigBase64
+        totalGuests: 1,
+        propertyOption: document.getElementById('propertyOption')?.value || '',
+        comingFrom,
+        goingTo,
+        purposeOfVisit,
+        checkInDate,
+        checkOutDate,
+        reservationCode,
+        arrivalTime: '',
+        customDetails: {},
+        guests: guestsList
       };
 
       // Show submitting overlay
@@ -1822,8 +1579,8 @@
       spinner.style.display = 'block';
       successIcon.style.display = 'none';
       btnDone.style.display = 'none';
-      statusTitle.textContent = "Submitting Verification...";
-      statusMsg.textContent = "Uploading guest details and ID documents to Cloudflare R2 secure storage...";
+      statusTitle.textContent = 'Submitting ID Verification...';
+      statusMsg.textContent = 'Uploading ID photos to Cloudflare R2 secure storage...';
 
       try {
         if (window.AirbnbAPI && typeof window.AirbnbAPI.submitCheckIn === 'function') {
@@ -1844,26 +1601,22 @@
         // Success state
         spinner.style.display = 'none';
         successIcon.style.display = 'flex';
-        statusTitle.textContent = "Check-in Details Confirmed!";
-        statusMsg.textContent = `Thank you, ${guestsList[0].name}! Your details and ID documents have been securely verified and saved. We look forward to hosting you!`;
+        statusTitle.textContent = 'ID Verification Complete!';
+        statusMsg.textContent = `Thank you, ${guestName}! Your ID document photos and travel details have been securely recorded. We look forward to hosting you at Elite Homes!`;
         btnDone.style.display = 'inline-block';
 
         btnDone.onclick = () => {
           overlay.style.display = 'none';
-          form.reset();
-          location.reload();
         };
 
       } catch (err) {
-        console.error("Submission error:", err);
+        console.error('Submission error:', err);
         spinner.style.display = 'none';
-        statusTitle.textContent = "Verification Received";
-        statusMsg.textContent = "Your details have been recorded. Thank you for completing your pre-check-in!";
+        statusTitle.textContent = 'Verification Received';
+        statusMsg.textContent = 'Your ID documents and travel details have been recorded. Thank you!';
         btnDone.style.display = 'inline-block';
         btnDone.onclick = () => {
           overlay.style.display = 'none';
-          form.reset();
-          location.reload();
         };
       }
     });

@@ -18,32 +18,23 @@ export async function ensureChannelsTable(db: D1Database) {
     );
   `).run();
 
-  // Check if channels table is empty
-  const countRow = await db.prepare(`SELECT count(*) as count FROM channels`).first();
-  if (!countRow || Number(countRow.count) === 0) {
-    await db.batch([
-      db.prepare(`
-        INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
-        VALUES ('ch_offline', 'Offline / Direct', '🤝', '#0D9488', 1, 'direct', 1)
-      `),
-      db.prepare(`
-        INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
-        VALUES ('ch_airbnb', 'Airbnb', '🏠', '#FF385C', 1, 'ota', 1)
-      `),
-      db.prepare(`
-        INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
-        VALUES ('ch_booking', 'Booking.com', '🌐', '#003580', 1, 'ota', 1)
-      `),
-      db.prepare(`
-        INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
-        VALUES ('ch_whatsapp', 'Direct Call / WhatsApp', '💬', '#16A34A', 1, 'direct', 1)
-      `),
-      db.prepare(`
-        INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
-        VALUES ('ch_other', 'Other Channels', '✨', '#8B5CF6', 1, 'custom', 1)
-      `)
-    ]);
-  }
+  // Check if channels table is empty or has legacy channels
+  await db.prepare(`DELETE FROM channels WHERE id IN ('ch_whatsapp', 'ch_other') OR name IN ('Direct Call / WhatsApp', 'Other Channels')`).run();
+
+  await db.batch([
+    db.prepare(`
+      INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
+      VALUES ('ch_airbnb', 'Airbnb', '🏠', '#FF385C', 1, 'ota', 1)
+    `),
+    db.prepare(`
+      INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
+      VALUES ('ch_booking', 'Booking.com', '🌐', '#003580', 1, 'ota', 1)
+    `),
+    db.prepare(`
+      INSERT OR IGNORE INTO channels (id, name, icon, color, is_active, type, is_system)
+      VALUES ('ch_offline', 'Offline / Direct', '🤝', '#0D9488', 1, 'direct', 1)
+    `)
+  ]);
 }
 
 // 1. GET /api/channels - List all channels (active and inactive) with bookings count
@@ -83,30 +74,17 @@ channelsRoute.get('/', async (c) => {
         const plat = (b.platform || '').toLowerCase();
         const notes = (b.notes || '').toLowerCase();
 
-        if (ch.id === 'ch_whatsapp' || chNameLower.includes('whatsapp')) {
-          if (notes.includes('whatsapp') || notes.includes('direct call') || plat.includes('whatsapp')) {
+        if (ch.id === 'ch_airbnb' || chNameLower === 'airbnb') {
+          if (plat.includes('airbnb') || notes.includes('airbnb')) {
             count++;
-            return;
           }
-        } else if (ch.id === 'ch_offline' || chNameLower === 'offline / direct' || chNameLower === 'offline') {
-          if (notes.includes('mode: offline') || (plat === 'direct' && !notes.includes('whatsapp') && !notes.includes('call'))) {
+        } else if (ch.id === 'ch_booking' || chNameLower.includes('booking')) {
+          if (plat.includes('booking') || notes.includes('booking')) {
             count++;
-            return;
           }
-        } else if (ch.id === 'ch_airbnb' || chNameLower === 'airbnb') {
-          if (plat.includes('airbnb') || notes.includes('mode: airbnb')) {
+        } else if (ch.id === 'ch_offline' || chNameLower.includes('offline') || chNameLower.includes('direct')) {
+          if (!plat.includes('airbnb') && !notes.includes('airbnb') && !plat.includes('booking') && !notes.includes('booking') && plat !== 'blocked' && !plat.includes('blocked')) {
             count++;
-            return;
-          }
-        } else if (ch.id === 'ch_booking' || chNameLower.includes('booking.com')) {
-          if (plat.includes('booking.com') || notes.includes('mode: booking.com')) {
-            count++;
-            return;
-          }
-        } else if (ch.id === 'ch_other' || chNameLower.includes('other')) {
-          if (plat.includes('other') || notes.includes('mode: other')) {
-            count++;
-            return;
           }
         } else {
           // Generic match for custom channels

@@ -3767,6 +3767,79 @@
         </div>
       </div>
 
+      <!-- MODAL: Bank Details & Payment QR Code Settings -->
+      <div class="modal-backdrop" id="modal-bank-settings" style="z-index: 10000; display: none;">
+        <div class="modal-dialog" style="max-width: 540px;">
+          <div class="modal-header">
+            <div>
+              <h3>🏦 Bank Details &amp; Payment QR</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">
+                Update bank account info and payment QR code shown on all guest invoices and bills.
+              </p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeBankSettingsModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Bank Name *</label>
+                <input type="text" id="modal-bank-name-input" placeholder="e.g. UCO Bank" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Account Name / Beneficiary *</label>
+                <input type="text" id="modal-bank-acc-name-input" placeholder="e.g. Elite Homes" style="width: 100%;">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Account Number *</label>
+                <input type="text" id="modal-bank-acc-num-input" placeholder="e.g. 04990110124666" style="width: 100%; font-family: monospace; font-weight: 600;">
+              </div>
+              <div>
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">IFSC Code *</label>
+                <input type="text" id="modal-bank-ifsc-input" placeholder="e.g. UCBA0000499" style="width: 100%; font-family: monospace; font-weight: 600; text-transform: uppercase;">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">UPI ID / VPA *</label>
+              <input type="text" id="modal-bank-upi-input" placeholder="e.g. bobuco@ybl" style="width: 100%; font-weight: 600;">
+            </div>
+
+            <!-- QR Upload Box -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; display: flex; gap: 14px; align-items: center;">
+              <div style="width: 82px; height: 82px; border: 1.5px dashed #CBD5E1; border-radius: 6px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                <img id="modal-qr-preview-img" src="" alt="Payment QR" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+                <div id="modal-qr-placeholder" style="text-align: center; color: #94A3B8; font-size: 10px; padding: 4px;">
+                  <span style="font-size: 18px; display: block;">📱</span>
+                  No QR
+                </div>
+              </div>
+              <div style="flex: 1;">
+                <strong style="font-size: 12.5px; color: #0F172A; display: block; margin-bottom: 2px;">Payment QR Code</strong>
+                <p style="font-size: 11px; color: #64748B; margin: 0 0 8px 0;">Upload UPI QR image (Google Pay, PhonePe, Paytm) to display on bills and invoices.</p>
+                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                  <label for="modal-bank-qr-file-input" class="btn btn-outline" style="cursor: pointer; font-size: 11px; height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 4px; background: #FFFFFF;">
+                    📷 Upload QR
+                  </label>
+                  <input type="file" id="modal-bank-qr-file-input" accept="image/*" style="display: none;" onchange="handleQrImageUpload(this)">
+                  <button type="button" class="btn btn-outline" id="modal-btn-remove-qr" onclick="removeBankQrCode()" style="font-size: 11px; height: 28px; padding: 0 8px; color: #DC2626; border-color: #FECACA; display: none;">
+                    ✕ Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-outline" onclick="closeBankSettingsModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveBankSettingsFromModal(this)" style="background: #0284C7; border-color: #0284C7; font-weight: 700;">
+              💾 Save Bank &amp; QR
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- MODAL 4: Rename Room (With Cascading Updates) -->
       <div class="modal-backdrop" id="modal-rename-room" style="z-index: 10000;">
         <div class="modal-dialog" style="max-width: 480px;">
@@ -4336,12 +4409,12 @@
             <span style="font-size: 18px;">📡</span>
             <span>2. Booking Channels &amp; Modes</span>
           </div>
-          <button type="button" class="btn btn-primary" onclick="openAddChannelModal()" style="font-size: 12px; height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 4px;">
-            <span>➕ Add Channel</span>
-          </button>
+          <span style="font-size: 12px; font-weight: 700; color: #047857; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 3px 8px; border-radius: 6px;">
+            3 Standard Categories
+          </span>
         </div>
         <p class="card-desc">
-          Add, remove, or deactivate booking channels (OTAs and direct booking sources). Deactivated channels are hidden from new bookings while preserving historical records and past revenue.
+          All reservations are categorized strictly into 3 standard channels: <strong>Airbnb</strong>, <strong>Booking.com</strong>, and <strong>Offline / Direct</strong>.
         </p>
 
         <div id="channels-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
@@ -4431,6 +4504,72 @@
         </div>
       </div>
 
+      <!-- SECTION 7: Bank Details & Payment QR Code (Shown in Guest Invoices & Bills) -->
+      <div class="card" id="card-bank-settings">
+        <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">🏦</span>
+            <span>7. Bank Information &amp; Payment QR Code</span>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="handleSaveBankSettings()" style="font-size: 12px; height: 32px; padding: 0 14px; background: #0284C7; border-color: #0284C7;">
+            💾 Save Bank &amp; QR
+          </button>
+        </div>
+        <p class="card-desc">
+          Configure bank account details, UPI ID, and upload your UPI Payment QR code. These details and the QR code will be displayed dynamically on all guest invoices and bills.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 5px;">Bank Name *</label>
+            <input type="text" id="bank-name-input" placeholder="e.g. UCO Bank" value="UCO Bank" style="width: 100%;">
+          </div>
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 5px;">Account Name / Beneficiary *</label>
+            <input type="text" id="bank-acc-name-input" placeholder="e.g. Elite Homes" value="Elite Homes" style="width: 100%;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 5px;">Account Number *</label>
+            <input type="text" id="bank-acc-num-input" placeholder="e.g. 04990110124666" value="04990110124666" style="width: 100%; font-family: monospace; font-weight: 600;">
+          </div>
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 5px;">IFSC Code *</label>
+            <input type="text" id="bank-ifsc-input" placeholder="e.g. UCBA0000499" value="UCBA0000499" style="width: 100%; font-family: monospace; font-weight: 600; text-transform: uppercase;">
+          </div>
+          <div>
+            <label style="font-size: 12.5px; font-weight: 600; display: block; margin-bottom: 5px;">UPI ID / VPA *</label>
+            <input type="text" id="bank-upi-input" placeholder="e.g. bobuco@ybl" value="bobuco@ybl" style="width: 100%; font-weight: 600;">
+          </div>
+        </div>
+
+        <!-- Payment QR Code Upload & Preview -->
+        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <div style="width: 96px; height: 96px; border: 1.5px dashed #CBD5E1; border-radius: 8px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; position: relative;">
+            <img id="settings-qr-preview-img" src="" alt="Payment QR" style="width: 100%; height: 100%; object-fit: contain; display: none;">
+            <div id="settings-qr-placeholder" style="text-align: center; color: #94A3B8; font-size: 11px; padding: 6px;">
+              <span style="font-size: 22px; display: block; margin-bottom: 2px;">📱</span>
+              No QR
+            </div>
+          </div>
+          <div style="flex: 1; min-width: 240px;">
+            <strong style="font-size: 13px; color: #0F172A; display: block; margin-bottom: 4px;">UPI / Payment QR Code Image</strong>
+            <p style="font-size: 12px; color: #64748B; margin: 0 0 8px 0;">Upload your official UPI QR code photo (Google Pay / PhonePe / Paytm / BHIM) to show directly on printed bills and invoices.</p>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <label for="bank-qr-file-input" class="btn btn-outline" style="cursor: pointer; font-size: 12px; height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; background: #FFFFFF;">
+                📷 Upload QR Image
+              </label>
+              <input type="file" id="bank-qr-file-input" accept="image/*" style="display: none;" onchange="handleQrImageUpload(this)">
+              <button type="button" class="btn btn-outline" id="btn-remove-qr" onclick="removeBankQrCode()" style="font-size: 12px; height: 32px; padding: 0 10px; color: #DC2626; border-color: #FECACA; display: none;">
+                ✕ Remove QR
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Action Bar: Direct Cloudflare D1 Save -->
       <div class="action-bar">
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -4467,6 +4606,9 @@
               <button type="button" class="btn btn-outline" onclick="openStandardRatesModal()" style="height: 36px; padding: 0 12px; font-size: 12px; color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; font-weight: 600;" title="Configure standard room rack rates for billing">
                 ⚙️ Standard Rates
               </button>
+              <button type="button" class="btn btn-outline" onclick="openBankSettingsModal()" style="height: 36px; padding: 0 12px; font-size: 12px; color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 600;" title="Update Bank Information & Payment QR Code for Invoices">
+                🏦 Bank &amp; QR
+              </button>
             </div>
 
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -4475,8 +4617,8 @@
                 <button type="button" id="btn-bill-type-gst" onclick="setBillerMode('gst')" class="btn-bill-type active">
                   🧾 GST Bill (5% Tax)
                 </button>
-                <button type="button" id="btn-bill-type-nongst" onclick="setBillerMode('nongst')" class="btn-bill-type">
-                  📄 Non-GST Bill
+                <button type="button" id="btn-bill-type-nongst" onclick="setBillerMode('nongst')" class="btn-bill-type" title="Guest Invoice without GST">
+                  📄 Non-GST (Guest Invoice)
                 </button>
               </div>
 
@@ -4637,13 +4779,22 @@
                   <strong>Payment Status:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-payment-status">Settled</span>
                 </div>
                 
-                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px;">
-                  <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px;">
-                    Bank &amp; UPI Details for Payment:
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; display: flex; gap: 14px; align-items: center;">
+                  <!-- Payment QR Code Image -->
+                  <div id="bill-qr-wrap" style="display: none; text-align: center; flex-shrink: 0;">
+                    <img id="bill-qr-image" src="" alt="Payment QR Code" style="width: 82px; height: 82px; border-radius: 6px; border: 1px solid #CBD5E1; object-fit: contain; background: #FFFFFF; padding: 2px; display: block;">
+                    <div style="font-size: 9.5px; font-weight: 700; color: #475569; margin-top: 3px; letter-spacing: 0.3px;">SCAN TO PAY</div>
                   </div>
-                  <div contenteditable="true" class="bill-edit-text" id="bill-bank-info" style="font-size: 11.5px; color: #334155; line-height: 1.5;">
-                    UPI ID: <strong>bobuco@ybl</strong> • Account Name: <strong>Elite Homes</strong><br>
-                    Bank: <strong>UCO Bank</strong> • A/C No: <strong>04990110124666</strong> • IFSC: <strong>UCBA0000499</strong>
+                  <!-- Bank & UPI Details -->
+                  <div style="flex: 1;">
+                    <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                      <span>Bank &amp; UPI Details for Payment:</span>
+                      <button type="button" class="biller-no-print" onclick="openBankSettingsModal()" style="background: none; border: none; color: #2563EB; font-size: 10.5px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;">⚙️ Edit Bank / QR</button>
+                    </div>
+                    <div contenteditable="true" class="bill-edit-text" id="bill-bank-info" style="font-size: 11.5px; color: #334155; line-height: 1.5;">
+                      UPI ID: <strong>bobuco@ybl</strong> • Account Name: <strong>Elite Homes</strong><br>
+                      Bank: <strong>UCO Bank</strong> • A/C No: <strong>04990110124666</strong> • IFSC: <strong>UCBA0000499</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -4837,6 +4988,12 @@
         document.getElementById('host-insta-input').value = currentConfig.hostContact.instagramUrl || '';
         document.getElementById('host-handle-input').value = currentConfig.hostContact.instagramHandle || '';
       }
+      if (typeof renderSettingsBankAndQr === 'function') {
+        renderSettingsBankAndQr();
+      }
+      if (typeof renderBillerBankAndQr === 'function') {
+        renderBillerBankAndQr();
+      }
     }
 
     // Property options
@@ -5009,6 +5166,26 @@
         instagramUrl: document.getElementById('host-insta-input').value.trim(),
         instagramHandle: document.getElementById('host-handle-input').value.trim()
       };
+
+      // Bank Details & Payment QR Code
+      const bankName = (document.getElementById('settings-bank-name')?.value || '').trim();
+      const accountName = (document.getElementById('settings-bank-acc-name')?.value || '').trim();
+      const accountNumber = (document.getElementById('settings-bank-acc-num')?.value || '').trim();
+      const ifsc = (document.getElementById('settings-bank-ifsc')?.value || '').trim().toUpperCase();
+      const upiId = (document.getElementById('settings-bank-upi')?.value || '').trim();
+
+      if (bankName || accountNumber || ifsc || upiId) {
+        currentConfig.bankDetails = {
+          bankName: bankName || 'UCO Bank',
+          accountName: accountName || 'Elite Homes',
+          accountNumber: accountNumber || '04990110124666',
+          ifsc: ifsc || 'UCBA0000499',
+          upiId: upiId || 'bobuco@ybl',
+          qrCodeUrl: currentConfig.bankDetails?.qrCodeUrl || ''
+        };
+        localStorage.setItem('elitehomes_bank_details', JSON.stringify(currentConfig.bankDetails));
+        if (typeof renderBillerBankAndQr === 'function') renderBillerBankAndQr();
+      }
 
       localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
 
@@ -5622,11 +5799,9 @@
     let currentBookings = [];
     let loadedProperties = [];
     let loadedChannels = [
-      { id: 'ch_offline', name: 'Offline / Direct', icon: '🤝', color: '#0D9488', isActive: true, is_active: 1, type: 'direct', isSystem: true },
       { id: 'ch_airbnb', name: 'Airbnb', icon: '🏠', color: '#FF385C', isActive: true, is_active: 1, type: 'ota', isSystem: true },
       { id: 'ch_booking', name: 'Booking.com', icon: '🌐', color: '#003580', isActive: true, is_active: 1, type: 'ota', isSystem: true },
-      { id: 'ch_whatsapp', name: 'Direct Call / WhatsApp', icon: '💬', color: '#16A34A', isActive: true, is_active: 1, type: 'direct', isSystem: true },
-      { id: 'ch_other', name: 'Other Channels', icon: '✨', color: '#8B5CF6', isActive: true, is_active: 1, type: 'custom', isSystem: true }
+      { id: 'ch_offline', name: 'Offline / Direct', icon: '🤝', color: '#0D9488', isActive: true, is_active: 1, type: 'direct', isSystem: true }
     ];
     let currentCalYear = new Date().getFullYear();
     let currentCalMonth = new Date().getMonth();
@@ -5665,7 +5840,7 @@
       return false;
     }
 
-    // Helper: Normalize booking mode against active and loaded channels
+    // Helper: Normalize booking mode against active and loaded channels (strictly 3 categories: Airbnb, Booking.com, Offline / Direct)
     function getBookingMode(b) {
       if (b.status === 'Blocked' || (b.platform || '').toLowerCase().includes('blocked')) {
         return 'Maintenance Block';
@@ -5677,31 +5852,29 @@
       if (b.notes && b.notes.includes('Booking Mode:')) {
         const m = b.notes.match(/Booking Mode:\s*([^\n|]+)/i);
         if (m) {
-          const parsed = m[1].trim();
-          const matched = loadedChannels.find(ch => ch.name.toLowerCase() === parsed.toLowerCase());
-          if (matched) return matched.name;
-          if (parsed.toLowerCase() === 'offline' || parsed.toLowerCase() === 'direct') return 'Offline / Direct';
-          if (parsed.toLowerCase() === 'other') return 'Other Channels';
-          return parsed;
+          const parsed = m[1].trim().toLowerCase();
+          if (parsed.includes('airbnb') && !parsed.includes('direct') && !parsed.includes('offline')) return 'Airbnb';
+          if (parsed.includes('booking') && !parsed.includes('direct') && !parsed.includes('offline')) return 'Booking.com';
+          return 'Offline / Direct';
         }
       }
 
-      // 2. Standard OTA & Direct mapping
-      if (plat.includes('airbnb') || notes.includes('mode: airbnb')) return 'Airbnb';
-      if (plat.includes('booking.com') || notes.includes('mode: booking.com')) return 'Booking.com';
-      if (plat.includes('whatsapp') || notes.includes('whatsapp') || notes.includes('direct call')) return 'Direct Call / WhatsApp';
-      if (plat.includes('direct') || plat.includes('offline') || notes.includes('mode: offline') || (b.id && b.id.includes('real'))) return 'Offline / Direct';
-
-      // 3. Match against custom channels
-      if (Array.isArray(loadedChannels)) {
-        for (const ch of loadedChannels) {
-          if (plat === ch.name.toLowerCase() || notes.includes(ch.name.toLowerCase())) {
-            return ch.name;
-          }
+      // 2. Strict 3 categories mapping: Airbnb, Booking.com, Offline / Direct
+      if (plat.includes('airbnb') || notes.includes('mode: airbnb')) {
+        if (plat.includes('direct') || plat.includes('offline') || notes.includes('mode: offline') || notes.includes('mode: direct')) {
+          return 'Offline / Direct';
         }
+        return 'Airbnb';
+      }
+      if (plat.includes('booking') || notes.includes('mode: booking')) {
+        if (plat.includes('direct') || plat.includes('offline') || notes.includes('mode: offline') || notes.includes('mode: direct')) {
+          return 'Offline / Direct';
+        }
+        return 'Booking.com';
       }
 
-      return b.platform || 'Other Channels';
+      // All others (Direct, Offline, WhatsApp, Call, Other) -> Offline / Direct
+      return 'Offline / Direct';
     }
 
     // Helper: Calculate revenue for booking
@@ -6200,11 +6373,9 @@
         return loadedChannels;
       }
       return [
-        { id: 'ch_offline', name: 'Offline / Direct', icon: '🤝', color: '#0D9488', isActive: true, is_active: 1, type: 'direct', isSystem: true },
         { id: 'ch_airbnb', name: 'Airbnb', icon: '🏠', color: '#FF385C', isActive: true, is_active: 1, type: 'ota', isSystem: true },
         { id: 'ch_booking', name: 'Booking.com', icon: '🌐', color: '#003580', isActive: true, is_active: 1, type: 'ota', isSystem: true },
-        { id: 'ch_whatsapp', name: 'Direct Call / WhatsApp', icon: '💬', color: '#16A34A', isActive: true, is_active: 1, type: 'direct', isSystem: true },
-        { id: 'ch_other', name: 'Other Channels', icon: '✨', color: '#8B5CF6', isActive: true, is_active: 1, type: 'custom', isSystem: true }
+        { id: 'ch_offline', name: 'Offline / Direct', icon: '🤝', color: '#0D9488', isActive: true, is_active: 1, type: 'direct', isSystem: true }
       ];
     }
 
@@ -6451,70 +6622,28 @@
       const select = document.getElementById('mb-booking-mode');
       if (!select) return;
 
-      const channels = getLoadedChannels();
-      const options = [];
-      const seen = new Set();
+      // Strictly 3 categories: Airbnb, Booking.com, Offline / Direct
+      const canonicalCategories = [
+        { value: 'Airbnb', label: '🏠 Airbnb' },
+        { value: 'Booking.com', label: '🌐 Booking.com' },
+        { value: 'Offline / Direct', label: '🤝 Offline / Direct' }
+      ];
 
-      channels.forEach(ch => {
-        const active = ch.isActive !== undefined ? ch.isActive : (ch.is_active !== 0);
-        if (active) {
-          options.push({ value: ch.name, label: `${ch.icon || '📌'} ${ch.name}` });
-          seen.add(ch.name.toLowerCase());
-        }
-      });
-
-      // If editing an existing booking whose channel was deactivated or custom, keep it visible
+      let currentVal = 'Offline / Direct';
       if (selectedMode) {
         const norm = selectedMode.trim().toLowerCase();
-        let alreadyCovered = false;
-        if (seen.has(norm)) alreadyCovered = true;
-        if ((norm === 'offline' || norm === 'direct') && (seen.has('offline / direct') || seen.has('offline'))) alreadyCovered = true;
-        if (norm === 'other' && seen.has('other channels')) alreadyCovered = true;
-
-        if (!alreadyCovered) {
-          options.push({ value: selectedMode, label: `📌 ${selectedMode} (Archived / Inactive)` });
+        if (norm.includes('airbnb') && !norm.includes('direct') && !norm.includes('offline')) {
+          currentVal = 'Airbnb';
+        } else if (norm.includes('booking') && !norm.includes('direct') && !norm.includes('offline')) {
+          currentVal = 'Booking.com';
+        } else {
+          currentVal = 'Offline / Direct';
         }
       }
 
-      if (options.length === 0) {
-        options.push(
-          { value: 'Offline / Direct', label: '🤝 Offline / Direct' },
-          { value: 'Booking.com', label: '🌐 Booking.com' },
-          { value: 'Airbnb', label: '🏠 Airbnb' },
-          { value: 'Direct Call / WhatsApp', label: '💬 Direct Call / WhatsApp' },
-          { value: 'Other Channels', label: '✨ Other Channels' }
-        );
-      }
-
-      select.innerHTML = options.map(opt => `
-        <option value="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</option>
+      select.innerHTML = canonicalCategories.map(c => `
+        <option value="${c.value}" ${c.value === currentVal ? 'selected' : ''}>${c.label}</option>
       `).join('');
-
-      if (selectedMode) {
-        let found = false;
-        for (let i = 0; i < select.options.length; i++) {
-          if (select.options[i].value.toLowerCase() === selectedMode.toLowerCase()) {
-            select.selectedIndex = i;
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          if (selectedMode.toLowerCase().includes('offline')) {
-            for (let i = 0; i < select.options.length; i++) {
-              if (select.options[i].value.toLowerCase().includes('offline')) { select.selectedIndex = i; break; }
-            }
-          } else if (selectedMode.toLowerCase().includes('booking')) {
-            for (let i = 0; i < select.options.length; i++) {
-              if (select.options[i].value.toLowerCase().includes('booking')) { select.selectedIndex = i; break; }
-            }
-          } else if (selectedMode.toLowerCase().includes('airbnb')) {
-            for (let i = 0; i < select.options.length; i++) {
-              if (select.options[i].value.toLowerCase().includes('airbnb')) { select.selectedIndex = i; break; }
-            }
-          }
-        }
-      }
     }
 
     // Default Sample Bookings (Realistic 3-property bookings covering Oct/Nov 2026)
@@ -11470,7 +11599,7 @@
       if (billerMode === 'nongst') {
         if (btnGst) btnGst.classList.remove('active');
         if (btnNonGst) btnNonGst.classList.add('active');
-        if (badgeTitle) badgeTitle.textContent = 'BILL OF SUPPLY / GUEST INVOICE';
+        if (badgeTitle) badgeTitle.textContent = 'GUEST INVOICE';
         if (hostGstinRow) hostGstinRow.style.display = 'none';
         if (hostGstinWrap) hostGstinWrap.style.display = 'none';
         if (sacRow) sacRow.style.display = 'none';
@@ -11747,6 +11876,221 @@
       await saveStandardRoomRates(rates, btn);
     }
 
+    // Bank Details & Payment QR Code Functions
+    function getStoredBankDetails() {
+      if (currentConfig && currentConfig.bankDetails && currentConfig.bankDetails.bankName) {
+        return currentConfig.bankDetails;
+      }
+      const cached = localStorage.getItem('elitehomes_bank_details');
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+      return {
+        bankName: 'UCO Bank',
+        accountName: 'Elite Homes',
+        accountNumber: '04990110124666',
+        ifsc: 'UCBA0000499',
+        upiId: 'bobuco@ybl',
+        qrCodeUrl: ''
+      };
+    }
+
+    function renderBillerBankAndQr() {
+      const details = getStoredBankDetails();
+      const bankInfoEl = document.getElementById('bill-bank-info');
+      const qrWrap = document.getElementById('bill-qr-wrap');
+      const qrImg = document.getElementById('bill-qr-image');
+
+      if (bankInfoEl) {
+        bankInfoEl.innerHTML = `UPI ID: <strong>${escapeHtml(details.upiId || 'bobuco@ybl')}</strong> • Account Name: <strong>${escapeHtml(details.accountName || 'Elite Homes')}</strong><br>Bank: <strong>${escapeHtml(details.bankName || 'UCO Bank')}</strong> • A/C No: <strong>${escapeHtml(details.accountNumber || '04990110124666')}</strong> • IFSC: <strong>${escapeHtml(details.ifsc || 'UCBA0000499')}</strong>`;
+      }
+
+      if (qrWrap && qrImg) {
+        if (details.qrCodeUrl) {
+          const resolved = (window.AirbnbAPI && typeof window.AirbnbAPI.resolveImageUrl === 'function')
+            ? window.AirbnbAPI.resolveImageUrl(details.qrCodeUrl)
+            : details.qrCodeUrl;
+          qrImg.src = resolved;
+          qrWrap.style.display = 'block';
+        } else {
+          qrWrap.style.display = 'none';
+        }
+      }
+    }
+
+    function renderSettingsBankAndQr() {
+      const details = getStoredBankDetails();
+      if (document.getElementById('settings-bank-name')) document.getElementById('settings-bank-name').value = details.bankName || '';
+      if (document.getElementById('settings-bank-acc-name')) document.getElementById('settings-bank-acc-name').value = details.accountName || '';
+      if (document.getElementById('settings-bank-acc-num')) document.getElementById('settings-bank-acc-num').value = details.accountNumber || '';
+      if (document.getElementById('settings-bank-ifsc')) document.getElementById('settings-bank-ifsc').value = details.ifsc || '';
+      if (document.getElementById('settings-bank-upi')) document.getElementById('settings-bank-upi').value = details.upiId || '';
+      updateQrPreview(details.qrCodeUrl || '');
+    }
+
+    function openBankSettingsModal() {
+      const details = getStoredBankDetails();
+      const modal = document.getElementById('modal-bank-settings');
+      if (!modal) return;
+
+      const bankNameInput = document.getElementById('modal-bank-name-input');
+      const accNameInput = document.getElementById('modal-bank-acc-name-input');
+      const accNumInput = document.getElementById('modal-bank-acc-num-input');
+      const ifscInput = document.getElementById('modal-bank-ifsc-input');
+      const upiInput = document.getElementById('modal-bank-upi-input');
+
+      if (bankNameInput) bankNameInput.value = details.bankName || '';
+      if (accNameInput) accNameInput.value = details.accountName || '';
+      if (accNumInput) accNumInput.value = details.accountNumber || '';
+      if (ifscInput) ifscInput.value = details.ifsc || '';
+      if (upiInput) upiInput.value = details.upiId || '';
+
+      updateQrPreview(details.qrCodeUrl || '');
+      modal.style.display = 'flex';
+    }
+
+    function closeBankSettingsModal() {
+      const modal = document.getElementById('modal-bank-settings');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function updateQrPreview(url) {
+      const resolved = url ? ((window.AirbnbAPI && typeof window.AirbnbAPI.resolveImageUrl === 'function') ? window.AirbnbAPI.resolveImageUrl(url) : url) : '';
+
+      // Update modal previews
+      const modalImg = document.getElementById('modal-qr-preview-img');
+      const modalPh = document.getElementById('modal-qr-placeholder');
+      const modalRemoveBtn = document.getElementById('modal-btn-remove-qr');
+      if (modalImg && modalPh) {
+        if (resolved) {
+          modalImg.src = resolved;
+          modalImg.style.display = 'block';
+          modalPh.style.display = 'none';
+          if (modalRemoveBtn) modalRemoveBtn.style.display = 'inline-block';
+        } else {
+          modalImg.src = '';
+          modalImg.style.display = 'none';
+          modalPh.style.display = 'block';
+          if (modalRemoveBtn) modalRemoveBtn.style.display = 'none';
+        }
+      }
+
+      // Update Section 7 previews
+      const secImg = document.getElementById('settings-qr-preview-img');
+      const secPh = document.getElementById('settings-qr-placeholder');
+      const secRemoveBtn = document.getElementById('btn-remove-qr');
+      if (secImg && secPh) {
+        if (resolved) {
+          secImg.src = resolved;
+          secImg.style.display = 'block';
+          secPh.style.display = 'none';
+          if (secRemoveBtn) secRemoveBtn.style.display = 'inline-block';
+        } else {
+          secImg.src = '';
+          secImg.style.display = 'none';
+          secPh.style.display = 'block';
+          if (secRemoveBtn) secRemoveBtn.style.display = 'none';
+        }
+      }
+    }
+
+    async function handleQrImageUpload(input) {
+      const file = input && input.files && input.files[0];
+      if (!file) return;
+
+      if (typeof showToast === 'function') showToast('⏳ Uploading Payment QR to Cloudflare R2...');
+
+      try {
+        let qrUrl = '';
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.uploadImageToR2 === 'function') {
+          const res = await window.AirbnbAPI.uploadImageToR2(file, { folder: 'settings' });
+          if (res && res.url) qrUrl = res.url;
+          else if (res && res.data && res.data.url) qrUrl = res.data.url;
+        }
+
+        if (!qrUrl) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            applyUploadedQr(e.target.result);
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+
+        applyUploadedQr(qrUrl);
+      } catch (err) {
+        console.error('QR upload failed:', err);
+        alert('Failed to upload QR image. Please try again.');
+      }
+    }
+
+    function applyUploadedQr(qrUrl) {
+      if (!currentConfig.bankDetails) currentConfig.bankDetails = getStoredBankDetails();
+      currentConfig.bankDetails.qrCodeUrl = qrUrl;
+      localStorage.setItem('elitehomes_bank_details', JSON.stringify(currentConfig.bankDetails));
+      updateQrPreview(qrUrl);
+      renderBillerBankAndQr();
+      if (typeof showToast === 'function') showToast('✅ Payment QR Code uploaded successfully!');
+    }
+
+    function removeBankQrCode() {
+      if (!currentConfig.bankDetails) currentConfig.bankDetails = getStoredBankDetails();
+      currentConfig.bankDetails.qrCodeUrl = '';
+      localStorage.setItem('elitehomes_bank_details', JSON.stringify(currentConfig.bankDetails));
+      updateQrPreview('');
+      renderBillerBankAndQr();
+      if (typeof showToast === 'function') showToast('Payment QR Code removed.');
+    }
+
+    async function saveBankSettingsFromModal() {
+      const bankName = (document.getElementById('modal-bank-name-input')?.value || '').trim();
+      const accountName = (document.getElementById('modal-bank-acc-name-input')?.value || '').trim();
+      const accountNumber = (document.getElementById('modal-bank-acc-num-input')?.value || '').trim();
+      const ifsc = (document.getElementById('modal-bank-ifsc-input')?.value || '').trim().toUpperCase();
+      const upiId = (document.getElementById('modal-bank-upi-input')?.value || '').trim();
+
+      if (!bankName || !accountNumber || !ifsc || !upiId) {
+        alert('Please fill all required bank and UPI fields.');
+        return;
+      }
+
+      const existing = getStoredBankDetails();
+      const updated = {
+        bankName,
+        accountName: accountName || 'Elite Homes',
+        accountNumber,
+        ifsc,
+        upiId,
+        qrCodeUrl: existing.qrCodeUrl || ''
+      };
+
+      currentConfig.bankDetails = updated;
+      localStorage.setItem('elitehomes_bank_details', JSON.stringify(updated));
+
+      // Also update Section 7 inputs
+      if (document.getElementById('settings-bank-name')) document.getElementById('settings-bank-name').value = updated.bankName;
+      if (document.getElementById('settings-bank-acc-name')) document.getElementById('settings-bank-acc-name').value = updated.accountName;
+      if (document.getElementById('settings-bank-acc-num')) document.getElementById('settings-bank-acc-num').value = updated.accountNumber;
+      if (document.getElementById('settings-bank-ifsc')) document.getElementById('settings-bank-ifsc').value = updated.ifsc;
+      if (document.getElementById('settings-bank-upi')) document.getElementById('settings-bank-upi').value = updated.upiId;
+
+      renderBillerBankAndQr();
+      closeBankSettingsModal();
+
+      // Persist to Cloudflare D1
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.saveConfig === 'function') {
+        try {
+          await window.AirbnbAPI.saveConfig(currentConfig, currentConfig.adminPin);
+          if (typeof showToast === 'function') showToast('✅ Bank details & Payment QR saved to Cloudflare D1!');
+        } catch (e) {
+          console.warn('Error saving bank details to D1:', e);
+          if (typeof showToast === 'function') showToast('Bank details updated locally.');
+        }
+      } else {
+        if (typeof showToast === 'function') showToast('✅ Bank details updated!');
+      }
+    }
+
     function onBillPropertySelected(val) {
       const customSpan = document.getElementById('bill-stay-property-custom');
       if (val === '__custom__') {
@@ -11815,9 +12159,7 @@
       if (displayGstin) displayGstin.innerText = fixedGstin;
       if (addrEl) addrEl.innerText = fixedAddress;
 
-      if (bankInfoEl) {
-        bankInfoEl.innerHTML = `UPI ID: <strong>bobuco@ybl</strong> • Account Name: <strong>Elite Homes</strong><br>Bank: <strong>UCO Bank</strong> • A/C No: <strong>04990110124666</strong> • IFSC: <strong>UCBA0000499</strong>`;
-      }
+      renderBillerBankAndQr();
 
       // Apply GST / Non-GST mode
       setBillerMode(billerMode);
@@ -11923,6 +12265,7 @@
       if (pModeEl) pModeEl.innerText = 'Cash / UPI';
       if (pStatEl) pStatEl.innerText = 'Settled';
       if (advEl) advEl.value = (billerMode === 'gst') ? 2625 : 2500;
+      renderBillerBankAndQr();
       recalculateBill();
     }
 
@@ -12018,6 +12361,7 @@
 
       // Set advance paid and recalculate
       if (advEl) advEl.value = totalAdvanceAcrossChain;
+      renderBillerBankAndQr();
       recalculateBill();
     }
 

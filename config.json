@@ -5,6 +5,14 @@
     "instagramUrl": "https://www.instagram.com/elitehomes.kokrajhar/",
     "instagramHandle": "Elite Homes"
   },
+  "bankDetails": {
+    "bankName": "UCO Bank",
+    "accountName": "Elite Homes",
+    "accountNumber": "04990110124666",
+    "ifsc": "UCBA0000499",
+    "upiId": "bobuco@ybl",
+    "qrCodeUrl": ""
+  },
   "propertyOptions": [
     "1 Room / Studio",
     "1 BHK",
