@@ -8840,7 +8840,8 @@
         const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
         const fullWaPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
         const checkinFormLink = getBookingGuestFormUrl(b);
-        const waMsg = `Hi ${b.guestName || 'Guest'}, welcome to Elite Homes! 🏨\n\nPlease click this link to verify your stay and upload your ID document(s) for ${b.property || 'your room'} (${b.checkInDate} to ${b.checkOutDate}):\n\n👉 ${checkinFormLink}\n\nThank you, and we look forward to hosting you!`;
+        const stayDates = (b.checkInDate && b.checkOutDate) ? ` (${b.checkInDate} to ${b.checkOutDate})` : '';
+        const waMsg = `Hi ${b.guestName || 'Guest'}, welcome to Elite Homes! 🏨\n\nPlease click this link to verify your stay and upload your ID document(s)${stayDates}:\n\n👉 ${checkinFormLink}\n\nThank you, and we look forward to hosting you!`;
         const waLink = fullWaPhone ? `https://wa.me/${fullWaPhone}?text=${encodeURIComponent(waMsg)}` : '';
         const hasOverlap = isBookingOverlapping(b, currentBookings);
         const missingPayout = isMissingPayout(b);
@@ -9136,7 +9137,6 @@
     function getBookingGuestFormUrl(customBooking = null) {
       const b = customBooking || (editingBookingId ? currentBookings.find(x => x && x.id === editingBookingId) : null);
 
-      const prop = (document.getElementById('mb-property')?.value || b?.property || '').trim();
       const name = (document.getElementById('mb-guest-name')?.value || b?.guestName || '').trim();
       const code = (document.getElementById('mb-res-code')?.value || b?.reservationCode || (b ? b.id : '') || editingBookingId || '').trim();
       const checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
@@ -9151,7 +9151,7 @@
       const formUrl = `${origin}${path}index.html`;
 
       const params = new URLSearchParams();
-      if (prop) params.set('prop', prop);
+      // Room details omitted from link (already recorded in calendar booking)
       if (code) params.set('code', code);
       if (name) params.set('name', name);
       if (checkin) params.set('checkin', checkin);
@@ -9191,7 +9191,6 @@
       const b = customBooking || (editingBookingId ? currentBookings.find(x => x && x.id === editingBookingId) : null);
       const url = getBookingGuestFormUrl(b);
       const guestName = (document.getElementById('mb-guest-name')?.value || b?.guestName || 'Guest').trim();
-      const prop = (document.getElementById('mb-property')?.value || b?.property || 'Elite Homes').trim();
       const checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
       const checkout = (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '').trim();
       let phone = (document.getElementById('mb-phone')?.value || b?.phone || '').replace(/[^0-9]/g, '');
@@ -9206,7 +9205,8 @@
         phone = '91' + phone;
       }
 
-      const msg = `Hi ${guestName}, welcome to Elite Homes! 🏨\n\nPlease click this secure link to verify your stay and upload your ID document(s) for ${prop} (${checkin} to ${checkout}):\n\n👉 ${url}\n\nThank you, and we look forward to hosting you!`;
+      const stayDates = (checkin && checkout) ? ` (${checkin} to ${checkout})` : '';
+      const msg = `Hi ${guestName}, welcome to Elite Homes! 🏨\n\nPlease click this secure link to verify your stay and upload your ID document(s)${stayDates}:\n\n👉 ${url}\n\nThank you, and we look forward to hosting you!`;
       const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
       window.open(waUrl, '_blank');
     }

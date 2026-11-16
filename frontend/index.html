@@ -1128,6 +1128,69 @@
       return null;
     }
 
+    // Select a property option by name, matching aliases if needed
+    function selectPropertyOption(propName) {
+      if (!propName) return;
+      const propSelect = document.getElementById('propertyOption');
+      if (!propSelect) return;
+
+      const availableOptions = Array.from(propSelect.options).map(o => o.value).filter(Boolean);
+      const matched = matchPropertyOption(propName, availableOptions);
+      if (matched) {
+        propSelect.value = matched;
+      } else {
+        const exists = Array.from(propSelect.options).some(o => o.value.toLowerCase() === propName.toLowerCase());
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = propName;
+          opt.textContent = propName;
+          propSelect.appendChild(opt);
+        }
+        propSelect.value = propName;
+      }
+    }
+
+    // Auto-select room from calendar booking if room was omitted from the shared link
+    async function tryLookupAndSelectCalendarRoom(code, name, checkin) {
+      if (!code && !name) return;
+      const propSelect = document.getElementById('propertyOption');
+      if (!propSelect) return;
+
+      let bookings = [];
+      const cached = localStorage.getItem('airbnb_bookings');
+      if (cached) {
+        try { bookings = JSON.parse(cached); } catch(e) {}
+      }
+
+      if ((!bookings || !bookings.length) && window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
+        try {
+          bookings = await window.AirbnbAPI.getBookings();
+        } catch(e) {}
+      }
+
+      if (Array.isArray(bookings) && bookings.length > 0) {
+        const c = (code || '').trim().toLowerCase();
+        const n = (name || '').trim().toLowerCase();
+        const d = (checkin || '').trim();
+
+        const match = bookings.find(b => {
+          const bCode = (b.reservationCode || b.id || '').trim().toLowerCase();
+          const bName = (b.guestName || '').trim().toLowerCase();
+          const bIn = (b.checkInDate || '').trim();
+
+          if (c && bCode && (bCode === c || bCode.includes(c) || c.includes(bCode))) return true;
+          if (n && bName && (bName.includes(n) || n.includes(bName))) {
+            if (!d || !bIn || d === bIn) return true;
+          }
+          return false;
+        });
+
+        if (match && match.property) {
+          selectPropertyOption(match.property);
+        }
+      }
+    }
+
     // Auto-fill and auto-select all recorded stay and guest details from shareable URL params
     function applyUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -1139,38 +1202,23 @@
         if (codeInput) codeInput.value = codeParam;
       }
 
-      // 2. Auto-select Property / Room Type
+      // 2. Property / Room Type: auto-select from calendar booking or URL param
       const propParam = urlParams.get('prop') || urlParams.get('property') || urlParams.get('room') || '';
+      const checkinParam = urlParams.get('checkin') || urlParams.get('checkInDate') || '';
+      const checkoutParam = urlParams.get('checkout') || urlParams.get('checkOutDate') || '';
+      const nameParam = urlParams.get('name') || urlParams.get('guestName') || '';
+
       if (propParam) {
-        const titleEl = document.getElementById('property-title');
-        const propSelect = document.getElementById('propertyOption');
-        if (propSelect) {
-          const availableOptions = Array.from(propSelect.options).map(o => o.value).filter(Boolean);
-          const matched = matchPropertyOption(propParam, availableOptions);
-          if (matched) {
-            propSelect.value = matched;
-            if (titleEl) titleEl.textContent = `${matched} — Guest Registration`;
-          } else {
-            let exists = Array.from(propSelect.options).some(o => o.value.toLowerCase() === propParam.toLowerCase());
-            if (!exists) {
-              const opt = document.createElement('option');
-              opt.value = propParam;
-              opt.textContent = propParam;
-              propSelect.appendChild(opt);
-            }
-            propSelect.value = propParam;
-            if (titleEl) titleEl.textContent = `${propParam} — Guest Registration`;
-          }
-        }
+        selectPropertyOption(propParam);
+      } else if (codeParam || nameParam) {
+        tryLookupAndSelectCalendarRoom(codeParam, nameParam, checkinParam);
       }
 
       // 3. Check-in & Check-out Dates
-      const checkinParam = urlParams.get('checkin') || urlParams.get('checkInDate') || '';
       if (checkinParam) {
         const inEl = document.getElementById('checkInDate');
         if (inEl) inEl.value = checkinParam;
       }
-      const checkoutParam = urlParams.get('checkout') || urlParams.get('checkOutDate') || '';
       if (checkoutParam) {
         const outEl = document.getElementById('checkOutDate');
         if (outEl) outEl.value = checkoutParam;
@@ -1186,7 +1234,6 @@
       }
 
       // 5. Primary Guest Legal Name, Phone & Email
-      const nameParam = urlParams.get('name') || urlParams.get('guestName') || '';
       if (nameParam) {
         const nameEl = document.getElementById('guest_1_name');
         if (nameEl) nameEl.value = nameParam;
