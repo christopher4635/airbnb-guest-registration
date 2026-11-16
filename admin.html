@@ -3010,6 +3010,9 @@
       font-size: 13px;
       vertical-align: middle;
     }
+    .bill-item-net-rate, .bill-item-amount {
+      white-space: nowrap;
+    }
     .bill-table tr:hover td {
       background: #FAFAFA;
     }
@@ -4592,14 +4595,15 @@
               <table class="bill-table" id="bill-table">
                 <thead>
                   <tr>
-                    <th style="width: 36px; text-align: center;">#</th>
+                    <th style="width: 32px; text-align: center;">#</th>
                     <th>Description / Particulars</th>
-                    <th class="bill-col-sac" style="width: 80px; text-align: center;">SAC</th>
-                    <th style="width: 85px; text-align: right;">Qty / Nts</th>
-                    <th style="width: 100px; text-align: right;">Rate (₹)</th>
-                    <th style="width: 95px; text-align: right; color: #DC2626;">Disc (₹)</th>
+                    <th class="bill-col-sac" style="width: 75px; text-align: center;">SAC</th>
+                    <th style="width: 75px; text-align: right;">Qty / Nts</th>
+                    <th style="width: 90px; text-align: right;">Rate (₹)</th>
+                    <th style="width: 85px; text-align: right; color: #DC2626;">Disc (₹)</th>
+                    <th style="width: 100px; text-align: right; color: #047857;" title="Net Rate per Night/Unit after discount">Net Rate (₹)</th>
                     <th style="width: 115px; text-align: right;">Amount (₹)</th>
-                    <th class="biller-no-print" style="width: 36px; text-align: center;"></th>
+                    <th class="biller-no-print" style="width: 32px; text-align: center;"></th>
                   </tr>
                 </thead>
                 <tbody id="bill-items-tbody">
@@ -4614,7 +4618,7 @@
                 ➕ Add Line Item (Extra Guest, Meals, Airport Cab...)
               </button>
               <span style="font-size: 11.5px; color: var(--text-muted);">
-                💡 Tip: Set discounts in the <strong>Disc (₹)</strong> column of any stay row to apply concessions cleanly without creating separate items.
+                💡 Tip: Set discounts in the <strong>Disc (₹)</strong> column — the bill shows the discounted <strong>Net Rate (₹)</strong> per night first before calculating the total <strong>Amount (₹)</strong>.
               </span>
             </div>
 
@@ -12029,13 +12033,16 @@
           <div contenteditable="true" class="bill-edit-text" style="text-align: center;">${escapeHtml(sac)}</div>
         </td>
         <td style="text-align: right;">
-          <input type="number" class="bill-num-input bill-item-qty" value="${qty}" min="1" step="1" oninput="recalculateBill()" style="width: 65px;">
+          <input type="number" class="bill-num-input bill-item-qty" value="${qty}" min="1" step="1" oninput="recalculateBill()" style="width: 60px;">
         </td>
         <td style="text-align: right;">
-          <input type="number" class="bill-num-input bill-item-rate" value="${rate}" min="0" step="50" oninput="recalculateBill()" style="width: 85px;">
+          <input type="number" class="bill-num-input bill-item-rate" value="${rate}" min="0" step="50" oninput="recalculateBill()" style="width: 80px;">
         </td>
         <td style="text-align: right;">
-          <input type="number" class="bill-num-input bill-item-disc" value="${disc}" min="0" step="50" oninput="recalculateBill()" style="width: 80px; color: ${disc > 0 ? '#DC2626' : '#64748B'}; font-weight: ${disc > 0 ? '700' : 'normal'};" title="Discount per night/unit">
+          <input type="number" class="bill-num-input bill-item-disc" value="${disc}" min="0" step="50" oninput="recalculateBill()" style="width: 75px; color: ${disc > 0 ? '#DC2626' : '#64748B'}; font-weight: ${disc > 0 ? '700' : 'normal'};" title="Discount per night/unit">
+        </td>
+        <td style="text-align: right; font-weight: 700; color: #047857;" class="bill-item-net-rate font-mono">
+          ₹0.00
         </td>
         <td style="text-align: right; font-weight: 700; color: #0F172A;" class="bill-item-amount font-mono">
           ₹0.00
@@ -12080,9 +12087,10 @@
         const rate = parseFloat(r.querySelector('.bill-item-rate')?.value) || 0;
         const disc = Math.max(0, parseFloat(r.querySelector('.bill-item-disc')?.value) || 0);
 
+        const netRate = Math.max(0, rate - disc);
         const lineGross = qty * rate;
         const lineDisc = qty * disc;
-        const lineNet = Math.max(0, lineGross - lineDisc);
+        const lineNet = Math.max(0, qty * netRate);
 
         grossTotal += lineGross;
         discountTotal += lineDisc;
@@ -12091,6 +12099,12 @@
         if (discInput) {
           discInput.style.color = disc > 0 ? '#DC2626' : '#64748B';
           discInput.style.fontWeight = disc > 0 ? '700' : 'normal';
+        }
+
+        const netRateEl = r.querySelector('.bill-item-net-rate');
+        if (netRateEl) {
+          netRateEl.textContent = '₹' + netRate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          netRateEl.style.color = (disc > 0) ? '#047857' : '#0F172A';
         }
 
         const amtEl = r.querySelector('.bill-item-amount');
