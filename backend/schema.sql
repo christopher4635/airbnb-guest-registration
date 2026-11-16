@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     payment_status TEXT DEFAULT 'Pay on Arrival', -- 'Paid in Full', 'Deposit Paid', 'Pay on Arrival'
     status TEXT NOT NULL DEFAULT 'Confirmed', -- 'Confirmed', 'Checked In', 'Completed', 'Cancelled', 'Blocked'
     notes TEXT,
+    id_documents TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

@@ -3559,6 +3559,36 @@
               <textarea id="mb-notes" rows="2" placeholder="e.g. Late flight arrival (10:30 PM), requested extra towels..."></textarea>
             </div>
 
+            <!-- Guest ID Documents Section (Stored in Cloudflare R2) -->
+            <div class="form-group" style="margin-top: 14px; background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 14px 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div>
+                  <label style="font-weight: 700; color: #1E293B; margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+                    <span>🪪 Guest ID Documents</span>
+                    <span class="badge-pill" style="font-size: 10px; background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD;">Cloudflare R2</span>
+                  </label>
+                  <div style="font-size: 11px; color: #64748B;">Upload Aadhaar, Passport, Driving License, or ID cards</div>
+                </div>
+                <button type="button" class="btn-action-pill" onclick="triggerGuestIdUpload()" style="background: #0284C7; color: #FFFFFF; font-weight: 600; cursor: pointer; padding: 6px 12px; font-size: 12px; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.08);">
+                  📷 Add / Upload ID
+                </button>
+              </div>
+
+              <!-- Hidden file input supporting file picker and camera -->
+              <input type="file" id="mb-guest-id-file-input" accept="image/*,.pdf" style="display: none;" onchange="handleGuestIdFileSelected(this)" multiple>
+
+              <!-- List of uploaded IDs -->
+              <div id="mb-guest-ids-list" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-height: 44px; margin-top: 6px;">
+                <!-- Populated dynamically by renderModalGuestIds() -->
+              </div>
+
+              <!-- Upload in progress indicator -->
+              <div id="mb-id-upload-spinner" style="display: none; align-items: center; gap: 8px; font-size: 12px; color: #0284C7; font-weight: 600; margin-top: 10px; background: #F0F9FF; padding: 8px 12px; border-radius: 6px; border: 1px solid #BAE6FD;">
+                <span class="spinner" style="width: 14px; height: 14px; border: 2px solid #BAE6FD; border-top-color: #0284C7; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;"></span>
+                <span id="mb-id-upload-status-text">Uploading image directly to Cloudflare R2...</span>
+              </div>
+            </div>
+
           </div>
           <div class="modal-footer">
             <div id="modal-booking-delete-wrap" style="display: flex; gap: 8px; align-items: center;">
@@ -7353,8 +7383,10 @@
         `;
       }
 
-      // 4. Legend & Secondary Tools Bar
+      // 4. Legend & Secondary Tools Bar (Hide legend in List view as requested)
+      const isListView = (currentCalView === 'list');
       legendEl.innerHTML = `
+        ${!isListView ? `
         <div class="sm-legend-items">
           <span class="sm-legend-label">Legend:</span>
           <span class="sm-legend-item"><span class="sm-dot sm-dot-vacant"></span> Vacant</span>
@@ -7364,6 +7396,7 @@
           <span class="sm-legend-item"><span class="sm-dot sm-dot-blocked"></span> Blocked</span>
           <span class="sm-legend-item"><span class="sm-dot sm-dot-overlap"></span> Overlap</span>
         </div>
+        ` : `<div></div>`}
 
         <div class="sm-tools-items">
           <button type="button" onclick="openIcalSyncModal()" class="sm-tool-pill-btn" title="Two-Way iCal Feeds & Export Links">⚙️ iCal</button>
@@ -8729,8 +8762,16 @@
         return true;
       });
 
-      // Sort by checkInDate descending
-      filtered.sort((a, b) => b.checkInDate.localeCompare(a.checkInDate));
+      // Sort by checkInDate descending (latest dates first)
+      filtered.sort((a, b) => {
+        const dateA = a.checkInDate || a.check_in_date || '';
+        const dateB = b.checkInDate || b.check_in_date || '';
+        const dateComp = dateB.localeCompare(dateA);
+        if (dateComp !== 0) return dateComp;
+        const createdA = a.createdAt || a.created_at || '';
+        const createdB = b.createdAt || b.created_at || '';
+        return createdB.localeCompare(createdA);
+      });
 
       const countBadge = document.getElementById('list-count-badge');
       if (countBadge) countBadge.textContent = filtered.length;
@@ -8759,6 +8800,24 @@
         const hasOverlap = isBookingOverlapping(b, currentBookings);
         const missingPayout = isMissingPayout(b);
 
+        let hasIds = false;
+        let idCount = 0;
+        if (Array.isArray(b.idDocuments) && b.idDocuments.length > 0) {
+          hasIds = true;
+          idCount = b.idDocuments.length;
+        } else if (b.notes && b.notes.includes('[ID Documents:')) {
+          try {
+            const m = b.notes.match(/\[ID Documents:\s*([^\]]+)\]/i);
+            if (m) {
+              const parsed = JSON.parse(m[1]);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                hasIds = true;
+                idCount = parsed.length;
+              }
+            }
+          } catch (e) {}
+        }
+
         tr.innerHTML = `
           <td>
             <span class="badge-pill" style="background:${theme.bg}; color:${theme.text}; border: 1px solid ${theme.border};">
@@ -8766,7 +8825,14 @@
             </span>
           </td>
           <td>
-            <strong style="color: var(--text-main); font-size: 14px;">${escapeHtml(b.guestName)}</strong>
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <strong style="color: var(--text-main); font-size: 14px;">${escapeHtml(b.guestName)}</strong>
+              ${hasIds ? `
+                <button type="button" class="btn-action-pill" onclick="openEditBookingModal('${b.id}')" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 10px; padding: 2px 6px; font-weight: 700; cursor: pointer;" title="Click to view ${idCount} Guest ID(s) stored in R2">
+                  🪪 ID (${idCount})
+                </button>
+              ` : ''}
+            </div>
             <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
               ${b.phone ? `📞 ${escapeHtml(b.phone)}` : ''} ${b.email ? `&bull; ✉️ ${escapeHtml(b.email)}` : ''}
             </div>
@@ -8894,6 +8960,162 @@
       }
     }
 
+    // -------------------------------------------------------------------------
+    // Guest ID Documents Management (Stored in Cloudflare R2)
+    // -------------------------------------------------------------------------
+    let currentModalGuestIds = [];
+
+    function triggerGuestIdUpload() {
+      const input = document.getElementById('mb-guest-id-file-input');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    async function handleGuestIdFileSelected(input) {
+      if (!input.files || input.files.length === 0) return;
+      const files = Array.from(input.files);
+      const spinner = document.getElementById('mb-id-upload-spinner');
+      const statusText = document.getElementById('mb-id-upload-status-text');
+
+      if (spinner) spinner.style.display = 'flex';
+
+      const guestName = (document.getElementById('mb-guest-name')?.value || 'Guest').trim();
+      const safeGuest = guestName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safeCode = (document.getElementById('mb-res-code')?.value || editingBookingId || 'stay').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (statusText) statusText.textContent = `Uploading ${file.name} (${i + 1}/${files.length}) to Cloudflare R2...`;
+
+        try {
+          let res = null;
+          if (window.AirbnbAPI && typeof window.AirbnbAPI.uploadImageToR2 === 'function') {
+            res = await window.AirbnbAPI.uploadImageToR2(file, {
+              name: `${safeGuest}_id_${Date.now()}`,
+              folder: `guest_ids/${safeCode}`
+            });
+          } else {
+            // Read as data URL fallback
+            const base64Data = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            const base = (window.AirbnbAPI && window.AirbnbAPI.getBaseUrl) ? window.AirbnbAPI.getBaseUrl() : 'https://airbnb-management.elitehomes-portal.workers.dev';
+            const pin = localStorage.getItem('airbnb_admin_pin') || '4635';
+            const resp = await fetch(`${base}/api/uploads`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Pin': pin
+              },
+              body: JSON.stringify({
+                data: base64Data,
+                name: `${safeGuest}_id_${Date.now()}`,
+                folder: `guest_ids/${safeCode}`
+              })
+            });
+            res = await resp.json();
+          }
+
+          if (res && res.success && (res.url || res.key)) {
+            const docUrl = res.url || res.key;
+            currentModalGuestIds.push({
+              id: 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+              name: file.name || `Guest ID ${currentModalGuestIds.length + 1}`,
+              url: docUrl,
+              key: res.key,
+              size: file.size,
+              type: file.type,
+              uploadedAt: new Date().toISOString()
+            });
+            if (typeof showToast === 'function') {
+              showToast(`✅ "${file.name}" uploaded to Cloudflare R2!`);
+            }
+          } else {
+            throw new Error(res?.error || 'Upload to R2 failed');
+          }
+        } catch (err) {
+          console.error('Guest ID upload error:', err);
+          alert(`Could not upload ${file.name} to Cloudflare R2: ` + (err.message || err));
+        }
+      }
+
+      if (spinner) spinner.style.display = 'none';
+      input.value = '';
+      renderModalGuestIds();
+    }
+
+    function removeModalGuestId(index) {
+      if (index >= 0 && index < currentModalGuestIds.length) {
+        const removed = currentModalGuestIds.splice(index, 1);
+        renderModalGuestIds();
+        if (typeof showToast === 'function' && removed[0]) {
+          showToast(`🗑️ Removed ${removed[0].name}`);
+        }
+      }
+    }
+
+    function renderModalGuestIds() {
+      const container = document.getElementById('mb-guest-ids-list');
+      if (!container) return;
+
+      if (!currentModalGuestIds || currentModalGuestIds.length === 0) {
+        container.innerHTML = `
+          <div style="font-size: 12px; color: var(--text-muted); font-style: italic; padding: 4px 0;" id="mb-no-ids-placeholder">
+            No ID documents attached yet. Click <strong>+ Add / Upload ID</strong> above to upload photos or files directly to Cloudflare R2.
+          </div>
+        `;
+        return;
+      }
+
+      const guestName = (document.getElementById('mb-guest-name')?.value || 'Guest').trim();
+      container.innerHTML = '';
+
+      currentModalGuestIds.forEach((doc, idx) => {
+        const resolvedUrl = (window.AirbnbAPI && typeof window.AirbnbAPI.resolveImageUrl === 'function')
+          ? window.AirbnbAPI.resolveImageUrl(doc.url || doc.key)
+          : (doc.url || doc.key);
+
+        const card = document.createElement('div');
+        card.style.cssText = 'position: relative; border-radius: 8px; border: 1px solid #CBD5E1; background: #FFFFFF; padding: 6px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); max-width: 240px; min-width: 170px;';
+
+        const isPdf = (doc.name && doc.name.toLowerCase().endsWith('.pdf')) || (doc.type && doc.type.includes('pdf'));
+
+        card.innerHTML = `
+          <div style="width: 52px; height: 40px; border-radius: 6px; overflow: hidden; background: #F1F5F9; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; border: 1px solid #E2E8F0;"
+               onclick="viewDocument('${encodeURIComponent(resolvedUrl)}', '${encodeURIComponent(doc.name || 'Guest ID')}', '${encodeURIComponent(guestName)}')" title="Click to view full screen">
+            ${isPdf ? `
+              <span style="font-size: 20px;">📄</span>
+            ` : `
+              <img src="${escapeHtml(resolvedUrl)}" alt="Guest ID" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 10px; color: #0284C7; font-weight: 700;">🪪 ID</div>
+            `}
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 11px; font-weight: 700; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(doc.name || 'Guest ID')}">
+              ${escapeHtml(doc.name || ('Guest ID #' + (idx + 1)))}
+            </div>
+            <div style="display: flex; gap: 6px; margin-top: 4px;">
+              <button type="button" class="btn-action-pill" style="font-size: 10px; padding: 2px 6px; color: #0369A1; background: #E0F2FE; border-color: #BAE6FD; cursor: pointer;"
+                      onclick="viewDocument('${encodeURIComponent(resolvedUrl)}', '${encodeURIComponent(doc.name || 'Guest ID')}', '${encodeURIComponent(guestName)}')">
+                👁️ View
+              </button>
+              <button type="button" class="btn-action-pill" style="font-size: 10px; padding: 2px 6px; color: #DC2626; background: #FEF2F2; border-color: #FECACA; cursor: pointer;"
+                      onclick="removeModalGuestId(${idx})" title="Remove this ID">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
     function openAddBookingModal(prefillProp = '', prefillDate = '') {
       editingBookingId = null;
       document.getElementById('modal-booking-title').textContent = '➕ Add New Booking';
@@ -8912,6 +9134,10 @@
       document.getElementById('mb-pay-status').value = 'Pay on Arrival';
       document.getElementById('mb-status').value = 'Confirmed';
       document.getElementById('mb-notes').value = '';
+
+      // Reset guest IDs
+      currentModalGuestIds = [];
+      renderModalGuestIds();
 
       // Reset rates & mode
       document.getElementById('mb-nightly-rate').value = '';
@@ -9086,6 +9312,21 @@
       if (document.getElementById('mb-linked-booking')) {
         document.getElementById('mb-linked-booking').value = linkedVal;
       }
+
+      // Load Guest IDs
+      let docs = [];
+      if (Array.isArray(b.idDocuments)) {
+        docs = b.idDocuments;
+      } else if (typeof b.idDocuments === 'string' && b.idDocuments.trim()) {
+        try { docs = JSON.parse(b.idDocuments); } catch (e) {}
+      } else if (b.notes && b.notes.includes('[ID Documents:')) {
+        try {
+          const matchDoc = b.notes.match(/\[ID Documents:\s*([^\]]+)\]/i);
+          if (matchDoc) docs = JSON.parse(matchDoc[1]);
+        } catch (e) {}
+      }
+      currentModalGuestIds = Array.isArray(docs) ? [...docs] : [];
+      renderModalGuestIds();
 
       onBookingDateOrPropChange();
       document.getElementById('modal-booking').style.display = 'flex';
@@ -9279,6 +9520,14 @@
         platformVal = 'Direct';
       }
 
+      // Attach Guest ID Documents to notes and bookingData
+      if (currentModalGuestIds && currentModalGuestIds.length > 0) {
+        finalNotes = finalNotes.replace(/\n?\[ID Documents:[^\]]+\]/gi, '').trim();
+        finalNotes = `${finalNotes}\n[ID Documents: ${JSON.stringify(currentModalGuestIds)}]`;
+      } else {
+        finalNotes = finalNotes.replace(/\n?\[ID Documents:[^\]]+\]/gi, '').trim();
+      }
+
       const bookingId = editingBookingId || ('bk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
 
       const bookingData = {
@@ -9297,6 +9546,7 @@
         paymentStatus: document.getElementById('mb-pay-status').value,
         status: document.getElementById('mb-status').value,
         linkedBookingId: linkedVal || null,
+        idDocuments: currentModalGuestIds || [],
         notes: finalNotes,
         isPrimary: true,
         isManual: true,

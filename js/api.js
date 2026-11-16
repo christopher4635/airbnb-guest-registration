@@ -215,14 +215,30 @@
     // --------------------------------------------------------------------------
     // Cloudflare R2 Image Uploads
     // --------------------------------------------------------------------------
-    uploadImageToR2: async function(base64Data, metadata = {}) {
+    uploadImageToR2: async function(dataOrFile, metadata = {}) {
       try {
+        if (typeof File !== 'undefined' && (dataOrFile instanceof File || dataOrFile instanceof Blob)) {
+          const formData = new FormData();
+          formData.append('file', dataOrFile);
+          formData.append('folder', metadata.folder || metadata.reservationCode || 'guest_ids');
+          const base = this.getBaseUrl();
+          const adminPin = localStorage.getItem('airbnb_admin_pin') || '4635';
+          const resp = await fetch(`${base}/api/uploads`, {
+            method: 'POST',
+            headers: {
+              'X-Admin-Pin': adminPin
+            },
+            body: formData
+          });
+          return await resp.json();
+        }
+
         return await this.request('/api/uploads', {
           method: 'POST',
           body: JSON.stringify({
-            data: base64Data,
+            data: dataOrFile,
             name: metadata.name || 'image',
-            folder: metadata.folder || metadata.reservationCode || 'guests'
+            folder: metadata.folder || metadata.reservationCode || 'guest_ids'
           })
         });
       } catch (e) {

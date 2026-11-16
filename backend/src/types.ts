@@ -32,6 +32,7 @@ export interface Booking {
   paymentStatus?: string;     // 'Paid in Full' | 'Deposit Paid' | 'Pay on Arrival'
   status: string;             // 'Confirmed' | 'Checked In' | 'Completed' | 'Cancelled' | 'Blocked'
   notes?: string;
+  idDocuments?: any[];
   createdAt?: string;
   updatedAt?: string;
 }

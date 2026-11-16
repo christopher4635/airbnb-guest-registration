@@ -5,6 +5,22 @@ const bookingsRoute = new Hono<{ Bindings: Bindings }>();
 
 // Helper to map DB row to camelCase Booking object
 function mapDbRowToBooking(row: any): Booking {
+  let idDocuments: any[] = [];
+  if (row.id_documents) {
+    try {
+      idDocuments = typeof row.id_documents === 'string' ? JSON.parse(row.id_documents) : row.id_documents;
+    } catch (e) {
+      idDocuments = [];
+    }
+  } else if (row.notes && row.notes.includes('[ID Documents:')) {
+    try {
+      const match = row.notes.match(/\[ID Documents:\s*([^\]]+)\]/i);
+      if (match) idDocuments = JSON.parse(match[1]);
+    } catch (e) {
+      idDocuments = [];
+    }
+  }
+
   return {
     id: row.id,
     property: row.property,
@@ -22,6 +38,7 @@ function mapDbRowToBooking(row: any): Booking {
     paymentStatus: row.payment_status || 'Pay on Arrival',
     status: row.status || 'Confirmed',
     notes: row.notes || '',
+    idDocuments: idDocuments,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -50,7 +67,7 @@ function notifyStaffSync(c: any) {
 bookingsRoute.get('/', async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      `SELECT * FROM bookings ORDER BY check_in_date ASC, property ASC`
+      `SELECT * FROM bookings ORDER BY check_in_date DESC, property ASC`
     ).all();
 
     const bookings = (results || []).map(mapDbRowToBooking);
@@ -99,6 +116,9 @@ bookingsRoute.post('/', async (c) => {
     const paymentStatus = body.paymentStatus || 'Pay on Arrival';
     const status = body.status || 'Confirmed';
     const notes = body.notes || '';
+    const idDocuments = body.idDocuments !== undefined
+      ? (typeof body.idDocuments === 'string' ? body.idDocuments : JSON.stringify(body.idDocuments))
+      : null;
 
     if (!checkInDate || !checkOutDate) {
       return c.json({ success: false, error: 'checkInDate and checkOutDate are required.' }, 400);
@@ -129,13 +149,13 @@ bookingsRoute.post('/', async (c) => {
         id, property, guest_name, phone, email,
         check_in_date, check_out_date, nights, guests_count,
         platform, reservation_code, external_uid, payout, payment_status,
-        status, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        status, notes, id_documents, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id, property, guestName, phone, email,
       checkInDate, checkOutDate, nights, guestsCount,
       platform, reservationCode, externalUid, payout, paymentStatus,
-      status, notes, now, now
+      status, notes, idDocuments, now, now
     ).run();
 
     notifyStaffSync(c);
@@ -172,6 +192,9 @@ bookingsRoute.put('/:id', async (c) => {
     const paymentStatus = body.paymentStatus !== undefined ? body.paymentStatus : existing.payment_status;
     const status = body.status !== undefined ? body.status : existing.status;
     const notes = body.notes !== undefined ? body.notes : existing.notes;
+    const idDocuments = body.idDocuments !== undefined
+      ? (typeof body.idDocuments === 'string' ? body.idDocuments : JSON.stringify(body.idDocuments))
+      : existing.id_documents;
     const now = new Date().toISOString();
 
     await c.env.DB.prepare(`
@@ -179,13 +202,13 @@ bookingsRoute.put('/:id', async (c) => {
         property = ?, guest_name = ?, phone = ?, email = ?,
         check_in_date = ?, check_out_date = ?, nights = ?, guests_count = ?,
         platform = ?, reservation_code = ?, payout = ?, payment_status = ?,
-        status = ?, notes = ?, updated_at = ?
+        status = ?, notes = ?, id_documents = ?, updated_at = ?
       WHERE id = ?
     `).bind(
       property, guestName, phone, email,
       checkInDate, checkOutDate, nights, guestsCount,
       platform, reservationCode, payout, paymentStatus,
-      status, notes, now, id
+      status, notes, idDocuments, now, id
     ).run();
 
     notifyStaffSync(c);
