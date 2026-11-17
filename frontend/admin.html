@@ -9,6 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- html2canvas & jsPDF for Direct Invoice Image & PDF Downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     :root {
       --primary: #FF385C;
@@ -3119,70 +3122,131 @@
       box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
     }
 
-    /* Print Stylesheet for Pristine Invoicing */
+    /* Export-ready styling for canvas image & PDF generation */
+    .bill-sheet.bill-exporting {
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: #FFFFFF !important;
+    }
+    .bill-sheet.bill-exporting .biller-no-print {
+      display: none !important;
+    }
+    .bill-sheet.bill-exporting .biller-hide-on-export,
+    .bill-sheet.bill-exporting select.bill-prop-select {
+      display: none !important;
+    }
+    .bill-sheet.bill-exporting .bill-print-only,
+    .bill-sheet.bill-exporting #bill-stay-prop-print-text {
+      display: inline !important;
+    }
+    .bill-sheet.bill-exporting .bill-edit-text {
+      box-shadow: none !important;
+      background: transparent !important;
+      padding: 0 !important;
+    }
+    .bill-sheet.bill-exporting .bill-num-input {
+      border: none !important;
+      background: transparent !important;
+      padding: 0 !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: textfield !important;
+      appearance: none !important;
+    }
+
+    /* Print Stylesheet for Pristine Invoicing - ONLY #bill-sheet is printed */
     @media print {
       @page {
         size: A4 portrait;
-        margin: 10mm 12mm;
+        margin: 8mm 10mm;
       }
-      body {
+      html, body {
         background: #FFFFFF !important;
         color: #000000 !important;
         margin: 0 !important;
         padding: 0 !important;
+        width: 100% !important;
+        min-height: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
-      select.bill-prop-select {
-        border: none !important;
-        background: transparent !important;
-        color: #000000 !important;
-        font-weight: 700 !important;
-        -webkit-appearance: none !important;
-        -moz-appearance: none !important;
-        appearance: none !important;
-        padding: 0 !important;
-      }
-      /* Hide all portal navigation, sidebars and headers */
-      .header,
+
+      /* Hide ALL non-invoice portal elements */
+      .admin-header,
       .admin-tabs,
-      .biller-no-print,
       .biller-toolbar,
       .biller-tip-banner,
+      .biller-no-print,
+      #auth-screen,
       #view-bookings,
       #view-finances,
       #view-entries,
       #view-settings,
-      .toast,
+      .modal,
       .modal-backdrop,
+      .toast,
       #cal-booking-hover-popup,
-      button {
+      button,
+      nav,
+      header,
+      footer {
         display: none !important;
       }
+
+      /* Clean structural containers */
       .container {
         max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      #admin-panel {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+      #view-biller {
+        display: block !important;
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
       }
       .biller-wrapper {
         max-width: 100% !important;
+        width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        border: none !important;
       }
-      #view-biller {
-        display: block !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
+
+      /* Pristine Bill Sheet takes full printable page width */
       .bill-sheet {
+        display: block !important;
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         border-radius: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
+        background: #FFFFFF !important;
       }
+
+      /* Hide dropdown and show clean text in print */
+      .biller-hide-on-export,
+      select.bill-prop-select {
+        display: none !important;
+      }
+      .bill-print-only,
+      #bill-stay-prop-print-text {
+        display: inline !important;
+      }
+
       .bill-edit-text {
         box-shadow: none !important;
         background: transparent !important;
@@ -4645,9 +4709,17 @@
                 <input type="text" id="biller-host-gstin-input" value="18BSPPB3865G1ZH" placeholder="18BSPPB3865G1ZH" style="height: 36px; width: 175px; font-size: 12px; border-radius: 6px; border: 1px solid #CBD5E1; padding: 4px 8px; font-family: monospace; font-weight: 700;" oninput="onHostGstinInputChanged(this.value)" title="Host GST ID / GSTIN (Fixed: 18BSPPB3865G1ZH)">
               </div>
 
-              <button type="button" class="btn btn-primary" onclick="printCustomerBill()" style="background: #2563EB; border-color: #2563EB; height: 36px; padding: 0 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-                <span>🖨️ Print / Save PDF</span>
-              </button>
+              <div style="display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" onclick="printCustomerBill()" style="background: #2563EB; border-color: #2563EB; height: 36px; padding: 0 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;" title="Print invoice or save as PDF via browser print preview">
+                  <span>🖨️ Print</span>
+                </button>
+                <button type="button" class="btn btn-outline" id="btn-download-bill-pdf" onclick="downloadCustomerBillPdf()" style="height: 36px; padding: 0 13px; font-weight: 700; color: #1E40AF; border-color: #93C5FD; background: #EFF6FF; display: inline-flex; align-items: center; gap: 5px;" title="Directly download clean PDF of this invoice only">
+                  <span>📥 Download PDF</span>
+                </button>
+                <button type="button" class="btn btn-outline" id="btn-download-bill-image" onclick="downloadCustomerBillImage()" style="height: 36px; padding: 0 13px; font-weight: 700; color: #065F46; border-color: #A7F3D0; background: #ECFDF5; display: inline-flex; align-items: center; gap: 5px;" title="Directly download high-res PNG image of this invoice only (ideal for WhatsApp / sharing)">
+                  <span>🖼️ Save Image</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -4730,9 +4802,10 @@
                 </div>
                 <div style="font-size: 12.5px; color: #0F172A; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                   <strong>Room / Property:</strong>
-                  <select id="bill-stay-property-select" class="bill-prop-select" onchange="onBillPropertySelected(this.value)">
+                  <select id="bill-stay-property-select" class="bill-prop-select biller-hide-on-export" onchange="onBillPropertySelected(this.value)">
                     <!-- Dynamically populated from getPropertiesList() -->
                   </select>
+                  <span id="bill-stay-prop-print-text" class="bill-print-only font-mono" style="display: none; font-size: 12px; font-weight: 700; color: #0F172A;"></span>
                   <span contenteditable="true" class="bill-edit-text font-mono" id="bill-stay-property-custom" style="display: none; font-size: 12px; font-weight: 700; color: #4338CA;" oninput="onCustomPropertyTyped(this.innerText)"></span>
                 </div>
                 <div style="font-size: 12px; color: #475569; margin-bottom: 2px;">
@@ -12692,8 +12765,23 @@
       }
     };
 
-    // Print / PDF execution
+    function syncBillerPrintText() {
+      const select = document.getElementById('bill-stay-property-select');
+      const printText = document.getElementById('bill-stay-prop-print-text');
+      if (select && printText) {
+        if (select.value === '__custom__') {
+          printText.textContent = document.getElementById('bill-stay-property-custom')?.innerText || 'Custom';
+        } else {
+          printText.textContent = select.options[select.selectedIndex]?.text || select.value;
+        }
+      }
+    }
+
+    // Print / PDF execution - ONLY #bill-sheet is printed
     window.printCustomerBill = function() {
+      switchAdminTab('biller');
+      syncBillerPrintText();
+
       // Auto increment counter for next invoice if not loaded from existing booking
       const now = new Date();
       const year = now.getFullYear();
@@ -12703,7 +12791,140 @@
       if (isNaN(counter) || counter < 1) counter = 1;
       localStorage.setItem(key, String(counter + 1));
 
+      const invNo = document.getElementById('bill-invoice-no')?.innerText.trim() || 'EH-Invoice';
+      const guestName = document.getElementById('bill-guest-name')?.innerText.trim() || 'Guest';
+      const prevTitle = document.title;
+      document.title = `Invoice_${invNo.replace(/[^a-zA-Z0-9_-]/g, '_')}_${guestName.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+
       window.print();
+
+      setTimeout(() => {
+        document.title = prevTitle;
+      }, 1000);
+    };
+
+    // Direct PDF Download of ONLY #bill-sheet
+    window.downloadCustomerBillPdf = async function() {
+      const sheet = document.getElementById('bill-sheet');
+      if (!sheet) return;
+      syncBillerPrintText();
+
+      const invNoEl = document.getElementById('bill-invoice-no');
+      const invNo = invNoEl ? invNoEl.innerText.trim().replace(/[^a-zA-Z0-9_-]/g, '_') : 'EH-Invoice';
+      const guestNameEl = document.getElementById('bill-guest-name');
+      const guestName = guestNameEl ? guestNameEl.innerText.trim().replace(/[^a-zA-Z0-9_-]/g, '_') : 'Guest';
+      const filename = `Invoice_${invNo}_${guestName}.pdf`;
+
+      const btn = document.getElementById('btn-download-bill-pdf');
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Preparing PDF...</span>';
+      }
+
+      sheet.classList.add('bill-exporting');
+
+      try {
+        if (typeof html2canvas === 'undefined' || !window.jspdf) {
+          throw new Error('PDF export libraries are loading. Please try again or use Print.');
+        }
+
+        const canvas = await html2canvas(sheet, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#FFFFFF',
+          ignoreElements: (el) => el.classList && el.classList.contains('biller-no-print'),
+          logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 8;
+        const usableWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * usableWidth) / canvas.width;
+
+        let yPos = margin;
+        if (imgHeight < pageHeight - (margin * 2)) {
+          yPos = margin;
+        }
+
+        pdf.addImage(imgData, 'PNG', margin, yPos, usableWidth, imgHeight, undefined, 'FAST');
+        pdf.save(filename);
+        if (typeof showToast === 'function') showToast('Invoice PDF downloaded!');
+      } catch (err) {
+        console.error('PDF export error:', err);
+        // Fallback to print
+        window.printCustomerBill();
+      } finally {
+        sheet.classList.remove('bill-exporting');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      }
+    };
+
+    // Direct Image Download (PNG) of ONLY #bill-sheet
+    window.downloadCustomerBillImage = async function() {
+      const sheet = document.getElementById('bill-sheet');
+      if (!sheet) return;
+      syncBillerPrintText();
+
+      const invNoEl = document.getElementById('bill-invoice-no');
+      const invNo = invNoEl ? invNoEl.innerText.trim().replace(/[^a-zA-Z0-9_-]/g, '_') : 'EH-Invoice';
+      const guestNameEl = document.getElementById('bill-guest-name');
+      const guestName = guestNameEl ? guestNameEl.innerText.trim().replace(/[^a-zA-Z0-9_-]/g, '_') : 'Guest';
+      const filename = `Invoice_${invNo}_${guestName}.png`;
+
+      const btn = document.getElementById('btn-download-bill-image');
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Preparing Image...</span>';
+      }
+
+      sheet.classList.add('bill-exporting');
+
+      try {
+        if (typeof html2canvas === 'undefined') {
+          throw new Error('Image export library is loading. Please try again or use Print.');
+        }
+
+        const canvas = await html2canvas(sheet, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#FFFFFF',
+          ignoreElements: (el) => el.classList && el.classList.contains('biller-no-print'),
+          logging: false
+        });
+
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (typeof showToast === 'function') showToast('Invoice image downloaded!');
+      } catch (err) {
+        console.error('Image export error:', err);
+        alert('Could not export image directly: ' + err.message);
+      } finally {
+        sheet.classList.remove('bill-exporting');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      }
     };
 
   </script>
