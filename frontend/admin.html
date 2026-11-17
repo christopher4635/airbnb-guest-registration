@@ -1711,6 +1711,173 @@
       font-size: 12px;
     }
 
+    /* 50:50 Split Layout for Turnovers (Check-in & Checkout) */
+    .sm-turnovers-split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .sm-turnovers-split-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+    }
+    .sm-turnover-col {
+      display: flex;
+      flex-direction: column;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+    .sm-turnover-col-header {
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .sm-turnover-col-header.sm-col-checkin {
+      background: #F0FDF4;
+      border-bottom-color: #DCFCE7;
+    }
+    .sm-turnover-col-header.sm-col-checkout {
+      background: #FEF2F2;
+      border-bottom-color: #FEE2E2;
+    }
+    .sm-turnover-col-sub {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #64748B;
+    }
+    .sm-turnover-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .sm-turnover-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px 8px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+    }
+    .sm-turnover-row:hover {
+      background: #F1F5F9;
+      border-color: #CBD5E1;
+    }
+    .sm-turnover-row-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .sm-turnover-row-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+      color: #475569;
+    }
+    .sm-contact-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #1D4ED8;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-decoration: none;
+    }
+    .sm-contact-chip:hover {
+      background: #DBEAFE;
+    }
+    .sm-wa-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #047857;
+      background: #ECFDF5;
+      border: 1px solid #A7F3D0;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-decoration: none;
+    }
+    .sm-wa-chip:hover {
+      background: #D1FAE5;
+    }
+    .sm-empty-turnover-msg {
+      padding: 14px 10px;
+      text-align: center;
+      font-size: 11.5px;
+      color: #94A3B8;
+      font-style: italic;
+    }
+    .sm-countdown-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 5px;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+    .sm-countdown-pill.sm-cd-soon {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+    }
+    .sm-countdown-pill.sm-cd-urgent {
+      background: #FEF3C7;
+      color: #B45309;
+      border: 1px solid #FDE68A;
+    }
+    .sm-countdown-pill.sm-cd-overdue {
+      background: #FEE2E2;
+      color: #B91C1C;
+      border: 1px solid #FECACA;
+    }
+    .sm-countdown-pill.sm-cd-arrived {
+      background: #DCFCE7;
+      color: #15803D;
+      border: 1px solid #BBF7D0;
+    }
+    .sm-countdown-pill.sm-cd-done {
+      background: #F1F5F9;
+      color: #475569;
+      border: 1px solid #CBD5E1;
+    }
+    .sm-countdown-pill.sm-cd-future {
+      background: #F3E8FF;
+      color: #6B21A8;
+      border: 1px solid #E9D5FF;
+    }
+    .sm-countdown-pill.sm-cd-past {
+      background: #F1F5F9;
+      color: #64748B;
+      border: 1px solid #E2E8F0;
+    }
+
     /* Checkout rows */
     .sm-checkout-guests-list {
       display: flex;
@@ -7278,6 +7445,100 @@
       renderBookingsPortal();
     }
 
+    // Helper to resolve estimated arrival time from booking metadata or guest submissions
+    function getBookingArrivalTime(bk) {
+      if (bk.arrivalTime && String(bk.arrivalTime).trim()) return String(bk.arrivalTime).trim();
+      if (bk.notes) {
+        const m = bk.notes.match(/Arrival(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
+        if (m && m[1].trim()) return m[1].trim();
+      }
+      if (Array.isArray(allSubmissions) && allSubmissions.length > 0) {
+        const sub = allSubmissions.find(s => {
+          if (bk.reservationCode && s['Reservation Code'] && s['Reservation Code'] === bk.reservationCode) return true;
+          if (bk.phone && s['Phone / WhatsApp']) {
+            const p1 = String(bk.phone).replace(/[^0-9]/g, '');
+            const p2 = String(s['Phone / WhatsApp']).replace(/[^0-9]/g, '');
+            if (p1 && p2 && p1 === p2) return true;
+          }
+          if (bk.guestName && s['Guest Legal Name']) {
+            const n1 = bk.guestName.trim().toLowerCase();
+            const n2 = s['Guest Legal Name'].trim().toLowerCase();
+            if (n1 === n2 && s['Check-in Date'] === bk.checkInDate) return true;
+          }
+          return false;
+        });
+        if (sub && sub['Arrival Time'] && String(sub['Arrival Time']).trim()) return String(sub['Arrival Time']).trim();
+      }
+      return '2:00 PM';
+    }
+
+    // Helper to compute countdown badge for Check-in and Checkout
+    function calculateCountdownBadge(targetDateStr, targetTimeStr, isCheckout = false, isPaid = false) {
+      if (!targetDateStr) return '';
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+
+      let hours = isCheckout ? 11 : 14;
+      let minutes = 0;
+
+      if (targetTimeStr) {
+        const cleanTime = String(targetTimeStr).trim();
+        const match12 = cleanTime.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+        if (match12) {
+          let h = parseInt(match12[1], 10);
+          const m = match12[2] ? parseInt(match12[2], 10) : 0;
+          const ampm = match12[3].toUpperCase();
+          if (ampm === 'PM' && h < 12) h += 12;
+          if (ampm === 'AM' && h === 12) h = 0;
+          hours = h;
+          minutes = m;
+        } else {
+          const match24 = cleanTime.match(/(\d{1,2}):(\d{2})/);
+          if (match24) {
+            hours = parseInt(match24[1], 10);
+            minutes = parseInt(match24[2], 10);
+          }
+        }
+      }
+
+      const target = new Date(`${targetDateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`);
+      const diffMs = target.getTime() - now.getTime();
+
+      if (targetDateStr === todayIso) {
+        if (diffMs > 0) {
+          const diffMins = Math.floor(diffMs / 60000);
+          const h = Math.floor(diffMins / 60);
+          const m = diffMins % 60;
+          const timeText = h > 0 ? `${h}h ${m}m` : `${m}m`;
+          const badgeClass = (isCheckout && diffMins <= 90) ? 'sm-cd-urgent' : 'sm-cd-soon';
+          return `<span class="sm-countdown-pill ${badgeClass}">⏳ in ${timeText}</span>`;
+        } else {
+          if (isCheckout && isPaid) {
+            return `<span class="sm-countdown-pill sm-cd-done">✔ Checked Out</span>`;
+          }
+          const pastMins = Math.floor(-diffMs / 60000);
+          const h = Math.floor(pastMins / 60);
+          const m = pastMins % 60;
+          const timeText = h > 0 ? `${h}h ${m}m` : `${m}m`;
+
+          if (isCheckout) {
+            return `<span class="sm-countdown-pill sm-cd-overdue">⚠️ Overdue by ${timeText}</span>`;
+          } else {
+            if (pastMins < 720) {
+              return `<span class="sm-countdown-pill sm-cd-arrived">✔ Expected (${timeText} ago)</span>`;
+            } else {
+              return `<span class="sm-countdown-pill sm-cd-done">✔ Arrived</span>`;
+            }
+          }
+        }
+      } else if (targetDateStr > todayIso) {
+        const days = Math.ceil((new Date(targetDateStr).getTime() - new Date(todayIso).getTime()) / 86400000);
+        return `<span class="sm-countdown-pill sm-cd-future">📅 in ${days}d</span>`;
+      } else {
+        return `<span class="sm-countdown-pill sm-cd-past">Past</span>`;
+      }
+    }
+
     // 1. Controls Bar, 4-Card Summary Stats Bar & Legend Bar
     function toggleTurnoversCollapse(forceState) {
       const todayIsoStr = new Date().toISOString().slice(0, 10);
@@ -7560,12 +7821,91 @@
         const defaultCollapsed = (outBookings.length === 0);
         const isTurnoversCollapsed = (localStorage.getItem('turnovers_collapsed') !== null ? (localStorage.getItem('turnovers_collapsed') === 'true') : defaultCollapsed);
 
+        // Render single Check-in Row (Left 50%)
+        function renderCheckInRow(bk) {
+          const platLower = (bk.platform || '').toLowerCase();
+          let platClass = 'is-direct';
+          if (platLower.includes('airbnb')) platClass = 'is-airbnb';
+          else if (platLower.includes('booking')) platClass = 'is-booking';
+
+          const arrTime = getBookingArrivalTime(bk);
+          const arrCountdown = calculateCountdownBadge(bk.checkInDate, arrTime, false, false);
+          const cleanPhone = (bk.phone || '').replace(/[^0-9]/g, '');
+
+          let contactHtml = '';
+          if (bk.phone) {
+            contactHtml = `
+              <a href="tel:${bk.phone}" class="sm-contact-chip" title="Call ${escapeHtml(bk.guestName)}">
+                📞 ${escapeHtml(bk.phone)}
+              </a>
+              ${cleanPhone.length >= 10 ? `
+                <a href="https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}" target="_blank" class="sm-wa-chip" title="Chat on WhatsApp">
+                  💬 WhatsApp
+                </a>
+              ` : ''}
+            `;
+          } else if (bk.email) {
+            contactHtml = `<a href="mailto:${escapeHtml(bk.email)}" class="sm-contact-chip">✉️ ${escapeHtml(bk.email)}</a>`;
+          } else {
+            contactHtml = `<span style="font-size: 10.5px; color: #94A3B8;">📞 No phone recorded</span>`;
+          }
+
+          const split = getSplitStayInfo(bk, currentBookings);
+          let transferNotice = '';
+          if (split.isSplit) {
+            const prevLeg = split.legs.find(l => l.checkOutDate === bk.checkInDate && l.id !== bk.id);
+            if (prevLeg) {
+              transferNotice = `<span class="sm-co-transfer-pill" style="font-size: 9.5px;">🔄 Moving from ${escapeHtml(prevLeg.property)}</span>`;
+            }
+          }
+
+          return `
+            <div class="sm-turnover-row sm-checkin-row">
+              <div class="sm-turnover-row-main">
+                <div class="sm-co-guest-name">
+                  <span class="sm-co-prop-pill" style="background: #ECFDF5; color: #065F46; border-color: #A7F3D0;">
+                    ${escapeHtml(bk.property)}
+                  </span>
+                  <strong>${escapeHtml(bk.guestName)}</strong>
+                  ${transferNotice}
+                  <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
+                </div>
+                <div class="sm-co-actions">
+                  <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="View booking details">
+                    ✏️ View
+                  </button>
+                  <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
+                    🧾 Bill
+                  </button>
+                </div>
+              </div>
+
+              <div class="sm-turnover-row-meta">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <span>🕒 Arrival: <strong>${escapeHtml(arrTime)}</strong></span>
+                  ${arrCountdown}
+                  <span>• Stay: <strong>${bk.checkInDate} → ${bk.checkOutDate}</strong> (${bk.nights || 1}n, ${bk.guestsCount || 1}g)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  ${contactHtml}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        // Render single Checkout Row (Right 50%)
         function renderCheckoutRow(bk) {
           const split = getSplitStayInfo(bk, currentBookings);
           const platLower = (bk.platform || '').toLowerCase();
           let platClass = 'is-direct';
           if (platLower.includes('airbnb')) platClass = 'is-airbnb';
           else if (platLower.includes('booking')) platClass = 'is-booking';
+
+          const outTime = '11:00 AM';
+          const fin = getBookingFinancials(bk);
+          const isPaid = (split.isSplit && split.isFinal) ? (split.combinedBalance === 0) : fin.isPaid;
+          const outCountdown = calculateCountdownBadge(bk.checkOutDate, outTime, true, isPaid);
 
           // Case A: Intermediate Leg of Split Stay (Room Transfer Today - Balance rolls over)
           if (split.isSplit && split.isIntermediate) {
@@ -7574,55 +7914,37 @@
             const legFin = getBookingFinancials(bk);
 
             return `
-              <div class="sm-checkout-row is-room-transfer" style="background: #F0FDF4; border-color: #BBF7D0;">
-                <div class="sm-co-guest-info">
+              <div class="sm-turnover-row is-room-transfer" style="background: #F0FDF4; border-color: #BBF7D0;">
+                <div class="sm-turnover-row-main">
                   <div class="sm-co-guest-name">
                     <span class="sm-co-prop-pill" style="background: #FEF3C7; color: #92400E; border-color: #FDE68A;">
                       ${escapeHtml(bk.property)}
                     </span>
                     <strong>${escapeHtml(bk.guestName)}</strong>
-                    <span class="sm-co-transfer-pill">🔄 Room Transfer → ${escapeHtml(nextRoom)}</span>
+                    <span class="sm-co-transfer-pill">🔄 Moving to ${escapeHtml(nextRoom)} today</span>
                     <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
                   </div>
-                  <div class="sm-co-stay-meta">
-                    <span>📅 Check-out: ${escapeHtml(bk.property)} (${bk.checkInDate} → ${bk.checkOutDate})</span>
-                    <span>• <strong>Moving to ${escapeHtml(nextRoom)} today</strong></span>
-                    <span>• Total Stay: ${split.overallCheckIn} → ${finalOut} (${split.totalNights} nights)</span>
-                    <span style="color: #4338CA; font-weight: 700;">🔄 Balance ₹${formatCurrency(legFin.balance)} rolls over to final checkout on ${finalOut}</span>
+                  <div class="sm-co-actions">
+                    <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="View this stay leg">
+                      ✏️ View
+                    </button>
+                    <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
+                      🧾 Bill
+                    </button>
                   </div>
                 </div>
-                <div class="sm-co-actions">
-                  <span class="sm-transfer-badge" title="No payment needed today. Balance will be collected at final checkout from ${escapeHtml(nextRoom)} on ${finalOut}.">
-                    🔄 Collect at Final Checkout (${finalOut})
-                  </span>
-                  <button
-                    type="button"
-                    class="sm-tool-pill-btn"
-                    onclick="openEditBookingModal('${bk.id}')"
-                    title="View this stay leg"
-                  >
-                    ✏️ View
-                  </button>
-                  <button
-                    type="button"
-                    class="sm-tool-pill-btn"
-                    onclick="issueBillForBooking('${bk.id}')"
-                    title="Issue & print customer bill"
-                    style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
-                  >
-                    🧾 Bill
-                  </button>
-                  ${split.nextLeg ? `
-                    <button
-                      type="button"
-                      class="sm-tool-pill-btn"
-                      onclick="openEditBookingModal('${split.nextLeg.id}')"
-                      title="View next leg (${escapeHtml(split.nextLeg.property)})"
-                      style="background: #EEF2FF; color: #4338CA;"
-                    >
-                      🚪 View ${escapeHtml(split.nextLeg.property)}
-                    </button>
-                  ` : ''}
+
+                <div class="sm-turnover-row-meta">
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span>🕒 Checkout: <strong>${outTime}</strong></span>
+                    ${outCountdown}
+                    <span>• Total Stay: ${split.overallCheckIn} → ${finalOut} (${split.totalNights}n)</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span class="sm-transfer-badge" title="No payment needed today. Balance will be collected at final checkout from ${escapeHtml(nextRoom)} on ${finalOut}.">
+                      🔄 Collect at Final Checkout (${finalOut})
+                    </span>
+                  </div>
                 </div>
               </div>
             `;
@@ -7631,13 +7953,12 @@
           // Case B: Final Leg of Split Stay (Departing Property Today - Collect Combined Balance!)
           if (split.isSplit && split.isFinal) {
             const chainProps = split.legs.map(l => l.property).join(' → ');
-            const legBreakdown = split.legs.map(l => `${l.property} (₹${formatCurrency(getBookingRevenue(l))})`).join(' + ');
             const dueAmt = split.combinedBalance;
             const isSettled = (dueAmt === 0 && split.totalAmount > 0);
 
             return `
-              <div class="sm-checkout-row is-split-final" style="background: #FAF5FF; border-color: #E9D5FF;">
-                <div class="sm-co-guest-info">
+              <div class="sm-turnover-row is-split-final" style="background: #FAF5FF; border-color: #E9D5FF;">
+                <div class="sm-turnover-row-main">
                   <div class="sm-co-guest-name">
                     <span class="sm-co-prop-pill" style="background: #F3E8FF; color: #6B21A8; border-color: #D8B4FE;">
                       ${escapeHtml(bk.property)}
@@ -7646,133 +7967,82 @@
                     <span class="sm-co-split-tag">🔄 Split Stay (${escapeHtml(chainProps)})</span>
                     <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
                   </div>
-                  <div class="sm-co-stay-meta">
-                    <span>📅 Final Departure: ${split.overallCheckIn} → ${bk.checkOutDate} (${split.totalNights} nights total across ${split.legs.length} rooms)</span>
-                    <span>• Combined Stay: ₹${formatCurrency(split.totalAmount)} [${escapeHtml(legBreakdown)}]</span>
-                    <span>• Recv: ₹${formatCurrency(split.totalAdvance)}</span>
-                    ${isSettled ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : `<span style="color:#DC2626; font-weight:800;">Combined Due: ₹${formatCurrency(dueAmt)}</span>`}
+                  <div class="sm-co-actions">
+                    <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="View booking details">
+                      ✏️ View
+                    </button>
+                    <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
+                      🧾 Bill
+                    </button>
                   </div>
                 </div>
-                <div class="sm-co-actions">
-                  <label class="sm-co-label" for="co-input-${bk.id}" style="color: #6B21A8;">Total Balance to Collect:</label>
-                  <div class="sm-co-input-wrap">
-                    <span class="sm-co-prefix">₹</span>
-                    <input
-                      type="number"
-                      id="co-input-${bk.id}"
-                      class="sm-co-input"
-                      value="${dueAmt}"
-                      min="0"
-                      step="100"
-                      placeholder="0"
-                      title="Total balance to collect across all rooms in split stay for ${escapeHtml(bk.guestName)}"
-                      style="border-color: #C084FC; color: #581C87; font-weight: 800;"
-                    />
+
+                <div class="sm-turnover-row-meta">
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span>🕒 Checkout: <strong>${outTime}</strong></span>
+                    ${outCountdown}
+                    <span>• Combined: ₹${formatCurrency(split.totalAmount)}</span>
+                    ${isSettled ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(dueAmt)}</span>`}
                   </div>
-                  <button
-                    type="button"
-                    class="sm-co-save-btn"
-                    onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)"
-                    title="Save corrected total collection amount"
-                    style="background: #7C3AED;"
-                  >
-                    💾 Save
-                  </button>
-                  <button
-                    type="button"
-                    class="sm-co-paid-btn"
-                    onclick="markGuestFullyPaid('${bk.id}')"
-                    title="Mark entire split stay as fully paid"
-                  >
-                    ✔ Paid
-                  </button>
-                  <button
-                    type="button"
-                    class="sm-tool-pill-btn"
-                    onclick="openEditBookingModal('${bk.id}')"
-                    title="View complete booking details"
-                  >
-                    ✏️ View
-                  </button>
-                  <button
-                    type="button"
-                    class="sm-tool-pill-btn"
-                    onclick="issueBillForBooking('${bk.id}')"
-                    title="Issue & print combined customer bill with GST"
-                    style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
-                  >
-                    🧾 Bill
-                  </button>
+
+                  <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                    <label class="sm-co-label" for="co-input-${bk.id}" style="color: #6B21A8;">To Collect:</label>
+                    <div class="sm-co-input-wrap">
+                      <span class="sm-co-prefix">₹</span>
+                      <input type="number" id="co-input-${bk.id}" class="sm-co-input" value="${dueAmt}" min="0" step="100" placeholder="0" style="border-color: #C084FC; color: #581C87; font-weight: 800;">
+                    </div>
+                    <button type="button" class="sm-co-save-btn" onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)" title="Save corrected total amount" style="background: #7C3AED;">
+                      💾 Save
+                    </button>
+                    <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" title="Mark entire split stay as fully paid">
+                      ✔ Paid
+                    </button>
+                  </div>
                 </div>
               </div>
             `;
           }
 
           // Case C: Standard Normal Booking Checkout
-          const fin = getBookingFinancials(bk);
           return `
-            <div class="sm-checkout-row">
-              <div class="sm-co-guest-info">
+            <div class="sm-turnover-row">
+              <div class="sm-turnover-row-main">
                 <div class="sm-co-guest-name">
                   <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
                   <strong>${escapeHtml(bk.guestName)}</strong>
                   <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
                 </div>
-                <div class="sm-co-stay-meta">
-                  <span>📅 ${bk.checkInDate} → ${bk.checkOutDate} (${bk.nights || 1}n)</span>
-                  <span>• Total: ₹${formatCurrency(fin.total)}</span>
-                  <span>• Recv: ₹${formatCurrency(fin.advance)}</span>
-                  ${fin.isPaid ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : (fin.balance > 0 ? `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(fin.balance)}</span>` : '')}
+                <div class="sm-co-actions">
+                  <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="View details">
+                    ✏️ View
+                  </button>
+                  <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
+                    🧾 Bill
+                  </button>
                 </div>
               </div>
-              <div class="sm-co-actions">
-                <label class="sm-co-label" for="co-input-${bk.id}">Amount to Collect:</label>
-                <div class="sm-co-input-wrap">
-                  <span class="sm-co-prefix">₹</span>
-                  <input
-                    type="number"
-                    id="co-input-${bk.id}"
-                    class="sm-co-input"
-                    value="${fin.balance}"
-                    min="0"
-                    step="100"
-                    placeholder="0"
-                    title="Change or manually correct collection amount for ${escapeHtml(bk.guestName)}"
-                  />
+
+              <div class="sm-turnover-row-meta">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <span>🕒 Checkout: <strong>${outTime}</strong></span>
+                  ${outCountdown}
+                  <span>• Stay: <strong>${bk.checkInDate} → ${bk.checkOutDate}</strong> (${bk.nights || 1}n)</span>
+                  ${fin.isPaid ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : (fin.balance > 0 ? `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(fin.balance)}</span>` : '')}
                 </div>
-                <button
-                  type="button"
-                  class="sm-co-save-btn"
-                  onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)"
-                  title="Save corrected collection amount"
-                >
-                  💾 Save
-                </button>
-                <button
-                  type="button"
-                  class="sm-co-paid-btn"
-                  onclick="markGuestFullyPaid('${bk.id}')"
-                  title="Mark guest as fully paid"
-                >
-                  ✔ Paid
-                </button>
-                <button
-                  type="button"
-                  class="sm-tool-pill-btn"
-                  onclick="openEditBookingModal('${bk.id}')"
-                  title="View complete booking details"
-                >
-                  ✏️ View
-                </button>
-                <button
-                  type="button"
-                  class="sm-tool-pill-btn"
-                  onclick="issueBillForBooking('${bk.id}')"
-                  title="Issue & print customer bill with GST"
-                  style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
-                >
-                  🧾 Bill
-                </button>
+
+                <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                  <label class="sm-co-label" for="co-input-${bk.id}">To Collect:</label>
+                  <div class="sm-co-input-wrap">
+                    <span class="sm-co-prefix">₹</span>
+                    <input type="number" id="co-input-${bk.id}" class="sm-co-input" value="${fin.balance}" min="0" step="100" placeholder="0">
+                  </div>
+                  <button type="button" class="sm-co-save-btn" onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)" title="Save collection amount">
+                    💾 Save
+                  </button>
+                  <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" title="Mark guest fully paid">
+                    ✔ Paid
+                  </button>
+                </div>
               </div>
             </div>
           `;
@@ -7804,7 +8074,7 @@
                     class="sm-tool-pill-btn"
                     style="font-size: 10.5px; padding: 2px 8px; font-weight: 700; color: #4338CA; background: #EEF2FF; border-color: #C7D2FE;"
                   >
-                    ▼ View ${outBookings.length > 0 ? `(${outBookings.length} Departures)` : ''}
+                    ▼ View (${checkInsCount} In / ${checkOutsCount} Out)
                   </button>
                 </div>
               </div>
@@ -7818,13 +8088,13 @@
                   <span class="sm-turnover-icon" style="font-size: 15px;">🛎️</span>
                   <div>
                     <div class="sm-turnover-title">
-                      <span>Turnovers &amp; Checkout Collections</span>
+                      <span>Turnovers &amp; Checkout Operations</span>
                       <span class="sm-pill-in">⬇ ${checkInsCount} In</span>
                       <span class="sm-pill-out">⬆ ${checkOutsCount} Out</span>
                       ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill">🔄 ${roomTransfersCount} Transfer</span>` : ''}
                     </div>
                     <div class="sm-turnover-sub">
-                      Showing date: <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
+                      Active Date: <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
                       ${activeTurnoverDate !== todayIsoStr ? `<button type="button" onclick="setTurnoverDate(null)" class="sm-today-btn" style="padding: 1px 6px; font-size: 9.5px; margin-left: 4px;">Reset to Today</button>` : ''}
                     </div>
                   </div>
@@ -7854,30 +8124,65 @@
                 </div>
               </div>
 
-              <div class="sm-checkout-guests-list">
-                ${outBookings.length > 0 ? `
-                  ${outBookings.map(bk => renderCheckoutRow(bk)).join('')}
-                ` : `
-                  <div style="padding: 6px 4px; font-size: 11.5px; color: #64748B; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
-                    <span>✨ No checkouts scheduled for ${activeTurnoverDate === todayIsoStr ? 'today' : activeTurnoverDate} (${checkInsCount} check-in${checkInsCount !== 1 ? 's' : ''} expected).</span>
+              <!-- 50:50 Split Grid: Left Check-ins | Right Checkouts -->
+              <div class="sm-turnovers-split-grid">
+                <!-- LEFT 50%: CHECK-INS (ARRIVALS) -->
+                <div class="sm-turnover-col">
+                  <div class="sm-turnover-col-header sm-col-checkin">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-size: 13px;">⬇️</span>
+                      <strong style="color: #166534; font-size: 12px;">Check-ins / Arrivals (${inBookings.length})</strong>
+                    </div>
+                    <span class="sm-turnover-col-sub">${activeTurnoverDate === todayIsoStr ? 'Expected Arrivals' : activeTurnoverDate}</span>
                   </div>
-                `}
 
-                ${showUpcomingCheckouts && upcomingCheckouts.length > 0 ? `
-                  <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #CBD5E1;">
-                    <div style="font-size: 11px; font-weight: 800; color: #4338CA; margin-bottom: 4px;">
-                      📅 Upcoming Departures (Next 7 Days):
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                      ${upcomingCheckouts.map(bk => renderCheckoutRow(bk)).join('')}
-                    </div>
+                  <div class="sm-turnover-list">
+                    ${inBookings.length > 0 ? `
+                      ${inBookings.map(bk => renderCheckInRow(bk)).join('')}
+                    ` : `
+                      <div class="sm-empty-turnover-msg">
+                        <span>✨ No check-ins scheduled for ${activeTurnoverDate === todayIsoStr ? 'today' : activeTurnoverDate}.</span>
+                      </div>
+                    `}
                   </div>
-                ` : (showUpcomingCheckouts ? `
-                  <div style="padding: 4px; font-size: 10.5px; color: #94A3B8;">
-                    No upcoming departures in the next 7 days.
+                </div>
+
+                <!-- RIGHT 50%: CHECKOUTS (DEPARTURES & COLLECTIONS) -->
+                <div class="sm-turnover-col">
+                  <div class="sm-turnover-col-header sm-col-checkout">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span style="font-size: 13px;">⬆️</span>
+                      <strong style="color: #991B1B; font-size: 12px;">Checkouts / Departures (${outBookings.length})</strong>
+                    </div>
+                    <span class="sm-turnover-col-sub">Collect: ₹${formatCurrency(totalToCollect)}</span>
                   </div>
-                ` : '')}
+
+                  <div class="sm-turnover-list">
+                    ${outBookings.length > 0 ? `
+                      ${outBookings.map(bk => renderCheckoutRow(bk)).join('')}
+                    ` : `
+                      <div class="sm-empty-turnover-msg">
+                        <span>✨ No checkouts scheduled for ${activeTurnoverDate === todayIsoStr ? 'today' : activeTurnoverDate}.</span>
+                      </div>
+                    `}
+                  </div>
+                </div>
               </div>
+
+              ${showUpcomingCheckouts && upcomingCheckouts.length > 0 ? `
+                <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #CBD5E1;">
+                  <div style="font-size: 11px; font-weight: 800; color: #4338CA; margin-bottom: 4px;">
+                    📅 Upcoming Departures (Next 7 Days):
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    ${upcomingCheckouts.map(bk => renderCheckoutRow(bk)).join('')}
+                  </div>
+                </div>
+              ` : (showUpcomingCheckouts ? `
+                <div style="padding: 4px; font-size: 10.5px; color: #94A3B8;">
+                  No upcoming departures in the next 7 days.
+                </div>
+              ` : '')}
             </div>
           `;
         }
