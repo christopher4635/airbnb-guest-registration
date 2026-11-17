@@ -3071,6 +3071,37 @@
       transform: rotate(-3deg);
       user-select: none;
     }
+    .bill-upi-pay-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #16A34A 0%, #15803D 100%);
+      color: #FFFFFF !important;
+      text-decoration: none !important;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(22, 163, 74, 0.25);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .bill-upi-pay-btn:hover {
+      background: linear-gradient(135deg, #15803D 0%, #166534 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(22, 163, 74, 0.35);
+    }
+    .bill-upi-pay-btn.is-settled {
+      background: #E2E8F0 !important;
+      color: #64748B !important;
+      box-shadow: none !important;
+      cursor: default;
+    }
+    .bill-upi-pay-btn.is-settled:hover {
+      background: #E2E8F0 !important;
+      transform: none;
+    }
     .bill-row-del-btn {
       background: none;
       border: none;
@@ -3266,6 +3297,19 @@
       .bill-table th {
         background: #F8FAFC !important;
         color: #000000 !important;
+      }
+      .bill-upi-pay-btn {
+        border: 1px solid #16A34A !important;
+        background: #F0FDF4 !important;
+        color: #166534 !important;
+        box-shadow: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .bill-upi-pay-btn.is-settled {
+        border: 1px solid #CBD5E1 !important;
+        background: #F8FAFC !important;
+        color: #64748B !important;
       }
     }
 
@@ -4870,21 +4914,40 @@
                   <strong>Payment Status:</strong> <span contenteditable="true" class="bill-edit-text" id="bill-payment-status">Settled</span>
                 </div>
                 
-                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; display: flex; gap: 14px; align-items: center;">
-                  <!-- Payment QR Code Image -->
-                  <div id="bill-qr-wrap" style="display: none; text-align: center; flex-shrink: 0;">
-                    <img id="bill-qr-image" src="" alt="Payment QR Code" style="width: 82px; height: 82px; border-radius: 6px; border: 1px solid #CBD5E1; object-fit: contain; background: #FFFFFF; padding: 2px; display: block;">
-                    <div style="font-size: 9.5px; font-weight: 700; color: #475569; margin-top: 3px; letter-spacing: 0.3px;">SCAN TO PAY</div>
-                  </div>
-                  <!-- Bank & UPI Details -->
-                  <div style="flex: 1;">
-                    <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
-                      <span>Bank &amp; UPI Details for Payment:</span>
-                      <button type="button" class="biller-no-print" onclick="openBankSettingsModal()" style="background: none; border: none; color: #2563EB; font-size: 10.5px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;">⚙️ Edit Bank / QR</button>
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;">
+                  <div style="display: flex; gap: 14px; align-items: center;">
+                    <!-- Payment QR Code Image -->
+                    <div id="bill-qr-wrap" style="text-align: center; flex-shrink: 0;">
+                      <img id="bill-qr-image" crossorigin="anonymous" src="" alt="Payment QR Code" style="width: 84px; height: 84px; border-radius: 6px; border: 1px solid #CBD5E1; object-fit: contain; background: #FFFFFF; padding: 2px; display: block;">
+                      <div id="bill-qr-label" style="font-size: 9.5px; font-weight: 700; color: #475569; margin-top: 3px; letter-spacing: 0.3px;">SCAN TO PAY</div>
                     </div>
-                    <div contenteditable="true" class="bill-edit-text" id="bill-bank-info" style="font-size: 11.5px; color: #334155; line-height: 1.5;">
-                      UPI ID: <strong>bobuco@ybl</strong> • Account Name: <strong>Elite Homes</strong><br>
-                      Bank: <strong>UCO Bank</strong> • A/C No: <strong>04990110124666</strong> • IFSC: <strong>UCBA0000499</strong>
+                    <!-- Bank & UPI Details -->
+                    <div style="flex: 1;">
+                      <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                        <span>Bank &amp; UPI Details for Payment:</span>
+                        <button type="button" class="biller-no-print" onclick="openBankSettingsModal()" style="background: none; border: none; color: #2563EB; font-size: 10.5px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;">⚙️ Edit Bank / QR</button>
+                      </div>
+                      <div contenteditable="true" class="bill-edit-text" id="bill-bank-info" style="font-size: 11.5px; color: #334155; line-height: 1.5;">
+                        UPI ID: <strong>bobuco@ybl</strong> • Account Name: <strong>Elite Homes</strong><br>
+                        Bank: <strong>UCO Bank</strong> • A/C No: <strong>04990110124666</strong> • IFSC: <strong>UCBA0000499</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Interactive UPI Pay Link & Action Buttons -->
+                  <div id="bill-upi-action-wrap" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #CBD5E1; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <a id="bill-upi-pay-link" href="#" class="bill-upi-pay-btn is-active" target="_blank" rel="noopener noreferrer" onclick="handleUpiPayClick(event, this)" title="Click to pay balance via UPI on phone">
+                        <span style="font-size: 13px;">📲</span>
+                        <span>Pay <strong id="bill-upi-pay-btn-amt">₹0.00</strong> via UPI</span>
+                        <span style="font-size: 10px; opacity: 0.9; font-weight: 500;">(GPay / PhonePe / Paytm)</span>
+                      </a>
+                      <button type="button" class="btn btn-outline biller-no-print" onclick="copyUpiPaymentLink()" style="font-size: 11px; height: 30px; padding: 0 10px; display: inline-flex; align-items: center; gap: 4px; background: #FFFFFF; border-color: #CBD5E1; color: #334155;" title="Copy UPI payment URL to share with guest">
+                        📋 Copy Pay Link
+                      </button>
+                    </div>
+                    <div id="bill-upi-note-text" style="font-size: 10.5px; color: #64748B;">
+                      Tap on phone or scan QR to pay balance.
                     </div>
                   </div>
                 </div>
@@ -5010,22 +5073,56 @@
       signatureRequired: true
     };
 
-    // Load config from config.json or localStorage
+    // Load config from config.json, Cloudflare D1, and localStorage
     async function loadConfig() {
+      // 1. Base defaults from config.json
       try {
         const res = await fetch('config.json?t=' + Date.now());
         if (res.ok) {
           const fetched = await res.json();
-          currentConfig = Object.assign(currentConfig, fetched);
+          currentConfig = Object.assign({}, currentConfig, fetched);
         }
-      } catch (e) {
-        const local = localStorage.getItem('airbnb_form_config');
-        if (local) {
-          try {
-            currentConfig = Object.assign(currentConfig, JSON.parse(local));
-          } catch (err) {}
+      } catch (e) {}
+
+      // 2. Load latest config from Cloudflare D1 via AirbnbAPI
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getConfig === 'function') {
+        try {
+          const d1Config = await window.AirbnbAPI.getConfig();
+          if (d1Config && typeof d1Config === 'object') {
+            currentConfig = Object.assign({}, currentConfig, d1Config);
+          }
+        } catch (e) {
+          console.warn("Could not load config from Cloudflare D1:", e);
         }
       }
+
+      // 3. Fallback/merge from localStorage 'airbnb_form_config'
+      const local = localStorage.getItem('airbnb_form_config');
+      if (local) {
+        try {
+          const parsed = JSON.parse(local);
+          if (parsed && typeof parsed === 'object') {
+            currentConfig = Object.assign({}, currentConfig, parsed);
+          }
+        } catch (err) {}
+      }
+
+      // 4. Ensure bank details and uploaded QR code are strictly preserved
+      const bankCached = localStorage.getItem('elitehomes_bank_details');
+      if (bankCached) {
+        try {
+          const pb = JSON.parse(bankCached);
+          if (pb && typeof pb === 'object') {
+            if (!currentConfig.bankDetails) currentConfig.bankDetails = {};
+            for (const k in pb) {
+              if (pb[k]) currentConfig.bankDetails[k] = pb[k];
+            }
+          }
+        } catch (err) {}
+      }
+
+      if (typeof renderSettingsBankAndQr === 'function') renderSettingsBankAndQr();
+      if (typeof renderBillerBankAndQr === 'function') renderBillerBankAndQr();
     }
 
     // Auth gate
@@ -5266,16 +5363,18 @@
       const upiId = (document.getElementById('settings-bank-upi')?.value || '').trim();
 
       if (bankName || accountNumber || ifsc || upiId) {
+        const existingDetails = (typeof getStoredBankDetails === 'function') ? getStoredBankDetails() : (currentConfig.bankDetails || {});
         currentConfig.bankDetails = {
           bankName: bankName || 'UCO Bank',
           accountName: accountName || 'Elite Homes',
           accountNumber: accountNumber || '04990110124666',
           ifsc: ifsc || 'UCBA0000499',
           upiId: upiId || 'bobuco@ybl',
-          qrCodeUrl: currentConfig.bankDetails?.qrCodeUrl || ''
+          qrCodeUrl: existingDetails.qrCodeUrl || currentConfig.bankDetails?.qrCodeUrl || ''
         };
         localStorage.setItem('elitehomes_bank_details', JSON.stringify(currentConfig.bankDetails));
         if (typeof renderBillerBankAndQr === 'function') renderBillerBankAndQr();
+        if (typeof recalculateBill === 'function') recalculateBill();
       }
 
       localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
@@ -12045,14 +12144,7 @@
 
     // Bank Details & Payment QR Code Functions
     function getStoredBankDetails() {
-      if (currentConfig && currentConfig.bankDetails && currentConfig.bankDetails.bankName) {
-        return currentConfig.bankDetails;
-      }
-      const cached = localStorage.getItem('elitehomes_bank_details');
-      if (cached) {
-        try { return JSON.parse(cached); } catch (e) {}
-      }
-      return {
+      let details = {
         bankName: 'UCO Bank',
         accountName: 'Elite Homes',
         accountNumber: '04990110124666',
@@ -12060,18 +12152,92 @@
         upiId: 'bobuco@ybl',
         qrCodeUrl: ''
       };
-    }
 
-    function renderBillerBankAndQr() {
-      const details = getStoredBankDetails();
-      const bankInfoEl = document.getElementById('bill-bank-info');
-      const qrWrap = document.getElementById('bill-qr-wrap');
-      const qrImg = document.getElementById('bill-qr-image');
-
-      if (bankInfoEl) {
-        bankInfoEl.innerHTML = `UPI ID: <strong>${escapeHtml(details.upiId || 'bobuco@ybl')}</strong> • Account Name: <strong>${escapeHtml(details.accountName || 'Elite Homes')}</strong><br>Bank: <strong>${escapeHtml(details.bankName || 'UCO Bank')}</strong> • A/C No: <strong>${escapeHtml(details.accountNumber || '04990110124666')}</strong> • IFSC: <strong>${escapeHtml(details.ifsc || 'UCBA0000499')}</strong>`;
+      // 1. Merge from currentConfig
+      if (currentConfig && currentConfig.bankDetails) {
+        for (const k in currentConfig.bankDetails) {
+          if (currentConfig.bankDetails[k]) details[k] = currentConfig.bankDetails[k];
+        }
       }
 
+      // 2. Merge from localStorage 'elitehomes_bank_details'
+      try {
+        const cached = localStorage.getItem('elitehomes_bank_details');
+        if (cached) {
+          const pb = JSON.parse(cached);
+          if (pb && typeof pb === 'object') {
+            for (const k in pb) {
+              if (pb[k]) details[k] = pb[k];
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 3. Merge from localStorage 'airbnb_form_config'
+      try {
+        const formCfg = localStorage.getItem('airbnb_form_config');
+        if (formCfg) {
+          const parsed = JSON.parse(formCfg);
+          if (parsed && parsed.bankDetails) {
+            for (const k in parsed.bankDetails) {
+              if (parsed.bankDetails[k]) details[k] = parsed.bankDetails[k];
+            }
+          }
+        }
+      } catch (e) {}
+
+      if (currentConfig) {
+        currentConfig.bankDetails = Object.assign({}, details);
+      }
+      return details;
+    }
+
+    // NPCI UPI URI Generator
+    function generateUpiPaymentUri(amount, invoiceNo) {
+      const details = getStoredBankDetails();
+      const upiId = (details.upiId || 'bobuco@ybl').trim();
+      const payeeName = (details.accountName || 'Elite Homes').trim();
+      const amt = (parseFloat(amount) || 0).toFixed(2);
+      const note = (invoiceNo ? `Invoice ${invoiceNo}` : 'Elite Homes Stay Bill').trim();
+
+      // Standard NPCI UPI URI Specification (using literal @ in pa for maximum compatibility)
+      let uri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}`;
+      if (parseFloat(amt) > 0) {
+        uri += `&am=${amt}`;
+      }
+      uri += `&cu=INR&tn=${encodeURIComponent(note)}`;
+      return uri;
+    }
+
+    // Real-time updater for UPI payment link and scannable QR
+    function updateBillerUpiPaymentLink(balanceDue) {
+      const details = getStoredBankDetails();
+      const invoiceNo = (document.getElementById('bill-invoice-no')?.innerText || '').trim();
+      const amt = Math.max(0, parseFloat(balanceDue) || 0);
+      const upiUri = generateUpiPaymentUri(amt, invoiceNo);
+
+      const payLink = document.getElementById('bill-upi-pay-link');
+      const payAmtSpan = document.getElementById('bill-upi-pay-btn-amt');
+      const noteEl = document.getElementById('bill-upi-note-text');
+      const qrWrap = document.getElementById('bill-qr-wrap');
+      const qrImg = document.getElementById('bill-qr-image');
+      const qrLabel = document.getElementById('bill-qr-label');
+
+      if (payLink) {
+        payLink.href = upiUri;
+        payLink.dataset.upiUri = upiUri;
+        if (amt > 0) {
+          payLink.className = 'bill-upi-pay-btn is-active';
+          if (payAmtSpan) payAmtSpan.textContent = '₹' + amt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          if (noteEl) noteEl.innerHTML = `Tap on phone or scan QR to pay balance <strong>₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> via GPay / PhonePe / Paytm.`;
+        } else {
+          payLink.className = 'bill-upi-pay-btn is-settled';
+          if (payAmtSpan) payAmtSpan.textContent = '₹0.00';
+          if (noteEl) noteEl.textContent = 'Invoice is paid in full. No balance payment required.';
+        }
+      }
+
+      // Display custom uploaded QR if available, otherwise dynamic UPI QR with balance amount
       if (qrWrap && qrImg) {
         if (details.qrCodeUrl) {
           const resolved = (window.AirbnbAPI && typeof window.AirbnbAPI.resolveImageUrl === 'function')
@@ -12079,10 +12245,64 @@
             : details.qrCodeUrl;
           qrImg.src = resolved;
           qrWrap.style.display = 'block';
+          if (qrLabel) qrLabel.textContent = 'SCAN TO PAY';
+        } else if (details.upiId) {
+          const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUri)}`;
+          qrImg.src = qrApiUrl;
+          qrWrap.style.display = 'block';
+          if (qrLabel) qrLabel.textContent = amt > 0 ? `SCAN TO PAY ₹${Math.round(amt)}` : 'SCAN TO PAY';
         } else {
           qrWrap.style.display = 'none';
         }
       }
+    }
+
+    function handleUpiPayClick(event, el) {
+      const uri = el.getAttribute('href') || el.dataset.upiUri;
+      if (!uri || uri === '#' || el.classList.contains('is-settled')) {
+        event.preventDefault();
+        if (typeof showToast === 'function') showToast('ℹ️ Invoice is paid in full. Balance due is ₹0.');
+        return;
+      }
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (!isMobile) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(uri).then(() => {
+            if (typeof showToast === 'function') showToast('📋 UPI payment link copied! Share with guest via WhatsApp/SMS.');
+          }).catch(() => {});
+        }
+      }
+    }
+
+    function copyUpiPaymentLink() {
+      const payLink = document.getElementById('bill-upi-pay-link');
+      const uri = (payLink ? (payLink.getAttribute('href') || payLink.dataset.upiUri) : '') || '';
+      if (!uri || uri === '#' || payLink?.classList.contains('is-settled')) {
+        if (typeof showToast === 'function') showToast('ℹ️ Invoice is paid in full. No balance due.');
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(uri).then(() => {
+          if (typeof showToast === 'function') showToast('📋 UPI payment link copied! Share via WhatsApp/SMS.');
+        }).catch(() => {
+          prompt('Copy UPI Payment Link:', uri);
+        });
+      } else {
+        prompt('Copy UPI Payment Link:', uri);
+      }
+    }
+
+    function renderBillerBankAndQr() {
+      const details = getStoredBankDetails();
+      const bankInfoEl = document.getElementById('bill-bank-info');
+
+      if (bankInfoEl) {
+        bankInfoEl.innerHTML = `UPI ID: <strong>${escapeHtml(details.upiId || 'bobuco@ybl')}</strong> • Account Name: <strong>${escapeHtml(details.accountName || 'Elite Homes')}</strong><br>Bank: <strong>${escapeHtml(details.bankName || 'UCO Bank')}</strong> • A/C No: <strong>${escapeHtml(details.accountNumber || '04990110124666')}</strong> • IFSC: <strong>${escapeHtml(details.ifsc || 'UCBA0000499')}</strong>`;
+      }
+
+      const balText = (document.getElementById('bill-balance-due-val')?.innerText || '').replace(/[^0-9.]/g, '');
+      const currentBal = parseFloat(balText) || 0;
+      updateBillerUpiPaymentLink(currentBal);
     }
 
     function renderSettingsBankAndQr() {
@@ -12191,22 +12411,57 @@
       }
     }
 
-    function applyUploadedQr(qrUrl) {
-      if (!currentConfig.bankDetails) currentConfig.bankDetails = getStoredBankDetails();
-      currentConfig.bankDetails.qrCodeUrl = qrUrl;
-      localStorage.setItem('elitehomes_bank_details', JSON.stringify(currentConfig.bankDetails));
+    async function applyUploadedQr(qrUrl) {
+      const details = getStoredBankDetails();
+      details.qrCodeUrl = qrUrl;
+      if (!currentConfig) currentConfig = {};
+      currentConfig.bankDetails = details;
+      localStorage.setItem('elitehomes_bank_details', JSON.stringify(details));
+      try {
+        const formCfg = JSON.parse(localStorage.getItem('airbnb_form_config') || '{}');
+        formCfg.bankDetails = details;
+        localStorage.setItem('airbnb_form_config', JSON.stringify(formCfg));
+      } catch (e) {}
+
       updateQrPreview(qrUrl);
       renderBillerBankAndQr();
+      if (typeof recalculateBill === 'function') recalculateBill();
       if (typeof showToast === 'function') showToast('✅ Payment QR Code uploaded successfully!');
+
+      // Persist immediately to Cloudflare D1
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.saveConfig === 'function') {
+        try {
+          await window.AirbnbAPI.saveConfig(currentConfig, currentConfig.adminPin);
+          if (typeof showToast === 'function') showToast('✅ Payment QR Code saved to Cloudflare database!');
+        } catch (e) {
+          console.warn('Could not save QR to D1:', e);
+        }
+      }
     }
 
-    function removeBankQrCode() {
-      if (!currentConfig.bankDetails) currentConfig.bankDetails = getStoredBankDetails();
-      currentConfig.bankDetails.qrCodeUrl = '';
-      localStorage.setItem('elitehomes_bank_details', JSON.stringify(currentConfig.bankDetails));
+    async function removeBankQrCode() {
+      if (!confirm('Are you sure you want to remove the payment QR code?')) return;
+      const details = getStoredBankDetails();
+      details.qrCodeUrl = '';
+      if (!currentConfig) currentConfig = {};
+      currentConfig.bankDetails = details;
+      localStorage.setItem('elitehomes_bank_details', JSON.stringify(details));
+      try {
+        const formCfg = JSON.parse(localStorage.getItem('airbnb_form_config') || '{}');
+        formCfg.bankDetails = details;
+        localStorage.setItem('airbnb_form_config', JSON.stringify(formCfg));
+      } catch (e) {}
+
       updateQrPreview('');
       renderBillerBankAndQr();
+      if (typeof recalculateBill === 'function') recalculateBill();
       if (typeof showToast === 'function') showToast('Payment QR Code removed.');
+
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.saveConfig === 'function') {
+        try {
+          await window.AirbnbAPI.saveConfig(currentConfig, currentConfig.adminPin);
+        } catch (e) {}
+      }
     }
 
     async function saveBankSettingsFromModal() {
@@ -12231,8 +12486,14 @@
         qrCodeUrl: existing.qrCodeUrl || ''
       };
 
+      if (!currentConfig) currentConfig = {};
       currentConfig.bankDetails = updated;
       localStorage.setItem('elitehomes_bank_details', JSON.stringify(updated));
+      try {
+        const formCfg = JSON.parse(localStorage.getItem('airbnb_form_config') || '{}');
+        formCfg.bankDetails = updated;
+        localStorage.setItem('airbnb_form_config', JSON.stringify(formCfg));
+      } catch (e) {}
 
       // Also update Section 7 inputs
       if (document.getElementById('settings-bank-name')) document.getElementById('settings-bank-name').value = updated.bankName;
@@ -12242,13 +12503,14 @@
       if (document.getElementById('settings-bank-upi')) document.getElementById('settings-bank-upi').value = updated.upiId;
 
       renderBillerBankAndQr();
+      if (typeof recalculateBill === 'function') recalculateBill();
       closeBankSettingsModal();
 
       // Persist to Cloudflare D1
       if (window.AirbnbAPI && typeof window.AirbnbAPI.saveConfig === 'function') {
         try {
           await window.AirbnbAPI.saveConfig(currentConfig, currentConfig.adminPin);
-          if (typeof showToast === 'function') showToast('✅ Bank details & Payment QR saved to Cloudflare D1!');
+          if (typeof showToast === 'function') showToast('✅ Bank details & Payment QR saved to Cloudflare database!');
         } catch (e) {
           console.warn('Error saving bank details to D1:', e);
           if (typeof showToast === 'function') showToast('Bank details updated locally.');
@@ -12737,6 +12999,11 @@
       // Update words
       const wordsEl = document.getElementById('bill-amount-words');
       if (wordsEl) wordsEl.textContent = numberToWordsINR(grandTotal);
+
+      // Real-time update for UPI Payment Link and dynamic QR
+      if (typeof updateBillerUpiPaymentLink === 'function') {
+        updateBillerUpiPaymentLink(balanceDue);
+      }
     }
 
     // Direct invocation helper from anywhere in the portal
