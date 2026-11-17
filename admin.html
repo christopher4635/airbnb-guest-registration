@@ -1907,6 +1907,115 @@
       color: #4338CA;
     }
 
+    /* 3-Step Room Turnover Status Tracking Group (Waiting Checkout, Cleaning, Ready for Checkin) */
+    .sm-turnover-status-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #F1F5F9;
+      padding: 2px 3px;
+      border-radius: 6px;
+      border: 1px solid #CBD5E1;
+    }
+    .sm-status-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #64748B;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .sm-status-btn:hover {
+      background: #E2E8F0;
+      color: #1E293B;
+    }
+
+    /* Stage 1: Waiting Checkout */
+    .sm-status-btn.is-waiting {
+      background: #FEF3C7;
+      color: #92400E;
+      border-color: #FDE68A;
+      box-shadow: 0 1px 2px rgba(180, 83, 9, 0.1);
+    }
+    .sm-status-btn.is-waiting:hover {
+      background: #FDE68A;
+      color: #78350F;
+    }
+
+    /* Stage 1: Checked Out */
+    .sm-status-btn.is-checked-out {
+      background: #FFFFFF;
+      color: #166534;
+      border-color: #BBF7D0;
+    }
+    .sm-status-btn.is-checked-out.active {
+      background: #DCFCE7;
+      color: #15803D;
+      border-color: #86EFAC;
+    }
+
+    /* Stage 2: Cleaning */
+    .sm-status-btn.is-cleaning.active {
+      background: #EEF2FF;
+      color: #4338CA;
+      border-color: #A5B4FC;
+      box-shadow: 0 1px 2px rgba(67, 56, 202, 0.12);
+    }
+    .sm-status-btn.is-cleaning:not(.active):hover {
+      background: #EEF2FF;
+      color: #4338CA;
+      border-color: #C7D2FE;
+    }
+
+    /* Stage 3: Ready for Checkin */
+    .sm-status-btn.is-ready.active {
+      background: #ECFDF5;
+      color: #047857;
+      border-color: #6EE7B7;
+      box-shadow: 0 1px 2px rgba(4, 120, 87, 0.15);
+    }
+    .sm-status-btn.is-ready:not(.active):hover {
+      background: #ECFDF5;
+      color: #047857;
+      border-color: #A7F3D0;
+    }
+
+    /* Right side Checkout Completion Button */
+    .sm-co-done-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .sm-co-done-btn:hover {
+      background: #F1F5F9;
+      border-color: #94A3B8;
+      color: #0F172A;
+    }
+    .sm-co-done-btn.active {
+      background: #ECFDF5;
+      color: #047857;
+      border-color: #86EFAC;
+      font-weight: 800;
+    }
+
     /* Checkout rows */
     .sm-checkout-guests-list {
       display: flex;
@@ -6772,12 +6881,13 @@
       targetLegs.forEach(leg => {
         leg.manualCollectionAmount = 0;
         leg.paymentStatus = 'Paid in Full';
+        leg.checkedOut = true;
         const rev = getBookingRevenue(leg);
         if (rev > 0) {
           leg.advancePaid = rev;
           leg.advance = rev;
         }
-        const tag = `Collect: ₹0 (Paid in Full)`;
+        const tag = `Collect: ₹0 (Paid in Full) | [Checked-Out]`;
         if (leg.notes && leg.notes.includes('Collect:')) {
           leg.notes = leg.notes.replace(/Collect:\s*₹?[0-9,]+(?:\s*\([^)]*\))?/i, tag);
         } else if (leg.notes) {
@@ -7653,6 +7763,13 @@
                   b.departureTime = depMatch[1].trim();
                   b.checkOutTime = depMatch[1].trim();
                 }
+                if (b.notes.includes('[Checked-Out]') || b.notes.includes('Checked Out at checkout')) {
+                  b.checkedOut = true;
+                }
+                const turnMatch = b.notes.match(/\[Turnover:\s*([a-zA-Z_-]+)\]/i);
+                if (turnMatch) {
+                  b.turnoverStatus = turnMatch[1].toLowerCase();
+                }
               }
             });
             currentBookings = d1Bookings;
@@ -7741,6 +7858,13 @@
                 if (depMatch) {
                   b.departureTime = depMatch[1].trim();
                   b.checkOutTime = depMatch[1].trim();
+                }
+                if (b.notes.includes('[Checked-Out]') || b.notes.includes('Checked Out at checkout')) {
+                  b.checkedOut = true;
+                }
+                const turnMatch = b.notes.match(/\[Turnover:\s*([a-zA-Z_-]+)\]/i);
+                if (turnMatch) {
+                  b.turnoverStatus = turnMatch[1].toLowerCase();
                 }
               }
             });
@@ -7902,6 +8026,187 @@
     function setCalendarPropertyFilter(prop) {
       selectedPropFilter = prop;
       renderBookingsPortal();
+    }
+
+    // Helper to check if a booking has been marked checked out
+    function isBookingCheckedOut(b) {
+      if (!b) return false;
+      if (b.checkedOut === true) return true;
+      if (b.status === 'Completed' || b.status === 'Checked Out') return true;
+      if (b.notes && (b.notes.includes('[Checked-Out]') || b.notes.includes('Checked Out at checkout'))) return true;
+      return false;
+    }
+
+    // Toggle checkout completion on the right side
+    async function toggleCheckoutCompleted(bookingId) {
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+
+      const currentDone = isBookingCheckedOut(b);
+      const nextDone = !currentDone;
+
+      b.checkedOut = nextDone;
+      if (nextDone) {
+        if (!b.notes || !b.notes.includes('[Checked-Out]')) {
+          b.notes = (b.notes ? b.notes + ' | ' : '') + '[Checked-Out]';
+        }
+      } else {
+        if (b.notes) {
+          b.notes = b.notes.replace(/\s*\|\s*\[Checked-Out\]|\[Checked-Out\]/g, '').trim();
+        }
+      }
+
+      saveBookings();
+      renderBookingsPortal();
+      showToast(nextDone ? `✔ Marked checkout completed for ${b.guestName} (${b.property})` : `Marked ${b.guestName} as not yet departed`);
+
+      // Persist to Cloudflare D1
+      try {
+        if (window.AirbnbAPI) {
+          const rev = getBookingRevenue(b);
+          const payoutStr = b.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
+          const payload = {
+            id: b.id,
+            property: b.property,
+            guestName: b.guestName,
+            phone: b.phone,
+            email: b.email,
+            checkInDate: b.checkInDate,
+            checkOutDate: b.checkOutDate,
+            nights: b.nights,
+            guestsCount: b.guestsCount,
+            platform: b.platform,
+            reservationCode: b.reservationCode,
+            payout: payoutStr,
+            paymentStatus: b.paymentStatus,
+            status: b.status || 'Confirmed',
+            notes: b.notes
+          };
+          if (typeof window.AirbnbAPI.updateBooking === 'function') {
+            await window.AirbnbAPI.updateBooking(b.id, payload);
+          } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
+            await window.AirbnbAPI.saveBooking(payload);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not sync checkout completion to D1:", err);
+      }
+    }
+
+    // Set Room Turnover Status (Waiting Checkout, Cleaning, Ready for Checkin)
+    async function setRoomTurnoverStatus(bookingId, status) {
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+
+      b.turnoverStatus = status;
+      const tag = `[Turnover: ${status}]`;
+      if (b.notes && /\[Turnover:\s*[^\]]+\]/i.test(b.notes)) {
+        b.notes = b.notes.replace(/\[Turnover:\s*[^\]]+\]/i, tag);
+      } else if (b.notes) {
+        b.notes += ` | ${tag}`;
+      } else {
+        b.notes = tag;
+      }
+
+      saveBookings();
+      renderBookingsPortal();
+
+      let label = status === 'cleaning' ? 'In Cleaning 🧹' : (status === 'ready' ? 'Ready for Check-in ✨' : 'Checked-Out ✔');
+      showToast(`Updated status for ${b.property} (${b.guestName}): ${label}`);
+
+      // Persist to Cloudflare D1
+      try {
+        if (window.AirbnbAPI) {
+          const rev = getBookingRevenue(b);
+          const payoutStr = b.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
+          const payload = {
+            id: b.id,
+            property: b.property,
+            guestName: b.guestName,
+            phone: b.phone,
+            email: b.email,
+            checkInDate: b.checkInDate,
+            checkOutDate: b.checkOutDate,
+            nights: b.nights,
+            guestsCount: b.guestsCount,
+            platform: b.platform,
+            reservationCode: b.reservationCode,
+            payout: payoutStr,
+            paymentStatus: b.paymentStatus,
+            status: b.status || 'Confirmed',
+            notes: b.notes
+          };
+          if (typeof window.AirbnbAPI.updateBooking === 'function') {
+            await window.AirbnbAPI.updateBooking(b.id, payload);
+          } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
+            await window.AirbnbAPI.saveBooking(payload);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not sync turnover status to D1:", err);
+      }
+    }
+
+    // Handler when clicking Waiting Checkout badge
+    function handleClickWaitingCheckout(inBookingId, outBookingId) {
+      if (outBookingId) {
+        const outBk = currentBookings.find(x => x && x.id === outBookingId);
+        const name = outBk ? outBk.guestName : 'previous guest';
+        if (confirm(`Previous guest (${name}) has not checked out yet on the right side.\n\nWould you like to mark them as Checked-Out now?`)) {
+          toggleCheckoutCompleted(outBookingId);
+        }
+      } else {
+        showToast("Waiting for previous guest to checkout on the right side.");
+      }
+    }
+
+    // Render the 3 Status Buttons on Check-in Card (Waiting Checkout / Checked-Out, Cleaning, Ready for Checkin)
+    function renderTurnoverStatusButtons(bk, outBookings) {
+      const prevStay = (outBookings || []).find(o => o.id !== bk.id && matchesProperty(o.property, bk.property));
+      const isPrevCheckedOut = !prevStay || isBookingCheckedOut(prevStay);
+
+      let currentStatus = bk.turnoverStatus;
+      if (!currentStatus && bk.notes) {
+        const m = bk.notes.match(/\[Turnover:\s*([a-zA-Z_-]+)\]/i);
+        if (m) currentStatus = m[1].toLowerCase();
+      }
+      if (!currentStatus) {
+        currentStatus = (prevStay && !isPrevCheckedOut) ? 'waiting_checkout' : (isPrevCheckedOut ? 'checked_out' : 'ready');
+      }
+
+      // Button 1: Waiting Checkout or Checked-Out
+      let btn1Html = '';
+      if (!isPrevCheckedOut) {
+        btn1Html = `
+          <button type="button" class="sm-status-btn is-waiting ${currentStatus === 'waiting_checkout' ? 'active' : ''}" onclick="handleClickWaitingCheckout('${bk.id}', '${prevStay ? prevStay.id : ''}')" title="Waiting for previous guest (${prevStay ? escapeHtml(prevStay.guestName) : 'Departing guest'}) to check out on right side">
+            ⏳ Waiting Checkout
+          </button>
+        `;
+      } else {
+        btn1Html = `
+          <button type="button" class="sm-status-btn is-checked-out ${currentStatus === 'checked_out' ? 'active' : ''}" onclick="setRoomTurnoverStatus('${bk.id}', 'checked_out')" title="Previous guest has departed / Room is vacant">
+            ✔ Checked-Out
+          </button>
+        `;
+      }
+
+      // Button 2: Cleaning
+      const isCleaningActive = (currentStatus === 'cleaning');
+      const btn2Html = `
+        <button type="button" class="sm-status-btn is-cleaning ${isCleaningActive ? 'active' : ''}" onclick="setRoomTurnoverStatus('${bk.id}', 'cleaning')" title="${isCleaningActive ? 'Housekeeping currently in progress' : 'Click to mark room in cleaning'}">
+          🧹 ${isCleaningActive ? 'In Cleaning' : 'Cleaning'}
+        </button>
+      `;
+
+      // Button 3: Ready for Checkin
+      const isReadyActive = (currentStatus === 'ready');
+      const btn3Html = `
+        <button type="button" class="sm-status-btn is-ready ${isReadyActive ? 'active' : ''}" onclick="setRoomTurnoverStatus('${bk.id}', 'ready')" title="${isReadyActive ? 'Room is cleaned, inspected and ready for check-in!' : 'Click to mark room ready for check-in'}">
+          ✨ ${isReadyActive ? 'Ready for Check-in' : 'Ready'}
+        </button>
+      `;
+
+      return `${btn1Html}${btn2Html}${btn3Html}`;
     }
 
     // Helper to resolve checkout time from booking metadata or notes (defaults to 11:00 AM)
@@ -8344,6 +8649,9 @@
                   <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
                 </div>
                 <div class="sm-co-actions">
+                  <div class="sm-turnover-status-group">
+                    ${renderTurnoverStatusButtons(bk, outBookings)}
+                  </div>
                   <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="View booking details">
                     ✏️ View
                   </button>
@@ -8400,6 +8708,9 @@
                     <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
                   </div>
                   <div class="sm-co-actions">
+                    <button type="button" class="sm-co-done-btn ${isBookingCheckedOut(bk) ? 'active' : ''}" onclick="toggleCheckoutCompleted('${bk.id}')" title="Click to mark guest transfer/checkout completed">
+                      ${isBookingCheckedOut(bk) ? '✔ Checked Out' : '🚪 Mark Departed'}
+                    </button>
                     <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="View this stay leg">
                       ✏️ View
                     </button>
@@ -8476,6 +8787,9 @@
                     <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" title="Mark entire split stay as fully paid">
                       ✔ Paid
                     </button>
+                    <button type="button" class="sm-co-done-btn ${isBookingCheckedOut(bk) ? 'active' : ''}" onclick="toggleCheckoutCompleted('${bk.id}')" title="Click to mark checkout completed / room vacated">
+                      ${isBookingCheckedOut(bk) ? '✔ Checked Out' : '🚪 Check Out'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -8522,6 +8836,9 @@
                   </button>
                   <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" title="Mark guest fully paid">
                     ✔ Paid
+                  </button>
+                  <button type="button" class="sm-co-done-btn ${isBookingCheckedOut(bk) ? 'active' : ''}" onclick="toggleCheckoutCompleted('${bk.id}')" title="Click to mark checkout completed / room vacated">
+                    ${isBookingCheckedOut(bk) ? '✔ Checked Out' : '🚪 Check Out'}
                   </button>
                 </div>
               </div>
