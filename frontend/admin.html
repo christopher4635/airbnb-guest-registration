@@ -6298,6 +6298,15 @@
       let balance = 0;
       if (b.manualCollectionAmount !== undefined && b.manualCollectionAmount !== null && b.manualCollectionAmount !== '') {
         balance = Math.max(0, parseFloat(b.manualCollectionAmount) || 0);
+      } else if (b.notes && /Collect:\s*₹?([0-9,]+)/i.test(b.notes)) {
+        const m = b.notes.match(/Collect:\s*₹?([0-9,]+)/i);
+        if (m) {
+          const parsed = parseFloat(m[1].replace(/,/g, ''));
+          if (!isNaN(parsed)) {
+            b.manualCollectionAmount = parsed;
+            balance = parsed;
+          }
+        }
       } else {
         const platLower = (b.platform || '').toLowerCase();
         const payStatus = (b.paymentStatus || '').trim().toLowerCase();
@@ -6314,7 +6323,16 @@
         }
       }
 
-      const isPaid = (balance === 0 && total > 0);
+      const payStatus = (b.paymentStatus || '').trim().toLowerCase();
+      if ((payStatus === 'paid in full' || payStatus === 'paid') && (b.manualCollectionAmount === undefined || b.manualCollectionAmount === 0)) {
+        balance = 0;
+        advance = total;
+      }
+
+      const isPaid = (payStatus === 'paid in full' || payStatus === 'paid') || (balance === 0 && total > 0);
+      if (isPaid && balance === 0) {
+        advance = total;
+      }
       return {
         total,
         advance,
@@ -6501,6 +6519,23 @@
       let combinedBalance = Math.max(0, totalAmount - totalAdvance);
       if (finalLeg.manualCollectionAmount !== undefined && finalLeg.manualCollectionAmount !== null && finalLeg.manualCollectionAmount !== '') {
         combinedBalance = Math.max(0, parseFloat(finalLeg.manualCollectionAmount) || 0);
+      } else if (finalLeg.notes && /Collect:\s*₹?([0-9,]+)/i.test(finalLeg.notes)) {
+        const m = finalLeg.notes.match(/Collect:\s*₹?([0-9,]+)/i);
+        if (m) {
+          const parsed = parseFloat(m[1].replace(/,/g, ''));
+          if (!isNaN(parsed)) {
+            finalLeg.manualCollectionAmount = parsed;
+            combinedBalance = parsed;
+          }
+        }
+      }
+
+      const allPaid = cluster.every(leg => {
+        const ps = (leg.paymentStatus || '').trim().toLowerCase();
+        return ps === 'paid in full' || ps === 'paid';
+      });
+      if (allPaid && (finalLeg.manualCollectionAmount === undefined || finalLeg.manualCollectionAmount === 0)) {
+        combinedBalance = 0;
       }
 
       return {
@@ -6521,80 +6556,160 @@
     }
 
     // Manual Checkout Collection Handlers (Changeable / Corrected Manually by Host)
-    function saveManualCollectionAmount(bookingId, newAmount) {
+    async function saveManualCollectionAmount(bookingId, newAmount) {
       const b = currentBookings.find(x => x.id === bookingId);
       if (!b) return;
       const num = Math.max(0, parseFloat(newAmount) || 0);
 
       const split = getSplitStayInfo(b, currentBookings);
-      if (split.isSplit && split.isFinal) {
-        b.manualCollectionAmount = num;
-        if (num === 0) {
-          split.legs.forEach(leg => {
-            leg.manualCollectionAmount = 0;
-            leg.paymentStatus = 'Paid in Full';
-            if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
-              window.AirbnbAPI.saveBooking(leg).catch(err => console.warn('D1 sync notice:', err));
-            }
-          });
-        } else {
-          b.paymentStatus = 'Deposit Paid';
-        }
-      } else {
-        b.manualCollectionAmount = num;
-        if (num === 0) {
-          b.paymentStatus = 'Paid in Full';
-        } else if (b.paymentStatus === 'Paid in Full') {
-          b.paymentStatus = 'Deposit Paid';
-        }
-      }
-
-      // Append/update manual collection note
-      const tag = `Collect: ₹${num.toLocaleString('en-IN')}`;
-      if (b.notes && b.notes.includes('Collect:')) {
-        b.notes = b.notes.replace(/Collect:\s*₹?[0-9,]+/i, tag);
-      } else if (b.notes) {
-        b.notes += ` | ${tag}`;
-      } else {
-        b.notes = tag;
-      }
-
-      saveBookings();
-      renderBookingsPortal();
-      showToast(`✅ Saved amount to collect for ${b.guestName}: ₹${num.toLocaleString('en-IN')}`);
-
-      if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
-        window.AirbnbAPI.saveBooking(b).catch(err => console.warn('D1 sync notice:', err));
-      }
-    }
-
-    function markGuestFullyPaid(bookingId) {
-      const b = currentBookings.find(x => x.id === bookingId);
-      if (!b) return;
-
-      const split = getSplitStayInfo(b, currentBookings);
-      const targetLegs = split.isSplit ? split.legs : [b];
+      const isSettled = (num === 0);
+      const targetLegs = (split.isSplit && split.isFinal && isSettled) ? split.legs : [b];
 
       targetLegs.forEach(leg => {
-        leg.manualCollectionAmount = 0;
-        leg.paymentStatus = 'Paid in Full';
-        const tag = `Collect: ₹0 (Paid in Full)`;
-        if (leg.notes && leg.notes.includes('Collect:')) {
-          leg.notes = leg.notes.replace(/Collect:\s*₹?[0-9,]+/i, tag);
-        } else if (leg.notes) {
-          leg.notes += ` | ${tag}`;
+        leg.manualCollectionAmount = num;
+        if (isSettled) {
+          leg.manualCollectionAmount = 0;
+          leg.paymentStatus = 'Paid in Full';
+          const rev = getBookingRevenue(leg);
+          if (rev > 0) {
+            leg.advancePaid = rev;
+            leg.advance = rev;
+          }
+          const tag = `Collect: ₹0 (Paid in Full)`;
+          if (leg.notes && leg.notes.includes('Collect:')) {
+            leg.notes = leg.notes.replace(/Collect:\s*₹?[0-9,]+(?:\s*\([^)]*\))?/i, tag);
+          } else if (leg.notes) {
+            leg.notes += ` | ${tag}`;
+          } else {
+            leg.notes = tag;
+          }
         } else {
-          leg.notes = tag;
-        }
-
-        if (window.AirbnbAPI && typeof window.AirbnbAPI.saveBooking === 'function') {
-          window.AirbnbAPI.saveBooking(leg).catch(err => console.warn('D1 sync notice:', err));
+          leg.manualCollectionAmount = num;
+          if (leg.paymentStatus === 'Paid in Full') {
+            leg.paymentStatus = 'Deposit Paid';
+          }
+          const tag = `Collect: ₹${num.toLocaleString('en-IN')}`;
+          if (leg.notes && leg.notes.includes('Collect:')) {
+            leg.notes = leg.notes.replace(/Collect:\s*₹?[0-9,]+(?:\s*\([^)]*\))?/i, tag);
+          } else if (leg.notes) {
+            leg.notes += ` | ${tag}`;
+          } else {
+            leg.notes = tag;
+          }
         }
       });
 
       saveBookings();
       renderBookingsPortal();
-      showToast(split.isSplit ? `🎉 Marked full split stay for ${b.guestName} (${split.legs.length} rooms) as Paid in Full!` : `🎉 Marked ${b.guestName} as Paid in Full!`);
+      showToast(`⏳ Saving amount to collect (₹${num.toLocaleString('en-IN')}) to Cloudflare D1...`);
+
+      try {
+        if (window.AirbnbAPI) {
+          const syncPromises = targetLegs.map(async leg => {
+            const rev = getBookingRevenue(leg);
+            const payoutStr = leg.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
+            const payload = {
+              id: leg.id,
+              property: leg.property,
+              guestName: leg.guestName,
+              phone: leg.phone,
+              email: leg.email,
+              checkInDate: leg.checkInDate,
+              checkOutDate: leg.checkOutDate,
+              nights: leg.nights,
+              guestsCount: leg.guestsCount,
+              platform: leg.platform,
+              reservationCode: leg.reservationCode,
+              payout: payoutStr,
+              paymentStatus: leg.paymentStatus,
+              status: leg.status || 'Confirmed',
+              notes: leg.notes
+            };
+            if (typeof window.AirbnbAPI.updateBooking === 'function') {
+              return await window.AirbnbAPI.updateBooking(leg.id, payload);
+            } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
+              return await window.AirbnbAPI.saveBooking(payload);
+            }
+          });
+          await Promise.all(syncPromises);
+          saveBookings();
+          renderBookingsPortal();
+          showToast(`✅ Saved & synced amount to collect for ${b.guestName}: ₹${num.toLocaleString('en-IN')}`);
+        }
+      } catch (err) {
+        console.error("Error saving collection amount to D1:", err);
+        showToast("⚠️ Saved locally, sync queued: " + (err.message || err));
+      }
+    }
+
+    async function markGuestFullyPaid(bookingId) {
+      const b = currentBookings.find(x => x.id === bookingId);
+      if (!b) return;
+
+      const split = getSplitStayInfo(b, currentBookings);
+      const targetLegs = (split.isSplit && split.legs.length > 0) ? split.legs : [b];
+
+      // Optimistically update memory and localStorage immediately
+      targetLegs.forEach(leg => {
+        leg.manualCollectionAmount = 0;
+        leg.paymentStatus = 'Paid in Full';
+        const rev = getBookingRevenue(leg);
+        if (rev > 0) {
+          leg.advancePaid = rev;
+          leg.advance = rev;
+        }
+        const tag = `Collect: ₹0 (Paid in Full)`;
+        if (leg.notes && leg.notes.includes('Collect:')) {
+          leg.notes = leg.notes.replace(/Collect:\s*₹?[0-9,]+(?:\s*\([^)]*\))?/i, tag);
+        } else if (leg.notes) {
+          leg.notes += ` | ${tag}`;
+        } else {
+          leg.notes = tag;
+        }
+      });
+
+      saveBookings();
+      renderBookingsPortal();
+      showToast(split.isSplit ? `⏳ Syncing Paid status to Cloudflare D1 for ${targetLegs.length} rooms...` : `⏳ Syncing Paid status to Cloudflare D1...`);
+
+      // Persist to Cloudflare D1
+      try {
+        if (window.AirbnbAPI) {
+          const syncPromises = targetLegs.map(async leg => {
+            const rev = getBookingRevenue(leg);
+            const payoutStr = leg.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
+            const payload = {
+              id: leg.id,
+              property: leg.property,
+              guestName: leg.guestName,
+              phone: leg.phone,
+              email: leg.email,
+              checkInDate: leg.checkInDate,
+              checkOutDate: leg.checkOutDate,
+              nights: leg.nights,
+              guestsCount: leg.guestsCount,
+              platform: leg.platform,
+              reservationCode: leg.reservationCode,
+              payout: payoutStr,
+              paymentStatus: 'Paid in Full',
+              status: leg.status || 'Confirmed',
+              notes: leg.notes
+            };
+            if (typeof window.AirbnbAPI.updateBooking === 'function') {
+              return await window.AirbnbAPI.updateBooking(leg.id, payload);
+            } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
+              return await window.AirbnbAPI.saveBooking(payload);
+            }
+          });
+          await Promise.all(syncPromises);
+          saveBookings();
+          renderBookingsPortal();
+          showToast(split.isSplit ? `🎉 Marked & synced full stay for ${b.guestName} (${targetLegs.length} rooms) as Paid in Full!` : `🎉 Marked & synced ${b.guestName} as Paid in Full!`);
+        }
+      } catch (err) {
+        console.error("Error saving payment to D1:", err);
+        showToast("⚠️ Payment updated locally, sync queued: " + (err.message || err));
+      }
     }
 
     let showUpcomingCheckouts = false;
@@ -7235,6 +7350,26 @@
               }
             }
 
+            // Preserve locally edited payment fields if fresher
+            const localSaved = JSON.parse(localStorage.getItem('airbnb_bookings') || '[]');
+            const localMap = new Map((localSaved || []).map(b => [b.id, b]));
+            d1Bookings.forEach(b => {
+              const loc = localMap.get(b.id);
+              if (loc) {
+                if (loc.paymentStatus === 'Paid in Full' && b.paymentStatus !== 'Paid in Full') {
+                  b.paymentStatus = 'Paid in Full';
+                }
+                if (loc.manualCollectionAmount !== undefined) {
+                  b.manualCollectionAmount = loc.manualCollectionAmount;
+                }
+              }
+              if (b.notes) {
+                const cm = b.notes.match(/Collect:\s*₹?([0-9,]+)/i);
+                if (cm && b.manualCollectionAmount === undefined) {
+                  b.manualCollectionAmount = parseFloat(cm[1].replace(/,/g, '')) || 0;
+                }
+              }
+            });
             currentBookings = d1Bookings;
             localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
             localStorage.setItem('airbnb_bookings_version', 'v3_real_bookings_active');
@@ -7295,6 +7430,25 @@
                 d1Bookings.push(u);
               }
             }
+            // Preserve locally edited payment fields if fresher
+            const localMapInit = new Map((localSaved || []).map(b => [b.id, b]));
+            d1Bookings.forEach(b => {
+              const loc = localMapInit.get(b.id);
+              if (loc) {
+                if (loc.paymentStatus === 'Paid in Full' && b.paymentStatus !== 'Paid in Full') {
+                  b.paymentStatus = 'Paid in Full';
+                }
+                if (loc.manualCollectionAmount !== undefined) {
+                  b.manualCollectionAmount = loc.manualCollectionAmount;
+                }
+              }
+              if (b.notes) {
+                const cm = b.notes.match(/Collect:\s*₹?([0-9,]+)/i);
+                if (cm && b.manualCollectionAmount === undefined) {
+                  b.manualCollectionAmount = parseFloat(cm[1].replace(/,/g, '')) || 0;
+                }
+              }
+            });
             currentBookings = d1Bookings;
             localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
             localStorage.setItem('airbnb_bookings_version', CURRENT_DATA_VERSION);

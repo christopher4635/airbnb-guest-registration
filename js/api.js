@@ -124,6 +124,14 @@
           method: 'PUT',
           body: JSON.stringify(bookingData)
         });
+        if (res && res.data) {
+          const local = JSON.parse(localStorage.getItem('airbnb_bookings') || '[]');
+          const idx = local.findIndex(b => b.id === id);
+          if (idx !== -1) {
+            local[idx] = Object.assign(local[idx], res.data);
+            localStorage.setItem('airbnb_bookings', JSON.stringify(local));
+          }
+        }
         return res;
       } catch (e) {
         const local = JSON.parse(localStorage.getItem('airbnb_bookings') || '[]');
@@ -134,6 +142,20 @@
         }
         return { success: true, data: bookingData, offline: true };
       }
+    },
+
+    saveBooking: async function(bookingData) {
+      if (!bookingData) return { success: false, error: 'No booking data provided' };
+      const id = bookingData.id;
+      if (id) {
+        try {
+          const res = await this.updateBooking(id, bookingData);
+          if (res && (res.success || !res.error)) return res;
+        } catch (err) {
+          console.warn('[AirbnbAPI.saveBooking] Update failed, falling back to create:', err);
+        }
+      }
+      return await this.createBooking(bookingData);
     },
 
     deleteBooking: async function(id) {
