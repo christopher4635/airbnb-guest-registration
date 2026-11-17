@@ -122,19 +122,20 @@ export function getDashboardHtml(): string {
       body * {
         visibility: hidden;
       }
-      #salarySlipModal, #salarySlipModal * {
+      #salarySlipModal, #salarySlipModal *,
+      #roomBillModal, #roomBillModal * {
         visibility: visible;
       }
-      #salarySlipModal {
+      #salarySlipModal, #roomBillModal {
         position: absolute;
         left: 0;
         top: 0;
         width: 100%;
-        height: 100%;
         background: white !important;
         padding: 0;
+        margin: 0;
       }
-      #salarySlipModal .no-print {
+      .no-print, .no-print * {
         display: none !important;
       }
     }
@@ -300,6 +301,10 @@ export function getDashboardHtml(): string {
             <button id="btnLeaveRules" onclick="openLeavePolicyModal()" title="Leave Policy" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
               <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-600"></i>
               <span>Leave Rules</span>
+            </button>
+            <button id="btnBillingSettings" onclick="openBillingSettingsModal()" title="Invoice &amp; Bank Settings" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
+              <i data-lucide="receipt" class="w-3.5 h-3.5 text-slate-600"></i>
+              <span>Invoice Settings</span>
             </button>
             <button id="btnHeaderAddStaff" onclick="openStaffModal()" title="Add Staff" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition cursor-pointer">
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
@@ -1742,6 +1747,64 @@ export function getDashboardHtml(): string {
           </div>
         </div>
 
+        <!-- Billing Option (Non-GST vs 5% GST) & Invoice Preview -->
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="receipt" class="w-4 h-4 text-indigo-600"></i>
+              <span>Billing Option</span>
+            </label>
+            <span id="modalBillingTag" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">Non-GST</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-300 bg-white hover:border-indigo-400 cursor-pointer text-xs font-semibold text-slate-800 transition shadow-2xs">
+              <input type="radio" name="modalBookingBillingMode" value="0" checked onchange="onModalBillingOptionChange()" class="text-indigo-600 focus:ring-indigo-500" />
+              <div>
+                <span class="block font-bold">Non-GST Bill</span>
+                <span class="text-[10px] text-slate-400 font-normal">Standard 0% Tax</span>
+              </div>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/50 hover:border-indigo-400 cursor-pointer text-xs font-semibold text-indigo-950 transition shadow-2xs">
+              <input type="radio" name="modalBookingBillingMode" value="1" onchange="onModalBillingOptionChange()" class="text-indigo-600 focus:ring-indigo-500" />
+              <div>
+                <span class="block font-bold">GST Bill (+5%)</span>
+                <span class="text-[10px] text-indigo-600 font-normal">CGST 2.5% + SGST 2.5%</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- GST Calculation Breakdown (Shown when GST is selected) -->
+          <div id="modalGstCalculationBox" class="hidden p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs space-y-1">
+            <div class="flex justify-between text-slate-700">
+              <span>Base Room Tariff:</span>
+              <span id="modalGstBasePreview" class="font-mono font-semibold">₹0</span>
+            </div>
+            <div class="flex justify-between text-amber-900 font-medium">
+              <span>Additional 5% GST (CGST 2.5% + SGST 2.5%):</span>
+              <span id="modalGstTaxPreview" class="font-mono font-bold">+₹0</span>
+            </div>
+            <div class="flex justify-between text-slate-900 font-bold border-t border-amber-200/80 pt-1 text-xs">
+              <span>Total Bill Amount (incl. 5% GST):</span>
+              <span id="modalGstTotalPreview" class="font-mono font-black text-indigo-700">₹0</span>
+            </div>
+          </div>
+
+          <!-- Guest GST Details (Optional Company Name & GSTIN) -->
+          <div id="modalGstFieldsContainer" class="hidden space-y-2 pt-1 border-t border-slate-200/80">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Guest / Company Name</label>
+                <input type="text" id="modalBookingCompanyName" placeholder="e.g. Acme Corp Ltd" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Guest GSTIN (Optional)</label>
+                <input type="text" id="modalBookingGuestGstin" placeholder="e.g. 18AABCU9603R1ZM" class="w-full px-2.5 py-1.5 text-xs font-mono uppercase rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Guest Contact / Phone Number (Optional) with Live Returning Guest History Detection -->
         <div>
           <div class="flex items-center justify-between mb-1">
@@ -1863,14 +1926,20 @@ export function getDashboardHtml(): string {
           Multiple bookings for the same room on the same day are supported and automatically summed into lodging revenue.
         </p>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <button type="button" onclick="closeRoomBookingModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
-            Cancel
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <button type="button" id="btnModalViewBill" class="hidden px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+            <span>View / Print Bill</span>
           </button>
-          <button type="submit" id="btnSubmitModalBooking" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
-            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-            <span id="btnSubmitModalBookingText">Save Booking</span>
-          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" onclick="closeRoomBookingModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit" id="btnSubmitModalBooking" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span id="btnSubmitModalBookingText">Save Booking</span>
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -2277,6 +2346,363 @@ export function getDashboardHtml(): string {
     </div>
   </div>
 
+  <!-- Billing & Bank Settings Modal (Admin) -->
+  <div id="billingSettingsModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-xl rounded-3xl p-5 sm:p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh]">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+            <i data-lucide="receipt" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">
+              Invoice &amp; Bank Settings
+            </h3>
+            <p class="text-xs text-slate-500">Configure enterprise identity, bank details &amp; QR code printed on bills</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeBillingSettingsModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Settings Form -->
+      <form id="billingSettingsForm" onsubmit="handleSaveBillingSettings(event)" class="space-y-4 overflow-y-auto pr-1 flex-1">
+        <!-- Enterprise Details -->
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="building" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span>Enterprise Identity (Bill Header)</span>
+          </h4>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Enterprise / Business Name *</label>
+            <input
+              type="text"
+              id="setBillingEnterpriseName"
+              required
+              placeholder="M/s Bida Phong Enterprise"
+              value="M/s Bida Phong Enterprise"
+              class="w-full px-3 py-2 text-xs font-bold text-slate-900 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+            />
+            <p class="text-[10px] text-slate-400 mt-0.5">Bills and invoices will be issued under this business name.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Enterprise GSTIN (Optional)</label>
+              <input
+                type="text"
+                id="setBillingEnterpriseGstin"
+                placeholder="e.g. 18XXXXX1234X1ZX"
+                class="w-full px-3 py-2 text-xs font-mono uppercase rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Contact Phone</label>
+              <input
+                type="tel"
+                id="setBillingEnterprisePhone"
+                placeholder="e.g. +91 98765 43210"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-700 mb-1">Address / Location</label>
+            <input
+              type="text"
+              id="setBillingEnterpriseAddress"
+              placeholder="e.g. Main Road, Near Clock Tower, Tezpur, Assam - 784001"
+              class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Email (Optional)</label>
+              <input
+                type="email"
+                id="setBillingEnterpriseEmail"
+                placeholder="e.g. info@bidaphong.com"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Invoice Number Prefix</label>
+              <input
+                type="text"
+                id="setBillingInvoicePrefix"
+                placeholder="e.g. INV-"
+                value="INV-"
+                class="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Details Section -->
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="landmark" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span>Bank Account Details (Printed on Bill)</span>
+          </h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Bank Name</label>
+              <input
+                type="text"
+                id="setBillingBankName"
+                placeholder="e.g. State Bank of India"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Account Holder Name</label>
+              <input
+                type="text"
+                id="setBillingAccountName"
+                placeholder="e.g. M/s Bida Phong Enterprise"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Account Number</label>
+              <input
+                type="text"
+                id="setBillingAccountNumber"
+                placeholder="e.g. 123456789012"
+                class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">IFSC Code</label>
+              <input
+                type="text"
+                id="setBillingIfscCode"
+                placeholder="e.g. SBIN0001234"
+                class="w-full px-3 py-2 text-xs font-mono uppercase rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">Branch Name</label>
+              <input
+                type="text"
+                id="setBillingBranch"
+                placeholder="e.g. Main Branch"
+                class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-700 mb-1">UPI ID (VPA)</label>
+              <input
+                type="text"
+                id="setBillingUpiId"
+                placeholder="e.g. bidaphong@upi"
+                class="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment QR Code Image Upload -->
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="qr-code" class="w-3.5 h-3.5 text-indigo-600"></i>
+              <span>Payment QR Code</span>
+            </h4>
+            <span class="text-[10px] text-slate-400 font-medium">Scannable by guests</span>
+          </div>
+
+          <input type="hidden" id="setBillingQrImageUrl" />
+          <input type="file" id="settingQrCameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleSettingQrCameraSelected(event)" />
+          <input type="file" id="settingQrFileInput" accept="image/*" class="hidden" onchange="handleSettingQrFileSelected(event)" />
+
+          <div class="flex items-start gap-4">
+            <!-- QR Preview Card -->
+            <div id="settingQrPreviewBox" class="w-28 h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-white flex flex-col items-center justify-center p-1.5 shrink-0 overflow-hidden relative shadow-2xs">
+              <img id="settingQrPreviewImg" src="" alt="QR Preview" class="hidden w-full h-full object-contain rounded-xl" />
+              <div id="settingQrPlaceholder" class="flex flex-col items-center justify-center text-center p-2 text-slate-400">
+                <i data-lucide="qr-code" class="w-8 h-8 text-slate-300 mb-1"></i>
+                <span class="text-[9px] leading-tight">No QR image</span>
+              </div>
+            </div>
+
+            <!-- Upload Action Buttons -->
+            <div class="space-y-2 flex-1">
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onclick="document.getElementById('settingQrCameraInput').click()"
+                  class="py-2 px-2.5 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/70 hover:bg-indigo-100/70 text-indigo-900 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <i data-lucide="camera" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>Snap Photo</span>
+                </button>
+                <button
+                  type="button"
+                  onclick="document.getElementById('settingQrFileInput').click()"
+                  class="py-2 px-2.5 rounded-xl border border-dashed border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <i data-lucide="upload" class="w-3.5 h-3.5 text-slate-500"></i>
+                  <span>Upload QR</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                id="btnRemoveSettingQr"
+                onclick="removeSettingQrImage()"
+                class="hidden text-[11px] font-bold text-rose-600 hover:text-rose-800 transition cursor-pointer flex items-center gap-1"
+              >
+                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                <span>Remove QR Code Image</span>
+              </button>
+
+              <p class="text-[10px] text-slate-400 leading-tight">
+                Upload your PhonePe, Google Pay, Paytm, or Bank UPI QR code. If none is uploaded, a dynamic UPI QR will be generated automatically when a UPI ID is provided.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terms and Conditions Notes -->
+        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="file-text" class="w-3.5 h-3.5 text-indigo-600"></i>
+            <span>Terms &amp; Conditions / Bill Notes</span>
+          </label>
+          <textarea
+            id="setBillingTerms"
+            rows="2"
+            placeholder="Thank you for staying at XSquare Hotel! Check-out time is 11:00 AM."
+            class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+          ></textarea>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 shrink-0">
+          <button type="button" onclick="closeBillingSettingsModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" id="btnSaveBillingSettings" class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save Settings</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Room Bill & Invoice Modal (Printable & Shareable A4) -->
+  <div id="roomBillModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[96vh] my-auto">
+      
+      <!-- Sticky Action Bar (Hidden when printing via .no-print) -->
+      <div class="no-print px-4 py-3 bg-slate-900 text-white flex items-center justify-between gap-2 flex-wrap shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+              <span>Hotel Bill / Invoice</span>
+              <span id="billModalInvoiceBadge" class="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-indigo-500/30 text-indigo-200"></span>
+            </h3>
+            <p id="billModalSubtitle" class="text-[10px] text-slate-400"></p>
+          </div>
+        </div>
+
+        <!-- Controls: GST Switch, Print, WhatsApp, Close -->
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <!-- GST Mode Toggle Pill -->
+          <div class="flex items-center bg-slate-800 p-0.5 rounded-xl border border-slate-700">
+            <button
+              type="button"
+              id="btnBillToggleNonGst"
+              onclick="toggleBillGstMode(false)"
+              class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
+            >
+              <span>Non-GST</span>
+            </button>
+            <button
+              type="button"
+              id="btnBillToggleGst"
+              onclick="toggleBillGstMode(true)"
+              class="px-2.5 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer flex items-center gap-1"
+            >
+              <span>GST 5%</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onclick="shareBillViaWhatsApp()"
+            title="Share Bill via WhatsApp"
+            class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+          >
+            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">WhatsApp</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="window.print()"
+            title="Print or Save as PDF"
+            class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+          >
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+            <span>Print / PDF</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="closeRoomBillModal()"
+            title="Close"
+            class="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+          >
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Document Sheet Body -->
+      <div id="printableBillArea" class="p-4 sm:p-8 bg-white overflow-y-auto flex-1 text-slate-900 font-sans">
+        <!-- Rendered dynamically by renderRoomBillHtml(billData) -->
+        <div id="roomBillContent" class="space-y-6">
+          <div class="py-12 text-center text-slate-400 text-xs">
+            Loading bill details...
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Bar (No-print) -->
+      <div class="no-print px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500 shrink-0">
+        <div class="flex items-center gap-2">
+          <span id="billSaveStatusMsg" class="text-[11px] font-medium text-slate-600"></span>
+        </div>
+        <button
+          type="button"
+          onclick="closeRoomBillModal()"
+          class="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold transition cursor-pointer text-xs"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-20 right-4 sm:right-5 z-[60] bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform translate-y-16 opacity-0 transition-all duration-200 pointer-events-none">
     <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
@@ -2618,6 +3044,7 @@ export function getDashboardHtml(): string {
     function applyRolePermissions() {
       const badge = document.getElementById("userRoleBadge");
       const btnLeaveRules = document.getElementById("btnLeaveRules");
+      const btnBillingSettings = document.getElementById("btnBillingSettings");
       const btnAddStaff = document.getElementById("btnHeaderAddStaff");
       const btnAdminSecurity = document.getElementById("btnAdminSecurity");
       const tabPayroll = document.getElementById("viewTabPayroll");
@@ -2633,6 +3060,7 @@ export function getDashboardHtml(): string {
 
         if (btnAdminSecurity) btnAdminSecurity.style.display = "none";
         if (btnLeaveRules) btnLeaveRules.style.display = "none";
+        if (btnBillingSettings) btnBillingSettings.style.display = "none";
         if (btnAddStaff) btnAddStaff.style.display = "none";
         if (tabPayroll) tabPayroll.style.display = "none";
         if (tabDirectory) tabDirectory.style.display = "none";
@@ -2652,6 +3080,7 @@ export function getDashboardHtml(): string {
 
         if (btnAdminSecurity) btnAdminSecurity.style.display = "";
         if (btnLeaveRules) btnLeaveRules.style.display = "";
+        if (btnBillingSettings) btnBillingSettings.style.display = "";
         if (btnAddStaff) btnAddStaff.style.display = "";
         if (tabPayroll) tabPayroll.style.display = "";
         if (tabDirectory) tabDirectory.style.display = "";
@@ -7904,6 +8333,18 @@ export function getDashboardHtml(): string {
                 <span>Guest History</span>
               </button>
 
+              \${currentUserRole === 'admin' ? \`
+                <button
+                  type="button"
+                  onclick="openBillingSettingsModal()"
+                  title="Invoice &amp; Bank Settings"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition cursor-pointer"
+                >
+                  <i data-lucide="receipt" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>Invoice Settings</span>
+                </button>
+              \` : ''}
+
               <button
                 type="button"
                 onclick="openRoomBookingModal(null, null, null)"
@@ -9543,6 +9984,8 @@ export function getDashboardHtml(): string {
         "roomDayDetailModal",
         "roomBookingModal",
         "guestTravelHistoryModal",
+        "billingSettingsModal",
+        "roomBillModal",
         "manageRoomModal",
         "financeModal",
         "businessConfigModal",
@@ -9879,6 +10322,27 @@ export function getDashboardHtml(): string {
             if (groupNotice) groupNotice.classList.add("hidden");
           }
 
+          const isGstRadio1 = document.querySelector('input[name="modalBookingBillingMode"][value="1"]');
+          const isGstRadio0 = document.querySelector('input[name="modalBookingBillingMode"][value="0"]');
+          if (bk.is_gst) {
+            if (isGstRadio1) isGstRadio1.checked = true;
+          } else {
+            if (isGstRadio0) isGstRadio0.checked = true;
+          }
+          const gstinInp = document.getElementById("modalBookingGuestGstin");
+          const compInp = document.getElementById("modalBookingCompanyName");
+          if (gstinInp) gstinInp.value = bk.guest_gstin || "";
+          if (compInp) compInp.value = bk.company_name || "";
+          onModalBillingOptionChange();
+
+          const btnViewBill = document.getElementById("btnModalViewBill");
+          if (btnViewBill) {
+            btnViewBill.classList.remove("hidden");
+            btnViewBill.onclick = () => {
+              closeRoomBookingModal();
+              openRoomBillModal(bk.id);
+            };
+          }
 
           if (staySegment) staySegment.classList.add("hidden");
           modalQuickSetNights(1);
@@ -9922,6 +10386,17 @@ export function getDashboardHtml(): string {
         if (onlineInp) onlineInp.value = basePrice;
         onModalCashOnlineInput();
 
+        const isGstRadio0 = document.querySelector('input[name="modalBookingBillingMode"][value="0"]');
+        if (isGstRadio0) isGstRadio0.checked = true;
+        const gstinInp = document.getElementById("modalBookingGuestGstin");
+        const compInp = document.getElementById("modalBookingCompanyName");
+        if (gstinInp) gstinInp.value = "";
+        if (compInp) compInp.value = "";
+        onModalBillingOptionChange();
+
+        const btnViewBill = document.getElementById("btnModalViewBill");
+        if (btnViewBill) btnViewBill.classList.add("hidden");
+
         if (staySegment) staySegment.classList.remove("hidden");
         if (groupNotice) groupNotice.classList.add("hidden");
         modalQuickSetNights(1);
@@ -9961,6 +10436,59 @@ export function getDashboardHtml(): string {
           badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200";
           badge.innerText = "100% Online";
         }
+      }
+
+      onModalBillingOptionChange();
+    }
+
+    function onModalBillingOptionChange() {
+      const billingRadios = document.getElementsByName("modalBookingBillingMode");
+      let isGst = false;
+      for (const r of billingRadios) {
+        if (r.checked && (r.value === "1" || r.value === 1)) {
+          isGst = true;
+          break;
+        }
+      }
+
+      const tag = document.getElementById("modalBillingTag");
+      const gstBox = document.getElementById("modalGstCalculationBox");
+      const gstFields = document.getElementById("modalGstFieldsContainer");
+      const basePreview = document.getElementById("modalGstBasePreview");
+      const taxPreview = document.getElementById("modalGstTaxPreview");
+      const totalPreview = document.getElementById("modalGstTotalPreview");
+
+      const cashInp = document.getElementById("modalBookingCashAmount");
+      const onlineInp = document.getElementById("modalBookingOnlineAmount");
+      const totalStayInput = document.getElementById("modalTotalStayAmount");
+      const singleAmountInput = document.getElementById("modalBookingAmount");
+      let total = (parseFloat(cashInp?.value || "0") || 0) + (parseFloat(onlineInp?.value || "0") || 0);
+      if (total <= 0) {
+        total = parseFloat(totalStayInput?.value || singleAmountInput?.value || "0") || 0;
+      }
+
+      if (isGst) {
+        if (tag) {
+          tag.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300";
+          tag.innerText = "GST 5% Bill";
+        }
+        if (gstBox) gstBox.classList.remove("hidden");
+        if (gstFields) gstFields.classList.remove("hidden");
+
+        const gstTax = Math.round(total * 0.05 * 100) / 100;
+        const halfGst = Math.round((gstTax / 2) * 100) / 100;
+        const grandTotal = Math.round((total + gstTax) * 100) / 100;
+
+        if (basePreview) basePreview.innerText = \`₹\${formatCurrency(total)}\`;
+        if (taxPreview) taxPreview.innerText = \`+₹\${formatCurrency(gstTax)} (CGST ₹\${formatCurrency(halfGst)} + SGST ₹\${formatCurrency(halfGst)})\`;
+        if (totalPreview) totalPreview.innerText = \`₹\${formatCurrency(grandTotal)}\`;
+      } else {
+        if (tag) {
+          tag.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700";
+          tag.innerText = "Non-GST Bill";
+        }
+        if (gstBox) gstBox.classList.add("hidden");
+        if (gstFields) gstFields.classList.add("hidden");
       }
     }
 
@@ -10038,6 +10566,17 @@ export function getDashboardHtml(): string {
       const notes = document.getElementById("modalBookingNotes")?.value?.trim() || "";
       const guest_phone = document.getElementById("modalBookingGuestPhone")?.value?.trim() || null;
 
+      const billingRadios = document.getElementsByName("modalBookingBillingMode");
+      let is_gst = 0;
+      for (const r of billingRadios) {
+        if (r.checked && (r.value === "1" || r.value === 1)) {
+          is_gst = 1;
+          break;
+        }
+      }
+      const guest_gstin = document.getElementById("modalBookingGuestGstin")?.value?.trim()?.toUpperCase() || null;
+      const company_name = document.getElementById("modalBookingCompanyName")?.value?.trim() || null;
+
       if (!property_id || !room_id) {
         return showToast("Please select a room");
       }
@@ -10054,7 +10593,10 @@ export function getDashboardHtml(): string {
         guest_count,
         guests_json,
         guest_id_image,
-        notes
+        notes,
+        is_gst,
+        guest_gstin,
+        company_name
       };
 
       if (bookingId) {
@@ -10173,6 +10715,15 @@ export function getDashboardHtml(): string {
                       </span>
                     \` : ''}
                     \${renderBookingPaymentBadge(b)}
+                    \${b.is_gst ? \`
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-amber-100 text-amber-800 border border-amber-200" title="GST 5% Bill">
+                        GST 5%
+                      </span>
+                    \` : \`
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-600 border border-slate-200" title="Non-GST Bill">
+                        Non-GST
+                      </span>
+                    \`}
                     \${b.external_booking_id ? \`
                       <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1" title="External Booking Synced from Airbnb Host Portal">
                         <i data-lucide="cloud-check" class="w-2.5 h-2.5"></i>
@@ -10253,10 +10804,18 @@ export function getDashboardHtml(): string {
                   </div>
                 </div>
 
-                <div class="text-right flex items-center gap-2">
+                <div class="text-right flex items-center gap-1.5">
                   <div class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
                     ₹\${formatCurrency(b.amount)}
                   </div>
+                  <button
+                    type="button"
+                    onclick="openRoomBillModal('\${b.id}')"
+                    title="View / Print Bill"
+                    class="p-1.5 rounded-lg hover:bg-white text-indigo-600 hover:text-indigo-800 cursor-pointer shadow-2xs border border-indigo-200 bg-indigo-50/70"
+                  >
+                    <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                  </button>
                   <button
                     type="button"
                     onclick="closeRoomDayDetailModal(); openEditBookingModal('\${b.id}')"
@@ -10656,6 +11215,15 @@ export function getDashboardHtml(): string {
                       </span>
                       <span class="text-[10px] text-slate-500 font-medium">(\${escapeHtml(b.room_type || 'Standard')})</span>
                       \${renderBookingPaymentBadge(b)}
+                      \${b.is_gst ? \`
+                        <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          GST 5%
+                        </span>
+                      \` : \`
+                        <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                          Non-GST
+                        </span>
+                      \`}
                       \${isMultiDay ? \`
                         <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-purple-100 text-purple-800 flex items-center gap-1">
                           <i data-lucide="layers" class="w-2.5 h-2.5"></i>
@@ -10696,17 +11264,27 @@ export function getDashboardHtml(): string {
                     </div>
                   </div>
 
-                  <div class="text-right sm:border-l sm:border-slate-100 sm:pl-3 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1 shrink-0">
+                  <div class="text-right sm:border-l sm:border-slate-100 sm:pl-3 flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-1.5 shrink-0">
                     <div class="text-sm font-black font-mono \${isOnline ? 'text-indigo-900' : 'text-amber-900'}">
                       ₹\${formatCurrency(b.amount)}
                     </div>
-                    <button
-                      type="button"
-                      onclick="closeGuestTravelHistoryModal(); openEditBookingModal('\${b.id}')"
-                      class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
-                    >
-                      Edit Booking ✏️
-                    </button>
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onclick="openRoomBillModal('\${b.id}')"
+                        class="text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-lg border border-indigo-200 cursor-pointer transition flex items-center gap-1"
+                      >
+                        <i data-lucide="receipt" class="w-3 h-3"></i>
+                        <span>🧾 Bill</span>
+                      </button>
+                      <button
+                        type="button"
+                        onclick="closeGuestTravelHistoryModal(); openEditBookingModal('\${b.id}')"
+                        class="text-[10px] font-bold text-slate-600 hover:text-indigo-600 hover:underline cursor-pointer"
+                      >
+                        Edit ✏️
+                      </button>
+                    </div>
                   </div>
                 </div>
               \`;
@@ -11485,6 +12063,608 @@ export function getDashboardHtml(): string {
         if (sendBtn) sendBtn.disabled = false;
         renderAiChatMessages();
       }
+    }
+
+    let currentBillingSettings = null;
+    let currentBillData = null;
+
+    async function openBillingSettingsModal() {
+      if (currentUserRole !== "admin") {
+        return showToast("Admin access required for invoice settings");
+      }
+      try {
+        const res = await fetch("/api/billing-settings", {
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        currentBillingSettings = data.settings || {};
+
+        const nameInp = document.getElementById("setBillingEnterpriseName");
+        const gstinInp = document.getElementById("setBillingEnterpriseGstin");
+        const phoneInp = document.getElementById("setBillingEnterprisePhone");
+        const addrInp = document.getElementById("setBillingEnterpriseAddress");
+        const emailInp = document.getElementById("setBillingEnterpriseEmail");
+        const prefixInp = document.getElementById("setBillingInvoicePrefix");
+
+        const bankInp = document.getElementById("setBillingBankName");
+        const accNameInp = document.getElementById("setBillingAccountName");
+        const accNumInp = document.getElementById("setBillingAccountNumber");
+        const ifscInp = document.getElementById("setBillingIfscCode");
+        const branchInp = document.getElementById("setBillingBranch");
+        const upiInp = document.getElementById("setBillingUpiId");
+        const termsInp = document.getElementById("setBillingTerms");
+
+        if (nameInp) nameInp.value = currentBillingSettings.enterprise_name || "M/s Bida Phong Enterprise";
+        if (gstinInp) gstinInp.value = currentBillingSettings.enterprise_gstin || "";
+        if (phoneInp) phoneInp.value = currentBillingSettings.enterprise_phone || "";
+        if (addrInp) addrInp.value = currentBillingSettings.enterprise_address || "";
+        if (emailInp) emailInp.value = currentBillingSettings.enterprise_email || "";
+        if (prefixInp) prefixInp.value = currentBillingSettings.invoice_prefix || "INV-";
+
+        if (bankInp) bankInp.value = currentBillingSettings.bank_name || "";
+        if (accNameInp) accNameInp.value = currentBillingSettings.account_name || "";
+        if (accNumInp) accNumInp.value = currentBillingSettings.account_number || "";
+        if (ifscInp) ifscInp.value = currentBillingSettings.ifsc_code || "";
+        if (branchInp) branchInp.value = currentBillingSettings.branch || "";
+        if (upiInp) upiInp.value = currentBillingSettings.upi_id || "";
+        if (termsInp) termsInp.value = currentBillingSettings.terms || "";
+
+        renderSettingQrPreview(currentBillingSettings.qr_image_url || "");
+
+        const modal = document.getElementById("billingSettingsModal");
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+        }
+        refreshIcons();
+      } catch (err) {
+        showToast("Error loading invoice settings: " + err.message);
+      }
+    }
+
+    function closeBillingSettingsModal() {
+      const modal = document.getElementById("billingSettingsModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function renderSettingQrPreview(url) {
+      const input = document.getElementById("setBillingQrImageUrl");
+      const img = document.getElementById("settingQrPreviewImg");
+      const placeholder = document.getElementById("settingQrPlaceholder");
+      const removeBtn = document.getElementById("btnRemoveSettingQr");
+
+      if (input) input.value = url || "";
+      if (url) {
+        if (img) {
+          img.src = url;
+          img.classList.remove("hidden");
+        }
+        if (placeholder) placeholder.classList.add("hidden");
+        if (removeBtn) removeBtn.classList.remove("hidden");
+      } else {
+        if (img) {
+          img.src = "";
+          img.classList.add("hidden");
+        }
+        if (placeholder) placeholder.classList.remove("hidden");
+        if (removeBtn) removeBtn.classList.add("hidden");
+      }
+    }
+
+    async function handleSettingQrFileSelected(e) {
+      const file = e.target?.files?.[0];
+      if (!file) return;
+      await uploadQrImageFile(file);
+    }
+
+    async function handleSettingQrCameraSelected(e) {
+      const file = e.target?.files?.[0];
+      if (!file) return;
+      await uploadQrImageFile(file);
+    }
+
+    async function uploadQrImageFile(file) {
+      try {
+        showToast("Uploading QR code image...");
+        const base64Data = await readFileAsBase64(file);
+        const res = await fetch("/api/guest-ids", {
+          method: "POST",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: "BillingQR_" + Date.now() + "_" + (file.name || "qr.jpg"),
+            data: base64Data
+          })
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to upload QR code");
+        }
+        renderSettingQrPreview(data.url);
+        showToast("QR code image uploaded!");
+      } catch (err) {
+        showToast("Error uploading QR code: " + err.message);
+      }
+    }
+
+    function removeSettingQrImage() {
+      renderSettingQrPreview("");
+    }
+
+    async function handleSaveBillingSettings(e) {
+      if (e) e.preventDefault();
+      const name = document.getElementById("setBillingEnterpriseName")?.value?.trim();
+      if (!name) {
+        return showToast("Enterprise name is required");
+      }
+
+      const payload = {
+        enterprise_name: name,
+        enterprise_address: document.getElementById("setBillingEnterpriseAddress")?.value?.trim() || "",
+        enterprise_phone: document.getElementById("setBillingEnterprisePhone")?.value?.trim() || "",
+        enterprise_email: document.getElementById("setBillingEnterpriseEmail")?.value?.trim() || "",
+        enterprise_gstin: document.getElementById("setBillingEnterpriseGstin")?.value?.trim()?.toUpperCase() || "",
+        bank_name: document.getElementById("setBillingBankName")?.value?.trim() || "",
+        account_name: document.getElementById("setBillingAccountName")?.value?.trim() || "",
+        account_number: document.getElementById("setBillingAccountNumber")?.value?.trim() || "",
+        ifsc_code: document.getElementById("setBillingIfscCode")?.value?.trim()?.toUpperCase() || "",
+        branch: document.getElementById("setBillingBranch")?.value?.trim() || "",
+        upi_id: document.getElementById("setBillingUpiId")?.value?.trim() || "",
+        qr_image_url: document.getElementById("setBillingQrImageUrl")?.value?.trim() || "",
+        terms: document.getElementById("setBillingTerms")?.value?.trim() || "",
+        invoice_prefix: document.getElementById("setBillingInvoicePrefix")?.value?.trim() || "INV-"
+      };
+
+      try {
+        const res = await fetch("/api/billing-settings", {
+          method: "POST",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to save settings");
+        }
+        currentBillingSettings = data.settings || payload;
+        closeBillingSettingsModal();
+        showToast("Invoice & Bank Settings saved successfully!");
+      } catch (err) {
+        showToast("Error saving invoice settings: " + err.message);
+      }
+    }
+
+    function viewBillFromBookingModal() {
+      const id = document.getElementById("modalBookingId")?.value;
+      if (id) {
+        closeRoomBookingModal();
+        openRoomBillModal(id);
+      }
+    }
+
+    async function openRoomBillModal(bookingId) {
+      if (!bookingId) return;
+      try {
+        const content = document.getElementById("roomBillContent");
+        if (content) {
+          content.innerHTML = '<div class="py-12 text-center text-slate-400 text-xs">Loading bill details...</div>';
+        }
+
+        const modal = document.getElementById("roomBillModal");
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+        }
+
+        const res = await fetch("/api/room-bookings/" + encodeURIComponent(bookingId) + "/bill", {
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to load bill");
+        }
+
+        const rawBill = data.bill || {};
+        currentBillData = {
+          booking_id: rawBill.booking_id,
+          group_booking_id: rawBill.group_booking_id,
+          invoice_number: rawBill.invoice_number,
+          date: rawBill.invoice_date || rawBill.stay?.check_in_date || rawBill.date || "",
+          enterprise_name: rawBill.enterprise?.enterprise_name || rawBill.enterprise_name || "M/s Bida Phong Enterprise",
+          enterprise_address: rawBill.enterprise?.address || rawBill.enterprise_address || "",
+          enterprise_phone: rawBill.enterprise?.phone || rawBill.enterprise_phone || "",
+          enterprise_email: rawBill.enterprise?.email || rawBill.enterprise_email || "",
+          enterprise_gstin: rawBill.enterprise?.gstin || rawBill.enterprise_gstin || "",
+          bank_name: rawBill.enterprise?.bank_name || rawBill.bank_name || "State Bank of India",
+          account_name: rawBill.enterprise?.account_name || rawBill.account_name || "M/s Bida Phong Enterprise",
+          account_number: rawBill.enterprise?.account_number || rawBill.account_number || "",
+          ifsc_code: rawBill.enterprise?.ifsc_code || rawBill.ifsc_code || "",
+          branch: rawBill.enterprise?.branch || rawBill.branch || "",
+          upi_id: rawBill.enterprise?.upi_id || rawBill.upi_id || "",
+          qr_image_url: rawBill.enterprise?.qr_image_url || rawBill.enterprise?.qr_code_image || rawBill.qr_image_url || "",
+          terms: rawBill.enterprise?.invoice_terms || rawBill.terms || "",
+          guest_name: rawBill.guest?.name || rawBill.guest_name || "Walk-in Guest",
+          guest_phone: rawBill.guest?.phone || rawBill.guest_phone || "",
+          guest_count: rawBill.guest?.count || rawBill.guest_count || 1,
+          guest_gstin: rawBill.guest?.gstin || rawBill.guest_gstin || "",
+          company_name: rawBill.guest?.company_name || rawBill.company_name || "",
+          room_number: rawBill.stay?.room_number || rawBill.room_number || "",
+          room_type: rawBill.stay?.room_type || rawBill.room_type || "Standard",
+          check_in_date: rawBill.stay?.check_in_date || rawBill.check_in_date || "",
+          check_out_date: rawBill.stay?.check_out_date || rawBill.check_out_date || "",
+          nights: rawBill.stay?.nights || rawBill.nights || 1,
+          is_gst: (rawBill.pricing?.is_gst !== undefined ? (rawBill.pricing.is_gst ? 1 : 0) : (rawBill.is_gst ? 1 : 0)),
+          base_amount: Number(rawBill.pricing?.base_tariff || rawBill.base_amount || rawBill.amount || 0),
+          gst_rate: Number(rawBill.pricing?.gst_rate || rawBill.gst_rate || 5.0),
+          gst_amount: Number(rawBill.pricing?.gst_amount || rawBill.gst_amount || 0),
+          total_amount: Number(rawBill.pricing?.grand_total || rawBill.total_amount || 0),
+          payment_mode: rawBill.payment?.mode || rawBill.payment_mode || "online",
+          cash_amount: Number(rawBill.payment?.cash_amount || rawBill.cash_amount || 0),
+          online_amount: Number(rawBill.payment?.online_amount || rawBill.online_amount || 0),
+          notes: rawBill.notes || ""
+        };
+        renderRoomBillHtml(currentBillData);
+        refreshIcons();
+      } catch (err) {
+        showToast("Error loading bill: " + err.message);
+      }
+    }
+
+    function closeRoomBillModal() {
+      const modal = document.getElementById("roomBillModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+      currentBillData = null;
+    }
+
+    function toggleBillGstMode(isGst) {
+      if (!currentBillData) return;
+      currentBillData.is_gst = isGst ? 1 : 0;
+      const base = Number(currentBillData.base_amount || currentBillData.amount || 0);
+
+      if (isGst) {
+        currentBillData.gst_rate = 5.0;
+        currentBillData.gst_amount = Math.round(base * 0.05 * 100) / 100;
+        currentBillData.total_amount = Math.round((base + currentBillData.gst_amount) * 100) / 100;
+      } else {
+        currentBillData.gst_rate = 0;
+        currentBillData.gst_amount = 0;
+        currentBillData.total_amount = base;
+      }
+
+      renderRoomBillHtml(currentBillData);
+      saveCurrentBillBillingChoice();
+    }
+
+    async function saveCurrentBillBillingChoice() {
+      if (!currentBillData || !currentBillData.booking_id) return;
+      const statusMsg = document.getElementById("billSaveStatusMsg");
+      if (statusMsg) statusMsg.innerText = "Saving billing choice...";
+      try {
+        const res = await fetch("/api/room-bookings/" + encodeURIComponent(currentBillData.booking_id) + "/billing", {
+          method: "PUT",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            is_gst: currentBillData.is_gst === 1,
+            guest_gstin: currentBillData.guest_gstin,
+            company_name: currentBillData.company_name
+          })
+        });
+        if (res.ok) {
+          if (statusMsg) {
+            statusMsg.innerText = currentBillData.is_gst ? "GST 5% Saved" : "Non-GST Saved";
+            setTimeout(() => { if (statusMsg) statusMsg.innerText = ""; }, 2500);
+          }
+          fetchRoomBookings();
+        }
+      } catch (err) {
+        if (statusMsg) statusMsg.innerText = "";
+      }
+    }
+
+    function numberToWords(amount) {
+      const num = Math.round(Number(amount) || 0);
+      if (num === 0) return "Zero Rupees Only";
+
+      const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+      const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+      function inWords(n) {
+        if (n < 20) return a[n];
+        const digit = n % 10;
+        return b[Math.floor(n / 10)] + (digit ? " " + a[digit] : "");
+      }
+
+      let words = "";
+      let crore = Math.floor(num / 10000000);
+      let remainder = num % 10000000;
+      let lakh = Math.floor(remainder / 100000);
+      remainder = remainder % 100000;
+      let thousand = Math.floor(remainder / 1000);
+      remainder = remainder % 1000;
+      let hundred = Math.floor(remainder / 100);
+      let rest = remainder % 100;
+
+      if (crore > 0) words += inWords(crore) + " Crore ";
+      if (lakh > 0) words += inWords(lakh) + " Lakh ";
+      if (thousand > 0) words += inWords(thousand) + " Thousand ";
+      if (hundred > 0) words += inWords(hundred) + " Hundred ";
+      if (rest > 0) words += (words !== "" ? "and " : "") + inWords(rest) + " ";
+
+      return "Rupees " + words.trim() + " Only";
+    }
+
+    function renderRoomBillHtml(b) {
+      const content = document.getElementById("roomBillContent");
+      const badge = document.getElementById("billModalInvoiceBadge");
+      const subtitle = document.getElementById("billModalSubtitle");
+      const btnNonGst = document.getElementById("btnBillToggleNonGst");
+      const btnGst = document.getElementById("btnBillToggleGst");
+
+      if (!content || !b) return;
+
+      const isGst = !!b.is_gst;
+      if (btnNonGst && btnGst) {
+        if (isGst) {
+          btnNonGst.className = "px-2.5 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer text-slate-400 hover:text-white";
+          btnGst.className = "px-2.5 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer bg-amber-500 text-slate-950 shadow-sm";
+        } else {
+          btnNonGst.className = "px-2.5 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer bg-white text-slate-900 shadow-sm";
+          btnGst.className = "px-2.5 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer text-slate-400 hover:text-white";
+        }
+      }
+
+      if (badge) badge.innerText = b.invoice_number || "INV-NEW";
+      if (subtitle) subtitle.innerText = (isGst ? "GST 5% Tax Invoice" : "Non-GST Bill") + " · Room " + (b.room_number || "") + " · " + (b.guest_name || "Guest");
+
+      const baseAmount = Number(b.base_amount || b.amount || 0);
+      const gstAmount = isGst ? Number(b.gst_amount || 0) : 0;
+      const cgst = Math.round((gstAmount / 2) * 100) / 100;
+      const sgst = Math.round((gstAmount / 2) * 100) / 100;
+      const totalAmount = Number(b.total_amount || (baseAmount + gstAmount));
+
+      const nights = Math.max(1, Number(b.nights || 1));
+      const ratePerNight = Math.round(baseAmount / nights);
+
+      let qrSrc = b.qr_image_url || "";
+      if (!qrSrc && b.upi_id) {
+        const upiPayUri = "upi://pay?pa=" + encodeURIComponent(b.upi_id) +
+          "&pn=" + encodeURIComponent(b.enterprise_name || "Hotel") +
+          "&am=" + totalAmount + "&cu=INR";
+        qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(upiPayUri);
+      }
+
+      content.innerHTML = \`
+        <div class="border border-slate-300 rounded-3xl p-5 sm:p-7 bg-white space-y-6 shadow-xs font-sans text-slate-900">
+          
+          <!-- Invoice Header -->
+          <div class="flex items-start justify-between flex-wrap gap-4 border-b border-slate-200 pb-5">
+            <div>
+              <div class="text-[11px] font-black tracking-widest uppercase text-indigo-600 mb-0.5">XSquare Hotel</div>
+              <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                \${escapeHtml(b.enterprise_name || 'M/s Bida Phong Enterprise')}
+              </h2>
+              \${b.enterprise_address ? \`<p class="text-xs text-slate-600 mt-1 max-w-sm">\${escapeHtml(b.enterprise_address)}</p>\` : ''}
+              <div class="text-[11px] text-slate-500 mt-1 space-x-2">
+                \${b.enterprise_phone ? \`<span>📞 \${escapeHtml(b.enterprise_phone)}</span>\` : ''}
+                \${b.enterprise_email ? \`<span>✉️ \${escapeHtml(b.enterprise_email)}</span>\` : ''}
+              </div>
+              \${isGst && b.enterprise_gstin ? \`
+                <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-mono font-bold text-slate-800">
+                  <span class="text-slate-500 font-sans text-[10px] uppercase">GSTIN:</span>
+                  <span>\${escapeHtml(b.enterprise_gstin)}</span>
+                </div>
+              \` : ''}
+            </div>
+
+            <div class="text-left sm:text-right">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase \${isGst ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-800 border border-slate-300'}">
+                \${isGst ? 'TAX INVOICE' : 'BILL / INVOICE'}
+              </span>
+              <div class="mt-2 text-xs space-y-0.5">
+                <div><span class="text-slate-500">Invoice No:</span> <b class="font-mono text-slate-900">\${escapeHtml(b.invoice_number || 'INV-001')}</b></div>
+                <div><span class="text-slate-500">Date:</span> <b class="text-slate-900">\${escapeHtml(b.date || '')}</b></div>
+                <div>
+                  <span class="text-slate-500">Payment:</span>
+                  <span class="font-bold text-emerald-700 uppercase">\${escapeHtml(b.payment_mode || 'PAID')}</span>
+                  \${(b.cash_amount > 0 && b.online_amount > 0) ? \`
+                    <span class="text-[10px] text-slate-500">(₹\${formatCurrency(b.cash_amount)} Cash + ₹\${formatCurrency(b.online_amount)} Online)</span>
+                  \` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Billed To & Room Stay Details Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
+            <div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">BILLED TO (GUEST)</span>
+              <div class="text-sm font-black text-slate-900">\${escapeHtml(b.guest_name || 'Walk-in Guest')}</div>
+              \${b.company_name ? \`<div class="font-semibold text-slate-800 mt-0.5">🏢 \${escapeHtml(b.company_name)}</div>\` : ''}
+              \${b.guest_phone ? \`<div class="text-slate-600 mt-0.5">📱 \${escapeHtml(b.guest_phone)}</div>\` : ''}
+              \${isGst && b.guest_gstin ? \`
+                <div class="mt-1.5 font-mono text-[11px] font-bold text-indigo-900">
+                  <span class="text-slate-500 font-sans text-[10px]">Guest GSTIN:</span> \${escapeHtml(b.guest_gstin)}
+                </div>
+              \` : ''}
+              \${b.guest_count ? \`<div class="text-slate-500 text-[11px] mt-1">Guests: \${b.guest_count} person\${b.guest_count > 1 ? 's' : ''}</div>\` : ''}
+            </div>
+
+            <div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">ROOM & STAY DETAILS</span>
+              <div class="text-sm font-black text-slate-900">
+                Room \${escapeHtml(b.room_number || '')}
+                <span class="text-xs font-semibold text-slate-500">(\${escapeHtml(b.room_type || 'Standard')})</span>
+              </div>
+              <div class="text-slate-700 mt-0.5">
+                Check-in: <b>\${escapeHtml(b.check_in_date || b.date || '')}</b>
+                \${b.check_out_date ? \` · Check-out: <b>\${escapeHtml(b.check_out_date)}</b>\` : ''}
+              </div>
+              <div class="text-slate-500 text-[11px] mt-0.5">
+                Stay Duration: <b>\${nights} night\${nights > 1 ? 's' : ''}</b>
+              </div>
+            </div>
+          </div>
+
+          <!-- Line Items Table -->
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100/80 text-slate-700 border-b border-slate-200 font-bold uppercase text-[10px]">
+                <tr>
+                  <th class="py-2.5 px-3">#</th>
+                  <th class="py-2.5 px-3">Description</th>
+                  <th class="py-2.5 px-3">SAC</th>
+                  <th class="py-2.5 px-3 text-right">Rate / Night</th>
+                  <th class="py-2.5 px-3 text-center">Nights</th>
+                  <th class="py-2.5 px-3 text-right">Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr>
+                  <td class="py-3 px-3 text-slate-500">1</td>
+                  <td class="py-3 px-3 font-semibold text-slate-900">
+                    Room Accommodation - Room \${escapeHtml(b.room_number || '')}
+                    <div class="text-[10px] text-slate-400 font-normal">
+                      \${escapeHtml(b.room_type || 'Standard')} · Stay: \${escapeHtml(b.check_in_date || b.date || '')}\${b.check_out_date ? ' to ' + escapeHtml(b.check_out_date) : ''}
+                    </div>
+                  </td>
+                  <td class="py-3 px-3 font-mono text-slate-600">9963</td>
+                  <td class="py-3 px-3 text-right font-mono text-slate-800">₹\${formatCurrency(ratePerNight)}</td>
+                  <td class="py-3 px-3 text-center font-bold text-slate-800">\${nights}</td>
+                  <td class="py-3 px-3 text-right font-mono font-bold text-slate-900">₹\${formatCurrency(baseAmount)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Total & Tax Breakdown Grid -->
+          <div class="flex flex-col sm:flex-row items-start justify-between gap-4 pt-1">
+            <!-- Amount in words -->
+            <div class="flex-1 space-y-2">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">AMOUNT IN WORDS</span>
+                <span class="font-bold text-slate-800 italic">\${numberToWords(totalAmount)}</span>
+              </div>
+
+              \${b.notes ? \`
+                <div class="text-[11px] text-slate-500 italic px-1">
+                  <b>Notes:</b> \${escapeHtml(b.notes)}
+                </div>
+              \` : ''}
+            </div>
+
+            <!-- Tax Computation Column -->
+            <div class="w-full sm:w-64 space-y-1.5 text-xs text-slate-700">
+              <div class="flex justify-between py-1">
+                <span>Taxable Tariff:</span>
+                <span class="font-mono font-semibold text-slate-900">₹\${formatCurrency(baseAmount)}</span>
+              </div>
+
+              \${isGst ? \`
+                <div class="flex justify-between py-1 text-slate-600">
+                  <span>CGST (2.5%):</span>
+                  <span class="font-mono">+₹\${formatCurrency(cgst)}</span>
+                </div>
+                <div class="flex justify-between py-1 text-slate-600">
+                  <span>SGST (2.5%):</span>
+                  <span class="font-mono">+₹\${formatCurrency(sgst)}</span>
+                </div>
+                <div class="flex justify-between py-1 font-bold text-amber-900 border-t border-slate-200/60 pt-1">
+                  <span>Total GST (5%):</span>
+                  <span class="font-mono">+₹\${formatCurrency(gstAmount)}</span>
+                </div>
+              \` : \`
+                <div class="flex justify-between py-1 text-slate-400">
+                  <span>GST (0% Non-GST):</span>
+                  <span class="font-mono">₹0</span>
+                </div>
+              \`}
+
+              <div class="flex justify-between py-2 border-t-2 border-slate-900 text-sm font-black text-slate-900">
+                <span>Total Amount:</span>
+                <span class="font-mono text-indigo-700">₹\${formatCurrency(totalAmount)}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bank Account & QR Code Section -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl border border-slate-200 bg-slate-50/70">
+            <!-- Bank Details (2 cols) -->
+            <div class="sm:col-span-2 space-y-1 text-xs">
+              <span class="text-[10px] font-black uppercase text-indigo-700 tracking-wider block mb-1">
+                🏦 BANK ACCOUNT & PAYMENT DETAILS
+              </span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-slate-700">
+                <div><span class="text-slate-500">Bank Name:</span> <b>\${escapeHtml(b.bank_name || 'State Bank of India')}</b></div>
+                <div><span class="text-slate-500">Account Name:</span> <b>\${escapeHtml(b.account_name || b.enterprise_name || 'Bida Phong Enterprise')}</b></div>
+                <div><span class="text-slate-500">Account No:</span> <b class="font-mono">\${escapeHtml(b.account_number || '-')}</b></div>
+                <div><span class="text-slate-500">IFSC Code:</span> <b class="font-mono uppercase">\${escapeHtml(b.ifsc_code || '-')}</b></div>
+                \${b.branch ? \`<div><span class="text-slate-500">Branch:</span> <b>\${escapeHtml(b.branch)}</b></div>\` : ''}
+                \${b.upi_id ? \`<div><span class="text-slate-500">UPI ID:</span> <b class="font-mono text-indigo-800">\${escapeHtml(b.upi_id)}</b></div>\` : ''}
+              </div>
+            </div>
+
+            <!-- QR Code (1 col) -->
+            <div class="flex flex-col items-center justify-center p-2 rounded-xl bg-white border border-slate-200 text-center">
+              \${qrSrc ? \`
+                <img src="\${qrSrc}" alt="UPI QR" class="w-24 h-24 sm:w-28 sm:h-28 object-contain rounded-lg" />
+                <span class="text-[9px] font-bold text-slate-500 mt-1 uppercase tracking-wider">Scan to Pay UPI</span>
+              \` : \`
+                <div class="text-[10px] text-slate-400 p-3">No QR configured</div>
+              \`}
+            </div>
+          </div>
+
+          <!-- Terms and Signatory -->
+          <div class="flex flex-col sm:flex-row items-end justify-between gap-4 pt-3 border-t border-slate-200 text-xs">
+            <div class="text-[10px] text-slate-500 max-w-md">
+              <span class="font-bold block uppercase text-slate-600 mb-0.5">TERMS & CONDITIONS:</span>
+              <p>\${escapeHtml(b.terms || 'Thank you for staying at XSquare Hotel! Check-out time is 11:00 AM. Please retain this bill for your records.')}</p>
+            </div>
+
+            <div class="text-center sm:text-right pt-4 sm:pt-0">
+              <div class="h-10"></div>
+              <div class="border-t border-slate-400 pt-1 text-[11px] font-bold text-slate-800">
+                For \${escapeHtml(b.enterprise_name || 'M/s Bida Phong Enterprise')}
+              </div>
+              <span class="text-[9px] text-slate-400 uppercase">Authorized Signatory</span>
+            </div>
+          </div>
+
+        </div>
+      \`;
+    }
+
+    function shareBillViaWhatsApp() {
+      if (!currentBillData) return;
+      const b = currentBillData;
+      const phone = (b.guest_phone || "").replace(/\\D/g, "");
+      const waNumber = phone.length === 10 ? "91" + phone : phone;
+
+      const isGst = !!b.is_gst;
+      const text =
+        "🏨 *" + (b.enterprise_name || "M/s Bida Phong Enterprise") + "*\\n" +
+        (isGst ? "🧾 *Tax Invoice*" : "🧾 *Hotel Bill*") + " #" + (b.invoice_number || "") + "\\n\\n" +
+        "👤 *Guest:* " + (b.guest_name || "Guest") + "\\n" +
+        "🚪 *Room:* " + (b.room_number || "") + " (" + (b.room_type || "Standard") + ")\\n" +
+        "📅 *Stay:* " + (b.check_in_date || b.date) + (b.check_out_date ? " to " + b.check_out_date : "") + " (" + (b.nights || 1) + " night)\\n" +
+        "💰 *Total Amount:* ₹" + formatCurrency(b.total_amount || b.amount) + (isGst ? " (incl. 5% GST)" : "") + "\\n" +
+        "✅ *Payment Status:* " + (b.payment_mode || "PAID").toUpperCase() + "\\n\\n" +
+        (b.upi_id ? ("💳 *Pay via UPI:* " + b.upi_id + "\\n") : "") +
+        "Thank you for choosing XSquare Hotel!";
+
+      const waUrl = waNumber
+        ? ("https://wa.me/" + waNumber + "?text=" + encodeURIComponent(text))
+        : ("https://wa.me/?text=" + encodeURIComponent(text));
+
+      window.open(waUrl, "_blank", "noopener,noreferrer");
     }
 
     window.addEventListener("DOMContentLoaded", () => {

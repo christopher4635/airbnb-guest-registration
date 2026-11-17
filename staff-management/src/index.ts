@@ -1,6 +1,6 @@
 import { getDashboardHtml } from "./ui";
 import { getUnifiedDashboardHtml, fetchUnifiedEarningsData } from "./unifiedDashboard";
-import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance, Room, RoomBooking } from "./types";
+import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance, Room, RoomBooking, BillingSettings } from "./types";
 import { syncAirbnbBookingsToStaffSync, pushBookingToAirbnbPortal } from "./airbnbSync";
 import { handleAiBookingChat, type CreateRoomBookingInput, type CreateRoomBookingResult } from "./aiBooking";
 
@@ -39,6 +39,35 @@ async function getAdminPin(env: Env): Promise<string> {
 		// app_settings table might not exist yet
 	}
 	return env.AUTH_PIN || "4635";
+}
+
+const DEFAULT_BILLING_SETTINGS: BillingSettings = {
+	enterprise_name: "M/s Bida Phong Enterprise",
+	address: "Xsquare Hotel, Bida Phong, Main Road",
+	phone: "+91 98620 00000",
+	email: "",
+	gstin: "",
+	bank_name: "State Bank of India",
+	account_name: "M/s Bida Phong Enterprise",
+	account_number: "",
+	ifsc_code: "",
+	account_type: "Current Account",
+	upi_id: "",
+	qr_code_image: "",
+	invoice_terms: "Thank you for choosing M/s Bida Phong Enterprise! Standard checkout time is 11:00 AM."
+};
+
+async function getBillingSettings(env: Env): Promise<BillingSettings> {
+	try {
+		const row = await env.DB.prepare("SELECT value FROM app_settings WHERE key = 'billing_settings'").first<{ value: string }>();
+		if (row && row.value) {
+			const parsed = JSON.parse(row.value);
+			return { ...DEFAULT_BILLING_SETTINGS, ...parsed };
+		}
+	} catch (err) {
+		console.error("Failed to read billing_settings:", err);
+	}
+	return { ...DEFAULT_BILLING_SETTINGS };
 }
 
 async function getAuthContext(request: Request, env: Env): Promise<AuthContext> {
@@ -468,6 +497,7 @@ export default {
 					(path === "/api/properties" && method === "GET") ||
 					(path === "/api/staff" && method === "GET") ||
 					(path === "/api/rooms" && method === "GET") ||
+					(path === "/api/billing-settings" && method === "GET") ||
 					path.startsWith("/api/room-bookings") ||
 					path.startsWith("/api/guest-history") ||
 					path.startsWith("/api/guest-ids") ||
@@ -1611,6 +1641,10 @@ export default {
 				const roomId = bookingInput.room_id?.trim() || "";
 				const guestName = bookingInput.guest_name?.trim() || null;
 				const guestPhone = bookingInput.guest_phone ? String(bookingInput.guest_phone).trim() : null;
+				const isGst = (bookingInput.is_gst === 1 || bookingInput.is_gst === true || String(bookingInput.is_gst) === "1") ? 1 : 0;
+				const gstRate = 5.0;
+				const guestGstin = bookingInput.guest_gstin?.trim() || null;
+				const companyName = bookingInput.company_name?.trim() || null;
 				const guestsJson = bookingInput.guests_json ? (typeof bookingInput.guests_json === "string" ? bookingInput.guests_json.trim() : JSON.stringify(bookingInput.guests_json)) : null;
 				let parsedNamesCount = 0;
 				if (guestsJson) {
@@ -1784,15 +1818,19 @@ export default {
 					const slotNumber = (slotCount?.cnt || 0) + 1;
 
 					const id = `bk_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}_${i + 1}`;
+					const dayGstAmount = isGst ? Math.round(dayAmount * (gstRate / 100)) : 0;
+					const invoiceNumber = bookingInput.invoice_number?.trim() || `INV-${stayDate.replace(/-/g, "")}-${(room.room_number || "RM").replace(/[^a-zA-Z0-9]/g, "")}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
 					await env.DB.prepare(`
 						INSERT INTO room_bookings (
 							id, property_id, room_id, date, amount, payment_mode, cash_amount, online_amount, guest_name, guest_phone, guest_count, guests_json, guest_id_image, notes, slot_number,
-							group_booking_id, check_in_date, check_out_date, total_stay_amount, platform, created_by, created_at, updated_at
-						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+							group_booking_id, check_in_date, check_out_date, total_stay_amount, platform, created_by,
+							is_gst, gst_rate, gst_amount, guest_gstin, company_name, invoice_number, created_at, updated_at
+						) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
 					`).bind(
 						id, propertyId, roomId, stayDate, dayAmount, dbPaymentMode, dayCash, dayOnline, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, slotNumber,
-						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, bookingInput.platform || "Direct", submittedBy
+						groupBookingId, checkInDate, actualCheckOut, totalStayAmount, bookingInput.platform || "Direct", submittedBy,
+						isGst, gstRate, dayGstAmount, guestGstin, companyName, invoiceNumber
 					).run();
 
 					// Sync lodging revenue in daily_finances for each date
@@ -1909,6 +1947,12 @@ export default {
 
 				const guestName = body.guest_name !== undefined ? (body.guest_name?.trim() || null) : existing.guest_name;
 				const guestPhone = body.guest_phone !== undefined ? (body.guest_phone ? String(body.guest_phone).trim() : null) : existing.guest_phone;
+				const isGst = body.is_gst !== undefined ? ((body.is_gst === 1 || body.is_gst === true || body.is_gst === "1") ? 1 : 0) : ((existing as any).is_gst || 0);
+				const gstRate = body.gst_rate !== undefined ? Number(body.gst_rate) : ((existing as any).gst_rate || 5.0);
+				const gstAmount = isGst ? (body.gst_amount !== undefined ? Number(body.gst_amount) : Math.round(amount * (gstRate / 100))) : 0;
+				const guestGstin = body.guest_gstin !== undefined ? (body.guest_gstin?.trim() || null) : (existing as any).guest_gstin;
+				const companyName = body.company_name !== undefined ? (body.company_name?.trim() || null) : (existing as any).company_name;
+				const invoiceNumber = body.invoice_number !== undefined ? (body.invoice_number?.trim() || null) : ((existing as any).invoice_number || `INV-${existing.date.replace(/-/g, "")}-${(existing.room_id || "RM").replace(/[^a-zA-Z0-9]/g, "")}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`);
 				const guestCount = body.guest_count !== undefined ? Math.max(1, Math.round(Number(body.guest_count) || 1)) : (existing.guest_count || 1);
 				const guestsJson = body.guests_json !== undefined ? (typeof body.guests_json === "string" ? body.guests_json.trim() : JSON.stringify(body.guests_json)) : (existing as any).guests_json;
 				const rawGuestIdImage = body.guest_id_image !== undefined ? (typeof body.guest_id_image === "string" ? body.guest_id_image?.trim() : JSON.stringify(body.guest_id_image)) : existing.guest_id_image;
@@ -1919,9 +1963,10 @@ export default {
 				if (updateGroup && existing.group_booking_id) {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_phone = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_phone = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?,
+							is_gst = ?, gst_rate = ?, gst_amount = ?, guest_gstin = ?, company_name = ?, invoice_number = ?, updated_at = datetime('now')
 						WHERE group_booking_id = ?
-					`).bind(dbPaymentMode, cashAmount, onlineAmount, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, existing.group_booking_id).run();
+					`).bind(dbPaymentMode, cashAmount, onlineAmount, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, isGst, gstRate, gstAmount, guestGstin, companyName, invoiceNumber, existing.group_booking_id).run();
 
 					// Re-sync lodging across all affected dates
 					const groupBookings = await env.DB.prepare("SELECT DISTINCT property_id, date FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ property_id: string; date: string }>();
@@ -1931,9 +1976,10 @@ export default {
 				} else {
 					await env.DB.prepare(`
 						UPDATE room_bookings
-						SET amount = ?, payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_phone = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?, updated_at = datetime('now')
+						SET amount = ?, payment_mode = ?, cash_amount = ?, online_amount = ?, guest_name = ?, guest_phone = ?, guest_count = ?, guests_json = ?, guest_id_image = ?, notes = ?,
+							is_gst = ?, gst_rate = ?, gst_amount = ?, guest_gstin = ?, company_name = ?, invoice_number = ?, updated_at = datetime('now')
 						WHERE id = ?
-					`).bind(amount, dbPaymentMode, cashAmount, onlineAmount, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, bookingId).run();
+					`).bind(amount, dbPaymentMode, cashAmount, onlineAmount, guestName, guestPhone, guestCount, guestsJson, guestIdImage, notes, isGst, gstRate, gstAmount, guestGstin, companyName, invoiceNumber, bookingId).run();
 
 					// Re-sync lodging in daily_finances
 					await syncDailyFinanceLodging(env, existing.property_id, existing.date);
@@ -1986,6 +2032,221 @@ export default {
 				const totals = await syncDailyFinanceLodging(env, existing.property_id, existing.date);
 
 				return jsonResponse({ success: true, lodgingTotals: totals });
+			}
+
+			// GET /api/billing-settings (Get enterprise info, bank details, and payment QR)
+			if (path === "/api/billing-settings" && method === "GET") {
+				const settings = await getBillingSettings(env);
+				return jsonResponse(settings);
+			}
+
+			// POST /api/billing-settings (Admin updates enterprise name, bank details, and QR code)
+			if (path === "/api/billing-settings" && method === "POST") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin only can modify billing and bank settings." }, 403);
+				}
+
+				const body = await request.json() as any;
+				let qrCodeImage = body.qr_code_image || "";
+
+				// If QR code was passed as a data URL, upload to R2
+				if (typeof qrCodeImage === "string" && qrCodeImage.startsWith("data:image/") && env.GUEST_ID_BUCKET) {
+					const uploaded = await uploadGuestIdToR2(env, qrCodeImage, "Billing UPI QR");
+					if (uploaded) {
+						qrCodeImage = uploaded.url;
+					}
+				}
+
+				const settings: BillingSettings = {
+					enterprise_name: body.enterprise_name?.trim() || "M/s Bida Phong Enterprise",
+					address: body.address !== undefined ? body.address.trim() : DEFAULT_BILLING_SETTINGS.address,
+					phone: body.phone !== undefined ? body.phone.trim() : DEFAULT_BILLING_SETTINGS.phone,
+					email: body.email !== undefined ? body.email.trim() : "",
+					gstin: body.gstin !== undefined ? body.gstin.trim() : "",
+					bank_name: body.bank_name !== undefined ? body.bank_name.trim() : DEFAULT_BILLING_SETTINGS.bank_name,
+					account_name: body.account_name !== undefined ? body.account_name.trim() : (body.enterprise_name?.trim() || DEFAULT_BILLING_SETTINGS.account_name),
+					account_number: body.account_number !== undefined ? body.account_number.trim() : "",
+					ifsc_code: body.ifsc_code !== undefined ? body.ifsc_code.trim().toUpperCase() : "",
+					account_type: body.account_type !== undefined ? body.account_type.trim() : "Current Account",
+					upi_id: body.upi_id !== undefined ? body.upi_id.trim() : "",
+					qr_code_image: qrCodeImage,
+					invoice_terms: body.invoice_terms !== undefined ? body.invoice_terms.trim() : DEFAULT_BILLING_SETTINGS.invoice_terms,
+					updated_at: new Date().toISOString()
+				};
+
+				await env.DB.prepare(`
+					INSERT INTO app_settings (key, value, updated_at)
+					VALUES ('billing_settings', ?, datetime('now'))
+					ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')
+				`).bind(JSON.stringify(settings)).run();
+
+				return jsonResponse({ success: true, settings });
+			}
+
+			// GET /api/room-bookings/:id/bill (Fetch comprehensive bill data for printing / sharing)
+			if (path.startsWith("/api/room-bookings/") && path.endsWith("/bill") && method === "GET") {
+				const parts = path.split("/");
+				const bookingId = parts[3];
+
+				const booking = await env.DB.prepare(`
+					SELECT b.*, r.room_number, r.room_type, r.base_price, p.name AS property_name
+					FROM room_bookings b
+					JOIN rooms r ON b.room_id = r.id
+					LEFT JOIN properties p ON b.property_id = p.id
+					WHERE b.id = ?
+				`).bind(bookingId).first<RoomBooking>();
+
+				if (!booking) {
+					return jsonResponse({ error: "Booking not found" }, 404);
+				}
+
+				if (auth.role === "manager" && booking.property_id !== auth.manager?.property_id) {
+					return jsonResponse({ error: "Forbidden. Manager can only access bills for their assigned property." }, 403);
+				}
+
+				let groupBookings: RoomBooking[] = [];
+				if (booking.group_booking_id) {
+					const groupRes = await env.DB.prepare(`
+						SELECT b.*, r.room_number, r.room_type
+						FROM room_bookings b
+						JOIN rooms r ON b.room_id = r.id
+						WHERE b.group_booking_id = ?
+						ORDER BY b.date ASC
+					`).bind(booking.group_booking_id).all<RoomBooking>();
+					groupBookings = groupRes.results || [];
+				}
+
+				const billingSettings = await getBillingSettings(env);
+
+				// Compute billing figures
+				const isMultiDay = groupBookings.length > 1;
+				const stayDates = isMultiDay ? groupBookings.map(b => b.date) : [booking.date];
+				const checkIn = booking.check_in_date || stayDates[0];
+				const checkOut = booking.check_out_date || (isMultiDay ? stayDates[stayDates.length - 1] : checkIn);
+				const nights = isMultiDay ? stayDates.length : 1;
+
+				const baseTariff = isMultiDay
+					? (booking.total_stay_amount || groupBookings.reduce((sum, b) => sum + Number(b.amount || 0), 0))
+					: Number(booking.amount || 0);
+
+				const isGst = Number((booking as any).is_gst || 0) === 1;
+				const gstRate = Number((booking as any).gst_rate || 5.0);
+				const gstAmount = isGst ? Math.round(baseTariff * (gstRate / 100)) : 0;
+				const cgstAmount = isGst ? Math.round(gstAmount / 2) : 0;
+				const sgstAmount = isGst ? (gstAmount - cgstAmount) : 0;
+				const grandTotal = baseTariff + gstAmount;
+
+				const cashAmount = isMultiDay
+					? groupBookings.reduce((sum, b) => sum + Number(b.cash_amount || (b.payment_mode === "cash" ? b.amount : 0)), 0)
+					: Number(booking.cash_amount || (booking.payment_mode === "cash" ? booking.amount : 0));
+
+				const onlineAmount = isMultiDay
+					? groupBookings.reduce((sum, b) => sum + Number(b.online_amount || (b.payment_mode === "online" ? b.amount : 0)), 0)
+					: Number(booking.online_amount || (booking.payment_mode === "online" ? booking.amount : 0));
+
+				const invoiceNumber = (booking as any).invoice_number ||
+					`INV-${checkIn.replace(/-/g, "")}-${(booking.room_number || "RM").replace(/[^a-zA-Z0-9]/g, "")}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+				return jsonResponse({
+					success: true,
+					bill: {
+						booking_id: booking.id,
+						group_booking_id: booking.group_booking_id,
+						invoice_number: invoiceNumber,
+						invoice_date: booking.created_at ? booking.created_at.split(" ")[0] : booking.date,
+						enterprise: billingSettings,
+						guest: {
+							name: booking.guest_name || "Walk-in Guest",
+							phone: (booking as any).guest_phone || "",
+							count: booking.guest_count || 1,
+							gstin: (booking as any).guest_gstin || "",
+							company_name: (booking as any).company_name || ""
+						},
+						stay: {
+							property_name: (booking as any).property_name || "Xsquare Hotel",
+							room_number: booking.room_number || "101",
+							room_type: booking.room_type || "Standard",
+							check_in_date: checkIn,
+							check_out_date: checkOut,
+							nights,
+							stay_dates: stayDates,
+							is_multi_day: isMultiDay
+						},
+						pricing: {
+							base_tariff: baseTariff,
+							daily_rate: nights > 0 ? Math.round(baseTariff / nights) : baseTariff,
+							is_gst: isGst,
+							gst_rate: gstRate,
+							cgst_rate: gstRate / 2,
+							sgst_rate: gstRate / 2,
+							cgst_amount: cgstAmount,
+							sgst_amount: sgstAmount,
+							gst_amount: gstAmount,
+							grand_total: grandTotal
+						},
+						payment: {
+							mode: (cashAmount > 0 && onlineAmount > 0) ? "split" : (cashAmount > 0 ? "cash" : "online"),
+							cash_amount: cashAmount,
+							online_amount: onlineAmount,
+							total_paid: cashAmount + onlineAmount,
+							status: (cashAmount + onlineAmount >= grandTotal) ? "Paid" : "Partial / Due"
+						},
+						notes: booking.notes || ""
+					}
+				});
+			}
+
+			// PUT /api/room-bookings/:id/billing (Update GST status, tax rate, GSTIN, Company Name, and invoice number)
+			if (path.startsWith("/api/room-bookings/") && path.endsWith("/billing") && method === "PUT") {
+				const parts = path.split("/");
+				const bookingId = parts[3];
+
+				const existing = await env.DB.prepare("SELECT * FROM room_bookings WHERE id = ?").bind(bookingId).first<RoomBooking>();
+				if (!existing) {
+					return jsonResponse({ error: "Booking not found" }, 404);
+				}
+
+				if (auth.role === "manager" && existing.property_id !== auth.manager?.property_id) {
+					return jsonResponse({ error: "Forbidden. Manager can only update bookings for their assigned property." }, 403);
+				}
+
+				const body = await request.json() as any;
+				const isGst = (body.is_gst === 1 || body.is_gst === true || body.is_gst === "1") ? 1 : 0;
+				const gstRate = body.gst_rate !== undefined ? Number(body.gst_rate) : 5.0;
+				const guestGstin = body.guest_gstin !== undefined ? (body.guest_gstin ? String(body.guest_gstin).trim().toUpperCase() : null) : (existing as any).guest_gstin;
+				const companyName = body.company_name !== undefined ? (body.company_name ? String(body.company_name).trim() : null) : (existing as any).company_name;
+				const invoiceNumber = body.invoice_number !== undefined ? (body.invoice_number ? String(body.invoice_number).trim() : null) : (existing as any).invoice_number;
+
+				const updateGroup = (body.update_entire_group === true || url.searchParams.get("update_group") === "true") && !!existing.group_booking_id;
+
+				if (updateGroup && existing.group_booking_id) {
+					// Update across all bookings of the group
+					const groupBookings = await env.DB.prepare("SELECT id, amount FROM room_bookings WHERE group_booking_id = ?").bind(existing.group_booking_id).all<{ id: string; amount: number }>();
+					for (const row of (groupBookings.results || [])) {
+						const rowGst = isGst ? Math.round(Number(row.amount || 0) * (gstRate / 100)) : 0;
+						await env.DB.prepare(`
+							UPDATE room_bookings
+							SET is_gst = ?, gst_rate = ?, gst_amount = ?, guest_gstin = ?, company_name = ?, invoice_number = ?, updated_at = datetime('now')
+							WHERE id = ?
+						`).bind(isGst, gstRate, rowGst, guestGstin, companyName, invoiceNumber, row.id).run();
+					}
+				} else {
+					const gstAmount = isGst ? Math.round(Number(existing.amount || 0) * (gstRate / 100)) : 0;
+					await env.DB.prepare(`
+						UPDATE room_bookings
+						SET is_gst = ?, gst_rate = ?, gst_amount = ?, guest_gstin = ?, company_name = ?, invoice_number = ?, updated_at = datetime('now')
+						WHERE id = ?
+					`).bind(isGst, gstRate, gstAmount, guestGstin, companyName, invoiceNumber, bookingId).run();
+				}
+
+				return jsonResponse({
+					success: true,
+					is_gst: isGst,
+					gst_rate: gstRate,
+					guest_gstin: guestGstin,
+					company_name: companyName,
+					invoice_number: invoiceNumber
+				});
 			}
 
 			// GET /api/guest-history (Look up guest stay history, stats, and past stays by phone or search query)

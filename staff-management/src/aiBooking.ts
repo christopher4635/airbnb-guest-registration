@@ -27,6 +27,9 @@ export interface BookingChatDraft {
 	amount?: number | null;
 	notes?: string | null;
 	confirm_overlap?: boolean;
+	is_gst?: boolean | null;
+	guest_gstin?: string | null;
+	company_name?: string | null;
 }
 
 export interface CreateRoomBookingInput {
@@ -52,6 +55,12 @@ export interface CreateRoomBookingInput {
 	amount?: number;
 	rate_per_day?: number;
 	platform?: string;
+	is_gst?: boolean | number;
+	gst_rate?: number;
+	gst_amount?: number;
+	guest_gstin?: string | null;
+	company_name?: string | null;
+	invoice_number?: string | null;
 }
 
 export interface CreateRoomBookingResult {
@@ -89,6 +98,9 @@ interface ParsedAiJson {
 	amount?: number | null;
 	notes?: string | null;
 	confirm_overlap?: boolean | null;
+	is_gst?: boolean | null;
+	guest_gstin?: string | null;
+	company_name?: string | null;
 	assistant_reply?: string | null;
 }
 
@@ -260,6 +272,23 @@ export function parseDeterministicBooking(
 
 		if ((m = line.match(/^(?:notes?|remarks?)\s*[:=\-]\s*(.+)$/i))) {
 			result.notes = m[1].trim();
+			continue;
+		}
+
+		if ((m = line.match(/^(?:gst|tax|billing)\s*[:=\-.]\s*(.+)$/i))) {
+			const v = m[1].trim().toLowerCase();
+			result.is_gst = /^(?:yes|y|true|1|5%?|gst|include|with)$/i.test(v);
+			continue;
+		}
+
+		if ((m = line.match(/^(?:guest\s*gstin|gstin|gst\s*number|gst\s*no\.?)\s*[:=\-.]\s*(.+)$/i))) {
+			result.guest_gstin = m[1].trim().toUpperCase();
+			result.is_gst = true;
+			continue;
+		}
+
+		if ((m = line.match(/^(?:company(?:\s*name)?|firm(?:\s*name)?|org(?:anization)?)\s*[:=\-.]\s*(.+)$/i))) {
+			result.company_name = m[1].trim();
 			continue;
 		}
 	}
@@ -789,6 +818,9 @@ export async function handleAiBookingChat(
 		...(aiParsed?.amount !== null && aiParsed?.amount !== undefined && aiParsed.amount >= 0
 			? { amount: Math.round(Number(aiParsed.amount)) }
 			: {}),
+		...(aiParsed?.is_gst !== undefined && aiParsed?.is_gst !== null ? { is_gst: Boolean(aiParsed.is_gst) } : {}),
+		...(aiParsed?.guest_gstin ? { guest_gstin: aiParsed.guest_gstin.trim() } : {}),
+		...(aiParsed?.company_name ? { company_name: aiParsed.company_name.trim() } : {}),
 		...(aiParsed?.notes ? { notes: aiParsed.notes.trim() } : {}),
 		...(aiParsed?.confirm_overlap ? { confirm_overlap: true } : {}),
 		...deterministic,
@@ -930,6 +962,10 @@ export async function handleAiBookingChat(
 			? merged.guest_names
 			: [merged.guest_name!];
 
+	const isGst = Boolean(merged.is_gst);
+	const gstRate = 5.0;
+	const gstAmount = isGst ? Math.round(totalAmount * (gstRate / 100)) : 0;
+
 	const created = await createBookingFn({
 		property_id: room.property_id,
 		room_id: room.id,
@@ -948,6 +984,11 @@ export async function handleAiBookingChat(
 		is_range: stayInfo.isRange,
 		amount: totalAmount,
 		platform: "Direct (AI Chat)",
+		is_gst: isGst ? 1 : 0,
+		gst_rate: gstRate,
+		gst_amount: gstAmount,
+		guest_gstin: merged.guest_gstin || null,
+		company_name: merged.company_name || null,
 	});
 
 	const mainBooking = created.booking;
@@ -957,6 +998,10 @@ export async function handleAiBookingChat(
 	const staySummary = created.isMultiDay
 		? `${checkInDate} → ${stayInfo.actualCheckOut} (${created.nights} nights stay)`
 		: checkInDate;
+
+	const billingText = isGst
+		? `• Billing: GST 5% (+₹${gstAmount.toLocaleString("en-IN")}, Total: ₹${(totalAmount + gstAmount).toLocaleString("en-IN")})\n`
+		: "• Billing: Non-GST\n";
 
 	return {
 		statusCode: 200,
@@ -973,7 +1018,8 @@ export async function handleAiBookingChat(
 				`• Room: ${room.room_number} (${room.room_type || "Standard"})\n` +
 				`• Persons: ${guestCount}\n` +
 				`• Stay: ${staySummary}\n` +
-				`• Total Tariff: ₹${totalAmount.toLocaleString("en-IN")}${created.isMultiDay ? ` (${created.nights} nights)` : ""} (${payDetails})`,
+				billingText +
+				`• Room Tariff: ₹${totalAmount.toLocaleString("en-IN")}${created.isMultiDay ? ` (${created.nights} nights)` : ""} (${payDetails})`,
 		},
 	};
 }

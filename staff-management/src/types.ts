@@ -156,9 +156,33 @@ export interface RoomBooking {
 	total_stay_amount?: number | null;
 	external_booking_id?: string | null;
 	platform?: string | null;
+	is_gst?: number;
+	gst_rate?: number;
+	gst_amount?: number;
+	guest_gstin?: string | null;
+	company_name?: string | null;
+	invoice_number?: string | null;
 	created_by?: string | null;
 	created_at?: string;
 	updated_at?: string;
 }
+
+export interface BillingSettings {
+	enterprise_name: string;
+	address?: string;
+	phone?: string;
+	email?: string;
+	gstin?: string;
+	bank_name?: string;
+	account_name?: string;
+	account_number?: string;
+	ifsc_code?: string;
+	account_type?: string;
+	upi_id?: string;
+	qr_code_image?: string;
+	invoice_terms?: string;
+	updated_at?: string;
+}
+
 
 
