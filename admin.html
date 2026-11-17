@@ -298,6 +298,7 @@
     .admin-tabs {
       display: flex;
       gap: 8px;
+      margin-top: 4px;
       margin-bottom: 8px;
       border-bottom: 1.5px solid var(--border-color);
       padding-bottom: 0px;
@@ -3332,27 +3333,6 @@
     <!-- Admin Panel -->
     <div id="admin-panel">
       
-      <div class="admin-header">
-        <div class="admin-title">
-          <h1>🏡 Elite Homes — Property &amp; Bookings Portal</h1>
-          <p>Unified 3-Property Calendar, Reservations Manager & Guest Check-in Registry</p>
-        </div>
-        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-          <a href="dashboard.html" class="btn-link" target="_blank" style="background: #eef2ff; color: #4338ca; padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700;" title="Open Unified Earnings Dashboard for Staff Management & Airbnb">
-            <span>📊 Common Earnings Dashboard</span>
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
-          <a href="portal.html" class="btn-link" target="_blank" style="background: #F1F5F9; color: #334155; padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border-color);">
-            <span>🖥️ Fullscreen Portal</span>
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
-          <a href="index.html" class="btn-link" target="_blank" style="background: var(--primary-light); color: var(--primary); padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(255, 56, 92, 0.2);">
-            <span>📋 Guest Check-in Form</span>
-            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
-        </div>
-      </div>
-
       <!-- Nav Tabs -->
       <div class="admin-tabs">
         <button type="button" class="tab-btn active" id="tab-btn-bookings" onclick="switchAdminTab('bookings')">
@@ -4693,6 +4673,28 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- SECTION 8: Portal & App Navigation Shortcuts -->
+      <div class="card">
+        <div class="card-title">
+          <span>8. Portal &amp; App Shortcuts</span>
+        </div>
+        <p class="card-desc">Quick shortcuts to open external apps, earnings dashboards, and guest check-in portals:</p>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <a href="dashboard.html" class="btn btn-outline" target="_blank" style="background: #EEF2FF; color: #4338CA; border-color: #C7D2FE; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <span>📊 Common Earnings Dashboard</span>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+          <a href="portal.html" class="btn btn-outline" target="_blank" style="background: #F8FAFC; color: #334155; border-color: #CBD5E1; font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <span>🖥️ Fullscreen Portal</span>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+          <a href="index.html" class="btn btn-outline" target="_blank" style="background: var(--primary-light); color: var(--primary); border-color: rgba(255, 56, 92, 0.25); font-size: 12px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <span>📋 Guest Check-in Form</span>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
         </div>
       </div>
 
