@@ -855,79 +855,31 @@
         </div>
       </section>
 
-      <!-- 3. ID SELECTION & 4. UPLOAD ID PHOTOS FRONT AND BACK -->
+      <!-- 3. GUESTS & IDENTIFICATION -->
       <section class="form-card">
         <h2 class="section-title">
-          <span>3.</span> ID Selection &amp; Photo Upload
+          <span>3.</span> Guests &amp; Identification
         </h2>
-        <p class="section-subtitle">Select your government ID type and upload clear photos of both sides.</p>
+        <p class="section-subtitle">Select the number of persons staying and provide name, age, and government ID (Front &amp; Back) for each person.</p>
 
-        <!-- 3. ID Selection -->
+        <!-- Number of Persons Selector -->
         <div class="form-group" style="margin-bottom: 20px;">
-          <label for="idType">Select ID Document Type <span class="required-star">*</span></label>
-          <select id="idType" name="idType" required>
-            <option value="" disabled selected>Select ID document type...</option>
-            <option value="Aadhaar Card">Aadhaar Card (UIDAI)</option>
-            <option value="Passport">Passport</option>
-            <option value="Driving License">Driver's License</option>
-            <option value="Voter ID">Voter ID / Election Card</option>
-            <option value="Government ID">Other Government ID</option>
-          </select>
-        </div>
-
-        <!-- 4. Upload ID Photos front and back -->
-        <label style="margin-bottom: 8px; display: block; font-weight: 600; font-size: 13.5px;">Upload ID Photos (Front &amp; Back) <span class="required-star">*</span></label>
-        <div class="upload-container">
-          
-          <!-- Front Slot -->
-          <div class="upload-slot" id="slot_1_front">
-            <input type="file" id="file_1_front" class="upload-file-overlay" accept="image/*,application/pdf"
-                   onchange="handleFileUpload(event, 1, 'front')" title="Tap to take photo or choose file">
-            <input type="file" id="file_1_front_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
-                   onchange="handleFileUpload(event, 1, 'front')">
-            
-            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
-            </svg>
-            <div class="upload-title">Front of ID</div>
-            <div class="upload-hint">Tap anywhere to take photo or choose file</div>
-            
-            <div class="upload-btn-row">
-              <label for="file_1_front_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
-                📷 Take Photo
-              </label>
-              <label for="file_1_front" class="upload-pill-btn" onclick="event.stopPropagation();">
-                🖼️ Gallery / PDF
-              </label>
+          <div class="guest-selector-box">
+            <div class="guest-selector-info">
+              <strong>👥 Number of Persons <span class="required-star">*</span></strong>
+              <span>Total number of guests staying in this room</span>
+            </div>
+            <div class="stepper-controls">
+              <button type="button" class="stepper-btn" id="btn-guest-minus" title="Decrease number of guests" aria-label="Decrease guests" onclick="changeGuestCount(-1)">−</button>
+              <span class="stepper-count" id="guest-count-display">1</span>
+              <button type="button" class="stepper-btn" id="btn-guest-plus" title="Increase number of guests" aria-label="Increase guests" onclick="changeGuestCount(1)">+</button>
+              <input type="hidden" id="totalGuestsInput" name="totalGuests" value="1">
             </div>
           </div>
-
-          <!-- Back Slot -->
-          <div class="upload-slot" id="slot_1_back">
-            <input type="file" id="file_1_back" class="upload-file-overlay" accept="image/*,application/pdf"
-                   onchange="handleFileUpload(event, 1, 'back')" title="Tap to take photo or choose file">
-            <input type="file" id="file_1_back_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
-                   onchange="handleFileUpload(event, 1, 'back')">
-            
-            <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
-            </svg>
-            <div class="upload-title">Back of ID</div>
-            <div class="upload-hint">Tap anywhere to take photo or choose file</div>
-            
-            <div class="upload-btn-row">
-              <label for="file_1_back_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
-                📷 Take Photo
-              </label>
-              <label for="file_1_back" class="upload-pill-btn" onclick="event.stopPropagation();">
-                🖼️ Gallery / PDF
-              </label>
-            </div>
-          </div>
-
         </div>
+
+        <!-- Dynamic Container for Person 1, Person 2, ... -->
+        <div id="guest-cards-container"></div>
       </section>
 
       <!-- Submit Button -->
@@ -976,12 +928,189 @@
     const guestFiles = {};
 
     // Elements
-    const guestCountDisplay = document.getElementById('guest-count-display');
-    const totalGuestsInput = document.getElementById('totalGuestsInput');
-    const btnGuestMinus = document.getElementById('btn-guest-minus');
-    const btnGuestPlus = document.getElementById('btn-guest-plus');
-    const guestCardsContainer = document.getElementById('guest-cards-container');
     const form = document.getElementById('checkin-form');
+
+    function escapeHtmlAttr(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function changeGuestCount(delta) {
+      const newCount = totalGuests + delta;
+      if (newCount < MIN_GUESTS || newCount > MAX_GUESTS) return;
+      totalGuests = newCount;
+      renderGuestCards(totalGuests);
+    }
+
+    function onGuestNameChange(guestIdx, val) {
+      if (guestIdx === 1) {
+        const nameInput = document.getElementById('guestNameInput');
+        if (nameInput) nameInput.value = val;
+        const dispName = document.getElementById('display-guest-name');
+        if (dispName && (!dispName.textContent || dispName.textContent === 'Valued Guest' || dispName.textContent === 'Guest')) {
+          dispName.textContent = val || 'Valued Guest';
+        }
+      }
+    }
+
+    function renderGuestCards(count) {
+      const container = document.getElementById('guest-cards-container');
+      if (!container) return;
+
+      // 1. Preserve any already entered inputs
+      const savedData = {};
+      for (let i = 1; i <= MAX_GUESTS; i++) {
+        const nameEl = document.getElementById(`person_${i}_name`);
+        const ageEl = document.getElementById(`person_${i}_age`);
+        const idTypeEl = document.getElementById(`person_${i}_idType`);
+        if (nameEl || ageEl || idTypeEl) {
+          savedData[i] = {
+            name: nameEl ? nameEl.value : '',
+            age: ageEl ? ageEl.value : '',
+            idType: idTypeEl ? idTypeEl.value : 'Aadhaar Card'
+          };
+        }
+      }
+
+      // 2. Update stepper count & buttons
+      const countDisp = document.getElementById('guest-count-display');
+      if (countDisp) countDisp.textContent = count;
+      const countInput = document.getElementById('totalGuestsInput');
+      if (countInput) countInput.value = count;
+      const minusBtn = document.getElementById('btn-guest-minus');
+      if (minusBtn) minusBtn.disabled = count <= MIN_GUESTS;
+      const plusBtn = document.getElementById('btn-guest-plus');
+      if (plusBtn) plusBtn.disabled = count >= MAX_GUESTS;
+
+      // 3. Fallback name for primary guest (e.g. from reservation / link)
+      const primaryFallback = (document.getElementById('guestNameInput')?.value || document.getElementById('manualGuestName')?.value || '').trim();
+
+      // 4. Render card for each guest
+      let html = '';
+      for (let i = 1; i <= count; i++) {
+        const isPrimary = (i === 1);
+        const prevName = savedData[i]?.name !== undefined ? savedData[i].name : (isPrimary ? primaryFallback : '');
+        const prevAge = savedData[i]?.age || '';
+        const prevIdType = savedData[i]?.idType || 'Aadhaar Card';
+
+        html += `
+          <div class="guest-card" id="guest-card-${i}">
+            <div class="guest-card-header">
+              <div class="guest-tag">
+                <span style="font-size: 16px;">${isPrimary ? '👑' : '👤'}</span>
+                <span style="font-size: 14.5px; font-weight: 700;">Person ${i}</span>
+                ${isPrimary 
+                  ? '<span class="guest-badge-pill" style="margin-left: 6px;">Primary Guest</span>' 
+                  : '<span class="guest-badge-pill" style="margin-left: 6px; background:#F1F5F9; color:#475569;">Additional Guest</span>'
+                }
+              </div>
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Person ${i} of ${count}</span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 2;">
+                <label for="person_${i}_name">Full Name <span class="required-star">*</span></label>
+                <input type="text" id="person_${i}_name" name="person_${i}_name" 
+                       value="${escapeHtmlAttr(prevName)}" 
+                       placeholder="As printed on government ID" required
+                       oninput="onGuestNameChange(${i}, this.value)">
+              </div>
+              <div class="form-group" style="flex: 1; min-width: 110px;">
+                <label for="person_${i}_age">Age <span class="required-star">*</span></label>
+                <input type="number" id="person_${i}_age" name="person_${i}_age" 
+                       value="${escapeHtmlAttr(prevAge)}" 
+                       placeholder="e.g. 28" min="1" max="120" required>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="person_${i}_idType">Select ID Document Type <span class="required-star">*</span></label>
+              <select id="person_${i}_idType" name="person_${i}_idType" required>
+                <option value="Aadhaar Card" ${prevIdType === 'Aadhaar Card' ? 'selected' : ''}>Aadhaar Card (UIDAI)</option>
+                <option value="Passport" ${prevIdType === 'Passport' ? 'selected' : ''}>Passport</option>
+                <option value="Driving License" ${prevIdType === 'Driving License' ? 'selected' : ''}>Driver's License</option>
+                <option value="Voter ID" ${prevIdType === 'Voter ID' ? 'selected' : ''}>Voter ID / Election Card</option>
+                <option value="Government ID" ${prevIdType === 'Government ID' ? 'selected' : ''}>Other Government ID</option>
+              </select>
+            </div>
+
+            <label style="margin-bottom: 8px; display: block; font-weight: 600; font-size: 13.5px;">
+              Upload ID Photos (Front &amp; Back) <span class="required-star">*</span>
+            </label>
+            <div class="upload-container">
+              <!-- Front Slot -->
+              <div class="upload-slot" id="slot_${i}_front">
+                <input type="file" id="file_${i}_front" class="upload-file-overlay" accept="image/*,application/pdf"
+                       onchange="handleFileUpload(event, ${i}, 'front')" title="Tap to take photo or choose file">
+                <input type="file" id="file_${i}_front_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                       onchange="handleFileUpload(event, ${i}, 'front')">
+                
+                <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+                </svg>
+                <div class="upload-title">Front of ID</div>
+                <div class="upload-hint">Tap anywhere to take photo or choose file</div>
+                
+                <div class="upload-btn-row">
+                  <label for="file_${i}_front_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    📷 Take Photo
+                  </label>
+                  <label for="file_${i}_front" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    🖼️ Gallery / PDF
+                  </label>
+                </div>
+              </div>
+
+              <!-- Back Slot -->
+              <div class="upload-slot" id="slot_${i}_back">
+                <input type="file" id="file_${i}_back" class="upload-file-overlay" accept="image/*,application/pdf"
+                       onchange="handleFileUpload(event, ${i}, 'back')" title="Tap to take photo or choose file">
+                <input type="file" id="file_${i}_back_cam" class="upload-file-overlay" accept="image/*" capture="environment" style="display:none;"
+                       onchange="handleFileUpload(event, ${i}, 'back')">
+                
+                <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+                </svg>
+                <div class="upload-title">Back of ID</div>
+                <div class="upload-hint">Tap anywhere to take photo or choose file</div>
+                
+                <div class="upload-btn-row">
+                  <label for="file_${i}_back_cam" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    📷 Take Photo
+                  </label>
+                  <label for="file_${i}_back" class="upload-pill-btn" onclick="event.stopPropagation();">
+                    🖼️ Gallery / PDF
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+
+      // 5. Restore previews for any existing files in guestFiles
+      for (let i = 1; i <= count; i++) {
+        if (guestFiles[i]) {
+          if (guestFiles[i].front) {
+            const isPdf = (guestFiles[i].frontName && guestFiles[i].frontName.toLowerCase().endsWith('.pdf')) || (guestFiles[i].front && guestFiles[i].front.startsWith('data:application/pdf'));
+            renderSlotPreview(i, 'front', isPdf ? 'pdf' : 'image', isPdf ? (guestFiles[i].frontName || 'document.pdf') : guestFiles[i].front);
+          }
+          if (guestFiles[i].back) {
+            const isPdf = (guestFiles[i].backName && guestFiles[i].backName.toLowerCase().endsWith('.pdf')) || (guestFiles[i].back && guestFiles[i].back.startsWith('data:application/pdf'));
+            renderSlotPreview(i, 'back', isPdf ? 'pdf' : 'image', isPdf ? (guestFiles[i].backName || 'document.pdf') : guestFiles[i].back);
+          }
+        }
+      }
+    }
 
     // Configuration State
     let appConfig = {
@@ -1339,6 +1468,20 @@
           };
         }
       }
+
+      // 5. Total Guests count from URL params (e.g. ?guests=2 or ?guestsCount=3)
+      const guestsParam = parseInt(urlParams.get('guests') || urlParams.get('guestsCount') || urlParams.get('numGuests') || '', 10);
+      if (!isNaN(guestsParam) && guestsParam >= MIN_GUESTS && guestsParam <= MAX_GUESTS) {
+        totalGuests = guestsParam;
+      }
+      renderGuestCards(totalGuests);
+
+      if (nameParam) {
+        const p1Name = document.getElementById('person_1_name');
+        if (p1Name && !p1Name.value) {
+          p1Name.value = nameParam;
+        }
+      }
     }
 
     // Client-side image compression & preview (handles large mobile photos cleanly)
@@ -1495,24 +1638,14 @@
       await initConfig();
     });
 
-    // Form Submission: Only Coming From & Going To, Purpose of Visit, ID Selection, and ID Photos
-    // Declaration not required!
+    // Form Submission: Purpose of Visit, Coming From & Going To, and Per-Person Name, Age, ID Selection & Photos
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const guestName = (document.getElementById('guestNameInput')?.value || document.getElementById('manualGuestName')?.value || 'Guest').trim();
-      const checkInDate = document.getElementById('checkInDate')?.value || document.getElementById('manualCheckIn')?.value || '';
-      const checkOutDate = document.getElementById('checkOutDate')?.value || document.getElementById('manualCheckOut')?.value || '';
       const reservationCode = (document.getElementById('reservationCode')?.value || '').trim();
       const comingFrom = (document.getElementById('comingFrom')?.value || '').trim();
       const goingTo = (document.getElementById('goingTo')?.value || '').trim();
       const purposeOfVisit = document.getElementById('purposeOfVisit')?.value || '';
-      const idType = document.getElementById('idType')?.value || '';
-
-      if (!guestName) {
-        alert('Please enter the guest legal name.');
-        return;
-      }
 
       if (!comingFrom || !goingTo) {
         alert('Please provide both Coming From and Going To locations.');
@@ -1526,35 +1659,65 @@
         return;
       }
 
-      if (!idType) {
-        alert('Please select your ID Document Type.');
-        document.getElementById('idType')?.focus();
-        return;
-      }
+      // Validate all guests (Person 1 .. Person N)
+      const guestsList = [];
+      for (let i = 1; i <= totalGuests; i++) {
+        const pName = (document.getElementById(`person_${i}_name`)?.value || '').trim();
+        const pAgeStr = (document.getElementById(`person_${i}_age`)?.value || '').trim();
+        const pIdType = document.getElementById(`person_${i}_idType`)?.value || '';
 
-      if (!guestFiles[1]?.front) {
-        alert('Please take a photo or upload the Front side of your Government ID.');
-        document.getElementById('slot_1_front')?.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
-
-      const guestsList = [
-        {
-          guestNumber: 1,
-          isPrimary: true,
-          name: guestName,
-          phone: document.getElementById('guestPhone')?.value || '',
-          email: document.getElementById('guestEmail')?.value || '',
-          idType: idType,
-          idNumber: '',
-          frontPhoto: guestFiles[1]?.front || '',
-          backPhoto: guestFiles[1]?.back || ''
+        if (!pName) {
+          alert(`Please enter the Full Name for Person ${i}.`);
+          document.getElementById(`person_${i}_name`)?.focus();
+          return;
         }
-      ];
+
+        if (!pAgeStr) {
+          alert(`Please enter the Age for Person ${i}.`);
+          document.getElementById(`person_${i}_age`)?.focus();
+          return;
+        }
+
+        const pAge = parseInt(pAgeStr, 10);
+        if (isNaN(pAge) || pAge < 1 || pAge > 120) {
+          alert(`Please enter a valid age (1-120) for Person ${i}.`);
+          document.getElementById(`person_${i}_age`)?.focus();
+          return;
+        }
+
+        if (!pIdType) {
+          alert(`Please select the ID Document Type for Person ${i}.`);
+          document.getElementById(`person_${i}_idType`)?.focus();
+          return;
+        }
+
+        if (!guestFiles[i]?.front) {
+          alert(`Please take a photo or upload the Front side of Government ID for Person ${i} (${pName}).`);
+          document.getElementById(`slot_${i}_front`)?.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+
+        guestsList.push({
+          guestNumber: i,
+          isPrimary: i === 1,
+          name: pName,
+          age: pAge,
+          phone: i === 1 ? (document.getElementById('guestPhone')?.value || '') : '',
+          email: i === 1 ? (document.getElementById('guestEmail')?.value || '') : '',
+          idType: pIdType,
+          idNumber: '',
+          frontPhoto: guestFiles[i]?.front || '',
+          backPhoto: guestFiles[i]?.back || ''
+        });
+      }
+
+      const primaryGuestName = guestsList[0]?.name || (document.getElementById('guestNameInput')?.value || 'Guest').trim();
+      const checkInDate = document.getElementById('checkInDate')?.value || document.getElementById('manualCheckIn')?.value || '';
+      const checkOutDate = document.getElementById('checkOutDate')?.value || document.getElementById('manualCheckOut')?.value || '';
 
       const submission = {
         submittedAt: new Date().toISOString(),
-        totalGuests: 1,
+        totalGuests: totalGuests,
         propertyOption: document.getElementById('propertyOption')?.value || '',
         comingFrom,
         goingTo,
@@ -1580,7 +1743,7 @@
       successIcon.style.display = 'none';
       btnDone.style.display = 'none';
       statusTitle.textContent = 'Submitting ID Verification...';
-      statusMsg.textContent = 'Uploading ID photos to Cloudflare R2 secure storage...';
+      statusMsg.textContent = `Uploading ID photos for ${totalGuests} guest(s) to Cloudflare R2 secure storage...`;
 
       try {
         if (window.AirbnbAPI && typeof window.AirbnbAPI.submitCheckIn === 'function') {
@@ -1602,7 +1765,7 @@
         spinner.style.display = 'none';
         successIcon.style.display = 'flex';
         statusTitle.textContent = 'ID Verification Complete!';
-        statusMsg.textContent = `Thank you, ${guestName}! Your ID document photos and travel details have been securely recorded. We look forward to hosting you at Elite Homes!`;
+        statusMsg.textContent = `Thank you, ${primaryGuestName}! ID document photos and travel details for all ${totalGuests} guest(s) have been securely recorded. We look forward to hosting you at Elite Homes!`;
         btnDone.style.display = 'inline-block';
 
         btnDone.onclick = () => {

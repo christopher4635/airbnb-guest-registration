@@ -3261,7 +3261,7 @@
 
         const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
         const waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(b.guestName)},%20looking%20forward%20to%20hosting%20you%20at%20${encodeURIComponent(b.property)}!` : '';
-        const checkinFormLink = `index.html?prop=${encodeURIComponent(b.property)}&code=${encodeURIComponent(b.reservationCode || '')}&name=${encodeURIComponent(b.guestName || '')}`;
+        const checkinFormLink = `index.html?prop=${encodeURIComponent(b.property || '')}&code=${encodeURIComponent(b.reservationCode || b.id || '')}&name=${encodeURIComponent(b.guestName || '')}&checkin=${encodeURIComponent(b.checkInDate || '')}&checkout=${encodeURIComponent(b.checkOutDate || '')}&phone=${encodeURIComponent(b.phone || '')}&guests=${encodeURIComponent(b.guestsCount || 1)}`;
 
         tr.innerHTML = `
           <td>
