@@ -1878,6 +1878,35 @@
       border: 1px solid #E2E8F0;
     }
 
+    /* Interactive Time Pill for Check-in and Checkout Time customization */
+    .sm-time-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #F8FAFC;
+      color: #334155;
+      border: 1px solid #CBD5E1;
+      padding: 1px 7px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .sm-time-pill-btn:hover {
+      background: #EEF2FF;
+      border-color: #818CF8;
+      color: #4338CA;
+    }
+    .sm-time-pill-btn strong {
+      font-weight: 800;
+      color: #0F172A;
+    }
+    .sm-time-pill-btn:hover strong {
+      color: #4338CA;
+    }
+
     /* Checkout rows */
     .sm-checkout-guests-list {
       display: flex;
@@ -3615,7 +3644,58 @@
            MODALS
            ==================================================================== -->
       
-      <!-- MODAL: Quick Add / Edit Payout Modal -->
+      <!-- QUICK TIME ADJUSTER MODAL (Check-in & Checkout Custom Time) -->
+      <div class="modal-backdrop" id="modal-quick-time" style="display: none; align-items: center; justify-content: center; z-index: 1050;">
+        <div class="modal-dialog" style="max-width: 440px; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+          <div class="modal-header" style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 14px 18px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="qt-modal-icon" style="font-size: 20px;">🕒</span>
+              <div>
+                <h3 id="qt-modal-title" style="margin: 0; font-size: 16px; font-weight: 700; color: var(--text-main);">Adjust Time</h3>
+                <p id="qt-modal-sub" style="margin: 0; font-size: 12px; color: var(--text-muted);">Update check-in or checkout time for guest</p>
+              </div>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeQuickTimeModal()">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 18px;">
+            <input type="hidden" id="qt-booking-id">
+            <input type="hidden" id="qt-time-type">
+            
+            <div style="background: #F1F5F9; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <strong id="qt-guest-name" style="font-size: 14px; color: var(--text-main);">Guest Name</strong>
+                <span id="qt-room-pill" class="tbar-badge" style="background: #0F172A; color: #fff;">Room</span>
+              </div>
+              <div id="qt-stay-dates" style="color: var(--text-muted); font-size: 12px;">Dates</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label for="qt-time-input" id="qt-input-label" style="font-size: 13px; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 6px;">
+                Target Time
+              </label>
+              <div style="position: relative;">
+                <input type="text" id="qt-time-input" placeholder="e.g. 2:00 PM" style="font-size: 17px; font-weight: 700; height: 46px; border: 2px solid #CBD5E1; border-radius: 8px; width: 100%; padding: 0 14px; box-sizing: border-box;" onkeydown="if(event.key==='Enter') saveQuickTime()">
+              </div>
+              <span id="qt-standard-hint" style="font-size: 11px; color: #64748B; margin-top: 4px; display: block;">Standard check-in: 2:00 PM &bull; Standard checkout: 11:00 AM</span>
+            </div>
+
+            <div style="margin-bottom: 8px;">
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;">Quick Presets:</span>
+              <div id="qt-preset-chips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <!-- Populated dynamically based on Check-in or Checkout -->
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="padding: 12px 18px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+            <button type="button" class="btn btn-outline" onclick="closeQuickTimeModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-save-quick-time" onclick="saveQuickTime()" style="background: #4338CA; border-color: #4338CA; font-weight: 700;">
+              <span>💾 Update Time</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK PAYOUT MODAL -->
       <div class="modal-backdrop" id="modal-quick-payout" style="display: none; align-items: center; justify-content: center; z-index: 1050;">
         <div class="modal-dialog" style="max-width: 440px; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
           <div class="modal-header" style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 14px 18px;">
@@ -3737,6 +3817,45 @@
               <div class="form-group">
                 <label>Check-out Date *</label>
                 <input type="date" id="mb-checkout" onchange="onBookingDateOrPropChange()">
+              </div>
+            </div>
+
+            <div class="form-row-2" style="margin-top: -4px;">
+              <div class="form-group">
+                <label style="display: flex; align-items: center; justify-content: space-between;">
+                  <span>Check-in Time (Arrival)</span>
+                  <span style="font-size: 10px; color: var(--text-muted); font-weight: 500;">Default: 2:00 PM</span>
+                </label>
+                <input type="text" id="mb-checkin-time" placeholder="2:00 PM" list="standard-checkin-times">
+                <datalist id="standard-checkin-times">
+                  <option value="11:00 AM">
+                  <option value="12:00 PM">
+                  <option value="1:00 PM">
+                  <option value="2:00 PM">
+                  <option value="3:00 PM">
+                  <option value="4:00 PM">
+                  <option value="5:00 PM">
+                  <option value="6:00 PM">
+                  <option value="8:00 PM">
+                  <option value="10:00 PM">
+                </datalist>
+              </div>
+              <div class="form-group">
+                <label style="display: flex; align-items: center; justify-content: space-between;">
+                  <span>Checkout Time (Departure)</span>
+                  <span style="font-size: 10px; color: var(--text-muted); font-weight: 500;">Default: 11:00 AM</span>
+                </label>
+                <input type="text" id="mb-checkout-time" placeholder="11:00 AM" list="standard-checkout-times">
+                <datalist id="standard-checkout-times">
+                  <option value="8:00 AM">
+                  <option value="9:00 AM">
+                  <option value="10:00 AM">
+                  <option value="11:00 AM">
+                  <option value="12:00 PM">
+                  <option value="1:00 PM">
+                  <option value="2:00 PM">
+                  <option value="3:00 PM">
+                </datalist>
               </div>
             </div>
 
@@ -6712,6 +6831,162 @@
       }
     }
 
+    // Quick Time Adjuster (Check-in & Checkout custom times)
+    let quickTimeTargetBookingId = null;
+    let quickTimeTargetType = null;
+
+    function openQuickTimeModal(bookingId, type) {
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+
+      quickTimeTargetBookingId = bookingId;
+      quickTimeTargetType = type;
+
+      const isCheckIn = (type === 'checkin');
+      const iconEl = document.getElementById('qt-modal-icon');
+      const titleEl = document.getElementById('qt-modal-title');
+      const subEl = document.getElementById('qt-modal-sub');
+      const labelEl = document.getElementById('qt-input-label');
+      const guestEl = document.getElementById('qt-guest-name');
+      const roomEl = document.getElementById('qt-room-pill');
+      const datesEl = document.getElementById('qt-stay-dates');
+      const inputEl = document.getElementById('qt-time-input');
+      const hintEl = document.getElementById('qt-standard-hint');
+      const chipsEl = document.getElementById('qt-preset-chips');
+
+      if (iconEl) iconEl.textContent = isCheckIn ? '⬇️' : '⬆️';
+      if (titleEl) titleEl.textContent = isCheckIn ? 'Adjust Check-in / Arrival Time' : 'Adjust Checkout / Departure Time';
+      if (subEl) subEl.textContent = isCheckIn 
+        ? 'Update estimated arrival time. Live countdown will adjust automatically.' 
+        : 'Update checkout deadline. Live countdown & overdue alerts will adjust automatically.';
+      if (labelEl) labelEl.textContent = isCheckIn ? 'Check-in Time (Arrival)' : 'Checkout Time (Departure)';
+      if (guestEl) guestEl.textContent = b.guestName || 'Guest';
+      if (roomEl) roomEl.textContent = b.property || 'Room';
+      if (datesEl) datesEl.textContent = `📅 Stay: ${b.checkInDate} → ${b.checkOutDate} (${b.nights || 1} nights)`;
+
+      const currentTime = isCheckIn ? getBookingArrivalTime(b) : getBookingCheckoutTime(b);
+      if (inputEl) {
+        inputEl.value = currentTime;
+        inputEl.placeholder = isCheckIn ? '2:00 PM' : '11:00 AM';
+      }
+      if (hintEl) {
+        hintEl.innerHTML = isCheckIn 
+          ? 'Standard check-in time: <strong>2:00 PM</strong>' 
+          : 'Standard checkout time: <strong>11:00 AM</strong>';
+      }
+
+      const presets = isCheckIn 
+        ? ['11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM (Standard)', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '8:00 PM', '10:00 PM']
+        : ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM (Standard)', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
+
+      if (chipsEl) {
+        chipsEl.innerHTML = presets.map(p => {
+          const raw = p.replace(/\s*\([^)]*\)/, '');
+          const isSelected = (raw.toLowerCase() === currentTime.toLowerCase());
+          return `
+            <button type="button" class="btn btn-outline" style="padding: 3px 8px; font-size: 11px; font-weight: 700; ${isSelected ? 'background: #EEF2FF; color: #4338CA; border-color: #818CF8;' : ''}" onclick="setQuickTimePreset('${raw}')">
+              ${escapeHtml(p)}
+            </button>
+          `;
+        }).join('');
+      }
+
+      const modal = document.getElementById('modal-quick-time');
+      if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => { if (inputEl) inputEl.focus(); }, 50);
+      }
+    }
+
+    function closeQuickTimeModal() {
+      const modal = document.getElementById('modal-quick-time');
+      if (modal) modal.style.display = 'none';
+      quickTimeTargetBookingId = null;
+      quickTimeTargetType = null;
+    }
+
+    function setQuickTimePreset(val) {
+      const input = document.getElementById('qt-time-input');
+      if (input) input.value = val;
+    }
+
+    async function saveQuickTime() {
+      if (!quickTimeTargetBookingId || !quickTimeTargetType) return;
+      const b = currentBookings.find(x => x && x.id === quickTimeTargetBookingId);
+      if (!b) return;
+
+      const input = document.getElementById('qt-time-input');
+      const val = (input ? input.value : '').trim();
+      if (!val) {
+        alert("Please enter a valid time (e.g. 2:00 PM or 11:00 AM).");
+        return;
+      }
+
+      const isCheckIn = (quickTimeTargetType === 'checkin');
+      const timeTag = isCheckIn ? `Arrival Time: ${val}` : `Checkout Time: ${val}`;
+
+      if (isCheckIn) {
+        b.checkInTime = val;
+        b.arrivalTime = val;
+        if (b.notes && /(?:Check-?in|Arrival)(?:\s*Time)?:\s*[0-9:APMapm\s]+/i.test(b.notes)) {
+          b.notes = b.notes.replace(/(?:Check-?in|Arrival)(?:\s*Time)?:\s*[0-9:APMapm\s]+/i, timeTag);
+        } else if (b.notes) {
+          b.notes += ` | ${timeTag}`;
+        } else {
+          b.notes = timeTag;
+        }
+      } else {
+        b.checkOutTime = val;
+        b.departureTime = val;
+        if (b.notes && /(?:Check-?out|Departure)(?:\s*Time)?:\s*[0-9:APMapm\s]+/i.test(b.notes)) {
+          b.notes = b.notes.replace(/(?:Check-?out|Departure)(?:\s*Time)?:\s*[0-9:APMapm\s]+/i, timeTag);
+        } else if (b.notes) {
+          b.notes += ` | ${timeTag}`;
+        } else {
+          b.notes = timeTag;
+        }
+      }
+
+      closeQuickTimeModal();
+      saveBookings();
+      renderBookingsPortal();
+      showToast(`🕒 Updated ${isCheckIn ? 'Check-in' : 'Checkout'} time to ${val}. Countdown updated!`);
+
+      // Persist to Cloudflare D1
+      try {
+        if (window.AirbnbAPI) {
+          const rev = getBookingRevenue(b);
+          const payoutStr = b.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
+          const payload = {
+            id: b.id,
+            property: b.property,
+            guestName: b.guestName,
+            phone: b.phone,
+            email: b.email,
+            checkInDate: b.checkInDate,
+            checkOutDate: b.checkOutDate,
+            nights: b.nights,
+            guestsCount: b.guestsCount,
+            platform: b.platform,
+            reservationCode: b.reservationCode,
+            payout: payoutStr,
+            paymentStatus: b.paymentStatus,
+            status: b.status || 'Confirmed',
+            notes: b.notes
+          };
+          if (typeof window.AirbnbAPI.updateBooking === 'function') {
+            await window.AirbnbAPI.updateBooking(b.id, payload);
+          } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
+            await window.AirbnbAPI.saveBooking(payload);
+          }
+          saveBookings();
+          renderBookingsPortal();
+        }
+      } catch (err) {
+        console.warn("Could not sync custom time to D1:", err);
+      }
+    }
+
     let showUpcomingCheckouts = false;
     function toggleUpcomingCheckouts() {
       showUpcomingCheckouts = !showUpcomingCheckouts;
@@ -7368,6 +7643,16 @@
                 if (cm && b.manualCollectionAmount === undefined) {
                   b.manualCollectionAmount = parseFloat(cm[1].replace(/,/g, '')) || 0;
                 }
+                const arrMatch = b.notes.match(/(?:Check-?in|Arrival)(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
+                if (arrMatch) {
+                  b.arrivalTime = arrMatch[1].trim();
+                  b.checkInTime = arrMatch[1].trim();
+                }
+                const depMatch = b.notes.match(/(?:Check-?out|Departure)(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
+                if (depMatch) {
+                  b.departureTime = depMatch[1].trim();
+                  b.checkOutTime = depMatch[1].trim();
+                }
               }
             });
             currentBookings = d1Bookings;
@@ -7447,6 +7732,16 @@
                 if (cm && b.manualCollectionAmount === undefined) {
                   b.manualCollectionAmount = parseFloat(cm[1].replace(/,/g, '')) || 0;
                 }
+                const arrMatch = b.notes.match(/(?:Check-?in|Arrival)(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
+                if (arrMatch) {
+                  b.arrivalTime = arrMatch[1].trim();
+                  b.checkInTime = arrMatch[1].trim();
+                }
+                const depMatch = b.notes.match(/(?:Check-?out|Departure)(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
+                if (depMatch) {
+                  b.departureTime = depMatch[1].trim();
+                  b.checkOutTime = depMatch[1].trim();
+                }
               }
             });
             currentBookings = d1Bookings;
@@ -7479,6 +7774,16 @@
 
       renderBookingsPortal();
       if (typeof loadFinancialData === 'function') loadFinancialData();
+
+      // Automatically refresh countdown badges every 60 seconds
+      setInterval(() => {
+        const qtModal = document.getElementById('modal-quick-time');
+        const bModal = document.getElementById('modal-booking');
+        const isAnyModalOpen = (qtModal && qtModal.style.display === 'flex') || (bModal && bModal.classList.contains('active'));
+        if (!isAnyModalOpen && typeof renderCalendarTopBarAndStats === 'function') {
+          renderCalendarTopBarAndStats();
+        }
+      }, 60000);
 
       // Silently pre-load guest submissions and trigger D1 bookings sync in background
       setTimeout(async () => {
@@ -7599,11 +7904,25 @@
       renderBookingsPortal();
     }
 
-    // Helper to resolve estimated arrival time from booking metadata or guest submissions
+    // Helper to resolve checkout time from booking metadata or notes (defaults to 11:00 AM)
+    function getBookingCheckoutTime(bk) {
+      if (!bk) return '11:00 AM';
+      if (bk.checkOutTime && String(bk.checkOutTime).trim()) return String(bk.checkOutTime).trim();
+      if (bk.departureTime && String(bk.departureTime).trim()) return String(bk.departureTime).trim();
+      if (bk.notes) {
+        const m = bk.notes.match(/(?:Check-?out|Departure)(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
+        if (m && m[1].trim()) return m[1].trim();
+      }
+      return '11:00 AM';
+    }
+
+    // Helper to resolve estimated arrival time from booking metadata, notes, or guest submissions (defaults to 2:00 PM)
     function getBookingArrivalTime(bk) {
+      if (!bk) return '2:00 PM';
+      if (bk.checkInTime && String(bk.checkInTime).trim()) return String(bk.checkInTime).trim();
       if (bk.arrivalTime && String(bk.arrivalTime).trim()) return String(bk.arrivalTime).trim();
       if (bk.notes) {
-        const m = bk.notes.match(/Arrival(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
+        const m = bk.notes.match(/(?:Check-?in|Arrival)(?:\s*Time)?:\s*([0-9:APMapm\s]+)/i);
         if (m && m[1].trim()) return m[1].trim();
       }
       if (Array.isArray(allSubmissions) && allSubmissions.length > 0) {
@@ -8036,7 +8355,9 @@
 
               <div class="sm-turnover-row-meta">
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                  <span>🕒 Arrival: <strong>${escapeHtml(arrTime)}</strong></span>
+                  <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkin')" title="Click to adjust Check-in / Arrival Time (Standard: 2:00 PM)">
+                    🕒 Arrival: <strong>${escapeHtml(arrTime)}</strong> <span style="font-size: 10px; opacity: 0.65;">✏️</span>
+                  </button>
                   ${arrCountdown}
                   <span>• Stay: <strong>${bk.checkInDate} → ${bk.checkOutDate}</strong> (${bk.nights || 1}n, ${bk.guestsCount || 1}g)</span>
                 </div>
@@ -8056,7 +8377,7 @@
           if (platLower.includes('airbnb')) platClass = 'is-airbnb';
           else if (platLower.includes('booking')) platClass = 'is-booking';
 
-          const outTime = '11:00 AM';
+          const outTime = getBookingCheckoutTime(bk);
           const fin = getBookingFinancials(bk);
           const isPaid = (split.isSplit && split.isFinal) ? (split.combinedBalance === 0) : fin.isPaid;
           const outCountdown = calculateCountdownBadge(bk.checkOutDate, outTime, true, isPaid);
@@ -8090,7 +8411,9 @@
 
                 <div class="sm-turnover-row-meta">
                   <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <span>🕒 Checkout: <strong>${outTime}</strong></span>
+                    <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkout')" title="Click to adjust Checkout / Departure Time (Standard: 11:00 AM)">
+                      🕒 Checkout: <strong>${escapeHtml(outTime)}</strong> <span style="font-size: 10px; opacity: 0.65;">✏️</span>
+                    </button>
                     ${outCountdown}
                     <span>• Total Stay: ${split.overallCheckIn} → ${finalOut} (${split.totalNights}n)</span>
                   </div>
@@ -8133,7 +8456,9 @@
 
                 <div class="sm-turnover-row-meta">
                   <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <span>🕒 Checkout: <strong>${outTime}</strong></span>
+                    <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkout')" title="Click to adjust Checkout / Departure Time (Standard: 11:00 AM)">
+                      🕒 Checkout: <strong>${escapeHtml(outTime)}</strong> <span style="font-size: 10px; opacity: 0.65;">✏️</span>
+                    </button>
                     ${outCountdown}
                     <span>• Combined: ₹${formatCurrency(split.totalAmount)}</span>
                     ${isSettled ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(dueAmt)}</span>`}
@@ -8178,7 +8503,9 @@
 
               <div class="sm-turnover-row-meta">
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                  <span>🕒 Checkout: <strong>${outTime}</strong></span>
+                  <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkout')" title="Click to adjust Checkout / Departure Time (Standard: 11:00 AM)">
+                    🕒 Checkout: <strong>${escapeHtml(outTime)}</strong> <span style="font-size: 10px; opacity: 0.65;">✏️</span>
+                  </button>
                   ${outCountdown}
                   <span>• Stay: <strong>${bk.checkInDate} → ${bk.checkOutDate}</strong> (${bk.nights || 1}n)</span>
                   ${fin.isPaid ? '<span style="color:#059669; font-weight:700;">✔ Settled / Paid</span>' : (fin.balance > 0 ? `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(fin.balance)}</span>` : '')}
@@ -10342,6 +10669,10 @@
       document.getElementById('mb-notes').value = b.notes || '';
       document.getElementById('mb-checkin').value = b.checkInDate || '';
       document.getElementById('mb-checkout').value = b.checkOutDate || '';
+      const inTimeInp = document.getElementById('mb-checkin-time');
+      if (inTimeInp) inTimeInp.value = getBookingArrivalTime(b);
+      const outTimeInp = document.getElementById('mb-checkout-time');
+      if (outTimeInp) outTimeInp.value = getBookingCheckoutTime(b);
 
       // Pre-compute shareable guest check-in URL
       const shareUrlInput = document.getElementById('mb-shareable-url-input');
@@ -10708,12 +11039,17 @@
         return;
       }
 
+      const checkInTimeVal = (document.getElementById('mb-checkin-time')?.value || '').trim();
+      const checkOutTimeVal = (document.getElementById('mb-checkout-time')?.value || '').trim();
       const payoutStr = totalAmount > 0 ? ('₹' + totalAmount.toLocaleString('en-IN')) : '—';
 
       // Preserve structured rate metadata: Rate/night, Total amount, and Booking Mode
       let userNotes = document.getElementById('mb-notes').value.trim();
       userNotes = userNotes.replace(/^Booked Rate:[^\n]+\n?/m, '').trim();
-      const metaLine = `Booked Rate: ₹${nightlyRate.toLocaleString('en-IN')}/night (Total: ₹${totalAmount.toLocaleString('en-IN')}) | Advance Paid: ₹${advance.toLocaleString('en-IN')} | Booking Mode: ${mode}`;
+      let timeMeta = '';
+      if (checkInTimeVal) timeMeta += ` | Arrival Time: ${checkInTimeVal}`;
+      if (checkOutTimeVal) timeMeta += ` | Checkout Time: ${checkOutTimeVal}`;
+      const metaLine = `Booked Rate: ₹${nightlyRate.toLocaleString('en-IN')}/night (Total: ₹${totalAmount.toLocaleString('en-IN')}) | Advance Paid: ₹${advance.toLocaleString('en-IN')} | Booking Mode: ${mode}${timeMeta}`;
       let finalNotes = userNotes ? `${metaLine}\n${userNotes}` : metaLine;
 
       const linkedVal = document.getElementById('mb-linked-booking')?.value || '';
@@ -10760,6 +11096,10 @@
         linkedBookingId: linkedVal || null,
         idDocuments: currentModalGuestIds || [],
         notes: finalNotes,
+        checkInTime: checkInTimeVal || '2:00 PM',
+        arrivalTime: checkInTimeVal || '2:00 PM',
+        checkOutTime: checkOutTimeVal || '11:00 AM',
+        departureTime: checkOutTimeVal || '11:00 AM',
         isPrimary: true,
         isManual: true,
         source: 'website',
