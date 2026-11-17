@@ -1005,6 +1005,87 @@
       flex-shrink: 0;
     }
 
+    /* Guest ID Badges and Quick View Modal Styles */
+    .tbar-id-badge {
+      background: #0284C7;
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 0.5px 4.5px;
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      box-shadow: 0 1px 2px rgba(2, 132, 199, 0.25);
+      transition: all 0.12s ease;
+      line-height: 1.2;
+    }
+    .tbar-id-badge:hover {
+      background: #0369A1;
+      transform: scale(1.08);
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.35);
+    }
+    .mday-id-badge {
+      background: #0284C7;
+      color: #FFFFFF;
+      font-size: 8.5px;
+      font-weight: 800;
+      padding: 0.5px 4px;
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      box-shadow: 0 1px 2px rgba(2, 132, 199, 0.2);
+    }
+    .mday-id-badge:hover {
+      background: #0369A1;
+      transform: scale(1.06);
+    }
+    .cal-popup-id-card {
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin: 6px 0;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cal-popup-id-card.is-verified {
+      background: #F0F9FF;
+      border: 1px solid #BAE6FD;
+    }
+    .cal-popup-id-card.is-verified:hover {
+      background: #E0F2FE;
+      border-color: #7DD3FC;
+    }
+    .cal-popup-id-card.is-pending {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      cursor: default;
+    }
+    .quick-id-hover-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+    }
+    .quick-id-thumb-wrap:hover .quick-id-hover-overlay {
+      opacity: 1;
+    }
+
+
     /* Bottom Row: Payout + Nights (NO redundant status text) */
     .tbar-row-bottom,
     .tbar-meta {
@@ -4655,6 +4736,43 @@
         </div>
       </div>
 
+      <!-- MODAL: QUICK GUEST ID & DOCUMENTS VIEWER (CALENDAR & TURNOVERS) -->
+      <div class="modal-backdrop" id="modal-booking-ids-quickview" style="z-index: 10001; display: none;">
+        <div class="modal-dialog" style="max-width: 820px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);">
+          <!-- Modal Header -->
+          <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; background: #FAFBFD;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 id="mb-quick-docs-title" style="margin: 0; font-size: 17px; font-weight: 800; color: #0F172A;">
+                  🪪 Guest ID Documents
+                </h3>
+                <span id="mb-quick-docs-count-badge" class="badge-pill" style="background: #E0F2FE; color: #0369A1; font-weight: 800; font-size: 11px;">
+                  0 Docs
+                </span>
+              </div>
+              <p id="mb-quick-docs-sub" style="margin: 3px 0 0; font-size: 12px; color: var(--text-muted);"></p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeBookingIdsQuickModal()">&times;</button>
+          </div>
+
+          <!-- Modal Body (Scrollable) -->
+          <div class="modal-body" style="padding: 18px 20px; overflow-y: auto; flex: 1; background: #F8FAFC;">
+            <!-- Top Info Summary Strip -->
+            <div id="mb-quick-docs-meta-banner" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"></div>
+
+            <!-- Guest Cards Container -->
+            <div id="mb-quick-docs-container" style="display: flex; flex-direction: column; gap: 14px;"></div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: #FFFFFF;">
+            <div id="mb-quick-docs-actions-left" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+            <button type="button" class="btn btn-primary" onclick="closeBookingIdsQuickModal()">Done</button>
+          </div>
+        </div>
+      </div>
+
+
 
       <!-- TAB 2: GUEST ENTRIES & SUBMISSIONS VIEW -->
       <div id="view-entries" style="display: none;">
@@ -7123,6 +7241,416 @@
       renderCalendarTopBarAndStats();
     }
 
+    
+    // =========================================================================
+    // UNIFIED GUEST ID EXTRACTION & QUICK VIEWER (CALENDAR & TURNOVERS)
+    // =========================================================================
+    function getBookingIdDocuments(b) {
+      if (!b) return [];
+      let docs = [];
+
+      // 1. Direct idDocuments array or JSON string
+      if (Array.isArray(b.idDocuments) && b.idDocuments.length > 0) {
+        docs = [...b.idDocuments];
+      } else if (typeof b.idDocuments === 'string' && b.idDocuments.trim()) {
+        try {
+          const parsed = JSON.parse(b.idDocuments);
+          if (Array.isArray(parsed) && parsed.length > 0) docs = [...parsed];
+        } catch (e) {}
+      }
+
+      // 2. Direct id_documents property from D1
+      if (docs.length === 0 && b.id_documents) {
+        try {
+          const parsed = typeof b.id_documents === 'string' ? JSON.parse(b.id_documents) : b.id_documents;
+          if (Array.isArray(parsed) && parsed.length > 0) docs = [...parsed];
+        } catch (e) {}
+      }
+
+      // 3. Notes embedded [ID Documents: [...]]
+      if (docs.length === 0 && b.notes && b.notes.includes('[ID Documents:')) {
+        try {
+          const m = b.notes.match(/\[ID Documents:\s*([^\]]+)\]/i);
+          if (m) {
+            const parsed = JSON.parse(m[1]);
+            if (Array.isArray(parsed) && parsed.length > 0) docs = [...parsed];
+          }
+        } catch (e) {}
+      }
+
+      // 4. Split stay linked legs
+      if (docs.length === 0 && Array.isArray(window.currentBookings)) {
+        const split = (typeof getSplitStayInfo === 'function')
+          ? getSplitStayInfo(b, window.currentBookings)
+          : null;
+        if (split && split.isSplit && Array.isArray(split.legs)) {
+          for (const leg of split.legs) {
+            if (leg.id === b.id) continue;
+            if (Array.isArray(leg.idDocuments) && leg.idDocuments.length > 0) {
+              docs = [...leg.idDocuments];
+              break;
+            }
+            if (leg.id_documents) {
+              try {
+                const parsed = typeof leg.id_documents === 'string' ? JSON.parse(leg.id_documents) : leg.id_documents;
+                if (Array.isArray(parsed) && parsed.length > 0) { docs = [...parsed]; break; }
+              } catch (e) {}
+            }
+            if (leg.notes && leg.notes.includes('[ID Documents:')) {
+              try {
+                const m = leg.notes.match(/\[ID Documents:\s*([^\]]+)\]/i);
+                if (m) {
+                  const parsed = JSON.parse(m[1]);
+                  if (Array.isArray(parsed) && parsed.length > 0) { docs = [...parsed]; break; }
+                }
+              } catch (e) {}
+            }
+          }
+        }
+      }
+
+      // 5. Cross-check allSubmissions if available
+      if (docs.length === 0 && Array.isArray(window.allSubmissions) && window.allSubmissions.length > 0) {
+        const bkCode = (b.reservationCode || b.id || '').toLowerCase().trim();
+        const bkName = (b.guestName || '').toLowerCase().trim();
+        const bkIn = b.checkInDate || '';
+        const bkOut = b.checkOutDate || '';
+
+        const matching = window.allSubmissions.filter(s => {
+          const sCode = (s['Reservation Code'] || s.id || '').toLowerCase().trim();
+          const sName = (s['Guest Legal Name'] || s['Guest Name'] || '').toLowerCase().trim();
+          const sIn = s['Check-in Date'] || s['Check-in'] || '';
+          const sOut = s['Check-out Date'] || s['Check-out'] || '';
+
+          if (bkCode && sCode && sCode !== 'direct' && (bkCode === sCode || sCode.includes(bkCode) || bkCode.includes(sCode))) return true;
+          if (bkName && sName) {
+            const firstBk = bkName.split(/\s+/)[0];
+            const firstS = sName.split(/\s+/)[0];
+            const nameMatch = sName.includes(bkName) || bkName.includes(sName) ||
+              (firstBk.length >= 3 && sName.includes(firstBk)) ||
+              (firstS.length >= 3 && bkName.includes(firstS));
+            if (nameMatch) {
+              if (!bkIn || !sIn || bkIn === sIn || bkOut === sOut) return true;
+            }
+          }
+          return false;
+        });
+
+        matching.forEach(sub => {
+          const sGuestName = sub['Guest Legal Name'] || sub['Guest Name'] || 'Guest';
+          const sType = sub['ID Type'] || 'ID Card';
+          if (sub['Front ID Photo'] || sub['Front ID']) {
+            docs.push({
+              name: `${sGuestName} - Front ID (${sType})`,
+              url: sub['Front ID Photo'] || sub['Front ID'],
+              source: 'Guest Submission Form',
+              uploadedAt: sub.Timestamp || ''
+            });
+          }
+          if (sub['Back ID Photo'] || sub['Back ID']) {
+            docs.push({
+              name: `${sGuestName} - Back ID`,
+              url: sub['Back ID Photo'] || sub['Back ID'],
+              source: 'Guest Submission Form',
+              uploadedAt: sub.Timestamp || ''
+            });
+          }
+          if (sub['Digital Signature'] || sub['Signature']) {
+            docs.push({
+              name: `${sGuestName} - Digital Signature`,
+              url: sub['Digital Signature'] || sub['Signature'],
+              source: 'Guest Submission Form',
+              uploadedAt: sub.Timestamp || ''
+            });
+          }
+        });
+      }
+
+      // Deduplicate docs
+      const seen = new Set();
+      const deduped = [];
+      for (const d of docs) {
+        const key = (d.url || d.key || d.name || '').trim();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(d);
+      }
+      return deduped;
+    }
+
+    function groupDocsByPerson(docs, primaryGuestName) {
+      const groups = new Map();
+
+      docs.forEach((doc, idx) => {
+        const rawName = (doc.name || '').trim();
+        let personName = '';
+        let docType = 'ID Document';
+        let isFront = false;
+        let isBack = false;
+        let isSig = false;
+
+        if (rawName.includes(' - ')) {
+          const parts = rawName.split(' - ');
+          personName = parts[0].trim();
+          docType = parts.slice(1).join(' - ').trim();
+        } else {
+          personName = primaryGuestName || 'Primary Guest';
+          docType = rawName || `Document #${idx + 1}`;
+        }
+
+        const lower = docType.toLowerCase();
+        if (lower.includes('front')) isFront = true;
+        else if (lower.includes('back')) isBack = true;
+        else if (lower.includes('sig')) isSig = true;
+
+        if (!groups.has(personName)) {
+          groups.set(personName, {
+            personName,
+            frontDoc: null,
+            backDoc: null,
+            otherDocs: []
+          });
+        }
+
+        const g = groups.get(personName);
+        if (isFront && !g.frontDoc) {
+          g.frontDoc = doc;
+        } else if (isBack && !g.backDoc) {
+          g.backDoc = doc;
+        } else {
+          g.otherDocs.push(doc);
+        }
+      });
+
+      return Array.from(groups.values());
+    }
+
+    async function openBookingIdsQuickModal(bookingId) {
+      let b = (Array.isArray(window.currentBookings)) ? window.currentBookings.find(x => x && x.id === bookingId) : null;
+      if (!b) return;
+
+      let docs = getBookingIdDocuments(b);
+
+      // If no docs found and submissions not yet loaded, load them once
+      if (docs.length === 0 && (!window.allSubmissions || window.allSubmissions.length === 0) && window.AirbnbAPI && typeof window.AirbnbAPI.getSubmissions === 'function') {
+        try {
+          const d1Subs = await window.AirbnbAPI.getSubmissions();
+          if (Array.isArray(d1Subs)) {
+            window.allSubmissions = d1Subs.map(s => ({
+              'id': s.id,
+              'Timestamp': s.createdAt || '',
+              'Reservation Code': s.reservationCode || '',
+              'Property Option': s.propertyOption || '',
+              'Check-in Date': s.checkInDate || '',
+              'Check-out Date': s.checkOutDate || '',
+              'Arrival Time': s.arrivalTime || '',
+              'Total Guests': s.totalGuests || 1,
+              'Guest #': s.guestNumber || '',
+              'Guest Legal Name': s.guestName || '',
+              'Age': s.age || '',
+              'Phone / WhatsApp': s.phone || '',
+              'Email Address': s.email || '',
+              'Coming From': s.comingFrom || '',
+              'Going To': s.goingTo || '',
+              'Purpose of Visit': s.purposeOfVisit || '',
+              'customDetails': s.customDetails,
+              'ID Type': s.idType || 'Aadhaar Card',
+              'ID Number': s.idNumber || '',
+              'Front ID Photo': s.frontPhotoUrl || '',
+              'Back ID Photo': s.backPhotoUrl || '',
+              'Digital Signature': s.signatureUrl || ''
+            }));
+            docs = getBookingIdDocuments(b);
+          }
+        } catch (e) {}
+      }
+
+      const modal = document.getElementById('modal-booking-ids-quickview');
+      const titleEl = document.getElementById('mb-quick-docs-title');
+      const countBadge = document.getElementById('mb-quick-docs-count-badge');
+      const subEl = document.getElementById('mb-quick-docs-sub');
+      const bannerEl = document.getElementById('mb-quick-docs-meta-banner');
+      const containerEl = document.getElementById('mb-quick-docs-container');
+      const actionsLeftEl = document.getElementById('mb-quick-docs-actions-left');
+
+      if (!modal || !containerEl) return;
+
+      const guestName = b.guestName || 'Guest';
+      titleEl.innerHTML = `🪪 Guest ID Documents &mdash; <span style="color: #0284C7;">${escapeHtml(guestName)}</span>`;
+      countBadge.textContent = `${docs.length} File${docs.length === 1 ? '' : 's'}`;
+      countBadge.style.background = docs.length > 0 ? '#E0F2FE' : '#FEF3C7';
+      countBadge.style.color = docs.length > 0 ? '#0369A1' : '#B45309';
+
+      subEl.textContent = `🏠 ${b.property || 'Property'} • 📅 ${b.checkInDate} → ${b.checkOutDate} (${b.nights || 1} nt) • Code: #${b.reservationCode || b.id}`;
+
+      // Clean phone
+      const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
+      const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+
+      // Meta banner
+      bannerEl.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span class="badge-pill" style="background: #F1F5F9; color: #334155; font-weight: 700;">🏠 ${escapeHtml(b.property || 'Property')}</span>
+          <span class="badge-pill" style="background: #EFF6FF; color: #1E40AF; font-weight: 700;">📅 ${b.checkInDate} &rarr; ${b.checkOutDate}</span>
+          ${b.phone ? `
+            <a href="tel:${b.phone}" class="badge-pill" style="background: #ECFDF5; color: #065F46; text-decoration: none; font-weight: 600;">📞 ${escapeHtml(b.phone)}</a>
+          ` : ''}
+          ${cleanPhone ? `
+            <button type="button" class="btn-action-pill" onclick="sendGuestIdWhatsApp(currentBookings.find(x => x.id === '${b.id}'))" style="background: #25D366; color: #FFFFFF; border: none; font-size: 11px; padding: 2px 8px; cursor: pointer;">
+              💬 WhatsApp
+            </button>
+          ` : ''}
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 11px; color: #0284C7; font-weight: 700; background: #F0F9FF; border: 1px solid #BAE6FD; padding: 3px 8px; border-radius: 6px;">
+            🔒 Cloudflare R2 Verified
+          </span>
+        </div>
+      `;
+
+      // Body: Grouped Person Cards or Empty State
+      if (docs.length === 0) {
+        containerEl.innerHTML = `
+          <div style="text-align: center; padding: 36px 20px; background: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 12px;">
+            <div style="font-size: 42px; margin-bottom: 8px;">⏳</div>
+            <h4 style="margin: 0 0 6px; font-size: 16px; color: #1E293B; font-weight: 800;">No ID Documents Uploaded Yet</h4>
+            <p style="margin: 0 auto 16px; font-size: 13px; color: #64748B; max-width: 440px; line-height: 1.5;">
+              Guest <strong>${escapeHtml(guestName)}</strong> has not completed their ID verification yet. You can send them a pre-filled link on WhatsApp or upload their document directly.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-primary" onclick="sendGuestIdWhatsApp(currentBookings.find(x => x.id === '${b.id}'))" style="background: #25D366; border: none; font-size: 13px; font-weight: 700; padding: 8px 16px;">
+                💬 Send WhatsApp Request
+              </button>
+              <button type="button" class="btn btn-outline" onclick="copyGuestIdUploadLink(currentBookings.find(x => x.id === '${b.id}'))" style="font-size: 13px; padding: 8px 14px;">
+                📋 Copy Guest Link
+              </button>
+              <button type="button" class="btn btn-outline" onclick="closeBookingIdsQuickModal(); openEditBookingModal('${b.id}');" style="font-size: 13px; padding: 8px 14px;">
+                📷 Host Direct Upload
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        const persons = groupDocsByPerson(docs, guestName);
+        let cardsHtml = '';
+
+        persons.forEach((p, pIdx) => {
+          const filesCount = (p.frontDoc ? 1 : 0) + (p.backDoc ? 1 : 0) + p.otherDocs.length;
+          let docBoxesHtml = '';
+
+          // Helper to render single document box
+          function renderDocBox(doc, label, sideBadge) {
+            const resolvedUrl = (window.AirbnbAPI && typeof window.AirbnbAPI.resolveImageUrl === 'function')
+              ? window.AirbnbAPI.resolveImageUrl(doc.url || doc.key)
+              : (doc.url || doc.key);
+            const isPdf = (doc.name && doc.name.toLowerCase().endsWith('.pdf')) || (doc.url && doc.url.toLowerCase().includes('.pdf'));
+
+            return `
+              <div style="border: 1px solid #E2E8F0; border-radius: 8px; background: #FFFFFF; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 11.5px; color: #0F172A; display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    <span>🪪</span>
+                    <span title="${escapeHtml(label)}">${escapeHtml(label)}</span>
+                  </strong>
+                  <span style="font-size: 9.5px; font-weight: 800; color: #0284C7; background: #E0F2FE; padding: 1px 6px; border-radius: 4px; flex-shrink: 0;">${sideBadge}</span>
+                </div>
+
+                <div class="quick-id-thumb-wrap" style="width: 100%; height: 160px; border-radius: 6px; overflow: hidden; background: #F1F5F9; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid #E2E8F0;"
+                     onclick="viewDocument('${encodeURIComponent(resolvedUrl)}', '${encodeURIComponent(doc.name || label)}', '${encodeURIComponent(p.personName)}')">
+                  ${isPdf ? `
+                    <div style="font-size: 32px; text-align: center;">
+                      <div>📄</div>
+                      <div style="font-size: 11px; font-weight: 700; color: #475569; margin-top: 4px;">PDF Document</div>
+                    </div>
+                  ` : `
+                    <img src="${escapeHtml(resolvedUrl)}" alt="${escapeHtml(label)}" style="width: 100%; height: 100%; object-fit: contain; background: #0F172A;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 11px; color: #64748B; font-weight: 700; background: #F1F5F9;">
+                      🪪 Photo Preview
+                    </div>
+                  `}
+                  <div class="quick-id-hover-overlay">
+                    <span>🔍 Click to View Full Screen</span>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 6px; justify-content: space-between; margin-top: 2px;">
+                  <button type="button" class="btn-action-pill" style="flex: 1; font-size: 11px; padding: 4px 8px; color: #0284C7; background: #E0F2FE; border: 1px solid #BAE6FD; cursor: pointer; font-weight: 700; text-align: center;"
+                          onclick="viewDocument('${encodeURIComponent(resolvedUrl)}', '${encodeURIComponent(doc.name || label)}', '${encodeURIComponent(p.personName)}')">
+                    🔍 Full Size
+                  </button>
+                  <a href="${escapeHtml(resolvedUrl)}" download="${escapeHtml(doc.name || label)}.jpg" target="_blank" class="btn-action-pill" style="font-size: 11px; padding: 4px 8px; color: #475569; background: #F8FAFC; border: 1px solid #CBD5E1; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 3px; font-weight: 600;" title="Download original file">
+                    ⬇️ Download
+                  </a>
+                  <a href="${escapeHtml(resolvedUrl)}" target="_blank" class="btn-action-pill" style="font-size: 11px; padding: 4px 8px; color: #64748B; background: #FFFFFF; border: 1px solid #E2E8F0; text-decoration: none;" title="Open in new browser tab">
+                    ↗
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+
+          if (p.frontDoc) {
+            docBoxesHtml += renderDocBox(p.frontDoc, p.frontDoc.name || 'Front ID Photo', 'Front ID');
+          }
+          if (p.backDoc) {
+            docBoxesHtml += renderDocBox(p.backDoc, p.backDoc.name || 'Back ID Photo', 'Back ID');
+          }
+          p.otherDocs.forEach((od, oIdx) => {
+            docBoxesHtml += renderDocBox(od, od.name || `Document #${oIdx + 1}`, 'Document');
+          });
+
+          cardsHtml += `
+            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 17px;">👤</span>
+                  <strong style="font-size: 14px; color: #1E293B;">Person ${pIdx + 1}: ${escapeHtml(p.personName)}</strong>
+                  ${pIdx === 0 ? `<span class="badge-pill" style="font-size: 9px; background: #DCFCE7; color: #166534; font-weight: 700;">Primary Guest</span>` : ''}
+                </div>
+                <span class="badge-pill" style="font-size: 10px; background: #F1F5F9; color: #475569; font-weight: 700;">
+                  ${filesCount} File${filesCount === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                ${docBoxesHtml}
+              </div>
+            </div>
+          `;
+        });
+
+        containerEl.innerHTML = cardsHtml;
+      }
+
+      // Footer actions
+      actionsLeftEl.innerHTML = `
+        <button type="button" class="btn btn-outline" onclick="sendGuestIdWhatsApp(currentBookings.find(x => x.id === '${b.id}'))" style="font-size: 12px; font-weight: 700; color: #15803D; border-color: #86EFAC; background: #F0FDF4;">
+          💬 WhatsApp Link
+        </button>
+        <button type="button" class="btn btn-outline" onclick="copyGuestIdUploadLink(currentBookings.find(x => x.id === '${b.id}'))" style="font-size: 12px;">
+          🔗 Copy Form Link
+        </button>
+        <button type="button" class="btn btn-outline" onclick="closeBookingIdsQuickModal(); openEditBookingModal('${b.id}');" style="font-size: 12px;">
+          ✏️ Edit Booking
+        </button>
+      `;
+
+      modal.style.display = 'flex';
+    }
+
+    function closeBookingIdsQuickModal() {
+      const modal = document.getElementById('modal-booking-ids-quickview');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function quickWhatsAppIdRequest(bookingId) {
+      const b = (Array.isArray(window.currentBookings)) ? window.currentBookings.find(x => x && x.id === bookingId) : null;
+      if (!b) return;
+      if (typeof sendGuestIdWhatsApp === 'function') {
+        sendGuestIdWhatsApp(b);
+      }
+    }
+
+
     // Calendar Hover Popup Manager
     function showBookingHoverPopup(e, bookingId) {
       const popup = document.getElementById('cal-booking-hover-popup');
@@ -7209,6 +7737,41 @@
         `;
       }
 
+      const idDocs = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(b) : [];
+      let idStatusHtml = '';
+      if (!isBlocked) {
+        if (idDocs.length > 0) {
+          idStatusHtml = `
+            <div class="cal-popup-id-card is-verified" onclick="event.stopPropagation(); openBookingIdsQuickModal('${b.id}')" title="Click to view all guest IDs">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <div style="font-weight: 800; color: #0284C7; font-size: 11px; display: flex; align-items: center; gap: 4px;">
+                  <span>🪪</span>
+                  <span>${idDocs.length} Guest ID Documents Ready</span>
+                </div>
+                <span style="background: #0284C7; color: #FFFFFF; font-size: 9.5px; font-weight: 800; padding: 2px 7px; border-radius: 4px;">👁️ View IDs</span>
+              </div>
+              <div style="font-size: 10px; color: #0369A1; margin-top: 2px; font-weight: 600;">
+                All Front & Back IDs verified • Click to open
+              </div>
+            </div>
+          `;
+        } else {
+          idStatusHtml = `
+            <div class="cal-popup-id-card is-pending">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                <div style="font-weight: 700; color: #B45309; font-size: 11px; display: flex; align-items: center; gap: 4px;">
+                  <span>⏳</span>
+                  <span>No ID Uploaded Yet</span>
+                </div>
+                <button type="button" onclick="event.stopPropagation(); quickWhatsAppIdRequest('${b.id}')" style="background: #25D366; color: #FFFFFF; font-size: 9.5px; font-weight: 800; padding: 2px 7px; border: none; border-radius: 4px; cursor: pointer;">
+                  💬 Request
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      }
+
       popup.innerHTML = `
         <div class="cal-popup-header">
           <span class="cal-popup-guest" title="${escapeHtml(guestName)}">${escapeHtml(guestName)}</span>
@@ -7221,6 +7784,7 @@
           <span>📅 ${datesText}</span>
         </div>
         ${finHtml}
+        ${idStatusHtml}
         <div class="cal-popup-footer">Click booking to view or edit details</div>
       `;
 
@@ -8706,6 +9270,15 @@
                   <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
                     🧾 Bill
                   </button>
+                  ${(typeof getBookingIdDocuments === 'function' && getBookingIdDocuments(bk).length > 0) ? `
+                    <button type="button" class="sm-tool-pill-btn" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${getBookingIdDocuments(bk).length} Guest ID Documents" style="color: #0369A1; border-color: #BAE6FD; background: #E0F2FE; font-weight: 800;">
+                      🪪 ID (${getBookingIdDocuments(bk).length})
+                    </button>
+                  ` : `
+                    <button type="button" class="sm-tool-pill-btn" onclick="quickWhatsAppIdRequest('${bk.id}')" title="Request ID upload via WhatsApp" style="color: #B45309; border-color: #FDE68A; background: #FEF3C7; font-weight: 700;">
+                      ⏳ Request ID
+                    </button>
+                  `}
                 </div>
               </div>
 
@@ -8860,6 +9433,15 @@
                   <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill" style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
                     🧾 Bill
                   </button>
+                  ${(typeof getBookingIdDocuments === 'function' && getBookingIdDocuments(bk).length > 0) ? `
+                    <button type="button" class="sm-tool-pill-btn" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${getBookingIdDocuments(bk).length} Guest ID Documents" style="color: #0369A1; border-color: #BAE6FD; background: #E0F2FE; font-weight: 800;">
+                      🪪 ID (${getBookingIdDocuments(bk).length})
+                    </button>
+                  ` : `
+                    <button type="button" class="sm-tool-pill-btn" onclick="quickWhatsAppIdRequest('${bk.id}')" title="Request ID upload via WhatsApp" style="color: #B45309; border-color: #FDE68A; background: #FEF3C7; font-weight: 700;">
+                      ⏳ Request ID
+                    </button>
+                  `}
                 </div>
               </div>
 
@@ -10243,10 +10825,16 @@
             ? `<span class="tbar-conflict-tag" title="Date Conflict / Overlap">⚠️${width >= 110 ? ' Conflict' : ''}</span>`
             : '';
 
+          const idDocs = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(booking) : [];
+          const idBadgeHtml = (!isBlocked && idDocs.length > 0)
+            ? `<span class="tbar-id-badge" onclick="event.stopPropagation(); openBookingIdsQuickModal('${booking.id}')" title="Click to view ${idDocs.length} Guest ID document(s)">🪪 ${idDocs.length > 1 ? idDocs.length : 'ID'}</span>`
+            : '';
+
           ribbon.innerHTML = `
             <div class="tbar-row-top">
               ${channelIndicatorHtml}
               <span class="tbar-guest-name" title="${escapeHtml(booking.guestName)}">${escapeHtml(booking.guestName)}</span>
+              ${idBadgeHtml}
               ${conflictHtml}
             </div>
             <div class="tbar-row-bottom">
@@ -10355,17 +10943,26 @@
           const pillBorder = hasOverlap ? '#F59E0B' : theme.border;
           const pillText = hasOverlap ? '#92400E' : theme.text;
 
+          const bIdDocs = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(b) : [];
+          const bIdCount = bIdDocs.length;
           cellHtml += `
             <div class="mday-pill" style="background:${pillBg}; color:${pillText}; border-color:${pillBorder};" onclick="event.stopPropagation(); openEditBookingModal('${b.id}')" title="${escapeHtml(b.property)}: ${escapeHtml(b.guestName)} (${b.checkInDate} to ${b.checkOutDate})${hasOverlap ? ' [⚠️ Overlap]' : ''}${missingPayout ? ' [⚠️ Missing Amount]' : ''}">
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%;">
                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   ${hasOverlap ? '⚠️ ' : ''}${tag}${escapeHtml(b.guestName)}
                 </span>
-                ${missingPayout ? `
-                  <button type="button" onclick="event.stopPropagation(); quickAddPayout('${b.id}')" style="background: #F59E0B; color: #fff; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 0 4px; cursor: pointer; flex-shrink: 0;" title="Add payout">
-                    +₹
-                  </button>
-                ` : ''}
+                <div style="display: flex; align-items: center; gap: 3px; flex-shrink: 0;">
+                  ${bIdCount > 0 ? `
+                    <span class="mday-id-badge" onclick="event.stopPropagation(); openBookingIdsQuickModal('${b.id}')" title="${bIdCount} Guest ID(s) ready - Click to view" style="background: #0284C7; color: #fff; border-radius: 3px; font-size: 8px; font-weight: 800; padding: 0 4px; cursor: pointer;">
+                      🪪 ${bIdCount}
+                    </span>
+                  ` : ''}
+                  ${missingPayout ? `
+                    <button type="button" onclick="event.stopPropagation(); quickAddPayout('${b.id}')" style="background: #F59E0B; color: #fff; border: none; border-radius: 3px; font-size: 9px; font-weight: 700; padding: 0 4px; cursor: pointer; flex-shrink: 0;" title="Add payout">
+                      +₹
+                    </button>
+                  ` : ''}
+                </div>
               </div>
             </div>
           `;
@@ -10519,7 +11116,7 @@
             <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
               <strong style="color: var(--text-main); font-size: 14px;">${escapeHtml(b.guestName)}</strong>
               ${hasIds ? `
-                <button type="button" class="btn-action-pill" onclick="openEditBookingModal('${b.id}')" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 10px; padding: 2px 6px; font-weight: 700; cursor: pointer;" title="Click to view ${idCount} Guest ID(s) stored in R2">
+                <button type="button" class="btn-action-pill" onclick="openBookingIdsQuickModal('${b.id}')" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; font-size: 10px; padding: 2px 6px; font-weight: 700; cursor: pointer;" title="Click to view ${idCount} Guest ID(s) stored in R2">
                   🪪 ID (${idCount})
                 </button>
               ` : ''}

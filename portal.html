@@ -917,6 +917,62 @@
       filter: brightness(0.97);
       z-index: 20;
     }
+
+    /* Guest ID Badges & Quick Modal */
+    .tbar-id-badge {
+      background: #0284C7;
+      color: #FFFFFF;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 0.5px 4.5px;
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      box-shadow: 0 1px 2px rgba(2, 132, 199, 0.25);
+      transition: all 0.12s ease;
+      line-height: 1.2;
+    }
+    .tbar-id-badge:hover {
+      background: #0369A1;
+      transform: scale(1.08);
+      box-shadow: 0 2px 4px rgba(2, 132, 199, 0.35);
+    }
+    .mday-id-badge {
+      background: #0284C7;
+      color: #FFFFFF;
+      font-size: 8.5px;
+      font-weight: 800;
+      padding: 0.5px 4px;
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .quick-id-hover-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+    }
+    .quick-id-thumb-wrap:hover .quick-id-hover-overlay {
+      opacity: 1;
+    }
+
     .tbar-header {
       display: flex;
       align-items: center;
@@ -1293,6 +1349,10 @@
         </div>
 
         <div class="nav-actions">
+          <a href="dashboard.html" class="btn-link" target="_blank" style="background: #eef2ff; color: #4338ca; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700; text-decoration: none;" title="Open Unified Earnings Dashboard for Staff Management & Airbnb">
+            <span>📊 Common Earnings Dashboard</span>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
           <a href="admin.html" class="btn-link" style="background: #F1F5F9; color: #334155; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); text-decoration: none;">
             <span>⚙️ Admin & Form Settings</span>
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -1608,6 +1668,51 @@
       </div>
 
       <!-- MODAL 2: Quick Block Dates Modal -->
+      
+      <!-- MODAL: VIEW GUEST ID DOCUMENT / SIGNATURE -->
+      <div class="modal-backdrop" id="modal-view-doc" style="z-index: 10002; display: none;">
+        <div class="modal-dialog" style="max-width: 680px; width: 95%;">
+          <div class="modal-header">
+            <div>
+              <h3 id="modal-view-doc-title" style="margin: 0; font-size: 16px;">🪪 View ID Document</h3>
+              <p id="modal-view-doc-sub" style="margin: 2px 0 0; font-size: 12px; color: var(--text-muted);"></p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeViewDocModal()">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 16px; text-align: center;">
+            <div id="modal-doc-viewer" style="min-height: 280px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow: hidden;"></div>
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <a id="modal-doc-open-link" href="#" target="_blank" class="btn btn-outline" style="font-size: 13px;">↗ Open Full Size in New Tab</a>
+            <button type="button" class="btn btn-primary" onclick="closeViewDocModal()">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: QUICK GUEST ID & DOCUMENTS VIEWER (CALENDAR) -->
+      <div class="modal-backdrop" id="modal-booking-ids-quickview" style="z-index: 10001; display: none;">
+        <div class="modal-dialog" style="max-width: 820px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);">
+          <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; background: #FAFBFD;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 id="mb-quick-docs-title" style="margin: 0; font-size: 17px; font-weight: 800; color: #0F172A;">🪪 Guest ID Documents</h3>
+                <span id="mb-quick-docs-count-badge" class="badge-pill" style="background: #E0F2FE; color: #0369A1; font-weight: 800; font-size: 11px;">0 Docs</span>
+              </div>
+              <p id="mb-quick-docs-sub" style="margin: 3px 0 0; font-size: 12px; color: var(--text-muted);"></p>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeBookingIdsQuickModal()">&times;</button>
+          </div>
+          <div class="modal-body" style="padding: 18px 20px; overflow-y: auto; flex: 1; background: #F8FAFC;">
+            <div id="mb-quick-docs-meta-banner" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;"></div>
+            <div id="mb-quick-docs-container" style="display: flex; flex-direction: column; gap: 14px;"></div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid var(--border-color); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: #FFFFFF;">
+            <div id="mb-quick-docs-actions-left" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+            <button type="button" class="btn btn-primary" onclick="closeBookingIdsQuickModal()">Done</button>
+          </div>
+        </div>
+      </div>
+
       <div class="modal-backdrop" id="modal-quick-block">
         <div class="modal-dialog" style="max-width: 480px;">
           <div class="modal-header">
@@ -3096,12 +3201,20 @@
           else if (booking.platform === 'Direct') platformBadgeBg = '#0D9488';
           else if (booking.platform === 'Blocked') platformBadgeBg = '#64748B';
 
+          const idDocs = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(booking) : [];
+          const idBadgeHtml = (!isBlocked && idDocs.length > 0)
+            ? `<span class="tbar-id-badge" onclick="event.stopPropagation(); openBookingIdsQuickModal('${booking.id}')" title="Click to view ${idDocs.length} Guest ID document(s)">🪪 ${idDocs.length > 1 ? idDocs.length : 'ID'}</span>`
+            : '';
+
           ribbon.innerHTML = `
             <div class="tbar-header">
               <span class="tbar-platform" style="background:${platformBadgeBg}; color:#fff;">
                 ${isFromPrev ? '◀ ' : ''}${booking.platform || 'Airbnb'}${isToNext ? ' ▶' : ''}
               </span>
-              <span class="tbar-nights">${booking.nights || 1} nts</span>
+              <div style="display: flex; align-items: center; gap: 4px;">
+                ${idBadgeHtml}
+                <span class="tbar-nights">${booking.nights || 1} nts</span>
+              </div>
             </div>
             <div class="tbar-guest">${booking.guestName}</div>
             <div class="tbar-meta">
@@ -3191,9 +3304,18 @@
           if (isCheckIn) tag = '▶ In: ';
           else if (isCheckOut) tag = '◀ Out: ';
 
+          const bIdDocs = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(b) : [];
+          const bIdCount = bIdDocs.length;
           cellHtml += `
             <div class="mday-pill" style="background:${theme.bg}; color:${theme.text}; border-color:${theme.border};" onclick="event.stopPropagation(); openEditBookingModal('${b.id}')" title="${b.property}: ${b.guestName} (${b.checkInDate} to ${b.checkOutDate})">
-              <span>${tag}${b.guestName}</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; width: 100%;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${tag}${b.guestName}</span>
+                ${bIdCount > 0 ? `
+                  <span class="mday-id-badge" onclick="event.stopPropagation(); openBookingIdsQuickModal('${b.id}')" title="${bIdCount} Guest ID(s) ready - Click to view">
+                    🪪 ${bIdCount}
+                  </span>
+                ` : ''}
+              </div>
             </div>
           `;
         });
@@ -3437,6 +3559,287 @@
       document.getElementById('modal-booking').style.display = 'flex';
       setTimeout(() => document.getElementById('mb-guest-name').focus(), 100);
     }
+
+    
+    // Modal Document Viewer
+    function viewDocument(encodedUrl, title, encodedName) {
+      const url = decodeURIComponent(encodedUrl);
+      const name = decodeURIComponent(encodedName || '');
+      const modal = document.getElementById('modal-view-doc');
+      const titleEl = document.getElementById('modal-view-doc-title');
+      const subEl = document.getElementById('modal-view-doc-sub');
+      const viewer = document.getElementById('modal-doc-viewer');
+      const openLink = document.getElementById('modal-doc-open-link');
+
+      if (!modal || !viewer) return;
+
+      titleEl.textContent = title ? decodeURIComponent(title) : '🪪 View ID Document';
+      subEl.textContent = name ? `Guest: ${name}` : '';
+      openLink.href = url;
+
+      const isPdf = url.toLowerCase().includes('.pdf') || url.startsWith('data:application/pdf');
+      if (isPdf) {
+        viewer.innerHTML = `<iframe src="${url}" style="width: 100%; height: 520px; border: none; border-radius: 6px;"></iframe>`;
+      } else {
+        viewer.innerHTML = `<img src="${url}" alt="ID Document" style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,0.12);">`;
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeViewDocModal() {
+      const modal = document.getElementById('modal-view-doc');
+      if (modal) modal.style.display = 'none';
+      const viewer = document.getElementById('modal-doc-viewer');
+      if (viewer) viewer.innerHTML = '';
+    }
+
+    function getBookingIdDocuments(b) {
+      if (!b) return [];
+      let docs = [];
+
+      if (Array.isArray(b.idDocuments) && b.idDocuments.length > 0) {
+        docs = [...b.idDocuments];
+      } else if (typeof b.idDocuments === 'string' && b.idDocuments.trim()) {
+        try {
+          const parsed = JSON.parse(b.idDocuments);
+          if (Array.isArray(parsed) && parsed.length > 0) docs = [...parsed];
+        } catch (e) {}
+      }
+
+      if (docs.length === 0 && b.id_documents) {
+        try {
+          const parsed = typeof b.id_documents === 'string' ? JSON.parse(b.id_documents) : b.id_documents;
+          if (Array.isArray(parsed) && parsed.length > 0) docs = [...parsed];
+        } catch (e) {}
+      }
+
+      if (docs.length === 0 && b.notes && b.notes.includes('[ID Documents:')) {
+        try {
+          const m = b.notes.match(/\[ID Documents:\s*([^\]]+)\]/i);
+          if (m) {
+            const parsed = JSON.parse(m[1]);
+            if (Array.isArray(parsed) && parsed.length > 0) docs = [...parsed];
+          }
+        } catch (e) {}
+      }
+
+      // Check allSubmissions if available
+      if (docs.length === 0 && Array.isArray(window.allSubmissions) && window.allSubmissions.length > 0) {
+        const bkCode = (b.reservationCode || b.id || '').toLowerCase().trim();
+        const bkName = (b.guestName || '').toLowerCase().trim();
+        const bkIn = b.checkInDate || '';
+        const bkOut = b.checkOutDate || '';
+
+        const matching = window.allSubmissions.filter(s => {
+          const sCode = (s['Reservation Code'] || s.id || '').toLowerCase().trim();
+          const sName = (s['Guest Legal Name'] || s['Guest Name'] || '').toLowerCase().trim();
+          const sIn = s['Check-in Date'] || s['Check-in'] || '';
+          const sOut = s['Check-out Date'] || s['Check-out'] || '';
+
+          if (bkCode && sCode && sCode !== 'direct' && (bkCode === sCode || sCode.includes(bkCode) || bkCode.includes(sCode))) return true;
+          if (bkName && sName) {
+            const firstBk = bkName.split(/\s+/)[0];
+            const firstS = sName.split(/\s+/)[0];
+            const nameMatch = sName.includes(bkName) || bkName.includes(sName) ||
+              (firstBk.length >= 3 && sName.includes(firstBk)) ||
+              (firstS.length >= 3 && bkName.includes(firstS));
+            if (nameMatch) {
+              if (!bkIn || !sIn || bkIn === sIn || bkOut === sOut) return true;
+            }
+          }
+          return false;
+        });
+
+        matching.forEach(sub => {
+          const sGuestName = sub['Guest Legal Name'] || sub['Guest Name'] || 'Guest';
+          const sType = sub['ID Type'] || 'ID Card';
+          if (sub['Front ID Photo'] || sub['Front ID']) {
+            docs.push({
+              name: `${sGuestName} - Front ID (${sType})`,
+              url: sub['Front ID Photo'] || sub['Front ID'],
+              source: 'Guest Submission Form',
+              uploadedAt: sub.Timestamp || ''
+            });
+          }
+          if (sub['Back ID Photo'] || sub['Back ID']) {
+            docs.push({
+              name: `${sGuestName} - Back ID`,
+              url: sub['Back ID Photo'] || sub['Back ID'],
+              source: 'Guest Submission Form',
+              uploadedAt: sub.Timestamp || ''
+            });
+          }
+        });
+      }
+
+      const seen = new Set();
+      const deduped = [];
+      for (const d of docs) {
+        const key = (d.url || d.key || d.name || '').trim();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(d);
+      }
+      return deduped;
+    }
+
+    function groupDocsByPerson(docs, primaryGuestName) {
+      const groups = new Map();
+
+      docs.forEach((doc, idx) => {
+        const rawName = (doc.name || '').trim();
+        let personName = '';
+        let docType = 'ID Document';
+        let isFront = false;
+        let isBack = false;
+
+        if (rawName.includes(' - ')) {
+          const parts = rawName.split(' - ');
+          personName = parts[0].trim();
+          docType = parts.slice(1).join(' - ').trim();
+        } else {
+          personName = primaryGuestName || 'Primary Guest';
+          docType = rawName || `Document #${idx + 1}`;
+        }
+
+        const lower = docType.toLowerCase();
+        if (lower.includes('front')) isFront = true;
+        else if (lower.includes('back')) isBack = true;
+
+        if (!groups.has(personName)) {
+          groups.set(personName, { personName, frontDoc: null, backDoc: null, otherDocs: [] });
+        }
+
+        const g = groups.get(personName);
+        if (isFront && !g.frontDoc) g.frontDoc = doc;
+        else if (isBack && !g.backDoc) g.backDoc = doc;
+        else g.otherDocs.push(doc);
+      });
+
+      return Array.from(groups.values());
+    }
+
+    async function openBookingIdsQuickModal(bookingId) {
+      const b = (Array.isArray(window.currentBookings)) ? window.currentBookings.find(x => x && x.id === bookingId) : null;
+      if (!b) return;
+
+      const docs = getBookingIdDocuments(b);
+      const modal = document.getElementById('modal-booking-ids-quickview');
+      const titleEl = document.getElementById('mb-quick-docs-title');
+      const countBadge = document.getElementById('mb-quick-docs-count-badge');
+      const subEl = document.getElementById('mb-quick-docs-sub');
+      const bannerEl = document.getElementById('mb-quick-docs-meta-banner');
+      const containerEl = document.getElementById('mb-quick-docs-container');
+      const actionsLeftEl = document.getElementById('mb-quick-docs-actions-left');
+
+      if (!modal || !containerEl) return;
+
+      const guestName = b.guestName || 'Guest';
+      titleEl.innerHTML = `🪪 Guest ID Documents &mdash; <span style="color: #0284C7;">${escapeHtml(guestName)}</span>`;
+      countBadge.textContent = `${docs.length} File${docs.length === 1 ? '' : 's'}`;
+      countBadge.style.background = docs.length > 0 ? '#E0F2FE' : '#FEF3C7';
+      countBadge.style.color = docs.length > 0 ? '#0369A1' : '#B45309';
+
+      subEl.textContent = `🏠 ${b.property || 'Property'} • 📅 ${b.checkInDate} → ${b.checkOutDate} • Code: #${b.reservationCode || b.id}`;
+
+      bannerEl.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span class="badge-pill" style="background: #F1F5F9; color: #334155; font-weight: 700;">🏠 ${escapeHtml(b.property || 'Property')}</span>
+          <span class="badge-pill" style="background: #EFF6FF; color: #1E40AF; font-weight: 700;">📅 ${b.checkInDate} &rarr; ${b.checkOutDate}</span>
+          ${b.phone ? `<span class="badge-pill" style="background: #ECFDF5; color: #065F46; font-weight: 600;">📞 ${escapeHtml(b.phone)}</span>` : ''}
+        </div>
+        <div>
+          <span style="font-size: 11px; color: #0284C7; font-weight: 700; background: #F0F9FF; border: 1px solid #BAE6FD; padding: 3px 8px; border-radius: 6px;">
+            🔒 Cloudflare R2 Verified
+          </span>
+        </div>
+      `;
+
+      if (docs.length === 0) {
+        containerEl.innerHTML = `
+          <div style="text-align: center; padding: 36px 20px; background: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 12px;">
+            <div style="font-size: 42px; margin-bottom: 8px;">⏳</div>
+            <h4 style="margin: 0 0 6px; font-size: 16px; color: #1E293B; font-weight: 800;">No ID Documents Uploaded Yet</h4>
+            <p style="margin: 0 auto 16px; font-size: 13px; color: #64748B; max-width: 440px;">
+              Guest <strong>${escapeHtml(guestName)}</strong> has not completed their ID verification yet.
+            </p>
+          </div>
+        `;
+      } else {
+        const persons = groupDocsByPerson(docs, guestName);
+        let cardsHtml = '';
+
+        persons.forEach((p, pIdx) => {
+          let docBoxesHtml = '';
+
+          function renderDocBox(doc, label, sideBadge) {
+            const resolvedUrl = (window.AirbnbAPI && typeof window.AirbnbAPI.resolveImageUrl === 'function')
+              ? window.AirbnbAPI.resolveImageUrl(doc.url || doc.key)
+              : (doc.url || doc.key);
+            const isPdf = (doc.name && doc.name.toLowerCase().endsWith('.pdf')) || (doc.url && doc.url.toLowerCase().includes('.pdf'));
+
+            return `
+              <div style="border: 1px solid #E2E8F0; border-radius: 8px; background: #FFFFFF; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <strong style="font-size: 11.5px; color: #0F172A;">🪪 ${escapeHtml(label)}</strong>
+                  <span style="font-size: 9.5px; font-weight: 800; color: #0284C7; background: #E0F2FE; padding: 1px 6px; border-radius: 4px;">${sideBadge}</span>
+                </div>
+                <div class="quick-id-thumb-wrap" style="width: 100%; height: 160px; border-radius: 6px; overflow: hidden; background: #F1F5F9; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid #E2E8F0;"
+                     onclick="viewDocument('${encodeURIComponent(resolvedUrl)}', '${encodeURIComponent(doc.name || label)}', '${encodeURIComponent(p.personName)}')">
+                  ${isPdf ? `<span style="font-size: 32px;">📄</span>` : `<img src="${escapeHtml(resolvedUrl)}" alt="${escapeHtml(label)}" style="width: 100%; height: 100%; object-fit: contain; background: #0F172A;">`}
+                  <div class="quick-id-hover-overlay"><span>🔍 Full Size</span></div>
+                </div>
+                <div style="display: flex; gap: 6px; justify-content: space-between;">
+                  <button type="button" class="btn-action-pill" style="flex: 1; font-size: 11px; padding: 4px 8px; color: #0284C7; background: #E0F2FE; border: 1px solid #BAE6FD; cursor: pointer; font-weight: 700;"
+                          onclick="viewDocument('${encodeURIComponent(resolvedUrl)}', '${encodeURIComponent(doc.name || label)}', '${encodeURIComponent(p.personName)}')">
+                    🔍 View
+                  </button>
+                  <a href="${escapeHtml(resolvedUrl)}" download="${escapeHtml(doc.name || label)}.jpg" target="_blank" class="btn-action-pill" style="font-size: 11px; padding: 4px 8px; color: #475569; background: #F8FAFC; border: 1px solid #CBD5E1; text-decoration: none;">
+                    ⬇️
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+
+          if (p.frontDoc) docBoxesHtml += renderDocBox(p.frontDoc, p.frontDoc.name || 'Front ID Photo', 'Front ID');
+          if (p.backDoc) docBoxesHtml += renderDocBox(p.backDoc, p.backDoc.name || 'Back ID Photo', 'Back ID');
+          p.otherDocs.forEach((od, oIdx) => docBoxesHtml += renderDocBox(od, od.name || `Document #${oIdx + 1}`, 'Document'));
+
+          cardsHtml += `
+            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 17px;">👤</span>
+                  <strong style="font-size: 14px; color: #1E293B;">Person ${pIdx + 1}: ${escapeHtml(p.personName)}</strong>
+                  ${pIdx === 0 ? `<span class="badge-pill" style="font-size: 9px; background: #DCFCE7; color: #166534; font-weight: 700;">Primary Guest</span>` : ''}
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                ${docBoxesHtml}
+              </div>
+            </div>
+          `;
+        });
+
+        containerEl.innerHTML = cardsHtml;
+      }
+
+      actionsLeftEl.innerHTML = `
+        <button type="button" class="btn btn-outline" onclick="closeBookingIdsQuickModal(); openEditBookingModal('${b.id}');" style="font-size: 12px;">
+          ✏️ Edit Booking
+        </button>
+      `;
+
+      modal.style.display = 'flex';
+    }
+
+    function closeBookingIdsQuickModal() {
+      const modal = document.getElementById('modal-booking-ids-quickview');
+      if (modal) modal.style.display = 'none';
+    }
+
 
     function openEditBookingModal(bookingId) {
       const b = currentBookings.find(x => x.id === bookingId);
