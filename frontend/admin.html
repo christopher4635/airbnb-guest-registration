@@ -33,11 +33,11 @@
       font-family: 'Plus Jakarta Sans', sans-serif;
       background: var(--bg-page);
       color: var(--text-main);
-      padding: 20px 16px 80px;
+      padding: 8px 12px 60px;
     }
 
     .container {
-      max-width: 1360px;
+      max-width: 1600px;
       margin: 0 auto;
     }
 
@@ -76,20 +76,20 @@
 
     .admin-header {
       background: #fff;
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: var(--shadow-card);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
       border: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 8px;
     }
 
-    .admin-title h1 { font-size: 22px; font-weight: 700; }
-    .admin-title p { font-size: 13px; color: var(--text-muted); }
+    .admin-title h1 { font-size: 16px; font-weight: 700; margin: 0; line-height: 1.2; }
+    .admin-title p { font-size: 11px; color: var(--text-muted); margin: 0; }
 
     .btn-link {
       color: var(--primary);
@@ -294,24 +294,24 @@
     /* Admin Nav Tabs */
     .admin-tabs {
       display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 2px;
+      gap: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1.5px solid var(--border-color);
+      padding-bottom: 0px;
     }
 
     .tab-btn {
-      padding: 12px 20px;
+      padding: 6px 12px;
       border: none;
       background: none;
-      font-size: 15px;
+      font-size: 12.5px;
       font-weight: 700;
       color: var(--text-muted);
       cursor: pointer;
       border-radius: var(--radius-sm) var(--radius-sm) 0 0;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       position: relative;
       font-family: inherit;
     }
@@ -323,12 +323,12 @@
     .tab-btn.active::after {
       content: '';
       position: absolute;
-      bottom: -4px;
+      bottom: -1.5px;
       left: 0;
       right: 0;
-      height: 3px;
+      height: 2.5px;
       background: var(--primary);
-      border-radius: 3px;
+      border-radius: 2px;
     }
 
     /* Submissions Dashboard UI */
@@ -1079,36 +1079,37 @@
     /* 1. Controls Bar */
     .sm-controls-bar {
       background: #FFFFFF;
-      padding: 12px 16px;
-      border-radius: 18px;
+      padding: 6px 10px;
+      border-radius: 10px;
       border: 1px solid #E2E8F0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
+      margin-bottom: 6px;
     }
     .sm-controls-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
     .sm-controls-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
 
     .sm-business-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      border-radius: 12px;
-      font-size: 12px;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11px;
       font-weight: 800;
       background: #EEF2FF;
       color: #4338CA;
@@ -1120,14 +1121,14 @@
       display: inline-flex;
       align-items: center;
       background: #F1F5F9;
-      border-radius: 12px;
-      padding: 2px;
+      border-radius: 8px;
+      padding: 1px;
       border: 1px solid #E2E8F0;
     }
     .sm-nav-arrow-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
       border: none;
       background: transparent;
       color: #475569;
@@ -1143,19 +1144,19 @@
       box-shadow: 0 1px 2px rgba(0,0,0,0.06);
     }
     .sm-month-text {
-      padding: 0 10px;
-      font-size: 12px;
+      padding: 0 8px;
+      font-size: 11.5px;
       font-weight: 700;
       color: #1E293B;
-      min-width: 110px;
+      min-width: 95px;
       text-align: center;
       user-select: none;
     }
     .sm-today-btn {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 10px;
+      padding: 3px 8px;
+      border-radius: 6px;
       border: none;
       color: #475569;
       background: #F1F5F9;
@@ -1167,17 +1168,17 @@
       color: #0F172A;
     }
     .sm-prop-select {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #334155;
       background: #F1F5F9;
       border: 1px solid #E2E8F0;
-      border-radius: 10px;
-      padding: 5px 10px;
+      border-radius: 6px;
+      padding: 2px 6px;
       cursor: pointer;
       outline: none;
       transition: all 0.15s ease;
-      height: 32px;
+      height: 26px;
     }
     .sm-prop-select:hover {
       background: #E2E8F0;
@@ -1189,22 +1190,22 @@
       display: inline-flex;
       align-items: center;
       background: #F1F5F9;
-      padding: 2px;
-      border-radius: 12px;
+      padding: 1px;
+      border-radius: 8px;
       border: 1px solid #E2E8F0;
     }
     .sm-view-btn {
-      padding: 5px 12px;
-      font-size: 12px;
+      padding: 3px 8px;
+      font-size: 11px;
       font-weight: 700;
-      border-radius: 9px;
+      border-radius: 6px;
       border: none;
       background: transparent;
       color: #475569;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       transition: all 0.15s ease;
       white-space: nowrap;
     }
@@ -1214,23 +1215,23 @@
     .sm-view-btn.active {
       background: #FFFFFF;
       color: #4338CA;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
     }
 
     /* Action Buttons */
     .sm-sync-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      font-size: 12px;
+      gap: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
       font-weight: 700;
       color: #4338CA;
       background: #EEF2FF;
       border: 1px solid #C7D2FE;
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
       transition: all 0.15s ease;
     }
     .sm-sync-btn:hover {
@@ -1240,16 +1241,16 @@
     .sm-add-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      font-size: 12px;
+      gap: 4px;
+      padding: 4px 10px;
+      font-size: 11.5px;
       font-weight: 700;
       color: #FFFFFF;
       background: #4F46E5;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       cursor: pointer;
-      box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.25);
       transition: all 0.15s ease;
     }
     .sm-add-btn:hover {
@@ -1260,8 +1261,9 @@
     /* 2. Summary Stats Bar */
     .sm-stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px;
+      margin-bottom: 6px;
     }
     @media (max-width: 768px) {
       .sm-stats-grid {
@@ -1270,14 +1272,14 @@
     }
     .sm-stat-card {
       background: #FFFFFF;
-      padding: 12px 14px;
-      border-radius: 16px;
+      padding: 5px 8px;
+      border-radius: 10px;
       border: 1px solid #E2E8F0;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
     .sm-stat-card.is-occ-highlight {
       background: #ECFDF5;
-      border: 2px solid #34D399;
+      border: 1.5px solid #34D399;
       color: #064E3B;
       box-shadow: 0 0 0 1px #A7F3D0;
     }
@@ -1285,34 +1287,35 @@
       border-color: #E0E7FF;
     }
     .sm-stat-label {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       color: #94A3B8;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
       display: block;
+      line-height: 1.1;
     }
     .sm-stat-label.is-occ-label {
       color: #047857;
       font-weight: 800;
     }
     .sm-stat-value {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 900;
       color: #0F172A;
-      margin-top: 2px;
+      margin-top: 1px;
       display: block;
-      line-height: 1.2;
+      line-height: 1.15;
     }
     .sm-stat-occ-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 2px;
+      gap: 4px;
+      margin-top: 1px;
     }
     .sm-stat-badge-green {
-      font-size: 9px;
-      padding: 1px 6px;
+      font-size: 8px;
+      padding: 0 4px;
       border-radius: 999px;
       font-weight: 800;
       background: #D1FAE5;
@@ -1320,9 +1323,13 @@
       border: 1px solid #6EE7B7;
     }
     .sm-stat-sub {
-      font-size: 10px;
+      font-size: 9px;
       color: #64748B;
-      margin-top: 4px;
+      margin-top: 1px;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* 3. Legend & Tools Bar */
@@ -1330,33 +1337,34 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 0 4px;
+      gap: 8px;
+      padding: 0 2px;
+      margin-bottom: 6px;
       flex-wrap: wrap;
-      font-size: 11px;
+      font-size: 10.5px;
       color: #475569;
     }
     .sm-legend-items {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
     .sm-legend-label {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
       color: #94A3B8;
     }
     .sm-legend-item {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
     .sm-dot {
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       display: inline-block;
     }
@@ -1370,12 +1378,12 @@
     .sm-tools-items {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
     .sm-tool-pill-btn {
-      padding: 4px 9px;
-      border-radius: 8px;
-      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 10.5px;
       font-weight: 600;
       color: #475569;
       background: #F1F5F9;
@@ -1391,9 +1399,9 @@
     /* 4. The Matrix Table Card */
     .sm-card {
       background: #FFFFFF;
-      border-radius: 24px;
+      border-radius: 12px;
       border: 1px solid #E2E8F0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
       overflow: hidden;
     }
     .sm-table-scroll {
@@ -1415,21 +1423,21 @@
       color: #64748B;
     }
     .sm-sticky-col-head {
-      padding: 10px 14px;
+      padding: 6px 10px;
       position: sticky;
       left: 0;
       z-index: 20;
       background: #F1F5F9;
-      min-width: 150px;
-      font-size: 11px;
+      min-width: 140px;
+      font-size: 10.5px;
       font-weight: 800;
       color: #334155;
       box-shadow: 2px 0 5px rgba(0,0,0,0.03);
     }
     .sm-day-th {
-      padding: 8px 4px;
+      padding: 4px 2px;
       text-align: center;
-      min-width: 48px;
+      min-width: 44px;
       border-left: 1px solid #F1F5F9;
     }
     .sm-day-th.is-today-th {
@@ -1438,7 +1446,7 @@
       font-weight: 900;
     }
     .sm-day-sub {
-      font-size: 9px;
+      font-size: 8.5px;
       font-weight: 500;
       color: #94A3B8;
       margin-top: 1px;
@@ -1451,7 +1459,7 @@
       background: rgba(248, 250, 252, 0.7);
     }
     .sm-sticky-col-cell {
-      padding: 10px 14px;
+      padding: 6px 10px;
       position: sticky;
       left: 0;
       z-index: 10;
@@ -1605,51 +1613,55 @@
 
     /* Today's Turnovers & Checkout Collection Feature Styles */
     .sm-turnovers-panel {
-      margin-top: 10px;
+      margin-top: 4px;
       margin-bottom: 6px;
     }
     .sm-turnover-box {
       background: #FFFFFF;
       border: 1px solid #E2E8F0;
-      border-radius: 18px;
-      padding: 14px 18px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      border-radius: 10px;
+      padding: 6px 10px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 6px;
+    }
+    .sm-turnover-box.sm-turnover-collapsed {
+      padding: 5px 10px;
+      gap: 0;
     }
     .sm-turnover-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 10px;
-      padding-bottom: 10px;
+      gap: 8px;
+      padding-bottom: 4px;
       border-bottom: 1px solid #F1F5F9;
     }
     .sm-turnover-head-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .sm-turnover-icon {
-      font-size: 20px;
+      font-size: 15px;
     }
     .sm-turnover-title {
-      font-size: 13px;
+      font-size: 11.5px;
       font-weight: 800;
       color: #0F172A;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
     .sm-pill-in {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 10px;
       font-weight: 800;
       background: #DCFCE7;
       color: #166534;
@@ -1658,26 +1670,26 @@
     .sm-pill-out {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 10px;
       font-weight: 800;
       background: #FEE2E2;
       color: #991B1B;
       border: 1px solid #FECACA;
     }
     .sm-turnover-sub {
-      font-size: 11px;
+      font-size: 10px;
       color: #64748B;
-      margin-top: 2px;
+      margin-top: 1px;
     }
     .sm-total-collect-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 12px;
-      font-size: 12px;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11px;
       font-weight: 700;
     }
     .sm-total-collect-badge.has-balance {
@@ -1692,25 +1704,25 @@
     }
     .sm-total-collect-badge strong {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
+      font-size: 12px;
     }
 
     /* Checkout rows */
     .sm-checkout-guests-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
     .sm-checkout-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
-      padding: 10px 14px;
+      gap: 8px;
+      padding: 5px 8px;
       background: #F8FAFC;
       border: 1px solid #E2E8F0;
-      border-radius: 14px;
+      border-radius: 8px;
       transition: all 0.15s ease;
     }
     .sm-checkout-row:hover {
@@ -1720,29 +1732,29 @@
     .sm-co-guest-info {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
     .sm-co-guest-name {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 12px;
       color: #0F172A;
     }
     .sm-co-prop-pill {
-      font-size: 10.5px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 1px 7px;
-      border-radius: 6px;
+      padding: 1px 6px;
+      border-radius: 5px;
       background: #EEF2FF;
       color: #4338CA;
       border: 1px solid #C7D2FE;
     }
     .sm-co-platform-pill {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 5px;
+      padding: 1px 5px;
+      border-radius: 4px;
       text-transform: uppercase;
     }
     .sm-co-platform-pill.is-direct {
@@ -1758,57 +1770,57 @@
       color: #1E40AF;
     }
     .sm-co-transfer-pill {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 6px;
+      padding: 1px 6px;
+      border-radius: 5px;
       background: #EFF6FF;
       color: #1D4ED8;
       border: 1px solid #BFDBFE;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
     }
     .sm-co-split-tag {
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 6px;
+      padding: 1px 6px;
+      border-radius: 5px;
       background: #FDF4FF;
       color: #86198F;
       border: 1px solid #F0ABFC;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
     }
     .sm-transfer-badge {
-      font-size: 11.5px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #1E40AF;
       background: #DBEAFE;
       border: 1px solid #93C5FD;
-      padding: 5px 11px;
-      border-radius: 8px;
+      padding: 3px 8px;
+      border-radius: 6px;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
     }
     .sm-co-stay-meta {
-      font-size: 11px;
+      font-size: 10.5px;
       color: #64748B;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
     }
     .sm-co-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
     .sm-co-label {
-      font-size: 11.5px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #334155;
     }
@@ -1819,41 +1831,43 @@
     }
     .sm-co-prefix {
       position: absolute;
-      left: 10px;
-      font-size: 13px;
+      left: 6px;
+      font-size: 11.5px;
       font-weight: 800;
       color: #64748B;
       pointer-events: none;
     }
     .sm-co-input {
-      padding: 6px 10px 6px 22px;
-      width: 105px;
+      padding: 3px 6px 3px 18px;
+      width: 80px;
+      height: 24px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      font-size: 11.5px;
       font-weight: 800;
       color: #0F172A;
       background: #FFFFFF;
       border: 1.5px solid #CBD5E1;
-      border-radius: 10px;
+      border-radius: 6px;
       outline: none;
       transition: all 0.15s ease;
     }
     .sm-co-input:focus {
       border-color: #6366F1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
     .sm-co-save-btn {
-      padding: 6px 12px;
-      font-size: 11.5px;
+      padding: 3px 8px;
+      height: 24px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #FFFFFF;
       background: #4F46E5;
       border: none;
-      border-radius: 9px;
+      border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       transition: all 0.15s ease;
     }
     .sm-co-save-btn:hover {
@@ -1861,17 +1875,18 @@
       transform: translateY(-1px);
     }
     .sm-co-paid-btn {
-      padding: 6px 12px;
-      font-size: 11.5px;
+      padding: 3px 8px;
+      height: 24px;
+      font-size: 10.5px;
       font-weight: 700;
       color: #065F46;
       background: #D1FAE5;
       border: 1px solid #A7F3D0;
-      border-radius: 9px;
+      border-radius: 6px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       transition: all 0.15s ease;
     }
     .sm-co-paid-btn:hover {
@@ -1880,13 +1895,13 @@
       transform: translateY(-1px);
     }
     .sm-btn-subtle {
-      padding: 4px 10px;
-      font-size: 11px;
+      padding: 3px 8px;
+      font-size: 10.5px;
       font-weight: 600;
       color: #4338CA;
       background: #EEF2FF;
       border: 1px solid #C7D2FE;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.15s ease;
     }
@@ -1896,9 +1911,9 @@
     .sm-turnover-empty {
       background: #FFFFFF;
       border: 1px solid #E2E8F0;
-      border-radius: 16px;
-      padding: 10px 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      border-radius: 10px;
+      padding: 6px 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
 
     /* Floating Hover Popup for Booking Details & Balance to Collect */
@@ -1909,8 +1924,11 @@
       background: #FFFFFF;
       border: 1px solid #E2E8F0;
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 10px 12px;
       width: 275px;
+      max-width: calc(100vw - 24px);
+      max-height: calc(100vh - 24px);
+      overflow-y: auto;
       box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.22), 0 6px 10px -4px rgba(15, 23, 42, 0.12);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: #0F172A;
@@ -3211,18 +3229,18 @@
           <h1>🏡 Elite Homes — Property &amp; Bookings Portal</h1>
           <p>Unified 3-Property Calendar, Reservations Manager & Guest Check-in Registry</p>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <a href="dashboard.html" class="btn-link" target="_blank" style="background: #eef2ff; color: #4338ca; padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700;" title="Open Unified Earnings Dashboard for Staff Management & Airbnb">
+        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+          <a href="dashboard.html" class="btn-link" target="_blank" style="background: #eef2ff; color: #4338ca; padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3); font-weight: 700;" title="Open Unified Earnings Dashboard for Staff Management & Airbnb">
             <span>📊 Common Earnings Dashboard</span>
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
-          <a href="portal.html" class="btn-link" target="_blank" style="background: #F1F5F9; color: #334155; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <a href="portal.html" class="btn-link" target="_blank" style="background: #F1F5F9; color: #334155; padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid var(--border-color);">
             <span>🖥️ Fullscreen Portal</span>
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
-          <a href="index.html" class="btn-link" target="_blank" style="background: var(--primary-light); color: var(--primary); padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255, 56, 92, 0.2);">
+          <a href="index.html" class="btn-link" target="_blank" style="background: var(--primary-light); color: var(--primary); padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(255, 56, 92, 0.2);">
             <span>📋 Guest Check-in Form</span>
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
         </div>
       </div>
@@ -6293,31 +6311,47 @@
 
       popup.style.display = 'block';
       positionHoverPopup(e);
+      requestAnimationFrame(() => positionHoverPopup(e));
     }
 
     function positionHoverPopup(e) {
       const popup = document.getElementById('cal-booking-hover-popup');
       if (!popup || popup.style.display === 'none') return;
-      const pad = 14;
+      const pad = 12;
+      const rect = popup.getBoundingClientRect();
+      const w = rect.width || popup.offsetWidth || 280;
+      const h = rect.height || popup.offsetHeight || 220;
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+
       let x = e.clientX + pad;
       let y = e.clientY + pad;
-      const w = 275;
-      const h = 210;
 
-      if (x + w > window.innerWidth - 10) {
+      // If overflowing right, flip to left of cursor
+      if (x + w > winW - 12) {
         x = e.clientX - w - pad;
       }
-      if (y + h > window.innerHeight - 10) {
+      // If overflowing bottom, flip above cursor
+      if (y + h > winH - 12) {
         y = e.clientY - h - pad;
       }
-      popup.style.left = `${Math.max(10, x)}px`;
-      popup.style.top = `${Math.max(10, y)}px`;
+
+      // Strict boundary clamping so popup NEVER goes outside visible window
+      if (x < 12) x = 12;
+      if (x + w > winW - 12) x = Math.max(12, winW - w - 12);
+      if (y < 12) y = 12;
+      if (y + h > winH - 12) y = Math.max(12, winH - h - 12);
+
+      popup.style.left = `${Math.round(x)}px`;
+      popup.style.top = `${Math.round(y)}px`;
     }
 
     function hideBookingHoverPopup() {
       const popup = document.getElementById('cal-booking-hover-popup');
       if (popup) popup.style.display = 'none';
     }
+    window.addEventListener('scroll', hideBookingHoverPopup, { passive: true });
+    window.addEventListener('resize', hideBookingHoverPopup, { passive: true });
 
     function getPropertyTheme(propName) {
       if (propName === 'Blocked') {
@@ -7011,6 +7045,23 @@
     }
 
     // 1. Controls Bar, 4-Card Summary Stats Bar & Legend Bar
+    function toggleTurnoversCollapse(forceState) {
+      const todayIsoStr = new Date().toISOString().slice(0, 10);
+      const activeTurnoverDate = turnoverSelectedDate || todayIsoStr;
+      const outBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+        return b.checkOutDate === activeTurnoverDate;
+      });
+      const defaultCollapsed = (outBookings.length === 0);
+      const curr = (localStorage.getItem('turnovers_collapsed') !== null ? (localStorage.getItem('turnovers_collapsed') === 'true') : defaultCollapsed);
+      const nextState = (typeof forceState === 'boolean') ? forceState : !curr;
+      try {
+        localStorage.setItem('turnovers_collapsed', nextState ? 'true' : 'false');
+      } catch (e) {}
+      renderCalendarTopBarAndStats();
+    }
+
     function renderCalendarTopBarAndStats() {
       const controlsEl = document.getElementById('sm-controls-container');
       const statsEl = document.getElementById('sm-stats-container');
@@ -7243,10 +7294,10 @@
           <span class="sm-stat-value font-mono" style="color: #B45309;">₹${formatCurrency(monthReceivablesTotal)}</span>
           <div class="sm-stat-sub" style="color: #92400E;">${pendingStaysCount} stay${pendingStaysCount === 1 ? '' : 's'} with balance due</div>
         </div>
-        <div class="sm-stat-card ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-highlight' : ''}" style="cursor: pointer;" onclick="document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth' });" title="Click to view departing guests and collect balance">
+        <div class="sm-stat-card ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-highlight' : ''}" style="cursor: pointer;" onclick="toggleTurnoversCollapse(false); document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth' });" title="Click to view departing guests and collect balance">
           <span class="sm-stat-label ${checkOutsCount > 0 && totalToCollect > 0 ? 'is-occ-label' : ''}">🛎️ Turnovers (${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate})</span>
           <div class="sm-stat-occ-row">
-            <span class="sm-stat-value font-mono text-indigo-950">${checkInsCount} In · ${checkOutsCount} Out ${roomTransfersCount > 0 ? `<span style="font-size: 11px; font-weight: 700; color: #2563EB;">(${roomTransfersCount} Transfer)</span>` : ''}</span>
+            <span class="sm-stat-value font-mono text-indigo-950">${checkInsCount} In · ${checkOutsCount} Out ${roomTransfersCount > 0 ? `<span style="font-size: 10px; font-weight: 700; color: #2563EB;">(${roomTransfersCount} Xfer)</span>` : ''}</span>
           </div>
           <div class="sm-stat-sub">
             To Collect: <strong style="color: ${totalToCollect > 0 ? '#B91C1C' : '#059669'}; font-family: 'JetBrains Mono', monospace;">₹${formatCurrency(totalToCollect)}</strong>
@@ -7271,6 +7322,9 @@
             return next7Days.includes(b.checkOutDate);
           }).sort((a, b) => a.checkOutDate.localeCompare(b.checkOutDate));
         }
+
+        const defaultCollapsed = (outBookings.length === 0);
+        const isTurnoversCollapsed = (localStorage.getItem('turnovers_collapsed') !== null ? (localStorage.getItem('turnovers_collapsed') === 'true') : defaultCollapsed);
 
         function renderCheckoutRow(bk) {
           const split = getSplitStayInfo(bk, currentBookings);
@@ -7312,7 +7366,6 @@
                     class="sm-tool-pill-btn"
                     onclick="openEditBookingModal('${bk.id}')"
                     title="View this stay leg"
-                    style="padding: 5px 8px;"
                   >
                     ✏️ View
                   </button>
@@ -7321,7 +7374,7 @@
                     class="sm-tool-pill-btn"
                     onclick="issueBillForBooking('${bk.id}')"
                     title="Issue & print customer bill"
-                    style="padding: 5px 8px; color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
+                    style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
                   >
                     🧾 Bill
                   </button>
@@ -7331,7 +7384,7 @@
                       class="sm-tool-pill-btn"
                       onclick="openEditBookingModal('${split.nextLeg.id}')"
                       title="View next leg (${escapeHtml(split.nextLeg.property)})"
-                      style="padding: 5px 8px; background: #EEF2FF; color: #4338CA;"
+                      style="background: #EEF2FF; color: #4338CA;"
                     >
                       🚪 View ${escapeHtml(split.nextLeg.property)}
                     </button>
@@ -7404,7 +7457,6 @@
                     class="sm-tool-pill-btn"
                     onclick="openEditBookingModal('${bk.id}')"
                     title="View complete booking details"
-                    style="padding: 5px 8px;"
                   >
                     ✏️ View
                   </button>
@@ -7413,7 +7465,7 @@
                     class="sm-tool-pill-btn"
                     onclick="issueBillForBooking('${bk.id}')"
                     title="Issue & print combined customer bill with GST"
-                    style="padding: 5px 8px; color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
+                    style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
                   >
                     🧾 Bill
                   </button>
@@ -7475,7 +7527,6 @@
                   class="sm-tool-pill-btn"
                   onclick="openEditBookingModal('${bk.id}')"
                   title="View complete booking details"
-                  style="padding: 5px 8px;"
                 >
                   ✏️ View
                 </button>
@@ -7484,7 +7535,7 @@
                   class="sm-tool-pill-btn"
                   onclick="issueBillForBooking('${bk.id}')"
                   title="Issue & print customer bill with GST"
-                  style="padding: 5px 8px; color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
+                  style="color: #0284C7; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;"
                 >
                   🧾 Bill
                 </button>
@@ -7493,66 +7544,109 @@
           `;
         }
 
-        turnoversEl.innerHTML = `
-          <div class="sm-turnover-box">
-            <div class="sm-turnover-head">
-              <div class="sm-turnover-head-left">
-                <span class="sm-turnover-icon">🛎️</span>
-                <div>
-                  <div class="sm-turnover-title">
-                    <span>Turnovers &amp; Checkout Collections</span>
+        if (isTurnoversCollapsed) {
+          turnoversEl.innerHTML = `
+            <div class="sm-turnover-box sm-turnover-collapsed">
+              <div class="sm-turnover-head" style="border-bottom: none; padding-bottom: 0;">
+                <div class="sm-turnover-head-left">
+                  <span class="sm-turnover-icon" style="font-size: 13px;">🛎️</span>
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                    <span style="font-size: 11.5px; font-weight: 800; color: #0F172A;">Turnovers:</span>
                     <span class="sm-pill-in">⬇ ${checkInsCount} In</span>
                     <span class="sm-pill-out">⬆ ${checkOutsCount} Out</span>
+                    ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill" style="font-size: 9.5px; padding: 1px 5px;">🔄 ${roomTransfersCount} Transfer</span>` : ''}
+                    <span class="sm-turnover-sub" style="margin-top: 0;">(${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate})</span>
                   </div>
-                  <div class="sm-turnover-sub">
-                    Showing date: <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
-                    ${activeTurnoverDate !== todayIsoStr ? `<button type="button" onclick="setTurnoverDate(null)" class="sm-today-btn" style="padding: 1px 7px; font-size: 10px; margin-left: 6px;">Reset to Today</button>` : ''}
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="sm-total-collect-badge ${totalToCollect > 0 ? 'has-balance' : 'is-paid'}" style="padding: 2px 7px; font-size: 11px;">
+                    <span>To Collect:</span>
+                    <strong style="font-size: 11.5px;">₹${formatCurrency(totalToCollect)}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onclick="toggleTurnoversCollapse()"
+                    class="sm-tool-pill-btn"
+                    style="font-size: 10.5px; padding: 2px 8px; font-weight: 700; color: #4338CA; background: #EEF2FF; border-color: #C7D2FE;"
+                  >
+                    ▼ View ${outBookings.length > 0 ? `(${outBookings.length} Departures)` : ''}
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          turnoversEl.innerHTML = `
+            <div class="sm-turnover-box">
+              <div class="sm-turnover-head">
+                <div class="sm-turnover-head-left">
+                  <span class="sm-turnover-icon" style="font-size: 15px;">🛎️</span>
+                  <div>
+                    <div class="sm-turnover-title">
+                      <span>Turnovers &amp; Checkout Collections</span>
+                      <span class="sm-pill-in">⬇ ${checkInsCount} In</span>
+                      <span class="sm-pill-out">⬆ ${checkOutsCount} Out</span>
+                      ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill">🔄 ${roomTransfersCount} Transfer</span>` : ''}
+                    </div>
+                    <div class="sm-turnover-sub">
+                      Showing date: <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
+                      ${activeTurnoverDate !== todayIsoStr ? `<button type="button" onclick="setTurnoverDate(null)" class="sm-today-btn" style="padding: 1px 6px; font-size: 9.5px; margin-left: 4px;">Reset to Today</button>` : ''}
+                    </div>
                   </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span class="sm-total-collect-badge ${totalToCollect > 0 ? 'has-balance' : 'is-paid'}">
+                    <span>Total to Collect:</span>
+                    <strong>₹${formatCurrency(totalToCollect)}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onclick="toggleUpcomingCheckouts()"
+                    class="sm-tool-pill-btn"
+                    style="font-size: 10.5px; padding: 2px 7px;"
+                  >
+                    ${showUpcomingCheckouts ? '▲ Hide 7D' : '📅 7 Days'}
+                  </button>
+                  <button
+                    type="button"
+                    onclick="toggleTurnoversCollapse()"
+                    class="sm-tool-pill-btn"
+                    style="font-size: 10.5px; padding: 2px 7px; font-weight: 700; color: #64748B;"
+                  >
+                    ▲ Collapse
+                  </button>
                 </div>
               </div>
 
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="sm-total-collect-badge ${totalToCollect > 0 ? 'has-balance' : 'is-paid'}">
-                  <span>Total to Collect:</span>
-                  <strong>₹${formatCurrency(totalToCollect)}</strong>
-                </span>
-                <button
-                  type="button"
-                  onclick="toggleUpcomingCheckouts()"
-                  class="sm-tool-pill-btn"
-                  style="font-size: 11px; padding: 4px 10px;"
-                >
-                  ${showUpcomingCheckouts ? '▲ Hide Next 7 Days' : '📅 Next 7 Days'}
-                </button>
+              <div class="sm-checkout-guests-list">
+                ${outBookings.length > 0 ? `
+                  ${outBookings.map(bk => renderCheckoutRow(bk)).join('')}
+                ` : `
+                  <div style="padding: 6px 4px; font-size: 11.5px; color: #64748B; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                    <span>✨ No checkouts scheduled for ${activeTurnoverDate === todayIsoStr ? 'today' : activeTurnoverDate} (${checkInsCount} check-in${checkInsCount !== 1 ? 's' : ''} expected).</span>
+                  </div>
+                `}
+
+                ${showUpcomingCheckouts && upcomingCheckouts.length > 0 ? `
+                  <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #CBD5E1;">
+                    <div style="font-size: 11px; font-weight: 800; color: #4338CA; margin-bottom: 4px;">
+                      📅 Upcoming Departures (Next 7 Days):
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                      ${upcomingCheckouts.map(bk => renderCheckoutRow(bk)).join('')}
+                    </div>
+                  </div>
+                ` : (showUpcomingCheckouts ? `
+                  <div style="padding: 4px; font-size: 10.5px; color: #94A3B8;">
+                    No upcoming departures in the next 7 days.
+                  </div>
+                ` : '')}
               </div>
             </div>
-
-            <div class="sm-checkout-guests-list">
-              ${outBookings.length > 0 ? `
-                ${outBookings.map(bk => renderCheckoutRow(bk)).join('')}
-              ` : `
-                <div style="padding: 10px 4px; font-size: 12px; color: #64748B; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-                  <span>✨ No checkouts scheduled for ${activeTurnoverDate === todayIsoStr ? 'today' : activeTurnoverDate} (${checkInsCount} check-in${checkInsCount !== 1 ? 's' : ''} expected).</span>
-                </div>
-              `}
-
-              ${showUpcomingCheckouts && upcomingCheckouts.length > 0 ? `
-                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #CBD5E1;">
-                  <div style="font-size: 11.5px; font-weight: 800; color: #4338CA; margin-bottom: 6px;">
-                    📅 Upcoming Departures (Next 7 Days):
-                  </div>
-                  <div style="display: flex; flex-direction: column; gap: 6px;">
-                    ${upcomingCheckouts.map(bk => renderCheckoutRow(bk)).join('')}
-                  </div>
-                </div>
-              ` : (showUpcomingCheckouts ? `
-                <div style="padding: 6px 4px; font-size: 11px; color: #94A3B8;">
-                  No upcoming departures in the next 7 days.
-                </div>
-              ` : '')}
-            </div>
-          </div>
-        `;
+          `;
+        }
       }
 
       // 4. Legend & Secondary Tools Bar (Hide legend in List view as requested)
