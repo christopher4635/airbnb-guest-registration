@@ -4767,6 +4767,26 @@
             </div>
           </div>
 
+          <!-- Multi-Stay / Split-Stay Stays Manager (Hidden on print) -->
+          <div id="biller-split-selector-bar" class="biller-no-print" style="display: none; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 12px; font-weight: 700; color: #6D28D9; display: flex; align-items: center; gap: 5px;">
+                <span>🔄 Connected Stays in this Bill:</span>
+              </span>
+              <div id="biller-split-chips-wrap" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <select id="biller-add-extra-stay-select" style="height: 30px; font-size: 11.5px; border-radius: 6px; border: 1px solid #CBD5E1; padding: 2px 6px; background: #FFFFFF; display: none;" onchange="onAddExtraStayToBill(this.value)">
+                <option value="">➕ Add another booking to this bill...</option>
+              </select>
+              <button type="button" class="btn btn-outline" onclick="toggleAddExtraStayDropdown()" style="font-size: 11px; height: 30px; padding: 0 10px; background: #FFFFFF; border-color: #C4B5FD; color: #6D28D9; font-weight: 600;">
+                ➕ Add Stay to Bill
+              </button>
+            </div>
+          </div>
+
           <!-- Edit Helper Banner (Hidden on print) -->
           <div class="biller-tip-banner biller-no-print">
             <span style="font-size: 16px;">💡</span>
@@ -6147,7 +6167,98 @@
       return false;
     }
 
-    // Helper: Detect and trace continuous split stays (room transfers)
+    // Helper: Determine if two bookings are connected (split stay, multi-room, or same guest session)
+    function areBookingsConnected(b1, b2) {
+      if (!b1 || !b2 || b1.id === b2.id) return false;
+      if (b1.status === 'Cancelled' || b2.status === 'Cancelled') return false;
+
+      // Date proximity check: must be overlapping, touching, or adjacent within 1 day
+      const t1In = new Date(b1.checkInDate).getTime();
+      const t1Out = new Date(b1.checkOutDate).getTime();
+      const t2In = new Date(b2.checkInDate).getTime();
+      const t2Out = new Date(b2.checkOutDate).getTime();
+      const isAdjacentOrOverlapping = (
+        (b1.checkInDate <= b2.checkOutDate && b1.checkOutDate >= b2.checkInDate) ||
+        Math.abs(t1Out - t2In) <= 86400000 ||
+        Math.abs(t2Out - t1In) <= 86400000
+      );
+
+      // Parse explicit links in notes
+      const parseLinks = (notes) => {
+        if (!notes) return [];
+        const matches = [...notes.matchAll(/\[Split Stay Link:\s*([^\]]+)\]/gi)];
+        return matches.flatMap(m => m[1].split(/[\s,;|]+/).map(s => s.trim()).filter(Boolean));
+      };
+      const links1 = parseLinks(b1.notes);
+      const links2 = parseLinks(b2.notes);
+
+      // 1. Explicit link via linkedBookingId, splitStayId, or notes
+      const hasExplicitLink = (
+        (b1.linkedBookingId && (b1.linkedBookingId === b2.id || b2.linkedBookingId === b1.id)) ||
+        (b1.splitStayId && b2.splitStayId && b1.splitStayId === b2.splitStayId) ||
+        (b1.notes && (b1.notes.includes(b2.id) || (b2.externalUid && b1.notes.includes(b2.externalUid)))) ||
+        (b2.notes && (b2.notes.includes(b1.id) || (b1.externalUid && b2.notes.includes(b1.externalUid)))) ||
+        links1.includes(b2.id) ||
+        links2.includes(b1.id)
+      );
+
+      if (hasExplicitLink && isAdjacentOrOverlapping) return true;
+
+      // 2. Guest match (phone or clean legal name) + adjacent/overlapping dates
+      if (!isAdjacentOrOverlapping) return false;
+
+      let guestMatches = false;
+      if (b1.phone && b2.phone) {
+        const c1 = String(b1.phone).replace(/[^0-9]/g, '');
+        const c2 = String(b2.phone).replace(/[^0-9]/g, '');
+        if (c1 && c2 && c1.length >= 7 && c1 === c2) guestMatches = true;
+      }
+      if (!guestMatches) {
+        const clean1 = (b1.guestName || '').trim().toLowerCase();
+        const clean2 = (b2.guestName || '').trim().toLowerCase();
+        const isGeneric1 = (!clean1 || clean1 === 'airbnb guest' || clean1 === 'booking.com guest' || clean1 === 'guest' || clean1 === 'valued guest');
+        const isGeneric2 = (!clean2 || clean2 === 'airbnb guest' || clean2 === 'booking.com guest' || clean2 === 'guest' || clean2 === 'valued guest');
+        if (!isGeneric1 && !isGeneric2) {
+          if (clean1 === clean2) guestMatches = true;
+          else {
+            const first1 = clean1.split(/\s+/)[0];
+            const first2 = clean2.split(/\s+/)[0];
+            if (first1.length >= 3 && first1 === first2) guestMatches = true;
+          }
+        }
+      }
+
+      return guestMatches;
+    }
+
+    // Breadth-First Search (BFS) graph clustering to identify ALL connected stays
+    function getConnectedBookingCluster(startBooking, allBookings) {
+      if (!startBooking) return [];
+      const list = (allBookings || currentBookings || []).filter(x => x && x.status !== 'Cancelled');
+      const visited = new Set();
+      const queue = [startBooking];
+      visited.add(startBooking.id);
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        for (const b of list) {
+          if (!visited.has(b.id) && areBookingsConnected(curr, b)) {
+            visited.add(b.id);
+            queue.push(b);
+          }
+        }
+      }
+
+      const cluster = list.filter(b => visited.has(b.id));
+      cluster.sort((a, b) => {
+        const dComp = (a.checkInDate || '').localeCompare(b.checkInDate || '');
+        if (dComp !== 0) return dComp;
+        return (a.property || '').localeCompare(b.property || '');
+      });
+      return cluster;
+    }
+
+    // Comprehensive split-stay & multi-room stay detector
     function getSplitStayInfo(booking, allBookings) {
       if (!booking || booking.status === 'Cancelled') {
         const fin = getBookingFinancials(booking);
@@ -6168,40 +6279,8 @@
         };
       }
 
-      const list = (allBookings || currentBookings || []).filter(x => x && x.status !== 'Cancelled');
-
-      function matchGuest(b1, b2) {
-        if (!b1 || !b2) return false;
-        // 1. Explicit link via linkedBookingId or notes
-        if (b1.linkedBookingId && (b1.linkedBookingId === b2.id || b2.linkedBookingId === b1.id)) return true;
-        if (b1.splitStayId && b2.splitStayId && b1.splitStayId === b2.splitStayId) return true;
-        if (b1.notes && b2.id && b1.notes.includes(b2.id)) return true;
-        if (b2.notes && b1.id && b2.notes.includes(b1.id)) return true;
-
-        // 2. Phone match
-        if (b1.phone && b2.phone) {
-          const c1 = String(b1.phone).replace(/[^0-9]/g, '');
-          const c2 = String(b2.phone).replace(/[^0-9]/g, '');
-          if (c1 && c2 && c1.length >= 7 && c1 === c2) return true;
-        }
-
-        // 3. Name match
-        const clean1 = (b1.guestName || '').trim().toLowerCase();
-        const clean2 = (b2.guestName || '').trim().toLowerCase();
-        if (!clean1 || !clean2) return false;
-        if (clean1 === clean2) return true;
-        const first1 = clean1.split(' ')[0];
-        const first2 = clean2.split(' ')[0];
-        return (first1.length >= 3 && first1 === first2);
-      }
-
-      // Check if another leg continues immediately on booking.checkOutDate
-      const nextLeg = list.find(x => x.id !== booking.id && x.checkInDate === booking.checkOutDate && matchGuest(x, booking));
-
-      // Check if a previous leg checked out on booking.checkInDate
-      const prevLeg = list.find(x => x.id !== booking.id && x.checkOutDate === booking.checkInDate && matchGuest(x, booking));
-
-      if (!nextLeg && !prevLeg) {
+      const cluster = getConnectedBookingCluster(booking, allBookings);
+      if (!cluster || cluster.length <= 1) {
         const fin = getBookingFinancials(booking);
         return {
           isSplit: false,
@@ -6220,36 +6299,17 @@
         };
       }
 
-      // Build continuous chain of legs
-      const chain = [];
-      let curr = booking;
-      while (curr) {
-        chain.unshift(curr);
-        const p = list.find(x => x.id !== curr.id && x.checkOutDate === curr.checkInDate && matchGuest(x, curr));
-        if (p && !chain.some(c => c.id === p.id)) {
-          curr = p;
-        } else {
-          break;
-        }
-      }
-      curr = booking;
-      while (curr) {
-        const n = list.find(x => x.id !== curr.id && x.checkInDate === curr.checkOutDate && matchGuest(x, curr));
-        if (n && !chain.some(c => c.id === n.id)) {
-          chain.push(n);
-          curr = n;
-        } else {
-          break;
-        }
-      }
+      const overallCheckIn = cluster.reduce((min, b) => (b.checkInDate < min ? b.checkInDate : min), cluster[0].checkInDate);
+      const overallCheckOut = cluster.reduce((max, b) => (b.checkOutDate > max ? b.checkOutDate : max), cluster[0].checkOutDate);
+      const totalNights = cluster.reduce((sum, l) => sum + (l.nights || 1), 0);
 
-      const isIntermediate = Boolean(nextLeg);
-      const isFinal = !nextLeg;
-      const finalLeg = chain[chain.length - 1];
+      const finalLeg = cluster.find(b => b.checkOutDate === overallCheckOut) || cluster[cluster.length - 1];
+      const isFinal = (booking.id === finalLeg.id || booking.checkOutDate === overallCheckOut);
+      const isIntermediate = !isFinal;
 
       let totalAmount = 0;
       let totalAdvance = 0;
-      chain.forEach(leg => {
+      cluster.forEach(leg => {
         const rev = getBookingRevenue(leg);
         totalAmount += rev;
         let adv = 0;
@@ -6278,13 +6338,13 @@
         isSplit: true,
         isIntermediate,
         isFinal,
-        legs: chain,
+        legs: cluster,
         finalLeg,
-        nextLeg,
-        prevLeg,
-        overallCheckIn: chain[0].checkInDate,
-        overallCheckOut: finalLeg.checkOutDate,
-        totalNights: chain.reduce((sum, l) => sum + (l.nights || 1), 0),
+        nextLeg: isIntermediate ? finalLeg : null,
+        prevLeg: cluster.length > 1 && isFinal ? cluster[0] : null,
+        overallCheckIn,
+        overallCheckOut,
+        totalNights,
         totalAmount,
         totalAdvance,
         combinedBalance
@@ -12640,9 +12700,159 @@
       localStorage.setItem('elitehomes_host_gstin', g);
     }
 
+    // Multi-Stay / Split-Stay Bill Management State
+    let currentBillerStays = [];
+    let activeBillerStayIds = new Set();
+
+    function renderBillerStaysChips() {
+      const bar = document.getElementById('biller-split-selector-bar');
+      const chipsWrap = document.getElementById('biller-split-chips-wrap');
+      const extraSelect = document.getElementById('biller-add-extra-stay-select');
+      if (!bar || !chipsWrap) return;
+
+      if (!currentBillerStays || currentBillerStays.length <= 1) {
+        bar.style.display = 'none';
+        return;
+      }
+
+      bar.style.display = 'flex';
+      chipsWrap.innerHTML = '';
+
+      currentBillerStays.forEach(leg => {
+        const isIncluded = activeBillerStayIds.has(leg.id);
+        const chip = document.createElement('label');
+        chip.style.cssText = `display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 4px 10px; border-radius: 6px; cursor: pointer; border: 1px solid ${isIncluded ? '#7C3AED' : '#CBD5E1'}; background: ${isIncluded ? '#EDE9FE' : '#FFFFFF'}; color: ${isIncluded ? '#5B21B6' : '#64748B'}; font-weight: ${isIncluded ? '700' : 'normal'}; transition: all 0.15s ease; user-select: none;`;
+        chip.innerHTML = `
+          <input type="checkbox" ${isIncluded ? 'checked' : ''} onchange="toggleBillerStayIncluded('${leg.id}', this.checked)" style="accent-color: #7C3AED; cursor: pointer;">
+          <span>${escapeHtml(leg.property)} (${formatInvoiceDate(leg.checkInDate).split(' ')[0]} ${formatInvoiceDate(leg.checkInDate).split(' ')[1]} → ${formatInvoiceDate(leg.checkOutDate).split(' ')[0]} ${formatInvoiceDate(leg.checkOutDate).split(' ')[1]}, ${leg.nights || 1} nt)</span>
+        `;
+        chipsWrap.appendChild(chip);
+      });
+
+      if (extraSelect) {
+        extraSelect.innerHTML = '<option value="">➕ Add another booking to this bill...</option>';
+        const remaining = (currentBookings || []).filter(b => b && b.status !== 'Cancelled' && !currentBillerStays.some(s => s.id === b.id));
+        remaining.sort((a, b) => (b.checkInDate || '').localeCompare(a.checkInDate || ''));
+        remaining.forEach(b => {
+          const opt = document.createElement('option');
+          opt.value = b.id;
+          opt.textContent = `${b.guestName || 'Guest'} [${b.property}] (${b.checkInDate} → ${b.checkOutDate})`;
+          extraSelect.appendChild(opt);
+        });
+      }
+    }
+
+    function toggleAddExtraStayDropdown() {
+      const extraSelect = document.getElementById('biller-add-extra-stay-select');
+      if (extraSelect) {
+        extraSelect.style.display = (extraSelect.style.display === 'none' || !extraSelect.style.display) ? 'inline-block' : 'none';
+        if (extraSelect.style.display === 'inline-block') extraSelect.focus();
+      }
+    }
+
+    function toggleBillerStayIncluded(stayId, included) {
+      if (included) {
+        activeBillerStayIds.add(stayId);
+      } else {
+        if (activeBillerStayIds.size <= 1) {
+          alert('At least one stay must remain selected in the invoice.');
+          renderBillerStaysChips();
+          return;
+        }
+        activeBillerStayIds.delete(stayId);
+      }
+      rebuildInvoiceFromActiveStays();
+    }
+
+    function onAddExtraStayToBill(bookingId) {
+      if (!bookingId) return;
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+
+      if (!currentBillerStays.some(s => s.id === b.id)) {
+        currentBillerStays.push(b);
+        activeBillerStayIds.add(b.id);
+      }
+
+      const extraSelect = document.getElementById('biller-add-extra-stay-select');
+      if (extraSelect) {
+        extraSelect.value = '';
+        extraSelect.style.display = 'none';
+      }
+
+      rebuildInvoiceFromActiveStays();
+    }
+
+    function rebuildInvoiceFromActiveStays() {
+      const selectedLegs = currentBillerStays.filter(s => activeBillerStayIds.has(s.id));
+      if (selectedLegs.length === 0) return;
+
+      selectedLegs.sort((a, b) => {
+        const dComp = (a.checkInDate || '').localeCompare(b.checkInDate || '');
+        if (dComp !== 0) return dComp;
+        return (a.property || '').localeCompare(b.property || '');
+      });
+
+      const tbody = document.getElementById('bill-items-tbody');
+      if (tbody) tbody.innerHTML = '';
+
+      const inEl = document.getElementById('bill-stay-checkin');
+      const outEl = document.getElementById('bill-stay-checkout');
+      const ntsEl = document.getElementById('bill-stay-nights');
+      const gstEl = document.getElementById('bill-stay-guests');
+      const advEl = document.getElementById('bill-advance-paid-input');
+
+      const minIn = selectedLegs.reduce((min, b) => (b.checkInDate < min ? b.checkInDate : min), selectedLegs[0].checkInDate);
+      const maxOut = selectedLegs.reduce((max, b) => (b.checkOutDate > max ? b.checkOutDate : max), selectedLegs[0].checkOutDate);
+      const totNts = selectedLegs.reduce((sum, b) => sum + (b.nights || 1), 0);
+
+      if (inEl) inEl.innerText = `${formatInvoiceDate(minIn)} (02:00 PM)`;
+      if (outEl) outEl.innerText = `${formatInvoiceDate(maxOut)} (11:00 AM)`;
+      if (ntsEl) ntsEl.innerText = (selectedLegs.length > 1) ? `${totNts} Nights Total (${selectedLegs.length} Rooms/Stays)` : `${totNts} Night${totNts > 1 ? 's' : ''}`;
+      if (gstEl) gstEl.innerText = `${selectedLegs[0].guestsCount || 2} Guests`;
+
+      populateBillPropertyDropdown(selectedLegs.map(l => l.property).join(' + ') + (selectedLegs.length > 1 ? ' (Split Stay)' : ''));
+
+      let totalAdv = 0;
+      selectedLegs.forEach(leg => {
+        const rev = getBookingRevenue(leg);
+        const nts = leg.nights || 1;
+        const actualRate = (rev > 0 && nts > 0) ? Math.round(rev / nts) : getStandardRackRate(leg.property);
+        const rackRate = getStandardRackRate(leg.property, actualRate);
+        const discPerNt = (actualRate < rackRate) ? (rackRate - actualRate) : 0;
+        const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nt${nts > 1 ? 's' : ''})`;
+        addBillItemRow(desc, '996311', nts, rackRate, discPerNt);
+
+        let adv = 0;
+        if (leg.advancePaid !== undefined && leg.advancePaid !== null && leg.advancePaid !== '') {
+          adv = parseFloat(String(leg.advancePaid).replace(/[^0-9.]/g, '')) || 0;
+        } else if (leg.advance !== undefined && leg.advance !== null && leg.advance !== '') {
+          adv = parseFloat(String(leg.advance).replace(/[^0-9.]/g, '')) || 0;
+        } else if (leg.notes) {
+          const m = leg.notes.match(/Advance(?:\s*Paid)?:\s*₹?\s*([0-9,]+)/i);
+          if (m) adv = parseFloat(m[1].replace(/,/g, '')) || 0;
+        }
+        const platLower = (leg.platform || '').toLowerCase();
+        const payStatus = (leg.paymentStatus || '').trim().toLowerCase();
+        if (platLower.includes('airbnb') || payStatus === 'paid in full' || payStatus === 'paid') {
+          adv = rev;
+        }
+        totalAdv += adv;
+      });
+
+      if (advEl) advEl.value = totalAdv;
+      renderBillerStaysChips();
+      recalculateBill();
+    }
+
     // Reset to blank template for walk-in / manual billing
     function resetBillerToBlank() {
       currentBillerBookingId = null;
+      currentBillerStays = [];
+      activeBillerStayIds = new Set();
+      const splitBar = document.getElementById('biller-split-selector-bar');
+      if (splitBar) splitBar.style.display = 'none';
+
       const select = document.getElementById('biller-booking-select');
       if (select) select.value = '';
 
@@ -12741,23 +12951,38 @@
       const tbody = document.getElementById('bill-items-tbody');
       if (tbody) tbody.innerHTML = '';
 
+      // Preferred human guest name across all connected stays
+      let resolvedGuestName = b.guestName || 'Valued Guest';
+      if (split.isSplit) {
+        const namedLeg = split.legs.find(l => {
+          const gn = (l.guestName || '').trim().toLowerCase();
+          return gn && gn !== 'airbnb guest' && gn !== 'booking.com guest' && gn !== 'guest' && gn !== 'valued guest';
+        });
+        if (namedLeg) resolvedGuestName = namedLeg.guestName;
+      }
+      if (gNameEl) gNameEl.innerText = resolvedGuestName;
+
+      // Initialize multi-stay bill tracking
+      currentBillerStays = split.isSplit ? [...split.legs] : [b];
+      activeBillerStayIds = new Set(currentBillerStays.map(s => s.id));
+
       let totalAdvanceAcrossChain = 0;
 
       if (split.isSplit) {
-        populateBillPropertyDropdown(split.legs.map(l => l.property).join(' ➔ ') + ' (Split Stay)');
+        populateBillPropertyDropdown(split.legs.map(l => l.property).join(' + ') + ' (Split Stay)');
         if (inEl) inEl.innerText = `${formatInvoiceDate(split.overallCheckIn)} (02:00 PM)`;
         if (outEl) outEl.innerText = `${formatInvoiceDate(split.overallCheckOut)} (11:00 AM)`;
-        if (ntsEl) ntsEl.innerText = `${split.totalNights} Nights Total (${split.legs.length} Rooms)`;
+        if (ntsEl) ntsEl.innerText = `${split.totalNights} Nights Total (${split.legs.length} Rooms/Stays)`;
         if (gstEl) gstEl.innerText = `${b.guestsCount || 2} Guests`;
         if (chEl) chEl.innerText = `${b.platform || 'Direct'} (Split Stay)`;
 
         split.legs.forEach(leg => {
           const rev = getBookingRevenue(leg);
           const nts = leg.nights || 1;
-          const actualRate = Math.round(rev / nts);
+          const actualRate = (rev > 0 && nts > 0) ? Math.round(rev / nts) : getStandardRackRate(leg.property);
           const rackRate = getStandardRackRate(leg.property, actualRate);
           const discPerNt = (actualRate < rackRate) ? (rackRate - actualRate) : 0;
-          const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nts)`;
+          const desc = `Accommodation: ${leg.property} (${formatInvoiceDate(leg.checkInDate)} → ${formatInvoiceDate(leg.checkOutDate)} - ${nts} nt${nts > 1 ? 's' : ''})`;
           addBillItemRow(desc, '996311', nts, rackRate, discPerNt);
         });
 
@@ -12776,11 +13001,13 @@
         if (gstEl) gstEl.innerText = `${b.guestsCount || 2} Guests`;
         if (chEl) chEl.innerText = b.platform || 'Direct';
 
-        const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nts)`;
+        const desc = `Accommodation: ${b.property} (${formatInvoiceDate(b.checkInDate)} → ${formatInvoiceDate(b.checkOutDate)} - ${nts} nt${nts > 1 ? 's' : ''})`;
         addBillItemRow(desc, '996311', nts, rackRate, discPerNt);
 
         totalAdvanceAcrossChain = fin.advance;
       }
+
+      renderBillerStaysChips();
 
       // Check payment status and advance
       const payMode = (b.platform || '').toLowerCase().includes('airbnb') ? 'Airbnb Online Payout' : 
