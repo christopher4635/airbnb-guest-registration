@@ -10448,7 +10448,16 @@
         const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
         const fullWaPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
         const checkinFormLink = getBookingGuestFormUrl(b);
-        const stayDates = (b.checkInDate && b.checkOutDate) ? ` (${b.checkInDate} to ${b.checkOutDate})` : '';
+        let stayIn = b.checkInDate;
+        let stayOut = b.checkOutDate;
+        if (typeof getSplitStayInfo === 'function') {
+          const split = getSplitStayInfo(b, currentBookings);
+          if (split && split.isSplit) {
+            if (split.overallCheckIn) stayIn = split.overallCheckIn;
+            if (split.overallCheckOut) stayOut = split.overallCheckOut;
+          }
+        }
+        const stayDates = (stayIn && stayOut) ? ` (${stayIn} to ${stayOut})` : '';
         const waMsg = `Hi ${b.guestName || 'Guest'}, welcome to Elite Homes! 🏨\n\nPlease click this link to verify your stay and upload your ID document(s)${stayDates}:\n\n👉 ${checkinFormLink}\n\nThank you, and we look forward to hosting you!`;
         const waLink = fullWaPhone ? `https://wa.me/${fullWaPhone}?text=${encodeURIComponent(waMsg)}` : '';
         const hasOverlap = isBookingOverlapping(b, currentBookings);
@@ -10747,11 +10756,34 @@
 
       const name = (document.getElementById('mb-guest-name')?.value || b?.guestName || '').trim();
       const code = (document.getElementById('mb-res-code')?.value || b?.reservationCode || (b ? b.id : '') || editingBookingId || '').trim();
-      const checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
-      const checkout = (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '').trim();
+      let checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
+      let checkout = (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '').trim();
       const phone = (document.getElementById('mb-phone')?.value || b?.phone || '').trim();
       const email = (document.getElementById('mb-email')?.value || b?.email || '').trim();
-      const guests = (document.getElementById('mb-guests-count')?.value || b?.guestsCount || '1').toString().trim();
+      let guests = (document.getElementById('mb-guests-count')?.value || b?.guestsCount || '1').toString().trim();
+
+      // Resolve continuous / split stay dates across all linked legs
+      if (typeof getSplitStayInfo === 'function') {
+        const bForSplit = b || {
+          id: editingBookingId || 'temp_split',
+          guestName: name,
+          phone: phone,
+          checkInDate: checkin,
+          checkOutDate: checkout,
+          linkedBookingId: document.getElementById('mb-linked-booking')?.value || ''
+        };
+        const split = getSplitStayInfo(bForSplit, currentBookings);
+        if (split && split.isSplit) {
+          if (split.overallCheckIn) checkin = split.overallCheckIn;
+          if (split.overallCheckOut) checkout = split.overallCheckOut;
+          if (split.legs && split.legs.length > 0) {
+            const maxGuests = Math.max(...split.legs.map(l => parseInt(l.guestsCount || 1, 10) || 1));
+            if (maxGuests > (parseInt(guests, 10) || 1)) {
+              guests = String(maxGuests);
+            }
+          }
+        }
+      }
 
       const origin = window.location.origin;
       let path = window.location.pathname.replace(/\/admin(\.html)?\/?$/, '');
@@ -10799,9 +10831,26 @@
       const b = customBooking || (editingBookingId ? currentBookings.find(x => x && x.id === editingBookingId) : null);
       const url = getBookingGuestFormUrl(b);
       const guestName = (document.getElementById('mb-guest-name')?.value || b?.guestName || 'Guest').trim();
-      const checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
-      const checkout = (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '').trim();
+      let checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
+      let checkout = (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '').trim();
       let phone = (document.getElementById('mb-phone')?.value || b?.phone || '').replace(/[^0-9]/g, '');
+
+      // Resolve continuous / split stay dates across all linked legs
+      if (typeof getSplitStayInfo === 'function') {
+        const bForSplit = b || {
+          id: editingBookingId || 'temp_split',
+          guestName: guestName,
+          phone: phone,
+          checkInDate: checkin,
+          checkOutDate: checkout,
+          linkedBookingId: document.getElementById('mb-linked-booking')?.value || ''
+        };
+        const split = getSplitStayInfo(bForSplit, currentBookings);
+        if (split && split.isSplit) {
+          if (split.overallCheckIn) checkin = split.overallCheckIn;
+          if (split.overallCheckOut) checkout = split.overallCheckOut;
+        }
+      }
 
       if (!phone) {
         const entered = prompt(`Enter ${guestName}'s WhatsApp mobile number (with country code, e.g. 919876543210):`);

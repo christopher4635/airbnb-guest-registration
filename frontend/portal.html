@@ -3218,6 +3218,84 @@
       }
     }
 
+    // Detect continuous / split stay dates for a booking
+    function getContinuousStayDates(booking, allBookings) {
+      if (!booking || !allBookings || allBookings.length === 0) {
+        return {
+          checkIn: booking?.checkInDate || '',
+          checkOut: booking?.checkOutDate || '',
+          isSplit: false
+        };
+      }
+      const list = allBookings.filter(x => x && x.status !== 'Cancelled');
+      const visited = new Set();
+      const queue = [booking];
+      visited.add(booking.id);
+
+      const areConnected = (b1, b2) => {
+        if (!b1 || !b2 || b1.id === b2.id) return false;
+        const t1In = new Date(b1.checkInDate).getTime();
+        const t1Out = new Date(b1.checkOutDate).getTime();
+        const t2In = new Date(b2.checkInDate).getTime();
+        const t2Out = new Date(b2.checkOutDate).getTime();
+        const isAdjacentOrOverlapping = (
+          (b1.checkInDate <= b2.checkOutDate && b1.checkOutDate >= b2.checkInDate) ||
+          Math.abs(t1Out - t2In) <= 86400000 ||
+          Math.abs(t2Out - t1In) <= 86400000
+        );
+        if (!isAdjacentOrOverlapping) return false;
+
+        const hasExplicitLink = (
+          (b1.linkedBookingId && (b1.linkedBookingId === b2.id || b2.linkedBookingId === b1.id)) ||
+          (b1.notes && b1.notes.includes(b2.id)) ||
+          (b2.notes && b2.notes.includes(b1.id))
+        );
+        if (hasExplicitLink) return true;
+
+        if (b1.phone && b2.phone) {
+          const c1 = String(b1.phone).replace(/[^0-9]/g, '');
+          const c2 = String(b2.phone).replace(/[^0-9]/g, '');
+          if (c1 && c2 && c1.length >= 7 && c1 === c2) return true;
+        }
+        const n1 = (b1.guestName || '').trim().toLowerCase();
+        const n2 = (b2.guestName || '').trim().toLowerCase();
+        if (n1 && n2) {
+          if (n1 === n2) return true;
+          const first1 = n1.split(/\s+/)[0];
+          const first2 = n2.split(/\s+/)[0];
+          if (first1.length >= 3 && first1 === first2) return true;
+        }
+        return false;
+      };
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        for (const b of list) {
+          if (!visited.has(b.id) && areConnected(curr, b)) {
+            visited.add(b.id);
+            queue.push(b);
+          }
+        }
+      }
+
+      const cluster = list.filter(b => visited.has(b.id));
+      if (cluster.length <= 1) {
+        return {
+          checkIn: booking.checkInDate || '',
+          checkOut: booking.checkOutDate || '',
+          isSplit: false
+        };
+      }
+
+      const minIn = cluster.reduce((min, b) => (b.checkInDate < min ? b.checkInDate : min), cluster[0].checkInDate);
+      const maxOut = cluster.reduce((max, b) => (b.checkOutDate > max ? b.checkOutDate : max), cluster[0].checkOutDate);
+      return {
+        checkIn: minIn,
+        checkOut: maxOut,
+        isSplit: true
+      };
+    }
+
     // =========================================================================
     // 3. BOOKINGS LIST VIEW RENDERER
     // =========================================================================
@@ -3265,7 +3343,8 @@
 
         const cleanPhone = (b.phone || '').replace(/[^0-9]/g, '');
         const waLink = cleanPhone ? `https://wa.me/${cleanPhone}?text=Hi%20${encodeURIComponent(b.guestName)},%20looking%20forward%20to%20hosting%20you%20at%20${encodeURIComponent(b.property)}!` : '';
-        const checkinFormLink = `index.html?prop=${encodeURIComponent(b.property || '')}&code=${encodeURIComponent(b.reservationCode || b.id || '')}&name=${encodeURIComponent(b.guestName || '')}&checkin=${encodeURIComponent(b.checkInDate || '')}&checkout=${encodeURIComponent(b.checkOutDate || '')}&phone=${encodeURIComponent(b.phone || '')}&guests=${encodeURIComponent(b.guestsCount || 1)}`;
+        const stay = getContinuousStayDates(b, currentBookings);
+        const checkinFormLink = `index.html?prop=${encodeURIComponent(b.property || '')}&code=${encodeURIComponent(b.reservationCode || b.id || '')}&name=${encodeURIComponent(b.guestName || '')}&checkin=${encodeURIComponent(stay.checkIn)}&checkout=${encodeURIComponent(stay.checkOut)}&phone=${encodeURIComponent(b.phone || '')}&guests=${encodeURIComponent(b.guestsCount || 1)}`;
 
         tr.innerHTML = `
           <td>

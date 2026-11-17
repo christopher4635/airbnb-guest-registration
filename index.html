@@ -786,6 +786,14 @@
           </div>
         </div>
 
+        <!-- Split Stay / Continuous Stay Banner -->
+        <div id="split-stay-indicator" style="display: none; margin-top: 12px; padding: 10px 14px; background: #FFFFFF; border: 1.5px dashed #059669; border-radius: 8px; font-size: 12.5px; color: #065F46;">
+          <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+            <span>🔄</span> <span>Continuous Connected Stay: <span id="split-stay-dates"></span></span>
+          </div>
+          <div id="split-stay-legs" style="font-size: 11.5px; color: #047857; margin-top: 4px; line-height: 1.4;"></div>
+        </div>
+
         <!-- Hidden sync inputs -->
         <input type="hidden" id="reservationCode" name="reservationCode">
         <input type="hidden" id="propertyOption" name="propertyOption">
@@ -1153,6 +1161,12 @@
       }
       applyConfigToForm();
       applyUrlParams();
+      const urlParams = new URLSearchParams(window.location.search);
+      const codeParam = (urlParams.get('code') || urlParams.get('resCode') || '').trim();
+      const nameParam = (urlParams.get('name') || urlParams.get('guestName') || '').trim();
+      const checkinParam = (urlParams.get('checkin') || urlParams.get('checkInDate') || '').trim();
+      const checkoutParam = (urlParams.get('checkout') || urlParams.get('checkOutDate') || '').trim();
+      resolveBookingStayAndContinuousChain(codeParam, nameParam, checkinParam, checkoutParam);
     }
 
     function applyConfigToForm() {
@@ -1318,11 +1332,9 @@
       }
     }
 
-    // Auto-select room from calendar booking if room was omitted from the shared link
-    async function tryLookupAndSelectCalendarRoom(code, name, checkin) {
-      if (!code && !name) return;
-      const propSelect = document.getElementById('propertyOption');
-      if (!propSelect) return;
+    // Auto-select room and resolve continuous split stays from calendar bookings
+    async function resolveBookingStayAndContinuousChain(code, name, checkin, checkout) {
+      if (!code && !name && !checkin) return;
 
       let bookings = [];
       const cached = localStorage.getItem('airbnb_bookings');
@@ -1333,28 +1345,126 @@
       if ((!bookings || !bookings.length) && window.AirbnbAPI && typeof window.AirbnbAPI.getBookings === 'function') {
         try {
           bookings = await window.AirbnbAPI.getBookings();
+          if (Array.isArray(bookings) && bookings.length > 0) {
+            localStorage.setItem('airbnb_bookings', JSON.stringify(bookings));
+          }
         } catch(e) {}
       }
 
-      if (Array.isArray(bookings) && bookings.length > 0) {
-        const c = (code || '').trim().toLowerCase();
-        const n = (name || '').trim().toLowerCase();
-        const d = (checkin || '').trim();
+      if (!Array.isArray(bookings) || bookings.length === 0) return;
 
-        const match = bookings.find(b => {
-          const bCode = (b.reservationCode || b.id || '').trim().toLowerCase();
-          const bName = (b.guestName || '').trim().toLowerCase();
-          const bIn = (b.checkInDate || '').trim();
+      const c = (code || '').trim().toLowerCase();
+      const n = (name || '').trim().toLowerCase();
+      const dIn = (checkin || '').trim();
+      const dOut = (checkout || '').trim();
 
-          if (c && bCode && (bCode === c || bCode.includes(c) || c.includes(bCode))) return true;
-          if (n && bName && (bName.includes(n) || n.includes(bName))) {
-            if (!d || !bIn || d === bIn) return true;
+      // Find matching booking
+      const matched = bookings.find(b => {
+        const bCode = (b.reservationCode || b.id || '').trim().toLowerCase();
+        const bName = (b.guestName || '').trim().toLowerCase();
+        const bIn = (b.checkInDate || '').trim();
+        const bOut = (b.checkOutDate || '').trim();
+
+        if (c && bCode && (bCode === c || bCode.includes(c) || c.includes(bCode))) return true;
+        if (n && bName && (bName.includes(n) || n.includes(bName))) {
+          if (!dIn || !bIn || dIn === bIn || dOut === bOut || (dIn <= bOut && dOut >= bIn)) return true;
+        }
+        return false;
+      });
+
+      if (!matched) return;
+
+      // Auto-select room if propertyOption wasn't set or empty
+      const propSelect = document.getElementById('propertyOption');
+      if (propSelect && (!propSelect.value || propSelect.value === '')) {
+        if (matched.property) selectPropertyOption(matched.property);
+      }
+
+      // Check for connected split/continuous stays using BFS clustering
+      const activeBookings = bookings.filter(x => x && x.status !== 'Cancelled');
+      const visited = new Set();
+      const queue = [matched];
+      visited.add(matched.id);
+
+      const areConnected = (b1, b2) => {
+        if (!b1 || !b2 || b1.id === b2.id) return false;
+        const t1In = new Date(b1.checkInDate).getTime();
+        const t1Out = new Date(b1.checkOutDate).getTime();
+        const t2In = new Date(b2.checkInDate).getTime();
+        const t2Out = new Date(b2.checkOutDate).getTime();
+        const isAdjacentOrOverlapping = (
+          (b1.checkInDate <= b2.checkOutDate && b1.checkOutDate >= b2.checkInDate) ||
+          Math.abs(t1Out - t2In) <= 86400000 ||
+          Math.abs(t2Out - t1In) <= 86400000
+        );
+        if (!isAdjacentOrOverlapping) return false;
+
+        const hasExplicitLink = (
+          (b1.linkedBookingId && (b1.linkedBookingId === b2.id || b2.linkedBookingId === b1.id)) ||
+          (b1.notes && b1.notes.includes(b2.id)) ||
+          (b2.notes && b2.notes.includes(b1.id))
+        );
+        if (hasExplicitLink) return true;
+
+        if (b1.phone && b2.phone) {
+          const c1 = String(b1.phone).replace(/[^0-9]/g, '');
+          const c2 = String(b2.phone).replace(/[^0-9]/g, '');
+          if (c1 && c2 && c1.length >= 7 && c1 === c2) return true;
+        }
+        const n1 = (b1.guestName || '').trim().toLowerCase();
+        const n2 = (b2.guestName || '').trim().toLowerCase();
+        if (n1 && n2) {
+          if (n1 === n2) return true;
+          const first1 = n1.split(/\s+/)[0];
+          const first2 = n2.split(/\s+/)[0];
+          if (first1.length >= 3 && first1 === first2) return true;
+        }
+        return false;
+      };
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        for (const b of activeBookings) {
+          if (!visited.has(b.id) && areConnected(curr, b)) {
+            visited.add(b.id);
+            queue.push(b);
           }
-          return false;
-        });
+        }
+      }
 
-        if (match && match.property) {
-          selectPropertyOption(match.property);
+      const cluster = activeBookings.filter(b => visited.has(b.id));
+      if (cluster.length > 1) {
+        cluster.sort((a, b) => (a.checkInDate || '').localeCompare(b.checkInDate || ''));
+        const overallIn = cluster.reduce((min, b) => (b.checkInDate < min ? b.checkInDate : min), cluster[0].checkInDate);
+        const overallOut = cluster.reduce((max, b) => (b.checkOutDate > max ? b.checkOutDate : max), cluster[0].checkOutDate);
+
+        // Update Check-in & Check-out displays and inputs to the continuous stay
+        const dispIn = document.getElementById('display-checkin');
+        const inInput = document.getElementById('checkInDate');
+        if (dispIn && overallIn) dispIn.textContent = formatDisplayDate(overallIn);
+        if (inInput && overallIn) inInput.value = overallIn;
+
+        const dispOut = document.getElementById('display-checkout');
+        const outInput = document.getElementById('checkOutDate');
+        if (dispOut && overallOut) dispOut.textContent = formatDisplayDate(overallOut);
+        if (outInput && overallOut) outInput.value = overallOut;
+
+        // Show continuous stay indicator banner
+        const indicator = document.getElementById('split-stay-indicator');
+        const datesEl = document.getElementById('split-stay-dates');
+        const legsEl = document.getElementById('split-stay-legs');
+        if (indicator && datesEl && legsEl) {
+          indicator.style.display = 'block';
+          datesEl.textContent = `${formatDisplayDate(overallIn)} ➔ ${formatDisplayDate(overallOut)}`;
+          const legsStr = cluster.map((l, idx) => `Part ${idx + 1}: ${l.property || 'Room'} (${formatDisplayDate(l.checkInDate)} – ${formatDisplayDate(l.checkOutDate)})`).join(' ➔ ');
+          legsEl.innerHTML = `<strong>Stay Sequence:</strong> ${escapeHtmlAttr(legsStr)}`;
+        }
+
+        // If any leg had a higher guest count, adjust totalGuests
+        const maxGuests = Math.max(...cluster.map(l => parseInt(l.guestsCount || 1, 10) || 1));
+        if (maxGuests > totalGuests) {
+          totalGuests = maxGuests;
+          renderGuestCards(totalGuests);
         }
       }
     }
@@ -1395,13 +1505,12 @@
         if (dispCode) dispCode.textContent = '#' + codeParam;
       }
 
-      // 2. Property / Room Type
+      // 2. Property / Room Type & Continuous Stay Resolution
       if (propParam) {
         const pEl = document.getElementById('propertyOption');
         if (pEl) pEl.value = propParam;
-      } else if (codeParam || nameParam) {
-        tryLookupAndSelectCalendarRoom(codeParam, nameParam, checkinParam);
       }
+      resolveBookingStayAndContinuousChain(codeParam, nameParam, checkinParam, checkoutParam);
 
       // 3. Contact Info
       if (phoneParam) {
