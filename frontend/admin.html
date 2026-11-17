@@ -1988,6 +1988,20 @@
       border-color: #A7F3D0;
     }
 
+    /* Stage 4: Checked In */
+    .sm-status-btn.is-checked-in.active {
+      background: #047857;
+      color: #FFFFFF;
+      border-color: #065F46;
+      box-shadow: 0 1px 2px rgba(4, 120, 87, 0.25);
+      font-weight: 800;
+    }
+    .sm-status-btn.is-checked-in:not(.active):hover {
+      background: #D1FAE5;
+      color: #065F46;
+      border-color: #A7F3D0;
+    }
+
     /* Right side Checkout Completion Button */
     .sm-co-done-btn {
       display: inline-flex;
@@ -7766,9 +7780,15 @@
                 if (b.notes.includes('[Checked-Out]') || b.notes.includes('Checked Out at checkout')) {
                   b.checkedOut = true;
                 }
+                if (b.status === 'Checked In') {
+                  b.turnoverStatus = 'checked_in';
+                }
                 const turnMatch = b.notes.match(/\[Turnover:\s*([a-zA-Z_-]+)\]/i);
                 if (turnMatch) {
                   b.turnoverStatus = turnMatch[1].toLowerCase();
+                  if (b.turnoverStatus === 'checked_in') {
+                    b.status = 'Checked In';
+                  }
                 }
               }
             });
@@ -7862,9 +7882,15 @@
                 if (b.notes.includes('[Checked-Out]') || b.notes.includes('Checked Out at checkout')) {
                   b.checkedOut = true;
                 }
+                if (b.status === 'Checked In') {
+                  b.turnoverStatus = 'checked_in';
+                }
                 const turnMatch = b.notes.match(/\[Turnover:\s*([a-zA-Z_-]+)\]/i);
                 if (turnMatch) {
                   b.turnoverStatus = turnMatch[1].toLowerCase();
+                  if (b.turnoverStatus === 'checked_in') {
+                    b.status = 'Checked In';
+                  }
                 }
               }
             });
@@ -8099,6 +8125,12 @@
       if (!b) return;
 
       b.turnoverStatus = status;
+      if (status === 'checked_in') {
+        b.status = 'Checked In';
+      } else if (b.status === 'Checked In') {
+        b.status = 'Confirmed';
+      }
+
       const tag = `[Turnover: ${status}]`;
       if (b.notes && /\[Turnover:\s*[^\]]+\]/i.test(b.notes)) {
         b.notes = b.notes.replace(/\[Turnover:\s*[^\]]+\]/i, tag);
@@ -8111,7 +8143,11 @@
       saveBookings();
       renderBookingsPortal();
 
-      let label = status === 'cleaning' ? 'In Cleaning 🧹' : (status === 'ready' ? 'Ready for Check-in ✨' : 'Checked-Out ✔');
+      let label = status === 'cleaning' 
+        ? 'In Cleaning 🧹' 
+        : (status === 'ready' 
+          ? 'Ready for Check-in ✨' 
+          : (status === 'checked_in' ? 'Checked-In 🚪' : 'Checked-Out ✔'));
       showToast(`Updated status for ${b.property} (${b.guestName}): ${label}`);
 
       // Persist to Cloudflare D1
@@ -8206,7 +8242,15 @@
         </button>
       `;
 
-      return `${btn1Html}${btn2Html}${btn3Html}`;
+      // Button 4: Checked-In
+      const isCheckedInActive = (currentStatus === 'checked_in' || bk.status === 'Checked In');
+      const btn4Html = `
+        <button type="button" class="sm-status-btn is-checked-in ${isCheckedInActive ? 'active' : ''}" onclick="setRoomTurnoverStatus('${bk.id}', 'checked_in')" title="${isCheckedInActive ? 'Guest has arrived & checked into the room!' : 'Click to mark guest checked into the room'}">
+          🚪 ${isCheckedInActive ? 'Checked-In' : 'Check-In'}
+        </button>
+      `;
+
+      return `${btn1Html}${btn2Html}${btn3Html}${btn4Html}`;
     }
 
     // Helper to resolve checkout time from booking metadata or notes (defaults to 11:00 AM)
@@ -8251,8 +8295,11 @@
     }
 
     // Helper to compute countdown badge for Check-in and Checkout
-    function calculateCountdownBadge(targetDateStr, targetTimeStr, isCheckout = false, isPaid = false) {
+    function calculateCountdownBadge(targetDateStr, targetTimeStr, isCheckout = false, isPaid = false, isCheckedIn = false) {
       if (!targetDateStr) return '';
+      if (!isCheckout && isCheckedIn) {
+        return `<span class="sm-countdown-pill sm-cd-done" style="background:#DCFCE7; color:#15803D; border-color:#BBF7D0;">✔ Checked In</span>`;
+      }
       const todayIso = new Date().toISOString().slice(0, 10);
       const now = new Date();
 
@@ -8607,7 +8654,8 @@
           else if (platLower.includes('booking')) platClass = 'is-booking';
 
           const arrTime = getBookingArrivalTime(bk);
-          const arrCountdown = calculateCountdownBadge(bk.checkInDate, arrTime, false, false);
+          const isCheckedIn = (bk.turnoverStatus === 'checked_in' || bk.status === 'Checked In');
+          const arrCountdown = calculateCountdownBadge(bk.checkInDate, arrTime, false, false, isCheckedIn);
           const cleanPhone = (bk.phone || '').replace(/[^0-9]/g, '');
 
           let contactHtml = '';
