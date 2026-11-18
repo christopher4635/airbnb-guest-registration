@@ -14,13 +14,20 @@ CREATE TABLE IF NOT EXISTS bookings (
     nights INTEGER NOT NULL DEFAULT 1,
     guests_count INTEGER NOT NULL DEFAULT 1,
     platform TEXT NOT NULL DEFAULT 'Direct',  -- 'Direct', 'Booking.com', 'Airbnb', 'Blocked'
+    booking_mode TEXT,                        -- 'Airbnb', 'Booking.com', 'Direct Booking', 'Manual Booking', 'Blocked'
     reservation_code TEXT,
+    external_reservation_id TEXT,
     external_uid TEXT,
     payout TEXT,                              -- e.g. '₹2,500'
-    payment_status TEXT DEFAULT 'Pay on Arrival', -- 'Paid in Full', 'Deposit Paid', 'Pay on Arrival'
+    total_price REAL,
+    currency TEXT DEFAULT 'INR',
+    taxes_fees REAL DEFAULT 0,
+    payment_status TEXT DEFAULT 'Pay on Arrival', -- 'Paid', 'Paid in Full', 'Deposit Paid', 'Pay on Arrival'
+    ota_payout_status TEXT DEFAULT 'N/A',     -- 'Pending Settlement', 'Settled', 'N/A'
     status TEXT NOT NULL DEFAULT 'Confirmed', -- 'Confirmed', 'Checked In', 'Completed', 'Cancelled', 'Blocked'
     notes TEXT,
     id_documents TEXT,
+    sync_version INTEGER DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -28,15 +35,21 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(check_in_date, check_out_date);
 CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings(property);
 CREATE INDEX IF NOT EXISTS idx_bookings_external_uid ON bookings(external_uid);
+CREATE INDEX IF NOT EXISTS idx_bookings_ext_res_id ON bookings(external_reservation_id);
 
--- 2. Properties / Rooms Table (Multi-room management & iCal Sync)
+-- 2. Properties / Rooms Table (Multi-room management, OTA Mappings & Two-Way Sync)
 CREATE TABLE IF NOT EXISTS properties (
     id TEXT PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,                -- e.g. '1 BHK', '2 BHK', 'Studio'
+    name TEXT UNIQUE NOT NULL,                -- e.g. 'Ripple 1 BHK', '2 BHK', 'Demilune', 'Luna (Studio Room)'
     color TEXT DEFAULT '#FF385C',             -- Calendar badge color
+    airbnb_listing_id TEXT,                   -- Airbnb Room / Listing ID
+    booking_com_property_id TEXT,             -- Booking.com Room / Property ID
     airbnb_ical_url TEXT,                     -- Inbound Airbnb iCal feed
     booking_com_ical_url TEXT,                -- Inbound Booking.com iCal feed
     other_ical_url TEXT,                      -- Other OTA/VRBO/Google Calendar feed
+    airbnb_webhook_url TEXT,                  -- Optional real-time outbound push URL (Airbnb API / Channex / Bridge)
+    booking_com_webhook_url TEXT,             -- Optional real-time outbound push URL (Booking.com API / Channex / Bridge)
+    sync_webhook_secret TEXT,                 -- Shared secret for inbound/outbound webhook verification
     last_synced_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -116,3 +129,54 @@ CREATE TABLE IF NOT EXISTS ical_sync_logs (
 
 CREATE INDEX IF NOT EXISTS idx_ical_logs_created ON ical_sync_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bookings_prop_uid ON bookings(property, external_uid);
+
+-- 6. Atomic Room Inventory Locks (Simultaneous Booking Protection)
+CREATE TABLE IF NOT EXISTS inventory_locks (
+    id TEXT PRIMARY KEY,
+    property TEXT NOT NULL,
+    lock_token TEXT NOT NULL,
+    source TEXT NOT NULL,
+    check_in_date TEXT NOT NULL,
+    check_out_date TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_inv_locks_prop ON inventory_locks(property, expires_at);
+
+-- 7. Outbound Availability Sync Queue (Real-Time Push + Retries + iCal Pull Readiness)
+CREATE TABLE IF NOT EXISTS sync_outbox (
+    id TEXT PRIMARY KEY,
+    property TEXT NOT NULL,
+    channel TEXT NOT NULL,                   -- 'Airbnb' | 'Booking.com'
+    event_type TEXT NOT NULL,                -- 'booking_created' | 'booking_updated' | 'booking_cancelled' | 'block_created' | 'reconcile'
+    booking_id TEXT,
+    payload TEXT NOT NULL,                   -- JSON authoritative availability snapshot + delta
+    delivery_mode TEXT NOT NULL DEFAULT 'ical_pull', -- 'webhook_push' | 'ical_pull'
+    status TEXT NOT NULL DEFAULT 'pending',  -- 'pending' | 'retrying' | 'acknowledged' | 'feed_ready' | 'failed'
+    attempts INTEGER NOT NULL DEFAULT 0,
+    max_attempts INTEGER NOT NULL DEFAULT 5,
+    next_retry_at TEXT,
+    last_error TEXT,
+    acknowledged_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sync_outbox_status ON sync_outbox(status, next_retry_at);
+CREATE INDEX IF NOT EXISTS idx_sync_outbox_created ON sync_outbox(created_at DESC);
+
+-- 8. Complete Availability & Booking Audit Trail
+CREATE TABLE IF NOT EXISTS availability_audit_logs (
+    id TEXT PRIMARY KEY,
+    property TEXT NOT NULL,
+    booking_id TEXT,
+    action TEXT NOT NULL,                    -- 'created' | 'imported' | 'modified' | 'cancelled' | 'conflict_detected' | 'availability_pushed'
+    source TEXT NOT NULL,
+    booking_mode TEXT,
+    check_in_date TEXT,
+    check_out_date TEXT,
+    previous_state TEXT,
+    new_state TEXT,
+    details TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_avail_audit_created ON availability_audit_logs(created_at DESC);

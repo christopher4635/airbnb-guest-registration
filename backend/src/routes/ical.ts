@@ -1,45 +1,30 @@
 import { Hono } from 'hono';
 import { Bindings } from '../types';
+import {
+  CanonicalBookingSource,
+  OtaChannel,
+  classifyBookingSource,
+  calculateNights,
+  parseMoneyAmount,
+  formatCurrencyAmount,
+  isDateRangeCoveredByBookings,
+  acquireRoomInventoryLock,
+  releaseRoomInventoryLock,
+  recalculateRoomAvailability,
+  recordAvailabilityAudit,
+  enqueueAndDispatchAvailabilityUpdate,
+  processOutboxRetries,
+  ingestExternalBookingEvent
+} from './syncEngine';
+
+export { classifyBookingSource };
+export type { CanonicalBookingSource };
 
 const icalRoute = new Hono<{ Bindings: Bindings }>();
 
-export type CanonicalBookingSource = 'Airbnb' | 'Booking.com' | 'Direct Booking' | 'Blocked' | 'Other';
-
 // =============================================================================
-// SOURCE CLASSIFICATION & RFC 5545 HELPERS
+// RFC 5545 iCAL PARSING & FORMATTING HELPERS
 // =============================================================================
-
-/**
- * Deterministically classifies a booking's true source.
- * Checks external_uid first so OTA-imported rows are never misclassified as Direct.
- */
-export function classifyBookingSource(bk: any): CanonicalBookingSource {
-  if (!bk) return 'Other';
-  const uid = String(bk.external_uid || bk.externalUid || '').toLowerCase().trim();
-  const plat = String(bk.platform || '').toLowerCase().trim();
-  const status = String(bk.status || '').toLowerCase().trim();
-
-  // 1. Explicit external OTA UID always identifies the true external source
-  if (uid.endsWith('@airbnb.com') || uid.includes('airbnb')) return 'Airbnb';
-  if (uid.endsWith('@booking.com') || uid.includes('booking.com')) return 'Booking.com';
-
-  // 2. Platform label classification
-  if (plat === 'blocked' || status === 'blocked') return 'Blocked';
-  if (plat === 'airbnb' || plat.startsWith('airbnb')) return 'Airbnb';
-  if (plat === 'booking.com' || plat.startsWith('booking')) return 'Booking.com';
-  if (
-    plat === 'direct' ||
-    plat === 'direct booking' ||
-    plat === 'website' ||
-    plat === 'offline' ||
-    plat === 'walk-in' ||
-    plat === 'manual'
-  ) {
-    return 'Direct Booking';
-  }
-
-  return 'Other';
-}
 
 function toIcalDate(dateStr: string): string {
   return String(dateStr || '').replace(/[^0-9]/g, '').slice(0, 8);
@@ -66,40 +51,6 @@ function parseIcsDate(rawVal: string): string | null {
   return `${match[1]}-${match[2]}-${match[3]}`;
 }
 
-function calculateNights(checkIn: string, checkOut: string): number {
-  const dIn = new Date(checkIn);
-  const dOut = new Date(checkOut);
-  const diffDays = Math.round((dOut.getTime() - dIn.getTime()) / (1000 * 60 * 60 * 24));
-  return Math.max(1, isNaN(diffDays) ? 1 : diffDays);
-}
-
-/**
- * Checks whether EVERY night in [checkIn, checkOut) is already covered by
- * one or more active bookings/blocks in the supplied list.
- * Prevents echo loops when Booking.com mirrors (or merges) our exported
- * website unavailability blocks back into its export feed.
- */
-function isDateRangeCoveredByBookings(checkIn: string, checkOut: string, bookings: any[]): boolean {
-  if (!bookings || bookings.length === 0) return false;
-  const start = new Date(`${checkIn}T00:00:00Z`);
-  const end = new Date(`${checkOut}T00:00:00Z`);
-  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return false;
-
-  const totalNights = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  if (totalNights <= 0 || totalNights > 365) return false;
-
-  const cursor = new Date(start.getTime());
-  for (let i = 0; i < totalNights; i++) {
-    const nightIso = cursor.toISOString().slice(0, 10);
-    const covered = bookings.some(
-      b => b.check_in_date <= nightIso && b.check_out_date > nightIso
-    );
-    if (!covered) return false;
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-  return true;
-}
-
 function extractIcsProperty(eventContent: string, propName: string): string | null {
   const regex = new RegExp(`^${propName}(?:;[^:]*)?:(.*)$`, 'im');
   const match = eventContent.match(regex);
@@ -112,30 +63,59 @@ function extractIcsProperty(eventContent: string, propName: string): string | nu
     .replace(/\\\\/g, '\\');
 }
 
-function parseEventMetadata(summary: string, description: string, source: 'Airbnb' | 'Booking.com') {
+function parseEventMetadata(summary: string, description: string, source: OtaChannel) {
   const sumLower = summary.toLowerCase();
   const desc = description || '';
 
-  // Extract Airbnb reservation code (e.g. HM34XZ891K) from Reservation URL in DESCRIPTION
+  // Reservation code (e.g. Airbnb HM34XZ891K or Booking.com confirmation number)
   let reservationCode = '';
-  const airbnbCodeMatch = desc.match(/reservations\/details\/([A-Z0-9]{6,14})/i) || desc.match(/Reservation\s*(?:Code|ID)?[:#\s]+([A-Z0-9]{6,14})/i);
-  if (airbnbCodeMatch) {
-    reservationCode = airbnbCodeMatch[1].toUpperCase();
+  const codeMatch =
+    desc.match(/reservations\/details\/([A-Z0-9]{6,16})/i) ||
+    desc.match(/Reservation\s*(?:Code|ID|Number)?[:#\s]+([A-Z0-9-]{5,20})/i) ||
+    desc.match(/Confirmation\s*(?:Code|Number)?[:#\s]+([A-Z0-9-]{5,20})/i);
+  if (codeMatch) {
+    reservationCode = codeMatch[1].toUpperCase();
   }
 
-  // Extract phone last-4 hint if present in Airbnb description
+  // Phone hint if present in description
   let phoneHint = '';
-  const phoneMatch = desc.match(/Phone Number[^:]*:\s*([^\n]+)/i);
+  const phoneMatch = desc.match(/Phone(?:\s*Number)?[^:]*:\s*([^\n]+)/i);
   if (phoneMatch) {
     phoneHint = phoneMatch[1].trim();
   }
 
-  // Identify whether this VEVENT is a generic unavailability block vs an identifiable reservation
+  // Email hint if present
+  let emailHint = '';
+  const emailMatch = desc.match(/Email[^:]*:\s*([^\s\n]+@[^\s\n]+)/i);
+  if (emailMatch) {
+    emailHint = emailMatch[1].trim();
+  }
+
+  // Guests count hint if present
+  let guestsCount = 1;
+  const guestsMatch = desc.match(/Guests?[^:]*:\s*(\d+)/i);
+  if (guestsMatch) {
+    guestsCount = Math.max(1, parseInt(guestsMatch[1], 10) || 1);
+  }
+
+  // Price & currency hint if present in description
+  let totalPrice: number | null = null;
+  let currency = 'INR';
+  const priceMatch = desc.match(/(?:Total\s*Price|Price|Payout|Amount)[^:]*:\s*(INR|USD|EUR|GBP|₹|\$|€|£)?\s*([0-9,]+(?:\.[0-9]{1,2})?)/i);
+  if (priceMatch) {
+    const curToken = (priceMatch[1] || '').toUpperCase();
+    if (curToken === '$' || curToken === 'USD') currency = 'USD';
+    else if (curToken === '€' || curToken === 'EUR') currency = 'EUR';
+    else if (curToken === '£' || curToken === 'GBP') currency = 'GBP';
+    else currency = 'INR';
+    totalPrice = parseMoneyAmount(priceMatch[2]);
+  }
+
   const isAirbnbNotAvailable = source === 'Airbnb' && /not available/i.test(sumLower) && !reservationCode;
   const isGenericBlockSummary =
     /not available|unavailable|blocked|closed/i.test(sumLower) && !reservationCode;
 
-  // Determine clean guest display name
+  // Clean guest display name
   let guestName = summary.trim();
   if (
     !guestName ||
@@ -159,21 +139,21 @@ function parseEventMetadata(summary: string, description: string, source: 'Airbn
     guestName,
     reservationCode,
     phoneHint,
+    emailHint,
+    guestsCount,
+    totalPrice,
+    currency,
     isAirbnbNotAvailable,
     isGenericBlockSummary
   };
 }
-
-// =============================================================================
-// PERSISTENT SYNC LOGGING HELPER
-// =============================================================================
 
 async function recordSyncLog(
   env: Bindings,
   entry: {
     property: string;
     source: string;
-    triggerType: 'cron' | 'manual';
+    triggerType: 'cron' | 'manual' | 'webhook';
     status: 'success' | 'warning' | 'error';
     eventsFound?: number;
     imported?: number;
@@ -209,11 +189,10 @@ async function recordSyncLog(
       entry.errorDetail || null
     ).run();
 
-    // Keep latest 250 sync log rows to prevent unbounded growth
     await env.DB.prepare(`
       DELETE FROM ical_sync_logs
       WHERE id NOT IN (
-        SELECT id FROM ical_sync_logs ORDER BY created_at DESC LIMIT 250
+        SELECT id FROM ical_sync_logs ORDER BY created_at DESC LIMIT 300
       )
     `).run();
   } catch (logErr) {
@@ -222,22 +201,23 @@ async function recordSyncLog(
 }
 
 // =============================================================================
-// 1. OUTBOUND iCAL EXPORT — WEBSITE UNAVAILABILITY -> BOOKING.COM (TWO-WAY)
+// 1. MASTER CALENDAR OUTBOUND iCAL EXPORT (HUB-AND-SPOKE, ZERO ECHO LOOPS)
 // =============================================================================
 
 /**
  * GET /api/ical/export/:property
  *
- * Booking.com Two-Way Synchronisation rules:
- * - For Booking.com (?target=bookingcom) or per-room feeds:
- *   Export EVERY active (non-cancelled) unavailable stay/block on the website
- *   calendar — Direct Bookings, Airbnb stays, Blocked/Maintenance dates, and
- *   any other channel — so anything unavailable on the website becomes
- *   unavailable on Booking.com.
- * - Exclude ONLY Booking.com's own bookings (source === 'Booking.com') to
- *   prevent echo/lock-in loops when guests cancel on Booking.com.
- * - If ?scope=all is explicitly passed for all.ics (personal read-only Google /
- *   Apple Calendar), include all active stays including Booking.com.
+ * Hub-and-Spoke Master Calendar Rules (Website = Single Source of Truth):
+ * - Website -> Airbnb (?target=airbnb):
+ *   Export ALL active website unavailability (Direct Booking, Manual Booking,
+ *   Booking.com reservations, Blocked dates, Other) EXCEPT Airbnb's own
+ *   reservations — so Booking.com & Website stays block Airbnb with ZERO loop!
+ * - Website -> Booking.com (?target=bookingcom):
+ *   Export ALL active website unavailability (Direct Booking, Manual Booking,
+ *   Airbnb reservations, Blocked dates, Other) EXCEPT Booking.com's own
+ *   reservations — so Airbnb & Website stays block Booking.com with ZERO loop!
+ * - Personal Read-Only (?scope=all on all.ics):
+ *   Export ALL active bookings across all channels.
  */
 icalRoute.get('/export/:property', async (c) => {
   try {
@@ -251,7 +231,7 @@ icalRoute.get('/export/:property', async (c) => {
     const params: any[] = [];
 
     if (!includeAllForPersonalReadOnly) {
-      // Keep outbound Booking.com feed fast & focused on recent/upcoming unavailability
+      // Export recent + all future unavailability for fast, accurate OTA ingestion
       query += ` AND check_out_date >= date('now', '-30 days')`;
     }
 
@@ -266,31 +246,40 @@ icalRoute.get('/export/:property', async (c) => {
 
     const bookings = results || [];
     const nowStamp = toIcalTimestamp();
+    const targetLabel = target === 'airbnb'
+      ? 'Airbnb Master Sync'
+      : target === 'bookingcom' || target === 'booking.com'
+        ? 'Booking.com Master Sync'
+        : includeAllForPersonalReadOnly
+          ? 'All Bookings (Read-Only)'
+          : 'Master Calendar Availability';
+
     const calName = cleanProp.toLowerCase() === 'all'
-      ? (includeAllForPersonalReadOnly ? 'Elite Homes - All Bookings (Read-Only)' : 'Elite Homes - Unavailable Dates (Booking.com Sync)')
-      : `${cleanProp} - Elite Homes Availability (Booking.com Sync)`;
+      ? `Elite Homes - ${targetLabel}`
+      : `${cleanProp} - Elite Homes (${targetLabel})`;
 
     const icsLines: string[] = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Elite Homes//Booking.com Two-Way Sync v3//EN',
+      'PRODID:-//Elite Homes//Master Calendar Two-Way Sync v4//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       `X-WR-CALNAME:${escapeIcalText(calName)}`,
       'X-WR-TIMEZONE:UTC',
-      'X-PUBLISHED-TTL:PT10M',
-      'REFRESH-INTERVAL;VALUE=DURATION:PT10M'
+      'X-PUBLISHED-TTL:PT5M',
+      'REFRESH-INTERVAL;VALUE=DURATION:PT5M'
     ];
 
     for (const bk of bookings as any[]) {
       const source = classifyBookingSource(bk);
 
-      // TWO-WAY BOOKING.COM LOOP-PREVENTION RULE:
-      // Export ALL website unavailability (Direct Booking, Airbnb, Blocked, Other)
-      // to Booking.com, excluding ONLY Booking.com's own reservations so Booking.com
-      // cancellations release dates cleanly without echo lock-in.
-      if (!includeAllForPersonalReadOnly && source === 'Booking.com') {
-        continue;
+      // HUB-AND-SPOKE ECHO PREVENTION:
+      // - Never echo Airbnb's own stays back to Airbnb
+      // - Never echo Booking.com's own stays back to Booking.com
+      // - Cross-propagate everything else through the Website Master Calendar!
+      if (!includeAllForPersonalReadOnly) {
+        if (target === 'airbnb' && source === 'Airbnb') continue;
+        if ((target === 'bookingcom' || target === 'booking.com') && source === 'Booking.com') continue;
       }
 
       const checkInIcal = toIcalDate(bk.check_in_date);
@@ -298,27 +287,31 @@ icalRoute.get('/export/:property', async (c) => {
 
       let checkOutIcal = toIcalDate(bk.check_out_date);
       if (!checkOutIcal || checkOutIcal <= checkInIcal) {
-        const nextDay = new Date(bk.check_in_date);
-        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDay = new Date(`${bk.check_in_date}T00:00:00Z`);
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1);
         checkOutIcal = toIcalDate(nextDay.toISOString().split('T')[0]);
       }
 
-      // Deterministic, stable UID per booking/block so Booking.com updates in-place cleanly
-      const uidPrefix = source === 'Direct Booking' ? 'direct' : 'unavailable';
+      const uidPrefix = source === 'Direct Booking' ? 'direct' : 'master';
       const uid = `${uidPrefix}-${bk.id}@elitehomes-portal.workers.dev`;
-      const updatedDate = bk.updated_at ? new Date(String(bk.updated_at).replace(' ', 'T') + (String(bk.updated_at).includes('Z') ? '' : 'Z')) : new Date();
+      const updatedDate = bk.updated_at
+        ? new Date(String(bk.updated_at).replace(' ', 'T') + (String(bk.updated_at).includes('Z') ? '' : 'Z'))
+        : new Date();
       const lastModStamp = toIcalTimestamp(updatedDate);
-      // Monotonic SEQUENCE from updated_at guarantees Booking.com applies date changes reliably
-      const seqNum = isNaN(updatedDate.getTime()) ? 1 : Math.max(1, Math.floor(updatedDate.getTime() / 1000) % 10000000);
+      const seqNum = Math.max(
+        Number(bk.sync_version) || 1,
+        isNaN(updatedDate.getTime()) ? 1 : Math.floor(updatedDate.getTime() / 1000) % 10000000
+      );
 
       const summary = includeAllForPersonalReadOnly
         ? `${bk.property} - ${bk.guest_name || 'Reserved'} (${source})`
-        : (source === 'Blocked'
-            ? `Closed - Not available (${bk.property})`
-            : `Unavailable - ${bk.property} (${source})`);
+        : source === 'Blocked'
+          ? `Closed - Not available (${bk.property})`
+          : `Unavailable - ${bk.property} (${source})`;
 
       const description = [
-        `Source: ${source}`,
+        `Master Source: Elite Homes Website`,
+        `Origin Channel: ${source}`,
         `Property: ${bk.property}`,
         `Reference: ${bk.reservation_code || bk.id}`,
         `Nights: ${bk.nights || calculateNights(bk.check_in_date, bk.check_out_date)}`
@@ -355,31 +348,34 @@ icalRoute.get('/export/:property', async (c) => {
       }
     });
   } catch (err: any) {
-    console.error('[iCal Export] Error generating outbound feed:', err);
+    console.error('[iCal Export] Error generating master outbound feed:', err);
     return c.text('Error generating calendar feed: ' + err.message, 500);
   }
 });
 
 // =============================================================================
-// 2. ROOM-WISE FEED CONFIGURATION & HEALTH METADATA
+// 2. ROOM-WISE OTA MAPPINGS, FEEDS & MASTER SYNCHRONISATION DASHBOARD
 // =============================================================================
 
 icalRoute.get('/feeds', async (c) => {
   try {
     const { results } = await c.env.DB.prepare(`
-      SELECT id, name, color, airbnb_ical_url, booking_com_ical_url, other_ical_url, last_synced_at
+      SELECT id, name, color,
+             airbnb_listing_id, booking_com_property_id,
+             airbnb_ical_url, booking_com_ical_url, other_ical_url,
+             airbnb_webhook_url, booking_com_webhook_url, sync_webhook_secret,
+             last_synced_at
       FROM properties
       ORDER BY name ASC
     `).all();
 
-    // Fetch latest sync log per (property, source) for health indicators
     let latestByPropSource: Record<string, any> = {};
     try {
       const logRes = await c.env.DB.prepare(`
-        SELECT property, source, status, imported, updated, cancelled, conflicts, message, error_detail, created_at
+        SELECT property, source, trigger_type, status, imported, updated, cancelled, conflicts, message, error_detail, created_at
         FROM ical_sync_logs
         ORDER BY created_at DESC
-        LIMIT 100
+        LIMIT 120
       `).all();
       for (const row of (logRes.results || []) as any[]) {
         const key = `${String(row.property).toLowerCase()}::${String(row.source).toLowerCase()}`;
@@ -394,9 +390,13 @@ icalRoute.get('/feeds', async (c) => {
       const pLower = String(p.name || '').toLowerCase();
       return {
         ...p,
-        syncMode: 'booking.com-only',
-        exportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=bookingcom`,
+        syncMode: 'master-hub-two-way',
+        exportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics`,
+        airbnbExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=airbnb`,
         bookingComExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=bookingcom`,
+        inboundWebhookAirbnb: `${origin}/api/sync/webhook/airbnb`,
+        inboundWebhookBookingCom: `${origin}/api/sync/webhook/bookingcom`,
+        airbnbSyncStatus: latestByPropSource[`${pLower}::airbnb`] || null,
         bookingComSyncStatus: latestByPropSource[`${pLower}::booking.com`] || null
       };
     });
@@ -407,7 +407,7 @@ icalRoute.get('/feeds', async (c) => {
   }
 });
 
-// Update inbound feed URLs independently per room (preserving fields not explicitly provided)
+// PUT /api/ical/feeds/:name - Update room-wise OTA IDs, iCal feeds, and optional real-time push webhooks
 icalRoute.put('/feeds/:name', async (c) => {
   try {
     const name = decodeURIComponent(c.req.param('name')).trim();
@@ -418,32 +418,211 @@ icalRoute.put('/feeds/:name', async (c) => {
       return c.json({ success: false, error: `Property "${name}" not found.` }, 404);
     }
 
+    const airbnbListingId = body.airbnbListingId !== undefined ? String(body.airbnbListingId || '').trim() : (existing.airbnb_listing_id || '');
+    const bookingComPropertyId = body.bookingComPropertyId !== undefined ? String(body.bookingComPropertyId || '').trim() : (existing.booking_com_property_id || '');
     const airbnbUrl = body.airbnbIcalUrl !== undefined ? String(body.airbnbIcalUrl || '').trim() : (existing.airbnb_ical_url || '');
     const bookingComUrl = body.bookingComIcalUrl !== undefined ? String(body.bookingComIcalUrl || '').trim() : (existing.booking_com_ical_url || '');
     const otherUrl = body.otherIcalUrl !== undefined ? String(body.otherIcalUrl || '').trim() : (existing.other_ical_url || '');
+    const airbnbWebhookUrl = body.airbnbWebhookUrl !== undefined ? String(body.airbnbWebhookUrl || '').trim() : (existing.airbnb_webhook_url || '');
+    const bookingComWebhookUrl = body.bookingComWebhookUrl !== undefined ? String(body.bookingComWebhookUrl || '').trim() : (existing.booking_com_webhook_url || '');
+    const syncWebhookSecret = body.syncWebhookSecret !== undefined ? String(body.syncWebhookSecret || '').trim() : (existing.sync_webhook_secret || '');
 
-    // Basic URL sanity check if non-empty
-    if (airbnbUrl && !airbnbUrl.startsWith('http')) {
-      return c.json({ success: false, error: 'Airbnb iCal URL must start with https:// or http://' }, 400);
-    }
-    if (bookingComUrl && !bookingComUrl.startsWith('http')) {
-      return c.json({ success: false, error: 'Booking.com iCal URL must start with https:// or http://' }, 400);
+    for (const [label, url] of [
+      ['Airbnb iCal URL', airbnbUrl],
+      ['Booking.com iCal URL', bookingComUrl],
+      ['Airbnb Outbound Webhook URL', airbnbWebhookUrl],
+      ['Booking.com Outbound Webhook URL', bookingComWebhookUrl]
+    ]) {
+      if (url && !url.startsWith('http')) {
+        return c.json({ success: false, error: `${label} must start with https:// or http://` }, 400);
+      }
     }
 
     await c.env.DB.prepare(`
       UPDATE properties SET
+        airbnb_listing_id = ?,
+        booking_com_property_id = ?,
         airbnb_ical_url = ?,
         booking_com_ical_url = ?,
-        other_ical_url = ?
+        other_ical_url = ?,
+        airbnb_webhook_url = ?,
+        booking_com_webhook_url = ?,
+        sync_webhook_secret = ?
       WHERE id = ?
-    `).bind(airbnbUrl || null, bookingComUrl || null, otherUrl || null, existing.id).run();
+    `).bind(
+      airbnbListingId || null,
+      bookingComPropertyId || null,
+      airbnbUrl || null,
+      bookingComUrl || null,
+      otherUrl || null,
+      airbnbWebhookUrl || null,
+      bookingComWebhookUrl || null,
+      syncWebhookSecret || null,
+      existing.id
+    ).run();
 
     return c.json({
       success: true,
-      message: `iCal feeds updated for "${existing.name}".`,
-      data: { name: existing.name, airbnbUrl, bookingComUrl, otherUrl }
+      message: `OTA mappings & sync feeds updated for "${existing.name}".`,
+      data: {
+        name: existing.name,
+        airbnbListingId,
+        bookingComPropertyId,
+        airbnbUrl,
+        bookingComUrl,
+        airbnbWebhookUrl,
+        bookingComWebhookUrl
+      }
     });
   } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// GET /api/sync/dashboard (and /api/ical/dashboard) - Full Master Calendar Sync Dashboard Payload
+icalRoute.get('/dashboard', async (c) => {
+  try {
+    const origin = new URL(c.req.url).origin;
+
+    const [propsRes, logsRes, outboxRes, auditRes, recentImportsRes] = await Promise.all([
+      c.env.DB.prepare(`
+        SELECT id, name, color,
+               airbnb_listing_id, booking_com_property_id,
+               airbnb_ical_url, booking_com_ical_url, other_ical_url,
+               airbnb_webhook_url, booking_com_webhook_url, sync_webhook_secret,
+               last_synced_at
+        FROM properties ORDER BY name ASC
+      `).all(),
+      c.env.DB.prepare(`
+        SELECT * FROM ical_sync_logs ORDER BY created_at DESC LIMIT 40
+      `).all(),
+      c.env.DB.prepare(`
+        SELECT * FROM sync_outbox ORDER BY created_at DESC LIMIT 40
+      `).all(),
+      c.env.DB.prepare(`
+        SELECT * FROM availability_audit_logs ORDER BY created_at DESC LIMIT 40
+      `).all(),
+      c.env.DB.prepare(`
+        SELECT id, property, guest_name, phone, email, check_in_date, check_out_date,
+               nights, guests_count, platform, booking_mode, reservation_code, external_reservation_id,
+               payout, total_price, currency, taxes_fees, payment_status, ota_payout_status,
+               status, notes, created_at, updated_at
+        FROM bookings
+        WHERE COALESCE(booking_mode, platform) IN ('Airbnb', 'Booking.com')
+           OR external_uid IS NOT NULL
+        ORDER BY updated_at DESC
+        LIMIT 30
+      `).all()
+    ]);
+
+    const props = (propsRes.results || []) as any[];
+    const logs = (logsRes.results || []) as any[];
+    const outbox = (outboxRes.results || []) as any[];
+    const audits = (auditRes.results || []) as any[];
+    const recentImports = (recentImportsRes.results || []) as any[];
+
+    const latestByPropSource: Record<string, any> = {};
+    for (const row of logs) {
+      const key = `${String(row.property).toLowerCase()}::${String(row.source).toLowerCase()}`;
+      if (!latestByPropSource[key]) latestByPropSource[key] = row;
+    }
+
+    // Channel-level health summary
+    const buildChannelOverview = (channel: OtaChannel) => {
+      const isAirbnb = channel === 'Airbnb';
+      const configuredRooms = props.filter(p =>
+        Boolean(isAirbnb ? p.airbnb_ical_url : p.booking_com_ical_url) ||
+        Boolean(isAirbnb ? p.airbnb_webhook_url : p.booking_com_webhook_url)
+      ).length;
+      const realtimePushRooms = props.filter(p =>
+        Boolean(isAirbnb ? p.airbnb_webhook_url : p.booking_com_webhook_url)
+      ).length;
+
+      const chLogs = logs.filter(l => String(l.source).toLowerCase() === channel.toLowerCase());
+      const lastInboundSuccess = chLogs.find(l => l.status === 'success' || l.status === 'warning') || null;
+      const lastInboundError = chLogs.find(l => l.status === 'error') || null;
+
+      const chOutbox = outbox.filter(o => String(o.channel).toLowerCase() === channel.toLowerCase());
+      const lastOutboundSuccess = chOutbox.find(o => o.status === 'acknowledged' || o.status === 'feed_ready') || null;
+      const pendingUpdates = chOutbox.filter(o => o.status === 'pending' || o.status === 'retrying').length;
+      const failedUpdates = chOutbox.filter(o => o.status === 'failed').length;
+
+      let connectionStatus: 'connected' | 'degraded' | 'not_configured' = 'not_configured';
+      if (configuredRooms > 0) {
+        const hasRecentError = Boolean(lastInboundError && (!lastInboundSuccess || lastInboundError.created_at > lastInboundSuccess.created_at));
+        connectionStatus = (hasRecentError || failedUpdates > 0) ? 'degraded' : 'connected';
+      }
+
+      return {
+        channel,
+        connectionStatus,
+        transportMode: realtimePushRooms > 0 ? 'hybrid_realtime_and_ical' : 'ical_polling',
+        realtimeGuaranteed: realtimePushRooms > 0,
+        configuredRooms,
+        totalRooms: props.length,
+        realtimePushRooms,
+        lastSuccessfulInboundSync: lastInboundSuccess?.created_at || null,
+        lastSuccessfulOutboundSync: lastOutboundSuccess?.acknowledged_at || lastOutboundSuccess?.created_at || null,
+        lastError: lastInboundError?.message || null,
+        pendingUpdates,
+        failedUpdates
+      };
+    };
+
+    const rooms = await Promise.all(
+      props.map(async (p) => {
+        const pLower = String(p.name || '').toLowerCase();
+        const avail = await recalculateRoomAvailability(c.env.DB, p.name);
+        return {
+          ...p,
+          airbnbExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=airbnb`,
+          bookingComExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=bookingcom`,
+          airbnbSyncStatus: latestByPropSource[`${pLower}::airbnb`] || null,
+          bookingComSyncStatus: latestByPropSource[`${pLower}::booking.com`] || null,
+          availability: {
+            activeBookingsCount: avail.activeCount,
+            unavailableRanges: avail.allUnavailableRanges.slice(0, 12),
+            exportedToAirbnbCount: avail.forAirbnb.length,
+            exportedToBookingComCount: avail.forBookingCom.length
+          }
+        };
+      })
+    );
+
+    const outboxStats = {
+      pending: outbox.filter(o => o.status === 'pending').length,
+      retrying: outbox.filter(o => o.status === 'retrying').length,
+      failed: outbox.filter(o => o.status === 'failed').length,
+      acknowledged: outbox.filter(o => o.status === 'acknowledged').length,
+      feedReady: outbox.filter(o => o.status === 'feed_ready').length
+    };
+
+    return c.json({
+      success: true,
+      data: {
+        masterTopology: {
+          sourceOfTruth: 'Website Master Calendar (Cloudflare D1)',
+          directOtaToOtaSync: false,
+          cronIntervalMinutes: 5,
+          webhookEndpoints: {
+            airbnb: `${origin}/api/sync/webhook/airbnb`,
+            bookingCom: `${origin}/api/sync/webhook/bookingcom`
+          }
+        },
+        channels: {
+          airbnb: buildChannelOverview('Airbnb'),
+          bookingCom: buildChannelOverview('Booking.com')
+        },
+        outboxStats,
+        rooms,
+        recentImports,
+        outbox,
+        syncLogs: logs,
+        auditLogs: audits
+      }
+    });
+  } catch (err: any) {
+    console.error('[SyncDashboard] Error loading dashboard:', err);
     return c.json({ success: false, error: err.message }, 500);
   }
 });
@@ -476,7 +655,88 @@ icalRoute.get('/logs', async (c) => {
 });
 
 // =============================================================================
-// 3. BOOKING.COM-ONLY TWO-WAY INBOUND SYNC ENGINE (HTTP + CRON)
+// 3. REAL-TIME EVENT-DRIVEN WEBHOOK ENDPOINTS (AIRBNB & BOOKING.COM)
+// =============================================================================
+
+async function verifyWebhookAuth(c: any): Promise<boolean> {
+  const adminPin = c.env.ADMIN_PIN || '4635';
+  const providedPin = c.req.header('X-Admin-Pin') || c.req.header('X-Sync-Secret') || '';
+  const authHeader = c.req.header('Authorization') || '';
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+
+  if (providedPin === adminPin || bearer === adminPin) return true;
+
+  // Also check if any room's configured sync_webhook_secret matches
+  const candidate = providedPin || bearer;
+  if (!candidate) return false;
+  const match = await c.env.DB.prepare(`
+    SELECT id FROM properties WHERE sync_webhook_secret = ? LIMIT 1
+  `).bind(candidate).first();
+  return Boolean(match);
+}
+
+icalRoute.post('/webhook/airbnb', async (c) => {
+  try {
+    if (!(await verifyWebhookAuth(c))) {
+      return c.json({ success: false, error: 'Unauthorized webhook request. Provide valid X-Sync-Secret or Bearer token.' }, 401);
+    }
+    const payload = await c.req.json();
+    const result = await ingestExternalBookingEvent(c.env, c.executionCtx, 'Airbnb', payload);
+    return c.json(result, (result.httpStatus || 200) as any);
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+icalRoute.post('/webhook/bookingcom', async (c) => {
+  try {
+    if (!(await verifyWebhookAuth(c))) {
+      return c.json({ success: false, error: 'Unauthorized webhook request. Provide valid X-Sync-Secret or Bearer token.' }, 401);
+    }
+    const payload = await c.req.json();
+    const result = await ingestExternalBookingEvent(c.env, c.executionCtx, 'Booking.com', payload);
+    return c.json(result, (result.httpStatus || 200) as any);
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// Admin-PIN protected test/simulation endpoint for verifying real-time two-way OTA workflows
+icalRoute.post('/simulate-webhook', async (c) => {
+  try {
+    if (!(await verifyWebhookAuth(c))) {
+      return c.json({ success: false, error: 'Unauthorized' }, 401);
+    }
+    const body = await c.req.json();
+    const source: OtaChannel = String(body.source || '').toLowerCase().includes('booking') ? 'Booking.com' : 'Airbnb';
+    const result = await ingestExternalBookingEvent(c.env, c.executionCtx, source, {
+      ...body,
+      _awaitDispatch: true
+    });
+    return c.json(result, (result.httpStatus || 200) as any);
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// POST /api/sync/retry-outbox - Retry failed or pending outbound pushes
+icalRoute.post('/retry-outbox', async (c) => {
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const forceAllFailed = body.forceAllFailed !== false;
+    const result = await processOutboxRetries(c.env, forceAllFailed);
+    return c.json({
+      success: true,
+      message: `Outbox retry complete: checked ${result.checked}, retried ${result.retried}, acknowledged ${result.acknowledged}, failed ${result.failed}.`,
+      data: result
+    });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// =============================================================================
+// 4. INDEPENDENT HUB-AND-SPOKE INBOUND iCAL SYNC (AIRBNB + BOOKING.COM)
 // =============================================================================
 
 export async function executeIcalSync(
@@ -484,11 +744,12 @@ export async function executeIcalSync(
   targetProperty?: string | null,
   executionCtx?: any,
   triggerType: 'cron' | 'manual' = 'manual',
-  _targetSource?: 'Booking.com' | null
+  targetSource?: OtaChannel | null
 ) {
   let propQuery = `
     SELECT * FROM properties
-    WHERE booking_com_ical_url IS NOT NULL AND trim(booking_com_ical_url) != ''
+    WHERE (airbnb_ical_url IS NOT NULL AND trim(airbnb_ical_url) != '')
+       OR (booking_com_ical_url IS NOT NULL AND trim(booking_com_ical_url) != '')
   `;
   const propParams: any[] = [];
 
@@ -505,7 +766,7 @@ export async function executeIcalSync(
   if (properties.length === 0) {
     return {
       success: true,
-      message: 'No Booking.com iCal URLs configured. Add room Booking.com export links in Booking.com Calendar Sync.',
+      message: 'No external Airbnb or Booking.com iCal URLs configured. Add room OTA links in Master OTA Sync Dashboard.',
       stats: {
         totalImported: 0,
         totalUpdated: 0,
@@ -529,10 +790,17 @@ export async function executeIcalSync(
   const errors: string[] = [];
 
   for (const prop of properties as any[]) {
-    // Strictly Booking.com two-way sync only (Airbnb iCal sync disabled)
-    const feeds: Array<{ url: string; source: 'Booking.com' }> = [];
+    // Hub-and-Spoke: Website connects independently to Airbnb AND Booking.com
+    const feeds: Array<{ url: string; source: OtaChannel }> = [];
+    if (prop.airbnb_ical_url && String(prop.airbnb_ical_url).trim().startsWith('http')) {
+      if (!targetSource || targetSource === 'Airbnb') {
+        feeds.push({ url: String(prop.airbnb_ical_url).trim(), source: 'Airbnb' });
+      }
+    }
     if (prop.booking_com_ical_url && String(prop.booking_com_ical_url).trim().startsWith('http')) {
-      feeds.push({ url: String(prop.booking_com_ical_url).trim(), source: 'Booking.com' });
+      if (!targetSource || targetSource === 'Booking.com') {
+        feeds.push({ url: String(prop.booking_com_ical_url).trim(), source: 'Booking.com' });
+      }
     }
 
     let anyFeedSucceededForRoom = false;
@@ -546,10 +814,9 @@ export async function executeIcalSync(
       let eventsFound = 0;
 
       try {
-        // 1. Fetch external feed with timeout & no-cache headers
         const res = await fetch(feed.url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; EliteHomesCalendarSync/2.0)',
+            'User-Agent': 'Mozilla/5.0 (compatible; EliteHomesMasterCalendarSync/4.0)',
             'Accept': 'text/calendar, text/plain, */*',
             'Cache-Control': 'no-cache'
           },
@@ -571,7 +838,6 @@ export async function executeIcalSync(
         }
 
         const icsText = await res.text();
-        // Validate genuine RFC 5545 calendar payload before touching ANY database records
         if (!/BEGIN:VCALENDAR/i.test(icsText) || !/END:VCALENDAR/i.test(icsText)) {
           const errMsg = `Invalid iCal payload from ${feed.source} for ${prop.name} (missing VCALENDAR wrapper)`;
           errors.push(errMsg);
@@ -588,15 +854,11 @@ export async function executeIcalSync(
 
         anyFeedSucceededForRoom = true;
 
-        // Unfold RFC 5545 folded lines (CRLF/LF followed by space or tab)
         const unfolded = icsText.replace(/\r?\n[ \t]/g, '');
         const eventBlocks = unfolded.split(/BEGIN:VEVENT/i).slice(1);
         eventsFound = eventBlocks.length;
-
-        // Track every active UID seen in THIS valid feed for accurate cancellation reconciliation
         const seenUids = new Set<string>();
 
-        // Load all active non-cancelled bookings for THIS room once for fast, isolated conflict/echo checks
         const roomBookingsRes = await env.DB.prepare(`
           SELECT * FROM bookings WHERE LOWER(property) = LOWER(?)
         `).bind(prop.name).all();
@@ -621,12 +883,13 @@ export async function executeIcalSync(
             continue;
           }
 
-          // GUARD 1: Direct Echo Loop Prevention — never re-import our own exported website unavailability events
+          // GUARD 1: Direct Echo Prevention — never re-import our own Master Calendar exported events
           const uidLower = uid.toLowerCase();
           if (
             uidLower.includes('@elitehomes-portal.workers.dev') ||
             uidLower.startsWith('direct-bk_') ||
             uidLower.startsWith('unavailable-') ||
+            uidLower.startsWith('master-') ||
             Boolean(ownSourceTag)
           ) {
             feedSkipped++;
@@ -634,38 +897,33 @@ export async function executeIcalSync(
           }
 
           if (!checkOut || checkOut <= checkIn) {
-            const d = new Date(checkIn);
-            d.setDate(d.getDate() + 1);
+            const d = new Date(`${checkIn}T00:00:00Z`);
+            d.setUTCDate(d.getUTCDate() + 1);
             checkOut = d.toISOString().split('T')[0];
           }
 
           const nights = calculateNights(checkIn, checkOut);
           const meta = parseEventMetadata(summary, description, feed.source);
 
-          // Skip long rolling OTA availability windows (> 45 nights of generic unavailable closure)
+          // Skip rolling >45-night generic OTA calendar closure windows
           if (nights > 45 && meta.isGenericBlockSummary) {
             feedSkipped++;
             continue;
           }
 
-          // Record UID as present in this feed
           seenUids.add(uid);
 
-          // Check if an existing booking in THIS room already matches this exact external_uid
+          // Idempotency Check: match by external_uid OR external_reservation_id
           const existingByUid = roomBookings.find(
-            b => b.external_uid && String(b.external_uid).trim() === uid
+            b =>
+              (b.external_uid && String(b.external_uid).trim() === uid) ||
+              (meta.reservationCode && b.external_reservation_id && String(b.external_reservation_id).trim() === meta.reservationCode)
           );
 
           if (existingByUid) {
-            // If host manually cancelled/deleted this booking (not auto-removed by sync), respect host decision
             const existingNotes = String(existingByUid.notes || '');
             const wasAutoCancelled = existingNotes.includes('[Cancelled on ');
-            if (existingByUid.status === 'Cancelled' && !wasAutoCancelled && eventStatus !== 'CONFIRMED') {
-              feedSkipped++;
-              continue;
-            }
             if (existingByUid.status === 'Cancelled' && !wasAutoCancelled) {
-              // Host manually cancelled it on website — do not resurrect
               feedSkipped++;
               continue;
             }
@@ -677,7 +935,6 @@ export async function executeIcalSync(
                   ? existingByUid.status
                   : 'Confirmed';
 
-            // Preserve host's customized guest name if they replaced generic placeholder
             const currentName = String(existingByUid.guest_name || '').trim();
             const isCurrentGeneric = !currentName || /^(airbnb|booking\.com)\s+guest$/i.test(currentName) || /not available|closed|blocked|reserved/i.test(currentName);
             const nameToSave = isCurrentGeneric ? meta.guestName : currentName;
@@ -691,27 +948,50 @@ export async function executeIcalSync(
             const nameChanged = currentName !== nameToSave;
 
             if (datesChanged || statusChanged || nameChanged) {
+              // REQUIREMENT 3: NEVER overwrite existing payment_status on subsequent sync updates!
               await env.DB.prepare(`
                 UPDATE bookings SET
                   guest_name = ?,
+                  phone = CASE WHEN ? != '' AND (phone IS NULL OR phone = '') THEN ? ELSE phone END,
+                  email = CASE WHEN ? != '' AND (email IS NULL OR email = '') THEN ? ELSE email END,
                   check_in_date = ?,
                   check_out_date = ?,
                   nights = ?,
                   platform = ?,
+                  booking_mode = ?,
                   reservation_code = ?,
+                  external_reservation_id = COALESCE(external_reservation_id, ?),
                   status = ?,
+                  sync_version = COALESCE(sync_version, 1) + 1,
                   updated_at = datetime('now')
                 WHERE id = ?
               `).bind(
                 nameToSave,
+                meta.phoneHint, meta.phoneHint,
+                meta.emailHint, meta.emailHint,
                 checkIn,
                 checkOut,
                 nights,
                 feed.source,
+                feed.source,
                 codeToSave,
+                meta.reservationCode || null,
                 nextStatus,
                 existingByUid.id
               ).run();
+
+              await recordAvailabilityAudit(env.DB, {
+                property: prop.name,
+                bookingId: existingByUid.id,
+                action: nextStatus === 'Cancelled' ? 'cancelled' : 'modified',
+                source: feed.source,
+                bookingMode: feed.source,
+                checkInDate: checkIn,
+                checkOutDate: checkOut,
+                previousState: { checkIn: existingByUid.check_in_date, checkOut: existingByUid.check_out_date, status: existingByUid.status },
+                newState: { checkIn, checkOut, status: nextStatus, paymentStatusPreserved: existingByUid.payment_status },
+                details: `Updated via ${feed.source} iCal sync (existing payment_status preserved).`
+              });
 
               existingByUid.guest_name = nameToSave;
               existingByUid.check_in_date = checkIn;
@@ -727,33 +1007,34 @@ export async function executeIcalSync(
             continue;
           }
 
-          // If external event is already marked CANCELLED and not in our DB, skip inserting
           if (eventStatus === 'CANCELLED') {
             feedSkipped++;
             continue;
           }
 
-          // Find active (non-cancelled) bookings in THIS room overlapping [checkIn, checkOut)
+          // Active bookings overlapping [checkIn, checkOut) in THIS room
           const activeOverlaps = roomBookings.filter(
             b => b.status !== 'Cancelled' && b.check_in_date < checkOut! && b.check_out_date > checkIn
           );
 
-          // GUARD 2: Two-Way Website Unavailability Echo Prevention
-          // Because our outbound feed exports ALL website unavailability (Direct Bookings, Airbnb stays,
-          // Blocked dates, etc.) to Booking.com, Booking.com may mirror (or merge) those blocked dates
-          // back as generic "CLOSED - Not available" events. If EVERY night of a generic Booking.com block
-          // is already covered by non-Booking.com active unavailability on our website, it is an echo — skip it!
-          const nonBookingActiveBookings = roomBookings.filter(
-            b => b.status !== 'Cancelled' && classifyBookingSource(b) !== 'Booking.com'
+          // GUARD 2: Master Hub Echo-Loop Prevention
+          // Our website exports ALL non-Airbnb unavailability to Airbnb and ALL non-Booking.com
+          // unavailability to Booking.com. If an incoming OTA feed sends back a generic
+          // "Not available" / "CLOSED - Not available" block whose nights are ALREADY 100%
+          // covered by other sources on our website, it is an echo of our own export — skip it!
+          const otherSourceActiveBookings = roomBookings.filter(
+            b => b.status !== 'Cancelled' && classifyBookingSource(b) !== feed.source
           );
-          if (meta.isGenericBlockSummary && isDateRangeCoveredByBookings(checkIn, checkOut, nonBookingActiveBookings)) {
+          if (meta.isGenericBlockSummary && isDateRangeCoveredByBookings(checkIn, checkOut, otherSourceActiveBookings)) {
+            feedSkipped++;
+            continue;
+          }
+          if (meta.isAirbnbNotAvailable && activeOverlaps.some(b => classifyBookingSource(b) !== feed.source)) {
             feedSkipped++;
             continue;
           }
 
-          // GUARD 3: Same-Source Manual Booking Deduplication (zero duplicates!)
-          // If host manually entered this exact Booking.com stay with same dates before sync ran,
-          // attach external_uid to it without overwriting guest name, payout, or status!
+          // GUARD 3: Same-Source Manual Booking Deduplication
           const sameSourceManualMatch = activeOverlaps.find(
             b =>
               classifyBookingSource(b) === feed.source &&
@@ -766,74 +1047,110 @@ export async function executeIcalSync(
             await env.DB.prepare(`
               UPDATE bookings SET
                 external_uid = ?,
+                external_reservation_id = COALESCE(external_reservation_id, ?),
                 reservation_code = ?,
+                booking_mode = ?,
                 updated_at = datetime('now')
               WHERE id = ?
-            `).bind(uid, codeToSave, sameSourceManualMatch.id).run();
+            `).bind(uid, meta.reservationCode || null, codeToSave, feed.source, sameSourceManualMatch.id).run();
             sameSourceManualMatch.external_uid = uid;
             feedUpdated++;
             continue;
           }
 
-          // GUARD 4: Genuine Conflict Detection — NEVER overwrite an existing booking from another source!
-          const otherSourceOverlap = activeOverlaps.find(b => classifyBookingSource(b) !== feed.source);
-          let importNote = `Imported via Booking.com two-way iCal sync on ${todayIso}`;
-          if (meta.phoneHint) {
-            importNote += ` | Phone hint: ${meta.phoneHint}`;
+          // GUARD 4: Atomic Room Lock + Genuine Conflict Detection (NEVER overwrite existing booking!)
+          const lock = await acquireRoomInventoryLock(env.DB, prop.name, checkIn, checkOut, feed.source);
+          try {
+            const otherSourceOverlap = activeOverlaps.find(b => classifyBookingSource(b) !== feed.source);
+            let importNote = `Imported via ${feed.source} iCal sync on ${todayIso} | Booking Mode: ${feed.source}`;
+            if (meta.phoneHint) importNote += ` | Phone hint: ${meta.phoneHint}`;
+            if (meta.totalPrice !== null) importNote += ` | Booked Rate: ${formatCurrencyAmount(meta.totalPrice, meta.currency)}`;
+            if (otherSourceOverlap) {
+              const otherSrc = classifyBookingSource(otherSourceOverlap);
+              importNote += ` | [⚠️ Inventory Conflict with existing ${otherSrc} booking: ${otherSourceOverlap.guest_name}]`;
+              feedConflicts++;
+            }
+
+            const newId = `bk_ical_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+            const newResCode = meta.reservationCode || uid.slice(0, 30);
+            const payoutFormatted = meta.totalPrice !== null ? formatCurrencyAmount(meta.totalPrice, meta.currency) : '';
+
+            // REQUIREMENT 3: Every newly imported Airbnb or Booking.com booking defaults
+            // internal payment_status = 'Paid', with separate ota_payout_status = 'Pending Settlement'!
+            await env.DB.prepare(`
+              INSERT INTO bookings (
+                id, property, guest_name, phone, email,
+                check_in_date, check_out_date, nights, guests_count,
+                platform, booking_mode, reservation_code, external_reservation_id, external_uid,
+                payout, total_price, currency, taxes_fees,
+                payment_status, ota_payout_status, status, notes, sync_version,
+                created_at, updated_at
+              ) VALUES (
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, 0,
+                'Paid', 'Pending Settlement', 'Confirmed', ?, 1,
+                datetime('now'), datetime('now')
+              )
+            `).bind(
+              newId,
+              prop.name,
+              meta.guestName,
+              meta.phoneHint,
+              meta.emailHint,
+              checkIn,
+              checkOut,
+              nights,
+              meta.guestsCount,
+              feed.source,
+              feed.source,
+              newResCode,
+              meta.reservationCode || null,
+              uid,
+              payoutFormatted,
+              meta.totalPrice,
+              meta.currency,
+              importNote
+            ).run();
+
+            await recordAvailabilityAudit(env.DB, {
+              property: prop.name,
+              bookingId: newId,
+              action: otherSourceOverlap ? 'conflict_detected' : 'imported',
+              source: feed.source,
+              bookingMode: feed.source,
+              checkInDate: checkIn,
+              checkOutDate: checkOut,
+              newState: { guestName: meta.guestName, paymentStatus: 'Paid', otaPayoutStatus: 'Pending Settlement' },
+              details: otherSourceOverlap
+                ? `⚠️ Conflict during ${feed.source} iCal sync with existing booking ${otherSourceOverlap.id} (${otherSourceOverlap.guest_name}).`
+                : `Imported ${feed.source} stay (${checkIn} → ${checkOut}) with default payment_status = Paid.`
+            });
+
+            roomBookings.push({
+              id: newId,
+              property: prop.name,
+              guest_name: meta.guestName,
+              check_in_date: checkIn,
+              check_out_date: checkOut,
+              nights,
+              platform: feed.source,
+              booking_mode: feed.source,
+              reservation_code: newResCode,
+              external_uid: uid,
+              payment_status: 'Paid',
+              status: 'Confirmed',
+              notes: importNote
+            });
+
+            feedImported++;
+          } finally {
+            await releaseRoomInventoryLock(env.DB, lock.lockToken);
           }
-          if (otherSourceOverlap) {
-            const otherSrc = classifyBookingSource(otherSourceOverlap);
-            importNote += ` | [⚠️ Date Conflict with existing ${otherSrc} booking: ${otherSourceOverlap.guest_name}]`;
-            feedConflicts++;
-          }
-
-          // Clean, isolated insert under its true source ('Airbnb' or 'Booking.com')
-          const newId = `bk_ical_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-          const newResCode = meta.reservationCode || uid.slice(0, 30);
-          await env.DB.prepare(`
-            INSERT INTO bookings (
-              id, property, guest_name, phone, email,
-              check_in_date, check_out_date, nights, guests_count,
-              platform, reservation_code, external_uid, payout, payment_status,
-              status, notes, created_at, updated_at
-            ) VALUES (?, ?, ?, '', '', ?, ?, ?, 1, ?, ?, ?, '', 'Paid via Channel', 'Confirmed', ?, datetime('now'), datetime('now'))
-          `).bind(
-            newId,
-            prop.name,
-            meta.guestName,
-            checkIn,
-            checkOut,
-            nights,
-            feed.source,
-            newResCode,
-            uid,
-            importNote
-          ).run();
-
-          // Update in-memory roomBookings cache for subsequent events in this same feed
-          roomBookings.push({
-            id: newId,
-            property: prop.name,
-            guest_name: meta.guestName,
-            check_in_date: checkIn,
-            check_out_date: checkOut,
-            nights,
-            platform: feed.source,
-            reservation_code: newResCode,
-            external_uid: uid,
-            status: 'Confirmed',
-            notes: importNote
-          });
-
-          feedImported++;
         }
 
-        // =====================================================================
         // CANCELLATION RECONCILIATION (Missing-Event Detection)
-        // If a future/current iCal-imported reservation from THIS exact (room, source)
-        // disappeared from a valid HTTP 200 VCALENDAR feed, mark it Cancelled.
-        // Never touches past stays, never touches Direct Bookings, never deletes rows!
-        // =====================================================================
         const activeSyncedForThisFeed = roomBookings.filter(b =>
           b.id &&
           String(b.id).startsWith('bk_ical_') &&
@@ -850,11 +1167,35 @@ export async function executeIcalSync(
               UPDATE bookings SET
                 status = 'Cancelled',
                 notes = ?,
+                sync_version = COALESCE(sync_version, 1) + 1,
                 updated_at = datetime('now')
               WHERE id = ?
             `).bind(cancelNote, staleBk.id).run();
+
+            await recordAvailabilityAudit(env.DB, {
+              property: prop.name,
+              bookingId: staleBk.id,
+              action: 'cancelled',
+              source: feed.source,
+              bookingMode: feed.source,
+              checkInDate: staleBk.check_in_date,
+              checkOutDate: staleBk.check_out_date,
+              details: `${feed.source} reservation disappeared from live feed — marked Cancelled and room availability recalculated.`
+            });
+
             feedCancelled++;
           }
+        }
+
+        // HUB-AND-SPOKE CROSS-OTA PROPAGATION:
+        // Whenever Airbnb changes -> immediately push updated availability to Booking.com!
+        // Whenever Booking.com changes -> immediately push updated availability to Airbnb!
+        if (feedImported > 0 || feedUpdated > 0 || feedCancelled > 0) {
+          await enqueueAndDispatchAvailabilityUpdate(env, executionCtx, {
+            property: prop.name,
+            eventType: feedCancelled > 0 && feedImported === 0 ? 'booking_cancelled' : (feedImported > 0 ? 'booking_created' : 'booking_updated'),
+            originSource: feed.source
+          });
         }
 
         totalImported += feedImported;
@@ -921,7 +1262,7 @@ export async function executeIcalSync(
 
   return {
     success: errors.length === 0 || (totalImported + totalUpdated + totalCancelled + totalSkipped) > 0,
-    message: `iCal sync complete: +${totalImported} imported, ~${totalUpdated} updated, -${totalCancelled} cancelled, ${totalSkipped} unchanged${totalConflicts > 0 ? `, ⚠️ ${totalConflicts} conflict(s)` : ''}${errors.length > 0 ? ` (${errors.length} error(s))` : ''}.`,
+    message: `Master sync complete: +${totalImported} imported, ~${totalUpdated} updated, -${totalCancelled} cancelled, ${totalSkipped} unchanged${totalConflicts > 0 ? `, ⚠️ ${totalConflicts} conflict(s)` : ''}${errors.length > 0 ? ` (${errors.length} error(s))` : ''}.`,
     stats: {
       totalImported,
       totalUpdated,
@@ -935,19 +1276,15 @@ export async function executeIcalSync(
   };
 }
 
-// 4. POST /api/ical/sync - Manual two-way Booking.com sync (all rooms or single room)
+// POST /api/ical/sync (and /api/sync/sync) - Manual reconciliation (both OTAs, single room, or single OTA)
 icalRoute.post('/sync', async (c) => {
   try {
     const body = await c.req.json().catch(() => ({}));
     const targetProperty = body.property ? String(body.property).trim() : null;
     const rawSource = body.source ? String(body.source).trim() : null;
-    if (rawSource && rawSource.toLowerCase() === 'airbnb') {
-      return c.json({
-        success: false,
-        error: 'Calendar sync is configured exclusively for Booking.com two-way sync (Airbnb iCal sync is disabled).'
-      }, 400);
-    }
-    const result = await executeIcalSync(c.env, targetProperty, c.executionCtx, 'manual', 'Booking.com');
+    const targetSource: OtaChannel | null =
+      rawSource === 'Airbnb' || rawSource === 'Booking.com' ? rawSource : null;
+    const result = await executeIcalSync(c.env, targetProperty, c.executionCtx, 'manual', targetSource);
     return c.json(result);
   } catch (err: any) {
     console.error('[iCal Sync] Fatal sync error:', err);
@@ -955,7 +1292,7 @@ icalRoute.post('/sync', async (c) => {
   }
 });
 
-// Alias for direct .ics download (e.g. /api/ical/1 BHK.ics)
+// Alias for direct .ics download (e.g. /api/ical/2 BHK.ics?target=bookingcom)
 icalRoute.get('/:filename{.+\\.ics$}', async (c) => {
   const filename = c.req.param('filename');
   const propName = filename.slice(0, -4);

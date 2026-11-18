@@ -425,6 +425,24 @@
       return await this.request(url);
     },
 
+    getSyncDashboard: async function() {
+      return await this.request('/api/sync/dashboard');
+    },
+
+    retrySyncOutbox: async function(forceAllFailed = true) {
+      return await this.request('/api/sync/retry-outbox', {
+        method: 'POST',
+        body: JSON.stringify({ forceAllFailed })
+      });
+    },
+
+    simulateSyncWebhook: async function(payload) {
+      return await this.request('/api/sync/simulate-webhook', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+    },
+
     getIcalExportUrl: function(propertyName, target = null, scope = null) {
       const base = WORKER_BACKEND_URL;
       let url = `${base}/api/ical/export/${encodeURIComponent(propertyName)}.ics`;

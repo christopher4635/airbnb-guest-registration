@@ -17,7 +17,7 @@ export type Bindings = {
 
 export interface Booking {
   id: string;
-  property: string;           // '1 BHK' | '2 BHK' | '1 Room / Studio'
+  property: string;           // 'Ripple 1 BHK' | '2 BHK' | 'Demilune' | 'Luna (Studio Room)'
   guestName: string;
   phone?: string;
   email?: string;
@@ -25,15 +25,22 @@ export interface Booking {
   checkOutDate: string;       // YYYY-MM-DD
   nights: number;
   guestsCount: number;
-  platform: string;           // 'Direct' | 'Direct Booking' | 'Booking.com' | 'Airbnb' | 'Blocked'
-  source?: string;            // Canonical source: 'Airbnb' | 'Booking.com' | 'Direct Booking' | 'Blocked' | 'Other'
+  platform: string;           // 'Direct' | 'Direct Booking' | 'Manual Booking' | 'Booking.com' | 'Airbnb' | 'Blocked'
+  bookingMode?: string;       // 'Airbnb' | 'Booking.com' | 'Direct Booking' | 'Manual Booking' | 'Blocked'
+  source?: string;            // Canonical source: 'Airbnb' | 'Booking.com' | 'Direct Booking' | 'Manual Booking' | 'Blocked' | 'Other'
   reservationCode?: string;
+  externalReservationId?: string;
   externalUid?: string;
   payout?: string;
-  paymentStatus?: string;     // 'Paid in Full' | 'Deposit Paid' | 'Pay on Arrival'
+  totalPrice?: number | null;
+  currency?: string;
+  taxesFees?: number;
+  paymentStatus?: string;     // 'Paid' | 'Paid in Full' | 'Deposit Paid' | 'Pay on Arrival'
+  otaPayoutStatus?: string;   // 'Pending Settlement' | 'Settled' | 'N/A'
   status: string;             // 'Confirmed' | 'Checked In' | 'Completed' | 'Cancelled' | 'Blocked'
   notes?: string;
   idDocuments?: any[];
+  syncVersion?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -42,9 +49,14 @@ export interface Property {
   id: string;
   name: string;
   color: string;
+  airbnbListingId?: string;
+  bookingComPropertyId?: string;
   airbnbIcalUrl?: string;
   bookingComIcalUrl?: string;
   otherIcalUrl?: string;
+  airbnbWebhookUrl?: string;
+  bookingComWebhookUrl?: string;
+  syncWebhookSecret?: string;
   lastSyncedAt?: string;
   createdAt?: string;
   activeBookingsCount?: number;

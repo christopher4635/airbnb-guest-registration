@@ -43,9 +43,9 @@
     "NOTIFICATION_EMAIL": "elitehomeskokrajhar@gmail.com"
   },
 
-  // 5. Automated 2-Way Calendar Sync Cron (every 10 minutes)
+  // 5. Automated Master Calendar Two-Way Sync & Outbox Retry Cron (every 5 minutes)
   "triggers": {
-    "crons": ["*/10 * * * *"]
+    "crons": ["*/5 * * * *"]
   },
 
   "observability": {

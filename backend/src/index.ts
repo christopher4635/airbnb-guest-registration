@@ -8,6 +8,7 @@ import uploadsRoute from './routes/uploads';
 import configRoute from './routes/config';
 import propertiesRoute from './routes/properties';
 import icalRoute, { executeIcalSync } from './routes/ical';
+import { processOutboxRetries } from './routes/syncEngine';
 import expensesRoute from './routes/expenses';
 import channelsRoute from './routes/channels';
 
@@ -53,6 +54,7 @@ app.route('/api/uploads', uploadsRoute);
 app.route('/api/config', configRoute);
 app.route('/api/properties', propertiesRoute);
 app.route('/api/ical', icalRoute);
+app.route('/api/sync', icalRoute);
 app.route('/ical', icalRoute);
 app.route('/api/expenses', expensesRoute);
 app.route('/api/finances', expensesRoute);
@@ -107,11 +109,20 @@ app.onError((err, c) => {
 export default {
   fetch: app.fetch,
   async scheduled(event: any, env: Bindings, ctx: any) {
-    console.log('[Cron] Triggering automatic two-way Booking.com iCal sync...');
-    ctx.waitUntil(executeIcalSync(env, null, ctx, 'cron', 'Booking.com').then((stats: any) => {
-      console.log('[Cron] Booking.com iCal sync completed:', stats.message);
-    }).catch((err: any) => {
-      console.error('[Cron] Booking.com iCal sync failed:', err);
-    }));
+    console.log('[Cron] Triggering Master Calendar 5-min two-way OTA sync & outbox retry processor...');
+    ctx.waitUntil((async () => {
+      try {
+        const retryStats = await processOutboxRetries(env, false);
+        console.log('[Cron] Outbox retry processor:', JSON.stringify(retryStats));
+      } catch (retryErr) {
+        console.error('[Cron] Outbox retry processor failed:', retryErr);
+      }
+      try {
+        const syncStats: any = await executeIcalSync(env, null, ctx, 'cron');
+        console.log('[Cron] Master Calendar OTA sync completed:', syncStats.message);
+      } catch (err) {
+        console.error('[Cron] Master Calendar OTA sync failed:', err);
+      }
+    })());
   }
 };
