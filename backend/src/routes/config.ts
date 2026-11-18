@@ -25,52 +25,19 @@ const DEFAULT_CONFIG = {
   ],
   defaultPropertyOption: "1 BHK",
   standardFields: [
-    {
-      id: "propertyOption",
-      label: "Property / Room Type",
-      type: "select",
-      required: true,
-      enabled: true,
-      helpText: "Select the room or unit booked"
-    },
-    {
-      id: "totalGuests",
-      label: "Total Number of Guests",
-      type: "stepper",
-      required: true,
-      enabled: true
-    },
-    {
-      id: "comingFrom",
-      label: "Coming From",
-      type: "text",
-      placeholder: "City / Country (Origin)",
-      required: true,
-      enabled: true
-    },
-    {
-      id: "goingTo",
-      label: "Going To",
-      type: "text",
-      placeholder: "City / Country (Next Destination)",
-      required: true,
-      enabled: true
-    },
-    {
-      id: "purposeOfVisit",
-      label: "Purpose of Visit",
-      type: "select",
-      options: [
-        "Vacation / Tourism / Sightseeing",
-        "Business / Official Work / Conference",
-        "Visiting Family / Friends",
-        "Transit / Short Stay",
-        "Medical / Healthcare",
-        "Other"
-      ],
-      required: true,
-      enabled: true
-    }
+    { id: "comingFrom", label: "Coming From", type: "text", section: "Travel Details", placeholder: "City / State (e.g. Guwahati)", required: true, enabled: true },
+    { id: "goingTo", label: "Going To", type: "text", section: "Travel Details", placeholder: "City / State (e.g. Kokrajhar)", required: true, enabled: true },
+    { id: "purposeOfVisit", label: "Purpose of Visit", type: "select", section: "Trip Purpose", required: true, enabled: true },
+    { id: "totalGuests", label: "Number of Persons", type: "stepper", section: "Guests & ID", required: true, enabled: true },
+    { id: "guestFullName", label: "Full Name (Per Person)", type: "text", section: "Guests & ID", required: true, enabled: true },
+    { id: "guestAge", label: "Age (Per Person)", type: "number", section: "Guests & ID", required: true, enabled: true },
+    { id: "guestIdType", label: "ID Document Type (Per Person)", type: "select", section: "Guests & ID", required: true, enabled: true },
+    { id: "guestIdFront", label: "Front ID Photo Upload (Per Person)", type: "file", section: "Guests & ID", required: true, enabled: true },
+    { id: "guestIdBack", label: "Back ID Photo Upload (Per Person)", type: "file", section: "Guests & ID", required: false, enabled: true },
+    { id: "arrivalTime", label: "Estimated Arrival Time", type: "text", section: "Extra Stay Details", placeholder: "e.g. 2:30 PM", required: false, enabled: false },
+    { id: "guestPhoneInput", label: "Phone / WhatsApp Number", type: "tel", section: "Extra Stay Details", placeholder: "+91 98765 43210", required: false, enabled: false },
+    { id: "guestEmailInput", label: "Email Address", type: "email", section: "Extra Stay Details", placeholder: "guest@example.com", required: false, enabled: false },
+    { id: "rulesConsent", label: "House Rules Agreement", type: "checkbox", section: "House Rules", required: true, enabled: false }
   ],
   customFields: [],
   rulesText: "1. Check-in after 2:00 PM, Check-out by 11:00 AM.\n2. Valid government ID required for all staying guests.\n3. No unauthorized extra visitors or parties.\n4. Please keep noise to a minimum after 10:00 PM."

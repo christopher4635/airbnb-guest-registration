@@ -6277,12 +6277,15 @@
         </div>
       </div>
 
-      <!-- SECTION 3: Standard Fields (Toggle on/off, Required) -->
+      <!-- SECTION 3: Standard Fields (Toggle on/off, Required, Rename) -->
       <div class="card">
-        <div class="card-title">
-          <span>3. Standard Form Fields</span>
+        <div class="card-title" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+          <span>3. Standard Form Fields (Guest Form)</span>
+          <button type="button" class="btn btn-primary" onclick="handleSaveSettingsToD1()" style="height: 32px; padding: 0 12px; font-size: 12px; font-weight: 700;">
+            💾 Save to Guest Form
+          </button>
         </div>
-        <p class="card-desc">Enable, disable, or make fields optional/required.</p>
+        <p class="card-desc">Controls the exact fields shown on the guest check-in form. Toggle fields Active/Required or customize labels — saved changes update the guest form immediately.</p>
 
         <div id="standard-fields-list"></div>
       </div>
@@ -6819,6 +6822,40 @@
   </div>
 
   <script>
+    const CANONICAL_STANDARD_FIELDS = [
+      { id: "comingFrom", label: "Coming From", type: "text", section: "Travel Details", placeholder: "City / State (e.g. Guwahati)", required: true, enabled: true },
+      { id: "goingTo", label: "Going To", type: "text", section: "Travel Details", placeholder: "City / State (e.g. Kokrajhar)", required: true, enabled: true },
+      { id: "purposeOfVisit", label: "Purpose of Visit", type: "select", section: "Trip Purpose", required: true, enabled: true },
+      { id: "totalGuests", label: "Number of Persons", type: "stepper", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestFullName", label: "Full Name (Per Person)", type: "text", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestAge", label: "Age (Per Person)", type: "number", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestIdType", label: "ID Document Type (Per Person)", type: "select", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestIdFront", label: "Front ID Photo Upload (Per Person)", type: "file", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestIdBack", label: "Back ID Photo Upload (Per Person)", type: "file", section: "Guests & ID", required: false, enabled: true },
+      { id: "arrivalTime", label: "Estimated Arrival Time", type: "text", section: "Extra Stay Details", placeholder: "e.g. 2:30 PM", required: false, enabled: false },
+      { id: "guestPhoneInput", label: "Phone / WhatsApp Number", type: "tel", section: "Extra Stay Details", placeholder: "+91 98765 43210", required: false, enabled: false },
+      { id: "guestEmailInput", label: "Email Address", type: "email", section: "Extra Stay Details", placeholder: "guest@example.com", required: false, enabled: false },
+      { id: "rulesConsent", label: "House Rules Agreement", type: "checkbox", section: "House Rules", required: true, enabled: false }
+    ];
+
+    function normalizeStandardFields(savedFields) {
+      const savedMap = new Map();
+      if (Array.isArray(savedFields)) {
+        savedFields.forEach(f => {
+          if (f && f.id) savedMap.set(f.id, f);
+        });
+      }
+      return CANONICAL_STANDARD_FIELDS.map(def => {
+        const prev = savedMap.get(def.id);
+        if (!prev) return Object.assign({}, def);
+        return Object.assign({}, def, {
+          label: (prev.label && prev.label.trim()) ? prev.label : def.label,
+          enabled: typeof prev.enabled === 'boolean' ? prev.enabled : def.enabled,
+          required: typeof prev.required === 'boolean' ? prev.required : def.required
+        });
+      });
+    }
+
     // State
     let currentConfig = {
       adminPin: "4635",
@@ -6829,16 +6866,7 @@
       },
       propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
       defaultPropertyOption: "1 BHK",
-      standardFields: [
-        { id: "propertyOption", label: "Property / Room Type (1BHK/2BHK/1Room...)", type: "select", required: true, enabled: true },
-        { id: "comingFrom", label: "Coming From (Origin)", type: "text", required: true, enabled: true },
-        { id: "goingTo", label: "Going To (Destination)", type: "text", required: true, enabled: true },
-        { id: "purposeOfVisit", label: "Purpose of Visit", type: "select", required: true, enabled: true },
-        { id: "checkInDate", label: "Check-in Date", type: "date", required: true, enabled: true },
-        { id: "checkOutDate", label: "Check-out Date", type: "date", required: true, enabled: true },
-        { id: "reservationCode", label: "Booking / Reservation Code", type: "text", required: false, enabled: true },
-        { id: "arrivalTime", label: "Estimated Arrival Time", type: "text", required: false, enabled: true }
-      ],
+      standardFields: CANONICAL_STANDARD_FIELDS.map(f => Object.assign({}, f)),
       customFields: [],
       rulesText: "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine.",
       signatureRequired: true
@@ -6855,19 +6883,7 @@
         }
       } catch (e) {}
 
-      // 2. Load latest config from Cloudflare D1 via AirbnbAPI
-      if (window.AirbnbAPI && typeof window.AirbnbAPI.getConfig === 'function') {
-        try {
-          const d1Config = await window.AirbnbAPI.getConfig();
-          if (d1Config && typeof d1Config === 'object') {
-            currentConfig = Object.assign({}, currentConfig, d1Config);
-          }
-        } catch (e) {
-          console.warn("Could not load config from Cloudflare D1:", e);
-        }
-      }
-
-      // 3. Fallback/merge from localStorage 'airbnb_form_config'
+      // 2. Fallback from localStorage 'airbnb_form_config' (overridden by live D1 below)
       const local = localStorage.getItem('airbnb_form_config');
       if (local) {
         try {
@@ -6877,6 +6893,22 @@
           }
         } catch (err) {}
       }
+
+      // 3. Load latest authoritative config from Cloudflare D1 via AirbnbAPI
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getConfig === 'function') {
+        try {
+          const d1Config = await window.AirbnbAPI.getConfig();
+          if (d1Config && typeof d1Config === 'object') {
+            currentConfig = Object.assign({}, currentConfig, d1Config);
+            localStorage.setItem('airbnb_form_config', JSON.stringify(currentConfig));
+          }
+        } catch (e) {
+          console.warn("Could not load config from Cloudflare D1:", e);
+        }
+      }
+
+      // Normalize standardFields to always reflect the real Guest Form schema while preserving saved toggles
+      currentConfig.standardFields = normalizeStandardFields(currentConfig.standardFields);
 
       // 4. Ensure bank details and uploaded QR code are strictly preserved
       const bankCached = localStorage.getItem('elitehomes_bank_details');
@@ -7010,26 +7042,38 @@
       handleDeleteRoom(propToRemove, 0);
     };
 
-    // Standard fields
+    // Standard fields (Synced live with Guest Form via Cloudflare D1)
     function renderStandardFields() {
       const container = document.getElementById('standard-fields-list');
+      if (!container) return;
       container.innerHTML = '';
+
+      currentConfig.standardFields = normalizeStandardFields(currentConfig.standardFields);
 
       currentConfig.standardFields.forEach((field, idx) => {
         const item = document.createElement('div');
         item.className = 'field-item';
+        item.style.opacity = field.enabled ? '1' : '0.68';
         item.innerHTML = `
-          <div class="field-info">
-            <strong>${field.label}</strong>
-            <span>Type: ${field.type}</span>
+          <div class="field-info" style="flex: 1; min-width: 220px;">
+            <input type="text" value="${escapeHtml(field.label)}" onchange="updateStandardFieldLabel(${idx}, this.value)"
+                   style="font-weight: 700; font-size: 13.5px; color: #0F172A; border: 1px solid transparent; background: transparent; padding: 2px 6px; margin-left: -6px; border-radius: 6px; width: 100%; max-width: 320px;"
+                   onfocus="this.style.background='#FFFFFF'; this.style.borderColor='#CBD5E1';"
+                   onblur="this.style.background='transparent'; this.style.borderColor='transparent';"
+                   title="Click to rename field label shown on Guest Form">
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap;">
+              <span style="font-size: 10.5px; font-weight: 700; background: #EEF2FF; color: #4338CA; padding: 1px 6px; border-radius: 4px;">${escapeHtml(field.section || 'Form')}</span>
+              <span style="font-size: 11px; color: #64748B;">Type: ${escapeHtml(field.type)}</span>
+              ${!field.enabled ? '<span style="font-size: 10.5px; font-weight: 700; color: #94A3B8;">Hidden on Guest Form</span>' : ''}
+            </div>
           </div>
           <div class="field-controls">
             <label class="toggle-label">
               <input type="checkbox" ${field.enabled ? 'checked' : ''} onchange="toggleField(${idx}, 'enabled', this.checked)">
               Active
             </label>
-            <label class="toggle-label">
-              <input type="checkbox" ${field.required ? 'checked' : ''} onchange="toggleField(${idx}, 'required', this.checked)">
+            <label class="toggle-label" style="opacity: ${field.enabled ? '1' : '0.45'};">
+              <input type="checkbox" ${field.required ? 'checked' : ''} ${field.enabled ? '' : 'disabled'} onchange="toggleField(${idx}, 'required', this.checked)">
               Required
             </label>
           </div>
@@ -7039,7 +7083,20 @@
     }
 
     window.toggleField = function(idx, prop, val) {
+      if (!currentConfig.standardFields[idx]) return;
       currentConfig.standardFields[idx][prop] = val;
+      if (prop === 'enabled' && !val) {
+        currentConfig.standardFields[idx].required = false;
+      }
+      renderStandardFields();
+    };
+
+    window.updateStandardFieldLabel = function(idx, val) {
+      if (!currentConfig.standardFields[idx]) return;
+      const trimmed = (val || '').trim();
+      if (trimmed) {
+        currentConfig.standardFields[idx].label = trimmed;
+      }
     };
 
     // Custom fields

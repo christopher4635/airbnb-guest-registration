@@ -805,33 +805,33 @@
       </section>
 
       <!-- 1. COMING FROM & GOING TO -->
-      <section class="form-card">
+      <section class="form-card dynamic-form-section" id="section-travel">
         <h2 class="section-title">
-          <span>1.</span> Coming From &amp; Going To
+          <span class="dynamic-step-num">1.</span> Coming From &amp; Going To
         </h2>
         <p class="section-subtitle">Please provide your travel origin and next destination as required by hospitality regulations.</p>
 
         <div class="form-row">
           <div class="form-group" id="field-wrap-comingFrom">
-            <label for="comingFrom">Coming From <span class="required-star">*</span></label>
+            <label for="comingFrom" id="label-comingFrom">Coming From <span class="required-star">*</span></label>
             <input type="text" id="comingFrom" name="comingFrom" placeholder="City / State (e.g. Guwahati)" required>
           </div>
           <div class="form-group" id="field-wrap-goingTo">
-            <label for="goingTo">Going To <span class="required-star">*</span></label>
+            <label for="goingTo" id="label-goingTo">Going To <span class="required-star">*</span></label>
             <input type="text" id="goingTo" name="goingTo" placeholder="City / State (e.g. Kokrajhar)" required>
           </div>
         </div>
       </section>
 
       <!-- 2. PURPOSE OF VISIT -->
-      <section class="form-card">
+      <section class="form-card dynamic-form-section" id="section-purpose">
         <h2 class="section-title">
-          <span>2.</span> Purpose of Visit
+          <span class="dynamic-step-num">2.</span> Purpose of Visit
         </h2>
         <p class="section-subtitle">Select the primary purpose of your trip.</p>
 
         <div class="form-group" id="field-wrap-purposeOfVisit">
-          <label for="purposeOfVisit">Purpose of Visit <span class="required-star">*</span></label>
+          <label for="purposeOfVisit" id="label-purposeOfVisit">Purpose of Visit <span class="required-star">*</span></label>
           <select id="purposeOfVisit" name="purposeOfVisit" required>
             <option value="" disabled selected>Select purpose of visit...</option>
             <option value="Tourism / Vacation">Tourism / Vacation</option>
@@ -846,17 +846,17 @@
       </section>
 
       <!-- 3. GUESTS & IDENTIFICATION -->
-      <section class="form-card">
+      <section class="form-card dynamic-form-section" id="section-guests">
         <h2 class="section-title">
-          <span>3.</span> Guests &amp; Identification
+          <span class="dynamic-step-num">3.</span> Guests &amp; Identification
         </h2>
-        <p class="section-subtitle">Select the number of persons staying and provide name, age, and government ID (Front &amp; Back) for each person.</p>
+        <p class="section-subtitle">Provide guest details and government ID photos for each staying person.</p>
 
         <!-- Number of Persons Selector -->
-        <div class="form-group" style="margin-bottom: 20px;">
+        <div class="form-group" id="field-wrap-totalGuests" style="margin-bottom: 20px;">
           <div class="guest-selector-box">
             <div class="guest-selector-info">
-              <strong>👥 Number of Persons <span class="required-star">*</span></strong>
+              <strong id="label-totalGuests">👥 Number of Persons <span class="required-star">*</span></strong>
               <span>Total number of guests staying in this room</span>
             </div>
             <div class="stepper-controls">
@@ -870,6 +870,51 @@
 
         <!-- Dynamic Container for Person 1, Person 2, ... -->
         <div id="guest-cards-container"></div>
+      </section>
+
+      <!-- OPTIONAL EXTRA STAY DETAILS (Controlled from Admin Settings -> 3. Standard Form Fields) -->
+      <section class="form-card dynamic-form-section" id="section-extra-details" style="display: none;">
+        <h2 class="section-title">
+          <span class="dynamic-step-num">4.</span> Additional Stay Details
+        </h2>
+        <p class="section-subtitle">Optional arrival and contact information requested by your host.</p>
+
+        <div class="form-group" id="field-wrap-arrivalTime" style="display: none;">
+          <label for="arrivalTime" id="label-arrivalTime">Estimated Arrival Time</label>
+          <input type="text" id="arrivalTime" name="arrivalTime" placeholder="e.g. 2:30 PM">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" id="field-wrap-guestPhoneInput" style="display: none;">
+            <label for="guestPhoneInput" id="label-guestPhoneInput">Phone / WhatsApp Number</label>
+            <input type="tel" id="guestPhoneInput" name="guestPhoneInput" placeholder="+91 98765 43210">
+          </div>
+          <div class="form-group" id="field-wrap-guestEmailInput" style="display: none;">
+            <label for="guestEmailInput" id="label-guestEmailInput">Email Address</label>
+            <input type="email" id="guestEmailInput" name="guestEmailInput" placeholder="guest@example.com">
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOM ADDITIONAL FIELDS (Controlled from Admin Settings -> 4. Custom Additional Fields) -->
+      <section class="form-card dynamic-form-section" id="section-custom-fields" style="display: none;">
+        <h2 class="section-title">
+          <span class="dynamic-step-num">5.</span> Additional Information
+        </h2>
+        <div id="dynamic-custom-fields"></div>
+      </section>
+
+      <!-- HOUSE RULES AGREEMENT (Controlled from Admin Settings -> 3. Standard Form Fields) -->
+      <section class="form-card dynamic-form-section" id="section-rules" style="display: none;">
+        <h2 class="section-title">
+          <span class="dynamic-step-num">6.</span> House Rules &amp; Confirmation
+        </h2>
+        <div class="form-group" id="field-wrap-rulesConsent" style="margin-bottom: 0;">
+          <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-weight: 500; line-height: 1.5; font-size: 13.5px;">
+            <input type="checkbox" id="rulesConsent" name="rulesConsent" style="width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary);">
+            <span id="rules-consent-text">I agree to observe the house rules. All provided guest details and IDs are genuine.</span>
+          </label>
+        </div>
       </section>
 
       <!-- Submit Button -->
@@ -979,13 +1024,34 @@
       // 3. Fallback name for primary guest (e.g. from reservation / link)
       const primaryFallback = (document.getElementById('guestNameInput')?.value || document.getElementById('manualGuestName')?.value || '').trim();
 
-      // 4. Render card for each guest
+      // 4. Render card for each guest (respecting live Settings -> 3. Standard Form Fields)
+      const cfgName = getStdFieldCfg('guestFullName');
+      const cfgAge = getStdFieldCfg('guestAge');
+      const cfgIdType = getStdFieldCfg('guestIdType');
+      const cfgFront = getStdFieldCfg('guestIdFront');
+      const cfgBack = getStdFieldCfg('guestIdBack');
+
+      const showName = cfgName.enabled !== false;
+      const showAge = cfgAge.enabled !== false;
+      const showIdType = cfgIdType.enabled !== false;
+      const showFront = cfgFront.enabled !== false;
+      const showBack = cfgBack.enabled !== false;
+
       let html = '';
       for (let i = 1; i <= count; i++) {
         const isPrimary = (i === 1);
         const prevName = savedData[i]?.name !== undefined ? savedData[i].name : (isPrimary ? primaryFallback : '');
         const prevAge = savedData[i]?.age || '';
         const prevIdType = savedData[i]?.idType || 'Aadhaar Card';
+
+        const nameStar = cfgName.required ? '<span class="required-star">*</span>' : '';
+        const ageStar = cfgAge.required ? '<span class="required-star">*</span>' : '';
+        const idTypeStar = cfgIdType.required ? '<span class="required-star">*</span>' : '';
+        const photosStar = (cfgFront.required || cfgBack.required) ? '<span class="required-star">*</span>' : '';
+
+        const uploadTitleText = (showFront && showBack)
+          ? 'Upload ID Photos (Front &amp; Back)'
+          : (showFront ? escapeHtmlAttr(cfgFront.label || 'Front ID Photo') : escapeHtmlAttr(cfgBack.label || 'Back ID Photo'));
 
         html += `
           <div class="guest-card" id="guest-card-${i}">
@@ -1001,25 +1067,32 @@
               <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Person ${i} of ${count}</span>
             </div>
 
+            ${(showName || showAge) ? `
             <div class="form-row">
+              ${showName ? `
               <div class="form-group" style="flex: 2;">
-                <label for="person_${i}_name">Full Name <span class="required-star">*</span></label>
+                <label for="person_${i}_name">${escapeHtmlAttr(cfgName.label.replace(/\s*\(Per Person\)/i, ''))} ${nameStar}</label>
                 <input type="text" id="person_${i}_name" name="person_${i}_name" 
                        value="${escapeHtmlAttr(prevName)}" 
-                       placeholder="As printed on government ID" required
+                       placeholder="As printed on government ID" ${cfgName.required ? 'required' : ''}
                        oninput="onGuestNameChange(${i}, this.value)">
               </div>
+              ` : ''}
+              ${showAge ? `
               <div class="form-group" style="flex: 1; min-width: 110px;">
-                <label for="person_${i}_age">Age <span class="required-star">*</span></label>
+                <label for="person_${i}_age">${escapeHtmlAttr(cfgAge.label.replace(/\s*\(Per Person\)/i, ''))} ${ageStar}</label>
                 <input type="number" id="person_${i}_age" name="person_${i}_age" 
                        value="${escapeHtmlAttr(prevAge)}" 
-                       placeholder="e.g. 28" min="1" max="120" required>
+                       placeholder="e.g. 28" min="1" max="120" ${cfgAge.required ? 'required' : ''}>
               </div>
+              ` : ''}
             </div>
+            ` : ''}
 
+            ${showIdType ? `
             <div class="form-group" style="margin-bottom: 16px;">
-              <label for="person_${i}_idType">Select ID Document Type <span class="required-star">*</span></label>
-              <select id="person_${i}_idType" name="person_${i}_idType" required>
+              <label for="person_${i}_idType">${escapeHtmlAttr(cfgIdType.label.replace(/\s*\(Per Person\)/i, ''))} ${idTypeStar}</label>
+              <select id="person_${i}_idType" name="person_${i}_idType" ${cfgIdType.required ? 'required' : ''}>
                 <option value="Aadhaar Card" ${prevIdType === 'Aadhaar Card' ? 'selected' : ''}>Aadhaar Card (UIDAI)</option>
                 <option value="Passport" ${prevIdType === 'Passport' ? 'selected' : ''}>Passport</option>
                 <option value="Driving License" ${prevIdType === 'Driving License' ? 'selected' : ''}>Driver's License</option>
@@ -1027,11 +1100,14 @@
                 <option value="Government ID" ${prevIdType === 'Government ID' ? 'selected' : ''}>Other Government ID</option>
               </select>
             </div>
+            ` : ''}
 
+            ${(showFront || showBack) ? `
             <label style="margin-bottom: 8px; display: block; font-weight: 600; font-size: 13.5px;">
-              Upload ID Photos (Front &amp; Back) <span class="required-star">*</span>
+              ${uploadTitleText} ${photosStar}
             </label>
-            <div class="upload-container">
+            <div class="upload-container" style="${(showFront && showBack) ? '' : 'grid-template-columns: 1fr;'}">
+              ${showFront ? `
               <!-- Front Slot -->
               <div class="upload-slot" id="slot_${i}_front">
                 <input type="file" id="file_${i}_front" class="upload-file-overlay" accept="image/*,application/pdf"
@@ -1043,7 +1119,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
                 </svg>
-                <div class="upload-title">Front of ID</div>
+                <div class="upload-title">Front of ID ${cfgFront.required ? '<span class="required-star">*</span>' : '<span style="font-size:11px; color:var(--text-muted);">(Optional)</span>'}</div>
                 <div class="upload-hint">Tap anywhere to take photo or choose file</div>
                 
                 <div class="upload-btn-row">
@@ -1055,7 +1131,9 @@
                   </label>
                 </div>
               </div>
+              ` : ''}
 
+              ${showBack ? `
               <!-- Back Slot -->
               <div class="upload-slot" id="slot_${i}_back">
                 <input type="file" id="file_${i}_back" class="upload-file-overlay" accept="image/*,application/pdf"
@@ -1067,7 +1145,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
                 </svg>
-                <div class="upload-title">Back of ID</div>
+                <div class="upload-title">Back of ID ${cfgBack.required ? '<span class="required-star">*</span>' : '<span style="font-size:11px; color:var(--text-muted);">(Optional)</span>'}</div>
                 <div class="upload-hint">Tap anywhere to take photo or choose file</div>
                 
                 <div class="upload-btn-row">
@@ -1079,7 +1157,9 @@
                   </label>
                 </div>
               </div>
+              ` : ''}
             </div>
+            ` : ''}
           </div>
         `;
       }
@@ -1089,16 +1169,58 @@
       // 5. Restore previews for any existing files in guestFiles
       for (let i = 1; i <= count; i++) {
         if (guestFiles[i]) {
-          if (guestFiles[i].front) {
+          if (guestFiles[i].front && showFront) {
             const isPdf = (guestFiles[i].frontName && guestFiles[i].frontName.toLowerCase().endsWith('.pdf')) || (guestFiles[i].front && guestFiles[i].front.startsWith('data:application/pdf'));
             renderSlotPreview(i, 'front', isPdf ? 'pdf' : 'image', isPdf ? (guestFiles[i].frontName || 'document.pdf') : guestFiles[i].front);
           }
-          if (guestFiles[i].back) {
+          if (guestFiles[i].back && showBack) {
             const isPdf = (guestFiles[i].backName && guestFiles[i].backName.toLowerCase().endsWith('.pdf')) || (guestFiles[i].back && guestFiles[i].back.startsWith('data:application/pdf'));
             renderSlotPreview(i, 'back', isPdf ? 'pdf' : 'image', isPdf ? (guestFiles[i].backName || 'document.pdf') : guestFiles[i].back);
           }
         }
       }
+    }
+
+    // Canonical Standard Form Fields Schema (Synced with Admin Settings -> 3. Standard Form Fields)
+    const CANONICAL_STANDARD_FIELDS = [
+      { id: "comingFrom", label: "Coming From", type: "text", section: "Travel Details", required: true, enabled: true },
+      { id: "goingTo", label: "Going To", type: "text", section: "Travel Details", required: true, enabled: true },
+      { id: "purposeOfVisit", label: "Purpose of Visit", type: "select", section: "Trip Purpose", required: true, enabled: true },
+      { id: "totalGuests", label: "Number of Persons", type: "stepper", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestFullName", label: "Full Name (Per Person)", type: "text", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestAge", label: "Age (Per Person)", type: "number", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestIdType", label: "ID Document Type (Per Person)", type: "select", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestIdFront", label: "Front ID Photo Upload (Per Person)", type: "file", section: "Guests & ID", required: true, enabled: true },
+      { id: "guestIdBack", label: "Back ID Photo Upload (Per Person)", type: "file", section: "Guests & ID", required: false, enabled: true },
+      { id: "arrivalTime", label: "Estimated Arrival Time", type: "text", section: "Extra Stay Details", required: false, enabled: false },
+      { id: "guestPhoneInput", label: "Phone / WhatsApp Number", type: "tel", section: "Extra Stay Details", required: false, enabled: false },
+      { id: "guestEmailInput", label: "Email Address", type: "email", section: "Extra Stay Details", required: false, enabled: false },
+      { id: "rulesConsent", label: "House Rules Agreement", type: "checkbox", section: "House Rules", required: true, enabled: false }
+    ];
+
+    function normalizeStandardFields(savedFields) {
+      const savedMap = new Map();
+      if (Array.isArray(savedFields)) {
+        savedFields.forEach(f => {
+          if (f && f.id) savedMap.set(f.id, f);
+        });
+      }
+      return CANONICAL_STANDARD_FIELDS.map(def => {
+        const prev = savedMap.get(def.id);
+        if (!prev) return Object.assign({}, def);
+        return Object.assign({}, def, {
+          label: (prev.label && prev.label.trim()) ? prev.label : def.label,
+          enabled: typeof prev.enabled === 'boolean' ? prev.enabled : def.enabled,
+          required: typeof prev.required === 'boolean' ? prev.required : def.required
+        });
+      });
+    }
+
+    function getStdFieldCfg(id) {
+      const list = (appConfig && Array.isArray(appConfig.standardFields)) ? appConfig.standardFields : CANONICAL_STANDARD_FIELDS;
+      const found = list.find(f => f && f.id === id);
+      if (found) return found;
+      return CANONICAL_STANDARD_FIELDS.find(f => f.id === id) || { id, label: id, enabled: true, required: false };
     }
 
     // Configuration State
@@ -1109,37 +1231,34 @@
         instagramHandle: ""
       },
       propertyOptions: ["1 Room / Studio", "1 BHK", "2 BHK", "3 BHK", "Entire Villa / House"],
-      standardFields: [
-        { id: "propertyOption", label: "Property / Room Type", required: true, enabled: true },
-        { id: "comingFrom", label: "Coming From", required: true, enabled: true },
-        { id: "goingTo", label: "Going To", required: true, enabled: true },
-        { id: "purposeOfVisit", label: "Purpose of Visit", required: true, enabled: true },
-        { id: "checkInDate", label: "Check-in Date", required: true, enabled: true },
-        { id: "checkOutDate", label: "Check-out Date", required: true, enabled: true },
-        { id: "reservationCode", label: "Booking / Reservation Code", required: false, enabled: true },
-        { id: "arrivalTime", label: "Estimated Arrival Time", required: false, enabled: true }
-      ],
+      standardFields: CANONICAL_STANDARD_FIELDS.map(f => Object.assign({}, f)),
       customFields: [],
       rulesText: "I agree to observe the house rules (no smoking indoors, quiet hours between 10:00 PM - 8:00 AM, no unauthorized parties or visitors, and respect the maximum occupancy). All provided guest details and IDs are genuine."
     };
 
     async function initConfig() {
-      // 1. Always fetch live config from GitHub with cache-busting timestamp
+      // 1. Base defaults from static config.json
       try {
         const res = await fetch('config.json?t=' + Date.now());
         if (res.ok) {
           const fetched = await res.json();
-          appConfig = Object.assign(appConfig, fetched);
+          appConfig = Object.assign({}, appConfig, fetched);
         }
-      } catch(e) {
-        // Fallback to localStorage if running offline or local file://
-        const local = localStorage.getItem('airbnb_form_config');
-        if (local) {
-          try {
-            appConfig = Object.assign(appConfig, JSON.parse(local));
-          } catch(err) {}
+      } catch (e) {}
+
+      // 2. Always fetch live authoritative config from Cloudflare D1 (reflects Admin Settings immediately!)
+      if (window.AirbnbAPI && typeof window.AirbnbAPI.getConfig === 'function') {
+        try {
+          const d1Config = await window.AirbnbAPI.getConfig();
+          if (d1Config && typeof d1Config === 'object') {
+            appConfig = Object.assign({}, appConfig, d1Config);
+          }
+        } catch (err) {
+          console.warn("Could not fetch live config from D1:", err);
         }
       }
+
+      appConfig.standardFields = normalizeStandardFields(appConfig.standardFields);
       applyConfigToForm();
       applyUrlParams();
       const urlParams = new URLSearchParams(window.location.search);
@@ -1151,78 +1270,123 @@
     }
 
     function applyConfigToForm() {
-      // 1. Populate Property Options
-      const propSelect = document.getElementById('propertyOption');
-      const prevVal = propSelect ? propSelect.value : '';
-      if (propSelect && appConfig.propertyOptions && appConfig.propertyOptions.length > 0) {
-        propSelect.innerHTML = '<option value="" disabled selected>Select property / room type...</option>';
-        appConfig.propertyOptions.forEach(opt => {
-          const el = document.createElement('option');
-          el.value = opt;
-          el.textContent = opt;
-          propSelect.appendChild(el);
-        });
-        if (prevVal) {
-          const matched = matchPropertyOption(prevVal, appConfig.propertyOptions);
-          if (matched) {
-            propSelect.value = matched;
+      appConfig.standardFields = normalizeStandardFields(appConfig.standardFields);
+
+      // 1. Apply visibility, label, and required state for each standard form field
+      appConfig.standardFields.forEach(f => {
+        const wrap = document.getElementById('field-wrap-' + f.id);
+        const input = document.getElementById(f.id);
+        const labelEl = document.getElementById('label-' + f.id);
+        const isEnabled = (f.enabled !== false);
+        const isRequired = isEnabled && !!f.required;
+
+        if (wrap) {
+          wrap.style.display = isEnabled ? '' : 'none';
+        }
+        if (labelEl) {
+          const star = isRequired ? ' <span class="required-star">*</span>' : '';
+          const prefix = f.id === 'totalGuests' ? '👥 ' : '';
+          labelEl.innerHTML = `${prefix}${escapeHtmlAttr(f.label)}${star}`;
+        }
+        if (input) {
+          if (isRequired) {
+            input.setAttribute('required', 'required');
+          } else {
+            input.removeAttribute('required');
           }
+        }
+      });
+
+      // 2. Toggle parent section cards cleanly based on whether any child field is enabled
+      const travelSec = document.getElementById('section-travel');
+      if (travelSec) {
+        const showTravel = getStdFieldCfg('comingFrom').enabled || getStdFieldCfg('goingTo').enabled;
+        travelSec.style.display = showTravel ? '' : 'none';
+      }
+
+      const purposeSec = document.getElementById('section-purpose');
+      if (purposeSec) {
+        purposeSec.style.display = getStdFieldCfg('purposeOfVisit').enabled ? '' : 'none';
+      }
+
+      const guestsSec = document.getElementById('section-guests');
+      if (guestsSec) {
+        const showAnyGuest = getStdFieldCfg('totalGuests').enabled || getStdFieldCfg('guestFullName').enabled ||
+          getStdFieldCfg('guestAge').enabled || getStdFieldCfg('guestIdType').enabled ||
+          getStdFieldCfg('guestIdFront').enabled || getStdFieldCfg('guestIdBack').enabled;
+        guestsSec.style.display = showAnyGuest ? '' : 'none';
+      }
+
+      const extraSec = document.getElementById('section-extra-details');
+      if (extraSec) {
+        const showExtra = getStdFieldCfg('arrivalTime').enabled || getStdFieldCfg('guestPhoneInput').enabled || getStdFieldCfg('guestEmailInput').enabled;
+        extraSec.style.display = showExtra ? '' : 'none';
+        // Pre-fill visible phone/email from hidden URL params if present
+        const phVal = document.getElementById('guestPhone')?.value;
+        const phVis = document.getElementById('guestPhoneInput');
+        if (phVis && phVal && !phVis.value) phVis.value = phVal;
+        const emVal = document.getElementById('guestEmail')?.value;
+        const emVis = document.getElementById('guestEmailInput');
+        if (emVis && emVal && !emVis.value) emVis.value = emVal;
+      }
+
+      const rulesSec = document.getElementById('section-rules');
+      if (rulesSec) {
+        const rulesCfg = getStdFieldCfg('rulesConsent');
+        rulesSec.style.display = rulesCfg.enabled ? '' : 'none';
+        const rulesTextEl = document.getElementById('rules-consent-text');
+        if (rulesTextEl && appConfig.rulesText) {
+          rulesTextEl.textContent = appConfig.rulesText;
         }
       }
 
-      // 2. Standard field visibility & requirement
-      if (appConfig.standardFields) {
-        appConfig.standardFields.forEach(f => {
-          const wrap = document.getElementById('field-wrap-' + f.id);
-          const input = document.getElementById(f.id);
-          if (wrap) {
-            wrap.style.display = (f.enabled !== false) ? '' : 'none';
-          }
-          if (input) {
-            if (f.enabled === false) {
-              input.removeAttribute('required');
-            } else if (f.required) {
-              input.setAttribute('required', 'required');
-            } else {
-              input.removeAttribute('required');
-            }
-          }
-        });
-      }
+      // 3. Re-render guest cards so per-person field toggles take effect immediately
+      renderGuestCards(totalGuests);
 
-      // 3. Render Custom Fields
+      // 4. Render Custom Additional Fields (Settings -> Section 4)
+      const customSec = document.getElementById('section-custom-fields');
       const customContainer = document.getElementById('dynamic-custom-fields');
-      if (customContainer && appConfig.customFields && appConfig.customFields.length > 0) {
-        customContainer.innerHTML = '';
-        appConfig.customFields.forEach(cf => {
-          if (cf.enabled === false) return;
-          const group = document.createElement('div');
-          group.className = 'form-group';
-          group.id = 'field-wrap-' + cf.id;
-          
-          const reqStar = cf.required ? '<span class="required-star">*</span>' : '';
-          let inputHtml = '';
-          if (cf.type === 'select' && cf.options) {
-            inputHtml = `<select id="${cf.id}" name="${cf.id}" ${cf.required ? 'required' : ''}>
-              <option value="" disabled selected>Select...</option>
-              ${cf.options.map(o => `<option value="${o}">${o}</option>`).join('')}
-            </select>`;
-          } else {
-            inputHtml = `<input type="${cf.type || 'text'}" id="${cf.id}" name="${cf.id}" placeholder="${cf.placeholder || cf.label}" ${cf.required ? 'required' : ''}>`;
-          }
+      const activeCustomFields = (appConfig.customFields || []).filter(cf => cf && cf.enabled !== false);
+      if (customSec && customContainer) {
+        if (activeCustomFields.length > 0) {
+          customSec.style.display = '';
+          customContainer.innerHTML = '';
+          activeCustomFields.forEach(cf => {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            group.id = 'field-wrap-' + cf.id;
 
-          group.innerHTML = `<label for="${cf.id}">${cf.label} ${reqStar}</label>${inputHtml}`;
-          customContainer.appendChild(group);
-        });
+            const reqStar = cf.required ? '<span class="required-star">*</span>' : '';
+            let inputHtml = '';
+            if (cf.type === 'select' && cf.options && cf.options.length > 0) {
+              inputHtml = `<select id="${escapeHtmlAttr(cf.id)}" name="${escapeHtmlAttr(cf.id)}" ${cf.required ? 'required' : ''}>
+                <option value="" disabled selected>Select...</option>
+                ${cf.options.map(o => `<option value="${escapeHtmlAttr(o)}">${escapeHtmlAttr(o)}</option>`).join('')}
+              </select>`;
+            } else {
+              inputHtml = `<input type="${escapeHtmlAttr(cf.type || 'text')}" id="${escapeHtmlAttr(cf.id)}" name="${escapeHtmlAttr(cf.id)}" placeholder="${escapeHtmlAttr(cf.placeholder || cf.label)}" ${cf.required ? 'required' : ''}>`;
+            }
+
+            group.innerHTML = `<label for="${escapeHtmlAttr(cf.id)}">${escapeHtmlAttr(cf.label)} ${reqStar}</label>${inputHtml}`;
+            customContainer.appendChild(group);
+          });
+        } else {
+          customSec.style.display = 'none';
+          customContainer.innerHTML = '';
+        }
       }
 
-      // 4. Update Rules Text if customized
-      if (appConfig.rulesText) {
-        const rulesSpan = document.querySelector('#rulesConsent + span');
-        if (rulesSpan) rulesSpan.textContent = appConfig.rulesText;
-      }
+      // 5. Auto-number all visible form sections cleanly (1., 2., 3., ...)
+      let stepIdx = 1;
+      document.querySelectorAll('.dynamic-form-section').forEach(sec => {
+        if (sec.style.display !== 'none') {
+          const numSpan = sec.querySelector('.dynamic-step-num');
+          if (numSpan) numSpan.textContent = `${stepIdx}.`;
+          stepIdx++;
+        }
+      });
 
-      // 5. Update Host Contact & Instagram Links
+      // 6. Update Host Contact & Instagram Links
       if (appConfig.hostContact) {
         const phoneLink = document.getElementById('host-phone-link');
         const phoneText = document.getElementById('host-phone-text');
@@ -1728,80 +1892,157 @@
       await initConfig();
     });
 
-    // Form Submission: Purpose of Visit, Coming From & Going To, and Per-Person Name, Age, ID Selection & Photos
+    // Form Submission: Dynamically validated against Admin Settings -> 3. Standard Form Fields & 4. Custom Fields
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const reservationCode = (document.getElementById('reservationCode')?.value || '').trim();
-      const comingFrom = (document.getElementById('comingFrom')?.value || '').trim();
-      const goingTo = (document.getElementById('goingTo')?.value || '').trim();
-      const purposeOfVisit = document.getElementById('purposeOfVisit')?.value || '';
+      const cfgComing = getStdFieldCfg('comingFrom');
+      const cfgGoing = getStdFieldCfg('goingTo');
+      const cfgPurpose = getStdFieldCfg('purposeOfVisit');
+      const cfgName = getStdFieldCfg('guestFullName');
+      const cfgAge = getStdFieldCfg('guestAge');
+      const cfgIdType = getStdFieldCfg('guestIdType');
+      const cfgFront = getStdFieldCfg('guestIdFront');
+      const cfgBack = getStdFieldCfg('guestIdBack');
+      const cfgArrival = getStdFieldCfg('arrivalTime');
+      const cfgPhone = getStdFieldCfg('guestPhoneInput');
+      const cfgEmail = getStdFieldCfg('guestEmailInput');
+      const cfgRules = getStdFieldCfg('rulesConsent');
 
-      if (!comingFrom || !goingTo) {
-        alert('Please provide both Coming From and Going To locations.');
+      const reservationCode = (document.getElementById('reservationCode')?.value || '').trim();
+      const comingFrom = cfgComing.enabled ? (document.getElementById('comingFrom')?.value || '').trim() : '';
+      const goingTo = cfgGoing.enabled ? (document.getElementById('goingTo')?.value || '').trim() : '';
+      const purposeOfVisit = cfgPurpose.enabled ? (document.getElementById('purposeOfVisit')?.value || '') : '';
+      const arrivalTime = cfgArrival.enabled ? (document.getElementById('arrivalTime')?.value || '').trim() : '';
+      const visiblePhone = cfgPhone.enabled ? (document.getElementById('guestPhoneInput')?.value || '').trim() : '';
+      const visibleEmail = cfgEmail.enabled ? (document.getElementById('guestEmailInput')?.value || '').trim() : '';
+      const finalPhone = visiblePhone || (document.getElementById('guestPhone')?.value || '').trim();
+      const finalEmail = visibleEmail || (document.getElementById('guestEmail')?.value || '').trim();
+
+      if (cfgComing.enabled && cfgComing.required && !comingFrom) {
+        alert(`Please provide ${cfgComing.label}.`);
         document.getElementById('comingFrom')?.focus();
         return;
       }
 
-      if (!purposeOfVisit) {
-        alert('Please select the Purpose of Visit.');
+      if (cfgGoing.enabled && cfgGoing.required && !goingTo) {
+        alert(`Please provide ${cfgGoing.label}.`);
+        document.getElementById('goingTo')?.focus();
+        return;
+      }
+
+      if (cfgPurpose.enabled && cfgPurpose.required && !purposeOfVisit) {
+        alert(`Please select ${cfgPurpose.label}.`);
         document.getElementById('purposeOfVisit')?.focus();
         return;
       }
 
-      // Validate all guests (Person 1 .. Person N)
-      const guestsList = [];
-      for (let i = 1; i <= totalGuests; i++) {
-        const pName = (document.getElementById(`person_${i}_name`)?.value || '').trim();
-        const pAgeStr = (document.getElementById(`person_${i}_age`)?.value || '').trim();
-        const pIdType = document.getElementById(`person_${i}_idType`)?.value || '';
+      if (cfgArrival.enabled && cfgArrival.required && !arrivalTime) {
+        alert(`Please provide ${cfgArrival.label}.`);
+        document.getElementById('arrivalTime')?.focus();
+        return;
+      }
 
-        if (!pName) {
+      if (cfgPhone.enabled && cfgPhone.required && !visiblePhone) {
+        alert(`Please provide ${cfgPhone.label}.`);
+        document.getElementById('guestPhoneInput')?.focus();
+        return;
+      }
+
+      if (cfgEmail.enabled && cfgEmail.required && !visibleEmail) {
+        alert(`Please provide ${cfgEmail.label}.`);
+        document.getElementById('guestEmailInput')?.focus();
+        return;
+      }
+
+      // Validate Custom Additional Fields (Settings -> Section 4)
+      const customDetails = {};
+      const activeCustomFields = (appConfig.customFields || []).filter(cf => cf && cf.enabled !== false);
+      for (const cf of activeCustomFields) {
+        const el = document.getElementById(cf.id);
+        const val = el ? (el.value || '').trim() : '';
+        if (cf.required && !val) {
+          alert(`Please complete "${cf.label}".`);
+          if (el) el.focus();
+          return;
+        }
+        if (val) customDetails[cf.label] = val;
+      }
+
+      if (cfgRules.enabled && cfgRules.required) {
+        const rulesChk = document.getElementById('rulesConsent');
+        if (rulesChk && !rulesChk.checked) {
+          alert('Please accept the House Rules Agreement to proceed.');
+          rulesChk.focus();
+          return;
+        }
+      }
+
+      // Validate all guests (Person 1 .. Person N) according to active Standard Fields
+      const guestsList = [];
+      const fallbackGuestName = (document.getElementById('guestNameInput')?.value || document.getElementById('manualGuestName')?.value || 'Guest').trim();
+      for (let i = 1; i <= totalGuests; i++) {
+        const pName = cfgName.enabled ? (document.getElementById(`person_${i}_name`)?.value || '').trim() : (i === 1 ? fallbackGuestName : `Guest ${i}`);
+        const pAgeStr = cfgAge.enabled ? (document.getElementById(`person_${i}_age`)?.value || '').trim() : '';
+        const pIdType = cfgIdType.enabled ? (document.getElementById(`person_${i}_idType`)?.value || '') : 'Government ID';
+
+        if (cfgName.enabled && cfgName.required && !pName) {
           alert(`Please enter the Full Name for Person ${i}.`);
           document.getElementById(`person_${i}_name`)?.focus();
           return;
         }
 
-        if (!pAgeStr) {
-          alert(`Please enter the Age for Person ${i}.`);
-          document.getElementById(`person_${i}_age`)?.focus();
-          return;
+        let pAge = '';
+        if (cfgAge.enabled) {
+          if (cfgAge.required && !pAgeStr) {
+            alert(`Please enter the Age for Person ${i}.`);
+            document.getElementById(`person_${i}_age`)?.focus();
+            return;
+          }
+          if (pAgeStr) {
+            const parsedAge = parseInt(pAgeStr, 10);
+            if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+              alert(`Please enter a valid age (1-120) for Person ${i}.`);
+              document.getElementById(`person_${i}_age`)?.focus();
+              return;
+            }
+            pAge = parsedAge;
+          }
         }
 
-        const pAge = parseInt(pAgeStr, 10);
-        if (isNaN(pAge) || pAge < 1 || pAge > 120) {
-          alert(`Please enter a valid age (1-120) for Person ${i}.`);
-          document.getElementById(`person_${i}_age`)?.focus();
-          return;
-        }
-
-        if (!pIdType) {
+        if (cfgIdType.enabled && cfgIdType.required && !pIdType) {
           alert(`Please select the ID Document Type for Person ${i}.`);
           document.getElementById(`person_${i}_idType`)?.focus();
           return;
         }
 
-        if (!guestFiles[i]?.front) {
-          alert(`Please take a photo or upload the Front side of Government ID for Person ${i} (${pName}).`);
+        if (cfgFront.enabled && cfgFront.required && !guestFiles[i]?.front) {
+          alert(`Please take a photo or upload the Front side of Government ID for Person ${i} (${pName || 'Guest'}).`);
           document.getElementById(`slot_${i}_front`)?.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+
+        if (cfgBack.enabled && cfgBack.required && !guestFiles[i]?.back) {
+          alert(`Please take a photo or upload the Back side of Government ID for Person ${i} (${pName || 'Guest'}).`);
+          document.getElementById(`slot_${i}_back`)?.scrollIntoView({ behavior: 'smooth' });
           return;
         }
 
         guestsList.push({
           guestNumber: i,
           isPrimary: i === 1,
-          name: pName,
+          name: pName || (i === 1 ? fallbackGuestName : `Guest ${i}`),
           age: pAge,
-          phone: i === 1 ? (document.getElementById('guestPhone')?.value || '') : '',
-          email: i === 1 ? (document.getElementById('guestEmail')?.value || '') : '',
-          idType: pIdType,
+          phone: i === 1 ? finalPhone : '',
+          email: i === 1 ? finalEmail : '',
+          idType: pIdType || 'Government ID',
           idNumber: '',
-          frontPhoto: guestFiles[i]?.front || '',
-          backPhoto: guestFiles[i]?.back || ''
+          frontPhoto: cfgFront.enabled ? (guestFiles[i]?.front || '') : '',
+          backPhoto: cfgBack.enabled ? (guestFiles[i]?.back || '') : ''
         });
       }
 
-      const primaryGuestName = guestsList[0]?.name || (document.getElementById('guestNameInput')?.value || 'Guest').trim();
+      const primaryGuestName = guestsList[0]?.name || fallbackGuestName || 'Guest';
       const checkInDate = document.getElementById('checkInDate')?.value || document.getElementById('manualCheckIn')?.value || '';
       const checkOutDate = document.getElementById('checkOutDate')?.value || document.getElementById('manualCheckOut')?.value || '';
 
@@ -1815,8 +2056,8 @@
         checkInDate,
         checkOutDate,
         reservationCode,
-        arrivalTime: '',
-        customDetails: {},
+        arrivalTime,
+        customDetails,
         guests: guestsList
       };
 
