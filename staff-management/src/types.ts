@@ -184,5 +184,20 @@ export interface BillingSettings {
 	updated_at?: string;
 }
 
+export interface BookingComSettings {
+	enabled: boolean;
+	suite_ical_url: string;
+	double_ical_url: string;
+	double_2_ical_url: string;
+	twin_ical_url: string;
+	webhook_secret: string;
+	auto_cancel_removed: boolean;
+	default_payment_mode: "online" | "cash";
+	last_synced_at?: string;
+	last_sync_summary?: string;
+	last_sync_error?: string;
+	updated_at?: string;
+}
+
 
 

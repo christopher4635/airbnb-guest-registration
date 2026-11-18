@@ -2,6 +2,15 @@ import { getDashboardHtml } from "./ui";
 import { getUnifiedDashboardHtml, fetchUnifiedEarningsData } from "./unifiedDashboard";
 import type { Env, Property, Staff, AttendanceRecord, SalaryAdvance, SalaryBonus, SalaryPayment, StaffDocument, DailyFinance, Room, RoomBooking, BillingSettings } from "./types";
 import { syncAirbnbBookingsToStaffSync, pushBookingToAirbnbPortal } from "./airbnbSync";
+import {
+	getBookingComSettings,
+	saveBookingComSettings,
+	regenerateBookingComSecret,
+	syncBookingComIcals,
+	parseBookingComPayloadOrEmail,
+	upsertBookingComReservation,
+	generateXsquareIcalFeed,
+} from "./bookingComSync";
 import { handleAiBookingChat, type CreateRoomBookingInput, type CreateRoomBookingResult } from "./aiBooking";
 
 function jsonResponse(data: any, status = 200): Response {
@@ -11,7 +20,7 @@ function jsonResponse(data: any, status = 200): Response {
 			"Content-Type": "application/json; charset=utf-8",
 			"Access-Control-Allow-Origin": "*",
 			"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-			"Access-Control-Allow-Headers": "Content-Type, Authorization, X-PIN, X-Auth-PIN",
+			"Access-Control-Allow-Headers": "Content-Type, Authorization, X-PIN, X-Auth-PIN, X-Webhook-Secret",
 		},
 	});
 }
@@ -483,6 +492,89 @@ export default {
 			}
 		}
 
+		// 2b. Booking.com Direct Webhook Endpoint (Token-authenticated for Gmail Apps Script / Email / Make / Zapier)
+		if (path === "/api/webhooks/booking-com" && method === "POST") {
+			try {
+				const settings = await getBookingComSettings(env);
+				const token = (
+					url.searchParams.get("token") ||
+					request.headers.get("x-webhook-secret") ||
+					request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+					""
+				).trim();
+
+				// Allow either valid webhook_secret OR valid Admin PIN
+				const expectedPin = await getAdminPin(env);
+				const pinHeader = (request.headers.get("x-auth-pin") || request.headers.get("x-pin") || "").trim();
+				const isAuthorized = (token && token === settings.webhook_secret) || (pinHeader && pinHeader === expectedPin);
+				if (!isAuthorized) {
+					return jsonResponse({ success: false, error: "Invalid webhook token." }, 401);
+				}
+
+				const contentType = request.headers.get("content-type") || "";
+				let payload: any = {};
+				if (contentType.includes("application/json")) {
+					payload = await request.json();
+				} else {
+					const rawText = await request.text();
+					payload = { text: rawText };
+				}
+
+				const parsed = await parseBookingComPayloadOrEmail(env, payload, "webhook");
+				const result = await upsertBookingComReservation(env, parsed, syncDailyFinanceLodging);
+
+				await saveBookingComSettings(env, {
+					last_synced_at: new Date().toISOString(),
+					last_sync_summary: `Webhook ${result.action}: Room ${result.roomNumber || parsed.roomCategory} (${parsed.guestName}, ${parsed.checkInDate} → ${parsed.checkOutDate})`,
+					last_sync_error: "",
+				});
+
+				return jsonResponse({
+					success: true,
+					action: result.action,
+					room_number: result.roomNumber,
+					room_category: parsed.roomCategory,
+					guest_name: parsed.guestName,
+					check_in_date: parsed.checkInDate,
+					check_out_date: parsed.checkOutDate,
+					total_amount: result.totalAmount,
+					dates_affected: result.datesAffected,
+					booking_ids: result.bookingIds,
+					external_booking_id: parsed.externalBookingId,
+				});
+			} catch (err: any) {
+				console.error("Booking.com webhook error:", err);
+				return jsonResponse({ success: false, error: err?.message || "Failed to process Booking.com webhook" }, 400);
+			}
+		}
+
+		// 2c. Two-Way iCal Export Feed for Booking.com Extranet (Token-authenticated)
+		// Supports: /api/ical/xsquare/suite.ics, /double.ics, /double-102.ics, /double-103.ics, /twin.ics
+		if (path.startsWith("/api/ical/xsquare/") && method === "GET") {
+			try {
+				const settings = await getBookingComSettings(env);
+				const token = (url.searchParams.get("token") || "").trim();
+				if (!token || token !== settings.webhook_secret) {
+					return new Response("Unauthorized iCal feed token", { status: 401 });
+				}
+				const roomKey = path.replace("/api/ical/xsquare/", "").replace(/\.ics$/i, "");
+				const feed = await generateXsquareIcalFeed(env, roomKey);
+				if (!feed) {
+					return new Response("Unknown room feed. Use suite, double, double-102, double-103, or twin.", { status: 404 });
+				}
+				return new Response(feed.ics, {
+					status: 200,
+					headers: {
+						"Content-Type": "text/calendar; charset=utf-8",
+						"Content-Disposition": `inline; filename="${feed.filename}"`,
+						"Cache-Control": "no-cache, max-age=60",
+					},
+				});
+			} catch (err: any) {
+				return new Response("Error generating iCal feed: " + (err?.message || "Unknown"), { status: 500 });
+			}
+		}
+
 		// 3. API Auth Guard & Role Permissions
 		let auth: AuthContext = { authorized: false };
 		if (path.startsWith("/api/")) {
@@ -502,6 +594,9 @@ export default {
 					path.startsWith("/api/guest-history") ||
 					path.startsWith("/api/guest-ids") ||
 					path.startsWith("/api/sync/airbnb") ||
+					(path === "/api/sync/booking-com" && method === "GET") ||
+					(path === "/api/sync/booking-com/sync" && method === "POST") ||
+					(path === "/api/sync/booking-com/import" && method === "POST") ||
 					path.startsWith("/api/attendance") || // GET /api/attendance, POST /api/attendance, POST /api/attendance/bulk
 					(path === "/api/finances" && (method === "GET" || method === "POST")); // GET & POST for their property only
 
@@ -2416,6 +2511,99 @@ export default {
 				return jsonResponse(syncResult, syncResult.success ? 200 : 500);
 			}
 
+			// =========================================================================
+			// BOOKING.COM DIRECT AUTO-SYNC ENDPOINTS (Suite=101, Double=102/103, Twin=104)
+			// =========================================================================
+
+			// GET /api/sync/booking-com (Get Booking.com settings, URLs, and synced stats)
+			if (path === "/api/sync/booking-com" && method === "GET") {
+				const settings = await getBookingComSettings(env);
+				const origin = url.origin;
+				const countRow = await env.DB.prepare(
+					"SELECT COUNT(DISTINCT COALESCE(external_booking_id, id)) AS cnt FROM room_bookings WHERE property_id = 'xsquare-hotel' AND LOWER(COALESCE(platform, '')) LIKE '%booking%'"
+				).first<{ cnt: number }>();
+
+				const isAdmin = auth.role === "admin";
+				const safeSettings = isAdmin
+					? settings
+					: { ...settings, webhook_secret: "" };
+
+				return jsonResponse({
+					success: true,
+					settings: safeSettings,
+					bookingComCount: Number(countRow?.cnt || 0),
+					webhookUrl: isAdmin ? `${origin}/api/webhooks/booking-com?token=${encodeURIComponent(settings.webhook_secret)}` : "",
+					exportUrls: isAdmin ? {
+						suite: `${origin}/api/ical/xsquare/suite.ics?token=${encodeURIComponent(settings.webhook_secret)}`,
+						double: `${origin}/api/ical/xsquare/double.ics?token=${encodeURIComponent(settings.webhook_secret)}`,
+						double_102: `${origin}/api/ical/xsquare/double-102.ics?token=${encodeURIComponent(settings.webhook_secret)}`,
+						double_103: `${origin}/api/ical/xsquare/double-103.ics?token=${encodeURIComponent(settings.webhook_secret)}`,
+						twin: `${origin}/api/ical/xsquare/twin.ics?token=${encodeURIComponent(settings.webhook_secret)}`,
+					} : null,
+				});
+			}
+
+			// POST /api/sync/booking-com/settings (Admin updates iCal URLs, options, or regenerates token)
+			if (path === "/api/sync/booking-com/settings" && method === "POST") {
+				if (auth.role !== "admin") {
+					return jsonResponse({ error: "Forbidden. Admin access required." }, 403);
+				}
+				const body = (await request.json()) as any;
+				let updatedSettings;
+				if (body?.regenerate_secret) {
+					updatedSettings = await regenerateBookingComSecret(env);
+				} else {
+					updatedSettings = await saveBookingComSettings(env, {
+						enabled: body.enabled !== undefined ? Boolean(body.enabled) : undefined,
+						suite_ical_url: body.suite_ical_url !== undefined ? String(body.suite_ical_url) : undefined,
+						double_ical_url: body.double_ical_url !== undefined ? String(body.double_ical_url) : undefined,
+						double_2_ical_url: body.double_2_ical_url !== undefined ? String(body.double_2_ical_url) : undefined,
+						twin_ical_url: body.twin_ical_url !== undefined ? String(body.twin_ical_url) : undefined,
+						auto_cancel_removed: body.auto_cancel_removed !== undefined ? Boolean(body.auto_cancel_removed) : undefined,
+						default_payment_mode: body.default_payment_mode === "cash" ? "cash" : "online",
+					});
+				}
+
+				const origin = url.origin;
+				return jsonResponse({
+					success: true,
+					settings: updatedSettings,
+					webhookUrl: `${origin}/api/webhooks/booking-com?token=${encodeURIComponent(updatedSettings.webhook_secret)}`,
+					exportUrls: {
+						suite: `${origin}/api/ical/xsquare/suite.ics?token=${encodeURIComponent(updatedSettings.webhook_secret)}`,
+						double: `${origin}/api/ical/xsquare/double.ics?token=${encodeURIComponent(updatedSettings.webhook_secret)}`,
+						double_102: `${origin}/api/ical/xsquare/double-102.ics?token=${encodeURIComponent(updatedSettings.webhook_secret)}`,
+						double_103: `${origin}/api/ical/xsquare/double-103.ics?token=${encodeURIComponent(updatedSettings.webhook_secret)}`,
+						twin: `${origin}/api/ical/xsquare/twin.ics?token=${encodeURIComponent(updatedSettings.webhook_secret)}`,
+					},
+				});
+			}
+
+			// POST /api/sync/booking-com/sync (Trigger immediate Booking.com iCal sync)
+			if (path === "/api/sync/booking-com/sync" && method === "POST") {
+				const result = await syncBookingComIcals(env, syncDailyFinanceLodging);
+				return jsonResponse(result, result.success ? 200 : 500);
+			}
+
+			// POST /api/sync/booking-com/import (Paste Booking.com confirmation email / structured data directly)
+			if (path === "/api/sync/booking-com/import" && method === "POST") {
+				const body = (await request.json()) as any;
+				const parsed = await parseBookingComPayloadOrEmail(env, body, "paste");
+				const result = await upsertBookingComReservation(env, parsed, syncDailyFinanceLodging);
+				return jsonResponse({
+					success: true,
+					action: result.action,
+					room_number: result.roomNumber,
+					room_category: parsed.roomCategory,
+					guest_name: parsed.guestName,
+					check_in_date: parsed.checkInDate,
+					check_out_date: parsed.checkOutDate,
+					total_amount: result.totalAmount,
+					dates_affected: result.datesAffected,
+					booking_ids: result.bookingIds,
+				});
+			}
+
 			return jsonResponse({ error: "Not Found" }, 404);
 		} catch (err: any) {
 			console.error("API Error:", err);
@@ -2423,12 +2611,17 @@ export default {
 		}
 	},
 
-	// Background scheduled sync handler (Runs periodically via Cloudflare cron triggers)
+	// Background scheduled sync handler (Runs every 5 minutes via Cloudflare cron triggers)
 	async scheduled(event: any, env: Env, ctx: any): Promise<void> {
+		try {
+			await syncBookingComIcals(env, syncDailyFinanceLodging);
+		} catch (e) {
+			console.error("Scheduled Booking.com sync error:", e);
+		}
 		try {
 			await syncAirbnbBookingsToStaffSync(env, syncDailyFinanceLodging);
 		} catch (e) {
-			console.error("Scheduled sync error:", e);
+			console.error("Scheduled Airbnb sync error:", e);
 		}
 	},
 };

@@ -33,6 +33,10 @@
     "AUTH_PIN": "4635"
   },
 
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+
   "observability": {
     "enabled": true
   }

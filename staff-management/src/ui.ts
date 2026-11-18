@@ -2693,6 +2693,191 @@ export function getDashboardHtml(): string {
     </div>
   </div>
 
+  <!-- Booking.com Direct Auto-Sync Modal (Suite=101, Double=102/103, Twin=104) -->
+  <div id="bookingComModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
+    <div class="bg-white w-full max-w-2xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-2xl border border-slate-200 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh]">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0">
+            <i data-lucide="globe" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5">
+              <span>Booking.com Auto-Sync</span>
+              <span id="bcomSyncedCountBadge" class="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800">0 synced</span>
+            </h3>
+            <p class="text-[11px] text-slate-500">Auto-updates Xsquare Hotel every 5 mins &amp; via instant email webhook</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeBookingComModal()" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Fixed Room Mapping Banner -->
+      <div class="flex items-center gap-1.5 flex-wrap bg-blue-50/70 border border-blue-200/80 rounded-xl px-3 py-2 text-[11px] text-blue-950 shrink-0">
+        <span class="font-bold uppercase text-[10px] text-blue-700 mr-1">Room Mapping:</span>
+        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Suite → Rm 101</span>
+        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Double → Rm 102 / 103 <span class="font-normal text-blue-600">(Auto-vacant)</span></span>
+        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Twin → Rm 104</span>
+      </div>
+
+      <!-- Mode Tabs -->
+      <div class="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
+        <button type="button" id="bcomTabBtnIcal" onclick="setBookingComTab('ical')" class="py-1.5 px-2 text-[11px] sm:text-xs font-bold rounded-lg bg-white text-blue-700 shadow-2xs cursor-pointer transition">
+          1. iCal Auto-Sync
+        </button>
+        <button type="button" id="bcomTabBtnGmail" onclick="setBookingComTab('gmail')" class="py-1.5 px-2 text-[11px] sm:text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer transition">
+          2. Gmail Instant Sync
+        </button>
+        <button type="button" id="bcomTabBtnPaste" onclick="setBookingComTab('paste')" class="py-1.5 px-2 text-[11px] sm:text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer transition">
+          3. Quick Paste
+        </button>
+      </div>
+
+      <!-- Scrollable Tab Body -->
+      <div class="overflow-y-auto pr-0.5 flex-1 space-y-3">
+        <!-- Status Bar -->
+        <div id="bcomLastSyncBar" class="hidden px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between gap-2 flex-wrap">
+          <span id="bcomLastSyncText">Not synced yet</span>
+          <button type="button" id="btnBcomSyncNowTop" onclick="triggerBookingComSyncNow()" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition cursor-pointer inline-flex items-center gap-1">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            <span>Sync Now</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: iCAL AUTO-SYNC -->
+        <div id="bcomPanelIcal" class="space-y-3">
+          <form id="bcomSettingsForm" onsubmit="handleSaveBookingComSettings(event)" class="space-y-2.5">
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div class="text-[11px] text-slate-600">
+                In <b>Booking.com Extranet → Rates &amp; Availability → Calendar Sync</b>, copy each room's Export iCal link (<code class="text-[10px] bg-white px-1 rounded border">.ics</code>) and paste below. Syncs automatically every 5 minutes!
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Suite iCal URL → <span class="text-indigo-700">Room 101</span></label>
+                <input type="url" id="bcomSuiteIcal" placeholder="https://admin.booking.com/hotel/hoteladmin/ical.html?t=..." class="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Double iCal URL → <span class="text-indigo-700">Rooms 102 / 103 (Auto-assigns free room)</span></label>
+                <input type="url" id="bcomDoubleIcal" placeholder="https://admin.booking.com/hotel/hoteladmin/ical.html?t=..." class="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Double #2 iCal URL <span class="text-slate-400 font-normal">(Optional — only if Booking.com gives a 2nd Double feed for Rm 103)</span></label>
+                <input type="url" id="bcomDouble2Ical" placeholder="Optional 2nd Double room iCal URL" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">Twin iCal URL → <span class="text-indigo-700">Room 104</span></label>
+                <input type="url" id="bcomTwinIcal" placeholder="https://admin.booking.com/hotel/hoteladmin/ical.html?t=..." class="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-700 mb-1">Default Payment Mode</label>
+                  <select id="bcomDefaultPaymentMode" class="w-full px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white">
+                    <option value="online">Online (Prepaid / OTA)</option>
+                    <option value="cash">Cash (Pay at Hotel)</option>
+                  </select>
+                </div>
+                <div class="flex flex-col justify-end gap-1.5 pb-1">
+                  <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 cursor-pointer">
+                    <input type="checkbox" id="bcomAutoCancel" checked class="rounded text-blue-600" />
+                    <span>Auto-remove cancelled bookings</span>
+                  </label>
+                  <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 cursor-pointer">
+                    <input type="checkbox" id="bcomEnabled" checked class="rounded text-blue-600" />
+                    <span>Auto-sync every 5 minutes</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div id="bcomAdminSaveRow" class="flex items-center justify-end gap-2">
+              <button type="button" onclick="triggerBookingComSyncNow()" class="px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition cursor-pointer">
+                Sync Now
+              </button>
+              <button type="submit" id="btnSaveBcomSettings" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-1">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Save &amp; Sync</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Two-Way Export URLs (Prevent Double Bookings on Booking.com) -->
+          <div id="bcomExportSection" class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
+            <div class="text-[11px] font-bold text-emerald-900 flex items-center gap-1.5">
+              <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Two-Way Block: Paste these into Booking.com "Import Calendar"</span>
+            </div>
+            <div class="space-y-1.5 text-[11px]" id="bcomExportLinksList">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: GMAIL INSTANT AUTO-IMPORT (FULL GUEST NAME + PRICE) -->
+        <div id="bcomPanelGmail" class="hidden space-y-3">
+          <div class="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200 text-xs text-indigo-950 space-y-1.5">
+            <div class="font-bold flex items-center gap-1.5">
+              <i data-lucide="mail" class="w-4 h-4 text-indigo-600"></i>
+              <span>Get Guest Name, Exact ₹ Price &amp; Cancellations Automatically from Gmail</span>
+            </div>
+            <p class="text-[11px] text-indigo-900/80">
+              Booking.com iCal only syncs blocked dates, whereas Booking.com confirmation emails have the <b>guest name, exact price, phone &amp; room type (Suite/Double/Twin)</b>. Set up this free 2-minute Google Apps Script once on your Gmail:
+            </p>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-bold text-slate-700">Live Webhook Endpoint URL</label>
+            <div class="flex items-center gap-1.5">
+              <input type="text" id="bcomWebhookUrlInput" readonly class="flex-1 px-2.5 py-1.5 text-[11px] font-mono bg-slate-100 border border-slate-300 rounded-lg text-slate-700" />
+              <button type="button" onclick="copyTextValue(document.getElementById('bcomWebhookUrlInput').value, 'Webhook URL')" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer shrink-0">Copy</button>
+              <button type="button" onclick="regenerateBookingComToken()" title="Regenerate Secret Token" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 cursor-pointer shrink-0">
+                <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-slate-700">Google Apps Script (Paste at script.google.com → Add 5-min Trigger)</label>
+              <button type="button" onclick="copyTextValue(document.getElementById('bcomAppsScriptBox').value, 'Google Apps Script')" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold cursor-pointer">
+                Copy Script
+              </button>
+            </div>
+            <textarea id="bcomAppsScriptBox" readonly rows="8" class="w-full p-2.5 text-[10px] font-mono bg-slate-900 text-emerald-300 rounded-xl border border-slate-700"></textarea>
+          </div>
+        </div>
+
+        <!-- TAB 3: QUICK PASTE BOOKING.COM EMAIL -->
+        <div id="bcomPanelPaste" class="hidden space-y-2.5">
+          <form onsubmit="handleBookingComQuickImport(event)" class="space-y-2.5">
+            <div class="text-[11px] text-slate-600">
+              Paste any Booking.com confirmation or cancellation email/message below. Suite automatically books <b>Room 101</b>, Double auto-assigns <b>Room 102 or 103</b>, and Twin books <b>Room 104</b>.
+            </div>
+            <textarea
+              id="bcomQuickPasteInput"
+              rows="6"
+              required
+              placeholder="Example:&#10;New Booking.com reservation #4829104821&#10;Guest name: Amit Das&#10;Room type: Double Room&#10;Check-in: 20 Nov 2026&#10;Check-out: 22 Nov 2026&#10;Guests: 2 adults&#10;Total price: INR 4,200"
+              class="w-full p-3 text-xs rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500"
+            ></textarea>
+            <div class="flex justify-end">
+              <button type="submit" id="btnBcomQuickImport" class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition cursor-pointer inline-flex items-center gap-1.5">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span>Parse &amp; Add Booking</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toast" class="fixed bottom-20 right-4 sm:right-5 z-[60] bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 transform translate-y-16 opacity-0 transition-all duration-200 pointer-events-none">
     <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
@@ -8180,6 +8365,16 @@ export function getDashboardHtml(): string {
 
               <button
                 type="button"
+                onclick="openBookingComModal()"
+                title="Booking.com Auto-Sync (Suite=101, Double=102/103, Twin=104)"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition cursor-pointer"
+              >
+                <i data-lucide="globe" class="w-3.5 h-3.5 text-blue-600"></i>
+                <span>Booking.com</span>
+              </button>
+
+              <button
+                type="button"
                 onclick="openRoomBookingModal(null, null, null)"
                 class="ml-auto md:ml-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-2xs transition cursor-pointer"
               >
@@ -8221,6 +8416,7 @@ export function getDashboardHtml(): string {
             <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Online</span>
             <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Cash</span>
             <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span> Split</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Booking.com</span>
             <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-700"></span> 2x+</span>
             <span class="inline-flex items-center gap-0.5"><span>🪪</span> ID</span>
           </div>
@@ -8302,7 +8498,7 @@ export function getDashboardHtml(): string {
                           const stayInfo = isMultiDay ? \` (Multi-day stay: \${bk.check_in_date || ''} to \${bk.check_out_date || ''})\` : '';
                           const isAirbnb = (bk.platform || '').toLowerCase().includes('airbnb');
                           const isBookingCom = (bk.platform || '').toLowerCase().includes('booking');
-                          const platformTag = isAirbnb ? 'Airbnb' : (isBookingCom ? 'OTA' : (isSplit ? 'Split' : (isOnline ? 'On' : 'Cs')) + (isMultiDay ? '·S' : ''));
+                          const platformTag = isAirbnb ? 'Airbnb' : (isBookingCom ? 'B.com' : (isSplit ? 'Split' : (isOnline ? 'On' : 'Cs')) + (isMultiDay ? '·S' : ''));
                           const cellStyle = isAirbnb
                             ? 'bg-rose-100 text-rose-900 border border-rose-300'
                             : (isBookingCom
@@ -9797,6 +9993,7 @@ export function getDashboardHtml(): string {
         "guestTravelHistoryModal",
         "billingSettingsModal",
         "roomBillModal",
+        "bookingComModal",
         "manageRoomModal",
         "financeModal",
         "businessConfigModal",
@@ -10536,9 +10733,9 @@ export function getDashboardHtml(): string {
                       </span>
                     \`}
                     \${b.external_booking_id ? \`
-                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1" title="External Booking Synced from Airbnb Host Portal">
-                        <i data-lucide="cloud-check" class="w-2.5 h-2.5"></i>
-                        <span>Airbnb Portal</span>
+                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold \${(b.platform || '').toLowerCase().includes('booking') || String(b.external_booking_id).startsWith('bcom_') ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-rose-50 text-rose-700 border border-rose-200'} flex items-center gap-1" title="Auto-synced OTA reservation">
+                        <i data-lucide="globe" class="w-2.5 h-2.5"></i>
+                        <span>\${(b.platform || '').toLowerCase().includes('booking') || String(b.external_booking_id).startsWith('bcom_') ? 'Booking.com Sync' : 'OTA Sync'}</span>
                       </span>
                     \` : ''}
                     \${isMultiDay ? \`
@@ -12476,6 +12673,289 @@ export function getDashboardHtml(): string {
         : ("https://wa.me/?text=" + encodeURIComponent(text));
 
       window.open(waUrl, "_blank", "noopener,noreferrer");
+    }
+
+    // -------------------------------------------------------------------------
+    // BOOKING.COM DIRECT AUTO-SYNC UI (Suite=101, Double=102/103, Twin=104)
+    // -------------------------------------------------------------------------
+    let currentBookingComConfig = null;
+
+    function buildBookingComAppsScript(webhookUrl) {
+      return [
+        "// Xsquare Hotel — Booking.com Gmail Auto-Sync Script",
+        "// 1. Open https://script.google.com -> New Project -> Paste this code",
+        "// 2. Click Triggers (clock icon) -> Add Trigger -> syncBookingComEmails -> Time-driven -> Every 5 minutes",
+        "",
+        "const WEBHOOK_URL = " + JSON.stringify(webhookUrl || "") + ";",
+        "const PROCESSED_LABEL = 'Xsquare-Synced';",
+        "",
+        "function syncBookingComEmails() {",
+        "  let label = GmailApp.getUserLabelByName(PROCESSED_LABEL);",
+        "  if (!label) label = GmailApp.createLabel(PROCESSED_LABEL);",
+        "  const threads = GmailApp.search('from:booking.com -label:' + PROCESSED_LABEL + ' newer_than:7d', 0, 20);",
+        "  for (const thread of threads) {",
+        "    const messages = thread.getMessages();",
+        "    let synced = false;",
+        "    for (const msg of messages) {",
+        "      const subject = msg.getSubject() || '';",
+        "      const body = msg.getPlainBody() || '';",
+        "      if (!/(booking|reservation|confirm|cancel|suite|double|twin)/i.test(subject + ' ' + body)) continue;",
+        "      const res = UrlFetchApp.fetch(WEBHOOK_URL, {",
+        "        method: 'post',",
+        "        contentType: 'application/json',",
+        "        payload: JSON.stringify({ subject: subject, body: body }),",
+        "        muteHttpExceptions: true",
+        "      });",
+        "      if (res.getResponseCode() >= 200 && res.getResponseCode() < 300) {",
+        "        synced = true;",
+        "      }",
+        "    }",
+        "    if (synced) thread.addLabel(label);",
+        "  }",
+        "}"
+      ].join("\\n");
+    }
+
+    function copyTextValue(text, label) {
+      if (!text) return showToast("Nothing to copy");
+      navigator.clipboard.writeText(text).then(() => {
+        showToast((label || "Text") + " copied to clipboard!");
+      }).catch(() => {
+        showToast("Copy failed — select and copy manually");
+      });
+    }
+
+    function setBookingComTab(tab) {
+      const panels = { ical: "bcomPanelIcal", gmail: "bcomPanelGmail", paste: "bcomPanelPaste" };
+      const btns = { ical: "bcomTabBtnIcal", gmail: "bcomTabBtnGmail", paste: "bcomTabBtnPaste" };
+      Object.keys(panels).forEach(k => {
+        const p = document.getElementById(panels[k]);
+        const b = document.getElementById(btns[k]);
+        if (p) p.classList.toggle("hidden", k !== tab);
+        if (b) {
+          b.className = k === tab
+            ? "py-1.5 px-2 text-[11px] sm:text-xs font-bold rounded-lg bg-white text-blue-700 shadow-2xs cursor-pointer transition"
+            : "py-1.5 px-2 text-[11px] sm:text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 cursor-pointer transition";
+        }
+      });
+    }
+
+    function renderBookingComModalData(data) {
+      currentBookingComConfig = data || {};
+      const s = data?.settings || {};
+      const isAdmin = currentUserRole === "admin";
+
+      const badge = document.getElementById("bcomSyncedCountBadge");
+      if (badge) badge.innerText = \`\${data?.bookingComCount || 0} synced\`;
+
+      const suiteInp = document.getElementById("bcomSuiteIcal");
+      const doubleInp = document.getElementById("bcomDoubleIcal");
+      const double2Inp = document.getElementById("bcomDouble2Ical");
+      const twinInp = document.getElementById("bcomTwinIcal");
+      const paySel = document.getElementById("bcomDefaultPaymentMode");
+      const autoCancel = document.getElementById("bcomAutoCancel");
+      const enabledChk = document.getElementById("bcomEnabled");
+
+      if (suiteInp) { suiteInp.value = s.suite_ical_url || ""; suiteInp.disabled = !isAdmin; }
+      if (doubleInp) { doubleInp.value = s.double_ical_url || ""; doubleInp.disabled = !isAdmin; }
+      if (double2Inp) { double2Inp.value = s.double_2_ical_url || ""; double2Inp.disabled = !isAdmin; }
+      if (twinInp) { twinInp.value = s.twin_ical_url || ""; twinInp.disabled = !isAdmin; }
+      if (paySel) { paySel.value = s.default_payment_mode || "online"; paySel.disabled = !isAdmin; }
+      if (autoCancel) { autoCancel.checked = s.auto_cancel_removed !== false; autoCancel.disabled = !isAdmin; }
+      if (enabledChk) { enabledChk.checked = s.enabled !== false; enabledChk.disabled = !isAdmin; }
+
+      const saveBtn = document.getElementById("btnSaveBcomSettings");
+      if (saveBtn) saveBtn.classList.toggle("hidden", !isAdmin);
+
+      const syncBar = document.getElementById("bcomLastSyncBar");
+      const syncText = document.getElementById("bcomLastSyncText");
+      if (syncBar && syncText) {
+        syncBar.classList.remove("hidden");
+        if (s.last_synced_at) {
+          const dt = new Date(s.last_synced_at).toLocaleString();
+          syncText.innerHTML = \`<b>Last sync:</b> \${escapeHtml(dt)} · \${escapeHtml(s.last_sync_summary || "OK")}\${s.last_sync_error ? \` <span class="text-rose-600 font-bold">(\${escapeHtml(s.last_sync_error)})</span>\` : ""}\`;
+        } else {
+          syncText.innerText = "Paste Booking.com iCal URLs or connect Gmail Webhook to start auto-syncing.";
+        }
+      }
+
+      // Export URLs
+      const exportSec = document.getElementById("bcomExportSection");
+      const exportList = document.getElementById("bcomExportLinksList");
+      if (exportSec && exportList) {
+        if (isAdmin && data?.exportUrls) {
+          exportSec.classList.remove("hidden");
+          const rows = [
+            { label: "Suite (Room 101)", url: data.exportUrls.suite },
+            { label: "Double (Rooms 102 & 103)", url: data.exportUrls.double },
+            { label: "Twin (Room 104)", url: data.exportUrls.twin }
+          ];
+          exportList.innerHTML = rows.map(r => \`
+            <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-lg border border-emerald-200/80">
+              <span class="font-bold text-emerald-950 shrink-0 w-36 truncate">\${r.label}</span>
+              <input type="text" readonly value="\${escapeHtml(r.url)}" class="flex-1 min-w-0 text-[10px] font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 text-slate-600" />
+              <button type="button" onclick="copyTextValue('\${escapeHtml(r.url)}', '\${r.label} iCal URL')" class="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold cursor-pointer shrink-0">Copy</button>
+            </div>
+          \`).join("");
+        } else {
+          exportSec.classList.add("hidden");
+        }
+      }
+
+      // Webhook & Apps Script
+      const whInp = document.getElementById("bcomWebhookUrlInput");
+      const scriptBox = document.getElementById("bcomAppsScriptBox");
+      if (whInp) whInp.value = data?.webhookUrl || (isAdmin ? "" : "Admin access required to view webhook URL");
+      if (scriptBox) scriptBox.value = isAdmin && data?.webhookUrl ? buildBookingComAppsScript(data.webhookUrl) : "// Admin access required to view Gmail auto-sync script.";
+    }
+
+    async function openBookingComModal() {
+      const modal = document.getElementById("bookingComModal");
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+      setBookingComTab("ical");
+      refreshIcons();
+
+      try {
+        const res = await fetch("/api/sync/booking-com", { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to load Booking.com sync settings");
+        }
+        renderBookingComModalData(data);
+        refreshIcons();
+      } catch (err) {
+        showToast("Error loading Booking.com settings: " + err.message);
+      }
+    }
+
+    function closeBookingComModal() {
+      const modal = document.getElementById("bookingComModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    async function handleSaveBookingComSettings(e) {
+      if (e) e.preventDefault();
+      if (currentUserRole !== "admin") return showToast("Admin access required");
+      const btn = document.getElementById("btnSaveBcomSettings");
+      if (btn) btn.disabled = true;
+
+      try {
+        const payload = {
+          suite_ical_url: document.getElementById("bcomSuiteIcal")?.value?.trim() || "",
+          double_ical_url: document.getElementById("bcomDoubleIcal")?.value?.trim() || "",
+          double_2_ical_url: document.getElementById("bcomDouble2Ical")?.value?.trim() || "",
+          twin_ical_url: document.getElementById("bcomTwinIcal")?.value?.trim() || "",
+          default_payment_mode: document.getElementById("bcomDefaultPaymentMode")?.value || "online",
+          auto_cancel_removed: document.getElementById("bcomAutoCancel")?.checked !== false,
+          enabled: document.getElementById("bcomEnabled")?.checked !== false
+        };
+
+        const res = await fetch("/api/sync/booking-com/settings", {
+          method: "POST",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Failed to save Booking.com settings");
+        }
+        showToast("Booking.com settings saved! Syncing now...");
+        await triggerBookingComSyncNow();
+      } catch (err) {
+        showToast("Error saving Booking.com settings: " + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function triggerBookingComSyncNow() {
+      const btnTop = document.getElementById("btnBcomSyncNowTop");
+      if (btnTop) btnTop.disabled = true;
+      showToast("Syncing Booking.com calendars...");
+      try {
+        const res = await fetch("/api/sync/booking-com/sync", {
+          method: "POST",
+          headers: getAuthHeaders()
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok && !data.summary) {
+          return showToast(data.error || "Booking.com sync failed");
+        }
+        showToast(data.summary || "Booking.com sync complete!");
+        await Promise.all([fetchRoomBookings(), fetchFinances()]);
+        renderFinancesView();
+        // Reload modal status
+        const statusRes = await fetch("/api/sync/booking-com", { headers: getAuthHeaders() });
+        if (statusRes.ok) {
+          renderBookingComModalData(await statusRes.json());
+        }
+      } catch (err) {
+        showToast("Sync error: " + err.message);
+      } finally {
+        if (btnTop) btnTop.disabled = false;
+      }
+    }
+
+    async function regenerateBookingComToken() {
+      if (currentUserRole !== "admin") return;
+      if (!confirm("Regenerate secret token? Old webhook / iCal export URLs will stop working.")) return;
+      try {
+        const res = await fetch("/api/sync/booking-com/settings", {
+          method: "POST",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ regenerate_secret: true })
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (res.ok && data.success) {
+          renderBookingComModalData(data);
+          showToast("New Booking.com secret token generated!");
+        }
+      } catch (err) {
+        showToast("Error regenerating token: " + err.message);
+      }
+    }
+
+    async function handleBookingComQuickImport(e) {
+      if (e) e.preventDefault();
+      const inp = document.getElementById("bcomQuickPasteInput");
+      const rawText = inp?.value?.trim();
+      if (!rawText) return showToast("Paste a Booking.com confirmation message first");
+
+      const btn = document.getElementById("btnBcomQuickImport");
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch("/api/sync/booking-com/import", {
+          method: "POST",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify({ text: rawText })
+        });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          return showToast(data.error || "Could not parse Booking.com details");
+        }
+
+        if (inp) inp.value = "";
+        showToast(\`Booking.com \${data.action}: Room \${data.room_number || data.room_category} (\${data.guest_name}, \${data.check_in_date} → \${data.check_out_date})!\`);
+        await Promise.all([fetchRoomBookings(), fetchFinances()]);
+        renderFinancesView();
+        closeBookingComModal();
+      } catch (err) {
+        showToast("Import error: " + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     window.addEventListener("DOMContentLoaded", () => {
