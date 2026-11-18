@@ -4634,6 +4634,176 @@
       }
     }
 
+    /* Room Housekeeping & Readiness Strip (Post-Checkout Cleaning Workflow) */
+    .pms-hk-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background: #FAFBFD;
+      border-bottom: 1px solid #E2E8F0;
+      flex-wrap: wrap;
+    }
+
+    .pms-hk-strip-label {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.45px;
+      color: #64748B;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+
+    .pms-hk-rooms-grid {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .pms-hk-room-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 9px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      font-size: 12px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .pms-hk-room-chip.is-needs-cleaning {
+      border-color: #FCD34D;
+      background: #FFFBEB;
+    }
+
+    .pms-hk-room-chip.is-cleaning {
+      border-color: #93C5FD;
+      background: #EFF6FF;
+    }
+
+    .pms-hk-room-chip.is-available {
+      border-color: #A7F3D0;
+      background: #ECFDF5;
+    }
+
+    .pms-hk-room-chip.is-due-out {
+      border-color: #FECDD3;
+      background: #FFF1F2;
+    }
+
+    .pms-hk-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .pms-hk-dot.is-needs-cleaning { background: #F59E0B; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22); }
+    .pms-hk-dot.is-cleaning { background: #3B82F6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22); }
+    .pms-hk-dot.is-available { background: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+    .pms-hk-dot.is-due-out { background: #F43F5E; box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2); }
+    .pms-hk-dot.is-occupied { background: #6366F1; }
+
+    .pms-hk-room-name {
+      font-weight: 800;
+      color: #0F172A;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .pms-hk-room-status {
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      white-space: nowrap;
+    }
+    .pms-hk-room-chip.is-needs-cleaning .pms-hk-room-status { color: #B45309; }
+    .pms-hk-room-chip.is-cleaning .pms-hk-room-status { color: #1D4ED8; }
+    .pms-hk-room-chip.is-available .pms-hk-room-status { color: #047857; }
+    .pms-hk-room-chip.is-due-out .pms-hk-room-status { color: #BE123C; }
+
+    .pms-hk-quick-btn {
+      padding: 2.5px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      border: 1px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #0F172A;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .pms-hk-quick-btn:hover {
+      background: #0F172A;
+      color: #FFFFFF;
+      border-color: #0F172A;
+    }
+    .pms-hk-quick-btn.is-primary-clean {
+      background: #059669;
+      color: #FFFFFF;
+      border-color: #059669;
+    }
+    .pms-hk-quick-btn.is-primary-clean:hover {
+      background: #047857;
+      border-color: #047857;
+    }
+
+    /* Inline Housekeeping Bar inside Checked-Out Departure Card */
+    .pms-co-hk-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-top: 8px;
+      border-top: 1px dashed #E2E8F0;
+    }
+
+    .pms-hk-step {
+      padding: 3.5px 9px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      color: #64748B;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      font-family: inherit;
+    }
+    .pms-hk-step:hover {
+      background: #F1F5F9;
+      color: #0F172A;
+      border-color: #CBD5E1;
+    }
+    .pms-hk-step.is-dirty.active {
+      background: #FFFBEB;
+      color: #B45309;
+      border-color: #F59E0B;
+      box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
+    }
+    .pms-hk-step.is-cleaning.active {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+    }
+    .pms-hk-step.is-clean.active {
+      background: #ECFDF5;
+      color: #047857;
+      border-color: #10B981;
+      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
+    }
+
   </style>
   <script src="js/api.js"></script>
 </head>
@@ -9606,6 +9776,131 @@
       return false;
     }
 
+    // Helper to read post-checkout room housekeeping status ('needs_cleaning' | 'cleaning' | 'available')
+    function getCheckoutHousekeepingStatus(b) {
+      if (!b || !isBookingCheckedOut(b)) return '';
+      if (b.housekeepingStatus) return b.housekeepingStatus;
+      if (b.notes) {
+        const m = b.notes.match(/\[Housekeeping:\s*([a-zA-Z_-]+)\]/i);
+        if (m) return m[1].toLowerCase();
+      }
+      return 'needs_cleaning';
+    }
+
+    // Helper to persist a single booking's status/notes to D1
+    async function persistBookingNotesToD1(b) {
+      if (!b || !window.AirbnbAPI) return;
+      try {
+        const rev = getBookingRevenue(b);
+        const payoutStr = b.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
+        const payload = {
+          id: b.id,
+          property: b.property,
+          guestName: b.guestName,
+          phone: b.phone,
+          email: b.email,
+          checkInDate: b.checkInDate,
+          checkOutDate: b.checkOutDate,
+          nights: b.nights,
+          guestsCount: b.guestsCount,
+          platform: b.platform,
+          reservationCode: b.reservationCode,
+          payout: payoutStr,
+          paymentStatus: b.paymentStatus,
+          status: b.status || 'Confirmed',
+          notes: b.notes
+        };
+        if (typeof window.AirbnbAPI.updateBooking === 'function') {
+          await window.AirbnbAPI.updateBooking(b.id, payload);
+        } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
+          await window.AirbnbAPI.saveBooking(payload);
+        }
+      } catch (err) {
+        console.warn("Could not sync housekeeping/checkout status to D1:", err);
+      }
+    }
+
+    // Update Post-Checkout Room Cleaning Status ('needs_cleaning' | 'cleaning' | 'available')
+    async function setCheckoutHousekeepingStatus(bookingId, hkState) {
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+
+      b.checkedOut = true;
+      if (!b.notes || !b.notes.includes('[Checked-Out]')) {
+        b.notes = (b.notes ? b.notes + ' | ' : '') + '[Checked-Out]';
+      }
+
+      b.housekeepingStatus = hkState;
+      const hkTag = `[Housekeeping: ${hkState}]`;
+      if (b.notes && /\[Housekeeping:\s*[^\]]+\]/i.test(b.notes)) {
+        b.notes = b.notes.replace(/\[Housekeeping:\s*[^\]]+\]/i, hkTag);
+      } else if (b.notes) {
+        b.notes += ` | ${hkTag}`;
+      } else {
+        b.notes = hkTag;
+      }
+
+      // Auto-sync any same-day incoming arrival in the SAME room
+      const syncedArrivals = [];
+      const matchingIn = currentBookings.find(inBk =>
+        inBk && inBk.id !== b.id &&
+        inBk.status !== 'Cancelled' && inBk.status !== 'Blocked' && inBk.platform !== 'Blocked' &&
+        inBk.checkInDate === b.checkOutDate &&
+        matchesProperty(inBk.property, b.property) &&
+        !isSameRoomContinuationCheckIn(inBk, currentBookings)
+      );
+      if (matchingIn && matchingIn.turnoverStatus !== 'checked_in' && matchingIn.status !== 'Checked In') {
+        const mappedStatus = hkState === 'available' ? 'ready' : (hkState === 'cleaning' ? 'cleaning' : 'checked_out');
+        matchingIn.turnoverStatus = mappedStatus;
+        const tTag = `[Turnover: ${mappedStatus}]`;
+        if (matchingIn.notes && /\[Turnover:\s*[^\]]+\]/i.test(matchingIn.notes)) {
+          matchingIn.notes = matchingIn.notes.replace(/\[Turnover:\s*[^\]]+\]/i, tTag);
+        } else if (matchingIn.notes) {
+          matchingIn.notes += ` | ${tTag}`;
+        } else {
+          matchingIn.notes = tTag;
+        }
+        syncedArrivals.push(matchingIn);
+      }
+
+      saveBookings();
+      renderBookingsPortal();
+
+      const labelMap = {
+        needs_cleaning: 'Needs Cleaning 🧹',
+        cleaning: 'Cleaning in Progress 🧼',
+        available: 'Clean · Available for Check-in ✨'
+      };
+      showToast(`${b.property}: ${labelMap[hkState] || hkState}`);
+
+      await persistBookingNotesToD1(b);
+      for (const arr of syncedArrivals) {
+        await persistBookingNotesToD1(arr);
+      }
+    }
+
+    // Inline 3-step Housekeeping Bar rendered inside a Checked-Out Departure Card
+    function renderCheckoutHousekeepingBar(bk) {
+      if (!isBookingCheckedOut(bk)) return '';
+      const hk = getCheckoutHousekeepingStatus(bk);
+      return `
+        <div class="pms-co-hk-bar">
+          <span class="sm-status-row-label">Room Prep (${escapeHtml(bk.property)}):</span>
+          <div class="sm-turnover-status-group">
+            <button type="button" class="pms-hk-step is-dirty ${hk === 'needs_cleaning' ? 'active' : ''}" onclick="setCheckoutHousekeepingStatus('${bk.id}', 'needs_cleaning')" title="Room vacated and requires housekeeping">
+              🧹 Needs Cleaning
+            </button>
+            <button type="button" class="pms-hk-step is-cleaning ${hk === 'cleaning' ? 'active' : ''}" onclick="setCheckoutHousekeepingStatus('${bk.id}', 'cleaning')" title="Housekeeping currently cleaning room">
+              🧼 Cleaning
+            </button>
+            <button type="button" class="pms-hk-step is-clean ${hk === 'available' ? 'active' : ''}" onclick="setCheckoutHousekeepingStatus('${bk.id}', 'available')" title="Room is clean and available for check-in">
+              ✨ Available for Check-in
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
     // Toggle checkout completion on the right side
     async function toggleCheckoutCompleted(bookingId) {
       const b = currentBookings.find(x => x && x.id === bookingId);
@@ -9619,47 +9914,32 @@
         if (!b.notes || !b.notes.includes('[Checked-Out]')) {
           b.notes = (b.notes ? b.notes + ' | ' : '') + '[Checked-Out]';
         }
+        // Automatically mark room as Needs Cleaning upon checkout
+        b.housekeepingStatus = 'needs_cleaning';
+        const hkTag = '[Housekeeping: needs_cleaning]';
+        if (b.notes && /\[Housekeeping:\s*[^\]]+\]/i.test(b.notes)) {
+          b.notes = b.notes.replace(/\[Housekeeping:\s*[^\]]+\]/i, hkTag);
+        } else {
+          b.notes += ` | ${hkTag}`;
+        }
       } else {
+        b.housekeepingStatus = '';
         if (b.notes) {
-          b.notes = b.notes.replace(/\s*\|\s*\[Checked-Out\]|\[Checked-Out\]/g, '').trim();
+          b.notes = b.notes
+            .replace(/\s*\|\s*\[Checked-Out\]|\[Checked-Out\]/g, '')
+            .replace(/\s*\|\s*\[Housekeeping:\s*[^\]]+\]|\[Housekeeping:\s*[^\]]+\]/gi, '')
+            .trim();
         }
       }
 
       saveBookings();
       renderBookingsPortal();
-      showToast(nextDone ? `✔ Marked checkout completed for ${b.guestName} (${b.property})` : `Marked ${b.guestName} as not yet departed`);
+      showToast(nextDone
+        ? `✔ Checked out ${b.guestName} (${b.property}) — Room marked as Needs Cleaning 🧹`
+        : `Marked ${b.guestName} as not yet departed`
+      );
 
-      // Persist to Cloudflare D1
-      try {
-        if (window.AirbnbAPI) {
-          const rev = getBookingRevenue(b);
-          const payoutStr = b.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
-          const payload = {
-            id: b.id,
-            property: b.property,
-            guestName: b.guestName,
-            phone: b.phone,
-            email: b.email,
-            checkInDate: b.checkInDate,
-            checkOutDate: b.checkOutDate,
-            nights: b.nights,
-            guestsCount: b.guestsCount,
-            platform: b.platform,
-            reservationCode: b.reservationCode,
-            payout: payoutStr,
-            paymentStatus: b.paymentStatus,
-            status: b.status || 'Confirmed',
-            notes: b.notes
-          };
-          if (typeof window.AirbnbAPI.updateBooking === 'function') {
-            await window.AirbnbAPI.updateBooking(b.id, payload);
-          } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
-            await window.AirbnbAPI.saveBooking(payload);
-          }
-        }
-      } catch (err) {
-        console.warn("Could not sync checkout completion to D1:", err);
-      }
+      await persistBookingNotesToD1(b);
     }
 
     // Set Room Turnover Status (Waiting Checkout, Cleaning, Ready for Checkin)
@@ -9683,6 +9963,29 @@
         b.notes = tag;
       }
 
+      // Sync back to any same-day checked-out booking on the same room
+      const syncedCheckouts = [];
+      const matchingOut = currentBookings.find(outBk =>
+        outBk && outBk.id !== b.id &&
+        outBk.status !== 'Cancelled' && outBk.status !== 'Blocked' && outBk.platform !== 'Blocked' &&
+        outBk.checkOutDate === b.checkInDate &&
+        matchesProperty(outBk.property, b.property) &&
+        isBookingCheckedOut(outBk)
+      );
+      if (matchingOut) {
+        const mappedHk = (status === 'ready' || status === 'checked_in') ? 'available' : (status === 'cleaning' ? 'cleaning' : 'needs_cleaning');
+        matchingOut.housekeepingStatus = mappedHk;
+        const hkTag = `[Housekeeping: ${mappedHk}]`;
+        if (matchingOut.notes && /\[Housekeeping:\s*[^\]]+\]/i.test(matchingOut.notes)) {
+          matchingOut.notes = matchingOut.notes.replace(/\[Housekeeping:\s*[^\]]+\]/i, hkTag);
+        } else if (matchingOut.notes) {
+          matchingOut.notes += ` | ${hkTag}`;
+        } else {
+          matchingOut.notes = hkTag;
+        }
+        syncedCheckouts.push(matchingOut);
+      }
+
       saveBookings();
       renderBookingsPortal();
 
@@ -9693,36 +9996,9 @@
           : (status === 'checked_in' ? 'Checked-In 🚪' : 'Checked-Out ✔'));
       showToast(`Updated status for ${b.property} (${b.guestName}): ${label}`);
 
-      // Persist to Cloudflare D1
-      try {
-        if (window.AirbnbAPI) {
-          const rev = getBookingRevenue(b);
-          const payoutStr = b.payout || (rev > 0 ? `₹${formatCurrency(rev)}` : '');
-          const payload = {
-            id: b.id,
-            property: b.property,
-            guestName: b.guestName,
-            phone: b.phone,
-            email: b.email,
-            checkInDate: b.checkInDate,
-            checkOutDate: b.checkOutDate,
-            nights: b.nights,
-            guestsCount: b.guestsCount,
-            platform: b.platform,
-            reservationCode: b.reservationCode,
-            payout: payoutStr,
-            paymentStatus: b.paymentStatus,
-            status: b.status || 'Confirmed',
-            notes: b.notes
-          };
-          if (typeof window.AirbnbAPI.updateBooking === 'function') {
-            await window.AirbnbAPI.updateBooking(b.id, payload);
-          } else if (typeof window.AirbnbAPI.saveBooking === 'function') {
-            await window.AirbnbAPI.saveBooking(payload);
-          }
-        }
-      } catch (err) {
-        console.warn("Could not sync turnover status to D1:", err);
+      await persistBookingNotesToD1(b);
+      for (const co of syncedCheckouts) {
+        await persistBookingNotesToD1(co);
       }
     }
 
@@ -10361,6 +10637,7 @@
                     ${isBookingCheckedOut(bk) ? '✔ Vacated' : '🚪 Mark Departed'}
                   </button>
                 </div>
+                ${renderCheckoutHousekeepingBar(bk)}
               </div>
             `;
           }
@@ -10424,6 +10701,7 @@
                     ${isBookingCheckedOut(bk) ? '✔ Checked Out' : '🚪 Check Out'}
                   </button>
                 </div>
+                ${renderCheckoutHousekeepingBar(bk)}
               </div>
             `;
           }
@@ -10475,14 +10753,159 @@
                   ${isBookingCheckedOut(bk) ? '✔ Checked Out' : '🚪 Check Out'}
                 </button>
               </div>
+              ${renderCheckoutHousekeepingBar(bk)}
             </div>
           `;
         }
 
+        // Compute Live Room Readiness & Housekeeping Strip across all visible properties
+        let needsCleaningCount = 0;
+        let inCleaningCount = 0;
+        const roomReadinessChipsHtml = visibleProps.map(prop => {
+          const outBk = outBookings.find(b => matchesProperty(b.property, prop));
+          const inBk = inBookings.find(b => matchesProperty(b.property, prop));
+          const stayingBk = currentBookings.find(b =>
+            b.status !== 'Cancelled' && b.status !== 'Blocked' && b.platform !== 'Blocked' &&
+            matchesProperty(b.property, prop) &&
+            b.checkInDate < activeTurnoverDate && b.checkOutDate > activeTurnoverDate
+          );
+
+          // 1. Departing guest checked out today -> Track post-checkout cleaning -> Available for Check-in
+          if (outBk && isBookingCheckedOut(outBk)) {
+            if (inBk && (inBk.turnoverStatus === 'checked_in' || inBk.status === 'Checked In')) {
+              const firstName = (inBk.guestName || 'Guest').split(' ')[0];
+              return `
+                <div class="pms-hk-room-chip">
+                  <span class="pms-hk-dot is-occupied"></span>
+                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                  <span class="pms-hk-room-status">Occupied · ${escapeHtml(firstName)}</span>
+                </div>
+              `;
+            }
+
+            const hk = getCheckoutHousekeepingStatus(outBk);
+            if (hk === 'needs_cleaning') {
+              needsCleaningCount++;
+              return `
+                <div class="pms-hk-room-chip is-needs-cleaning">
+                  <span class="pms-hk-dot is-needs-cleaning"></span>
+                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                  <span class="pms-hk-room-status">Needs Cleaning</span>
+                  <button type="button" class="pms-hk-quick-btn" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'cleaning')" title="Start housekeeping">🧹 Start</button>
+                  <button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and ready for check-in">✓ Clean</button>
+                </div>
+              `;
+            }
+            if (hk === 'cleaning') {
+              inCleaningCount++;
+              return `
+                <div class="pms-hk-room-chip is-cleaning">
+                  <span class="pms-hk-dot is-cleaning"></span>
+                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                  <span class="pms-hk-room-status">In Cleaning</span>
+                  <button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and available for check-in">✓ Mark Available</button>
+                </div>
+              `;
+            }
+            return `
+              <div class="pms-hk-room-chip is-available">
+                <span class="pms-hk-dot is-available"></span>
+                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                <span class="pms-hk-room-status">Available for Check-in</span>
+                <button type="button" class="pms-hk-quick-btn" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'needs_cleaning')" title="Mark room as needing cleaning again">↺</button>
+              </div>
+            `;
+          }
+
+          // 2. Departing guest NOT yet checked out
+          if (outBk) {
+            const outTime = getBookingCheckoutTime(outBk);
+            return `
+              <div class="pms-hk-room-chip is-due-out">
+                <span class="pms-hk-dot is-due-out"></span>
+                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                <span class="pms-hk-room-status">Due Checkout (${escapeHtml(outTime)})</span>
+                <button type="button" class="pms-hk-quick-btn" onclick="toggleCheckoutCompleted('${outBk.id}')" title="Mark guest checked out">Check Out</button>
+              </div>
+            `;
+          }
+
+          // 3. Continuing in-house guest (no checkout today)
+          if (stayingBk) {
+            const firstName = (stayingBk.guestName || 'Guest').split(' ')[0];
+            return `
+              <div class="pms-hk-room-chip">
+                <span class="pms-hk-dot is-occupied"></span>
+                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                <span class="pms-hk-room-status">Occupied · ${escapeHtml(firstName)}</span>
+              </div>
+            `;
+          }
+
+          // 4. Arrival scheduled today (room already vacant)
+          if (inBk) {
+            const isCheckedIn = (inBk.turnoverStatus === 'checked_in' || inBk.status === 'Checked In');
+            const firstName = (inBk.guestName || 'Guest').split(' ')[0];
+            if (isCheckedIn) {
+              return `
+                <div class="pms-hk-room-chip">
+                  <span class="pms-hk-dot is-occupied"></span>
+                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                  <span class="pms-hk-room-status">Occupied · ${escapeHtml(firstName)}</span>
+                </div>
+              `;
+            }
+            if (inBk.turnoverStatus === 'cleaning') {
+              inCleaningCount++;
+              return `
+                <div class="pms-hk-room-chip is-cleaning">
+                  <span class="pms-hk-dot is-cleaning"></span>
+                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                  <span class="pms-hk-room-status">In Cleaning</span>
+                  <button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="setRoomTurnoverStatus('${inBk.id}', 'ready')">✓ Mark Ready</button>
+                </div>
+              `;
+            }
+            return `
+              <div class="pms-hk-room-chip is-available">
+                <span class="pms-hk-dot is-available"></span>
+                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+                <span class="pms-hk-room-status">Available · Arrival ${escapeHtml(getBookingArrivalTime(inBk))}</span>
+              </div>
+            `;
+          }
+
+          // 5. Vacant & Available for Check-in
+          return `
+            <div class="pms-hk-room-chip is-available">
+              <span class="pms-hk-dot is-available"></span>
+              <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
+              <span class="pms-hk-room-status">Available for Check-in</span>
+            </div>
+          `;
+        }).join('');
+
+        const roomStatusStripHtml = `
+          <div class="pms-hk-strip">
+            <span class="pms-hk-strip-label">
+              <i data-lucide="sparkles" style="color:#4F46E5;"></i>
+              <span>Room Status</span>
+            </span>
+            <div class="pms-hk-rooms-grid">
+              ${roomReadinessChipsHtml}
+            </div>
+          </div>
+        `;
+
+        const hkSummaryBadges = `
+          ${needsCleaningCount > 0 ? `<span class="pms-kpi-badge is-amber">🧹 ${needsCleaningCount} Needs Cleaning</span>` : ''}
+          ${inCleaningCount > 0 ? `<span class="pms-kpi-badge is-indigo">🧼 ${inCleaningCount} Cleaning</span>` : ''}
+        `;
+
         if (isTurnoversCollapsed) {
           turnoversEl.innerHTML = `
             <div class="sm-turnover-box sm-turnover-collapsed">
-              <div class="sm-turnover-head">
+              <div class="sm-turnover-head" style="${(needsCleaningCount > 0 || inCleaningCount > 0) ? 'border-bottom: 1px solid #F1F5F9;' : ''}">
                 <div class="sm-turnover-head-left">
                   <div class="sm-turnover-title">
                     <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
@@ -10490,6 +10913,7 @@
                     <span class="sm-pill-in">${checkInsCount} Arrival${checkInsCount === 1 ? '' : 's'}</span>
                     <span class="sm-pill-out">${checkOutsCount} Departure${checkOutsCount === 1 ? '' : 's'}</span>
                     ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill">🔄 ${roomTransfersCount} Transfer</span>` : ''}
+                    ${hkSummaryBadges}
                     <span class="sm-turnover-sub" style="margin:0;">· ${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
                   </div>
                 </div>
@@ -10504,6 +10928,7 @@
                   </button>
                 </div>
               </div>
+              ${(needsCleaningCount > 0 || inCleaningCount > 0) ? roomStatusStripHtml : ''}
             </div>
           `;
         } else {
@@ -10518,6 +10943,7 @@
                       <span class="sm-pill-in">${checkInsCount} In</span>
                       <span class="sm-pill-out">${checkOutsCount} Out</span>
                       ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill">🔄 ${roomTransfersCount} Transfer</span>` : ''}
+                      ${hkSummaryBadges}
                     </div>
                     <div class="sm-turnover-sub">
                       Schedule for <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
@@ -10539,6 +10965,9 @@
                   </button>
                 </div>
               </div>
+
+              <!-- Live Room Status & Housekeeping Readiness Strip -->
+              ${roomStatusStripHtml}
 
               <!-- 50:50 Split Grid: Left Arrivals | Right Departures -->
               <div class="sm-turnovers-split-grid">
