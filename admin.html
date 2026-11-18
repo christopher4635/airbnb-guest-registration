@@ -4836,6 +4836,72 @@
       overflow: hidden;
     }
 
+    /* Minimal Clean Check-in / Checkout Card Accents */
+    .pms-guest-link {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0F172A;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+    }
+    .pms-guest-link:hover {
+      color: #4F46E5;
+      text-decoration: underline;
+    }
+    .pms-paid-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 7px;
+      font-size: 11.5px;
+      font-weight: 700;
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #A7F3D0;
+    }
+    .pms-due-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      background: #FEF2F2;
+      color: #B91C1C;
+      border: 1px solid #FECACA;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .pms-due-chip:hover {
+      background: #FEE2E2;
+      border-color: #FCA5A5;
+    }
+    .pms-icon-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid #E2E8F0;
+      background: #F8FAFC;
+      font-size: 12px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .pms-icon-link:hover {
+      background: #EEF2FF;
+      border-color: #C7D2FE;
+    }
+
   </style>
   <script src="js/api.js"></script>
 </head>
@@ -8096,6 +8162,17 @@
       );
     }
 
+    // Quick inline prompt to adjust checkout collection amount
+    async function quickEditCollectionAmount(bookingId, currentAmt) {
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+      const entered = prompt(`Update amount to collect from ${b.guestName} (${b.property}) in ₹:`, String(currentAmt || 0));
+      if (entered === null) return;
+      const cleaned = entered.replace(/[^0-9.]/g, '');
+      if (cleaned === '') return;
+      await saveManualCollectionAmount(bookingId, cleaned);
+    }
+
     // Manual Checkout Collection Handlers (Changeable / Corrected Manually by Host)
     async function saveManualCollectionAmount(bookingId, newAmount) {
       const b = currentBookings.find(x => x.id === bookingId);
@@ -10586,36 +10663,13 @@
         const defaultCollapsed = (outBookings.length === 0 && inBookings.length === 0);
         const isTurnoversCollapsed = (localStorage.getItem('turnovers_collapsed') !== null ? (localStorage.getItem('turnovers_collapsed') === 'true') : defaultCollapsed);
 
-        // Render single Check-in Row (Left 50% — Structured 3-row card)
+        // Render single Check-in Row (Left 50% — Clean 2-row minimal card)
         function renderCheckInRow(bk) {
-          const platLower = (bk.platform || '').toLowerCase();
-          let platClass = 'is-direct';
-          if (platLower.includes('airbnb')) platClass = 'is-airbnb';
-          else if (platLower.includes('booking')) platClass = 'is-booking';
-
           const arrTime = getBookingArrivalTime(bk);
           const isCheckedIn = (bk.turnoverStatus === 'checked_in' || bk.status === 'Checked In');
           const arrCountdown = calculateCountdownBadge(bk.checkInDate, arrTime, false, false, isCheckedIn);
           const cleanPhone = (bk.phone || '').replace(/[^0-9]/g, '');
           const idDocsCount = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(bk).length : 0;
-
-          let contactHtml = '';
-          if (bk.phone) {
-            contactHtml = `
-              <a href="tel:${bk.phone}" class="sm-contact-chip" title="Call ${escapeHtml(bk.guestName)}">
-                📞 ${escapeHtml(bk.phone)}
-              </a>
-              ${cleanPhone.length >= 10 ? `
-                <a href="https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}" target="_blank" class="sm-wa-chip" title="Chat on WhatsApp">
-                  💬 WhatsApp
-                </a>
-              ` : ''}
-            `;
-          } else if (bk.email) {
-            contactHtml = `<a href="mailto:${escapeHtml(bk.email)}" class="sm-contact-chip">✉️ ${escapeHtml(bk.email)}</a>`;
-          } else {
-            contactHtml = `<span style="font-size: 11px; color: #94A3B8;">No phone on file</span>`;
-          }
 
           const split = getSplitStayInfo(bk, currentBookings);
           let transferNotice = '';
@@ -10631,225 +10685,88 @@
               <div class="sm-turnover-row-main">
                 <div class="sm-co-guest-name">
                   <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
-                  <strong>${escapeHtml(bk.guestName)}</strong>
-                  <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
+                  <button type="button" class="pms-guest-link" onclick="openEditBookingModal('${bk.id}')" title="Click for full booking details">
+                    ${escapeHtml(bk.guestName)}
+                  </button>
                   ${transferNotice}
+                  ${bk.phone ? `<a href="tel:${bk.phone}" class="pms-icon-link" title="Call ${escapeHtml(bk.phone)}">📞</a>` : ''}
+                  ${cleanPhone.length >= 10 ? `<a href="https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}" target="_blank" class="pms-icon-link" title="WhatsApp ${escapeHtml(bk.guestName)}">💬</a>` : ''}
+                  ${idDocsCount > 0 ? `<button type="button" class="pms-icon-link" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${idDocsCount} uploaded Guest ID(s)" style="background:#F0F9FF; border-color:#BAE6FD;">🪪</button>` : ''}
                 </div>
-                <div class="sm-co-actions">
-                  ${idDocsCount > 0 ? `
-                    <button type="button" class="sm-tool-pill-btn" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${idDocsCount} Guest ID Documents" style="color: #0369A1; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">
-                      🪪 ID (${idDocsCount})
-                    </button>
-                  ` : `
-                    <button type="button" class="sm-tool-pill-btn" onclick="quickWhatsAppIdRequest('${bk.id}')" title="Request ID upload via WhatsApp" style="color: #B45309; border-color: #FDE68A; background: #FFFBEB; font-weight: 700;">
-                      ⏳ Request ID
-                    </button>
-                  `}
-                  <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue invoice/bill">
-                    🧾 Bill
-                  </button>
-                  <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="Edit reservation">
-                    ✏️ Edit
-                  </button>
-                </div>
-              </div>
-
-              <div class="sm-turnover-row-meta">
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                  <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkin')" title="Click to adjust Check-in / Arrival Time (Standard: 2:00 PM)">
+                  <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkin')" title="Adjust arrival time (Standard: 2:00 PM)">
                     🕒 <strong>${escapeHtml(arrTime)}</strong>
                   </button>
                   ${arrCountdown}
-                  <span style="color:#64748B;">${bk.checkInDate} → ${bk.checkOutDate} · ${bk.nights || 1}n · ${bk.guestsCount || 1}g</span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                  ${contactHtml}
                 </div>
               </div>
 
               <div class="sm-turnover-row-footer">
-                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; width: 100%;">
-                  <span class="sm-status-row-label">Prep:</span>
-                  <div class="sm-turnover-status-group">
-                    ${renderTurnoverStatusButtons(bk, outBookings)}
-                  </div>
+                <div class="sm-turnover-status-group">
+                  ${renderTurnoverStatusButtons(bk, outBookings)}
                 </div>
               </div>
             </div>
           `;
         }
 
-        // Render single Checkout Row (Right 50% — Structured 3-row card)
+        // Render single Checkout Row (Right 50% — Clean 2-row minimal card)
         function renderCheckoutRow(bk) {
           const split = getSplitStayInfo(bk, currentBookings);
-          const platLower = (bk.platform || '').toLowerCase();
-          let platClass = 'is-direct';
-          if (platLower.includes('airbnb')) platClass = 'is-airbnb';
-          else if (platLower.includes('booking')) platClass = 'is-booking';
-
           const outTime = getBookingCheckoutTime(bk);
           const fin = getBookingFinancials(bk);
-          const isPaid = (split.isSplit && split.isFinal) ? (split.combinedBalance === 0) : fin.isPaid;
+          const isIntermediateTransfer = (split.isSplit && split.isIntermediate);
+          const dueAmt = (split.isSplit && split.isFinal) ? split.combinedBalance : fin.balance;
+          const isPaid = isIntermediateTransfer ? true : (dueAmt === 0);
           const outCountdown = calculateCountdownBadge(bk.checkOutDate, outTime, true, isPaid);
-          const idDocsCount = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(bk).length : 0;
+          const isCheckedOutNow = isBookingCheckedOut(bk);
 
-          const idBtnHtml = idDocsCount > 0
-            ? `<button type="button" class="sm-tool-pill-btn" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${idDocsCount} Guest ID Documents" style="color: #0369A1; border-color: #BAE6FD; background: #F0F9FF; font-weight: 700;">🪪 ID (${idDocsCount})</button>`
-            : `<button type="button" class="sm-tool-pill-btn" onclick="quickWhatsAppIdRequest('${bk.id}')" title="Request ID upload via WhatsApp" style="color: #B45309; border-color: #FDE68A; background: #FFFBEB; font-weight: 700;">⏳ ID</button>`;
-
-          // Case A: Intermediate Leg of Split Stay (Room Transfer Today)
-          if (split.isSplit && split.isIntermediate) {
+          let transferBadge = '';
+          if (isIntermediateTransfer) {
             const nextRoom = split.nextLeg?.property || 'Next Room';
-            const finalOut = split.overallCheckOut;
-
-            return `
-              <div class="sm-turnover-row is-room-transfer" style="border-left: 3px solid #10B981;">
-                <div class="sm-turnover-row-main">
-                  <div class="sm-co-guest-name">
-                    <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
-                    <strong>${escapeHtml(bk.guestName)}</strong>
-                    <span class="sm-co-transfer-pill">🔄 Transfer → ${escapeHtml(nextRoom)}</span>
-                    <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
-                  </div>
-                  <div class="sm-co-actions">
-                    ${idBtnHtml}
-                    <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill">🧾 Bill</button>
-                    <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="Edit booking">✏️ Edit</button>
-                  </div>
-                </div>
-
-                <div class="sm-turnover-row-meta">
-                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkout')" title="Adjust Checkout Time">
-                      🕒 <strong>${escapeHtml(outTime)}</strong>
-                    </button>
-                    ${outCountdown}
-                    <span style="color:#64748B;">Split Stay: ${split.overallCheckIn} → ${finalOut} (${split.totalNights}n)</span>
-                  </div>
-                </div>
-
-                <div class="sm-turnover-row-footer">
-                  <span class="sm-transfer-badge" title="Balance rolls over to final checkout on ${finalOut}">
-                    🔄 Collect at Final Checkout (${finalOut})
-                  </span>
-                  <button type="button" class="sm-co-done-btn ${isBookingCheckedOut(bk) ? 'active' : ''}" onclick="toggleCheckoutCompleted('${bk.id}')">
-                    ${isBookingCheckedOut(bk) ? '✔ Vacated' : '🚪 Mark Departed'}
-                  </button>
-                </div>
-                ${renderCheckoutHousekeepingBar(bk)}
-              </div>
-            `;
+            transferBadge = `<span class="sm-co-transfer-pill" style="font-size: 10px;">🔄 → ${escapeHtml(nextRoom)}</span>`;
           }
 
-          // Case B: Final Leg of Split Stay
-          if (split.isSplit && split.isFinal) {
-            const uniqueProps = [];
-            split.legs.forEach(l => {
-              if (!uniqueProps.some(up => matchesProperty(up, l.property))) uniqueProps.push(l.property);
-            });
-            const splitBadgeLabel = uniqueProps.length > 1
-              ? uniqueProps.join(' → ')
-              : `Continuous Stay (${split.totalNights}n)`;
-            const dueAmt = split.combinedBalance;
-            const isSettled = (dueAmt === 0 && split.totalAmount > 0);
-
-            return `
-              <div class="sm-turnover-row is-split-final" style="border-left: 3px solid #7C3AED;">
-                <div class="sm-turnover-row-main">
-                  <div class="sm-co-guest-name">
-                    <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
-                    <strong>${escapeHtml(bk.guestName)}</strong>
-                    <span class="sm-co-split-tag">🔄 ${escapeHtml(splitBadgeLabel)}</span>
-                    <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
-                  </div>
-                  <div class="sm-co-actions">
-                    ${idBtnHtml}
-                    <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill">🧾 Bill</button>
-                    <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="Edit booking">✏️ Edit</button>
-                  </div>
-                </div>
-
-                <div class="sm-turnover-row-meta">
-                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                    <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkout')" title="Adjust Checkout Time">
-                      🕒 <strong>${escapeHtml(outTime)}</strong>
-                    </button>
-                    ${outCountdown}
-                    <span style="color:#64748B;">Combined: ₹${formatCurrency(split.totalAmount)}</span>
-                  </div>
-                  <div>
-                    ${isSettled ? '<span style="color:#047857; font-weight:700;">✔ Paid in Full</span>' : `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(dueAmt)}</span>`}
-                  </div>
-                </div>
-
-                <div class="sm-turnover-row-footer">
-                  <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
-                    <label class="sm-co-label" for="co-input-${bk.id}">Collect:</label>
-                    <div class="sm-co-input-wrap">
-                      <span class="sm-co-prefix">₹</span>
-                      <input type="number" id="co-input-${bk.id}" class="sm-co-input" value="${dueAmt}" min="0" step="100" placeholder="0">
-                    </div>
-                    <button type="button" class="sm-co-save-btn" onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)" title="Save updated amount">
-                      Save
-                    </button>
-                    <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" title="Mark entire split stay as paid">
-                      ✔ Paid
-                    </button>
-                  </div>
-                  <button type="button" class="sm-co-done-btn ${isBookingCheckedOut(bk) ? 'active' : ''}" onclick="toggleCheckoutCompleted('${bk.id}')">
-                    ${isBookingCheckedOut(bk) ? '✔ Checked Out' : '🚪 Check Out'}
-                  </button>
-                </div>
-                ${renderCheckoutHousekeepingBar(bk)}
+          let paymentActionHtml = '';
+          if (isIntermediateTransfer) {
+            paymentActionHtml = `<span style="font-size: 11.5px; color: #047857; font-weight: 600;">🔄 Collect on final checkout</span>`;
+          } else if (dueAmt > 0) {
+            paymentActionHtml = `
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="pms-due-chip" onclick="quickEditCollectionAmount('${bk.id}', ${dueAmt})" title="Click to adjust collection amount">
+                  Collect ₹${formatCurrency(dueAmt)} <span style="font-size: 10px; opacity: 0.65;">✏️</span>
+                </button>
+                <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" title="Mark payment received">
+                  ✔ Mark Paid
+                </button>
               </div>
             `;
+          } else {
+            paymentActionHtml = `<span class="pms-paid-pill">✔ Paid</span>`;
           }
 
-          // Case C: Standard Checkout
           return `
-            <div class="sm-turnover-row">
+            <div class="sm-turnover-row ${isIntermediateTransfer ? 'is-room-transfer' : ''}">
               <div class="sm-turnover-row-main">
                 <div class="sm-co-guest-name">
                   <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
-                  <strong>${escapeHtml(bk.guestName)}</strong>
-                  <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
+                  <button type="button" class="pms-guest-link" onclick="openEditBookingModal('${bk.id}')" title="Click for full booking details, bill, or IDs">
+                    ${escapeHtml(bk.guestName)}
+                  </button>
+                  ${transferBadge}
                 </div>
-                <div class="sm-co-actions">
-                  ${idBtnHtml}
-                  <button type="button" class="sm-tool-pill-btn" onclick="issueBillForBooking('${bk.id}')" title="Issue bill">🧾 Bill</button>
-                  <button type="button" class="sm-tool-pill-btn" onclick="openEditBookingModal('${bk.id}')" title="Edit booking">✏️ Edit</button>
-                </div>
-              </div>
-
-              <div class="sm-turnover-row-meta">
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                  <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkout')" title="Click to adjust Checkout Time (Standard: 11:00 AM)">
+                  <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkout')" title="Adjust checkout time (Standard: 11:00 AM)">
                     🕒 <strong>${escapeHtml(outTime)}</strong>
                   </button>
                   ${outCountdown}
-                  <span style="color:#64748B;">${bk.checkInDate} → ${bk.checkOutDate} · ${bk.nights || 1}n</span>
-                </div>
-                <div>
-                  ${fin.isPaid ? '<span style="color:#047857; font-weight:700;">✔ Paid in Full</span>' : (fin.balance > 0 ? `<span style="color:#DC2626; font-weight:800;">Due: ₹${formatCurrency(fin.balance)}</span>` : '')}
                 </div>
               </div>
 
               <div class="sm-turnover-row-footer">
-                <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
-                  <label class="sm-co-label" for="co-input-${bk.id}">Collect:</label>
-                  <div class="sm-co-input-wrap">
-                    <span class="sm-co-prefix">₹</span>
-                    <input type="number" id="co-input-${bk.id}" class="sm-co-input" value="${fin.balance}" min="0" step="100" placeholder="0">
-                  </div>
-                  <button type="button" class="sm-co-save-btn" onclick="saveManualCollectionAmount('${bk.id}', document.getElementById('co-input-${bk.id}').value)" title="Save collection amount">
-                    Save
-                  </button>
-                  <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" title="Mark guest fully paid">
-                    ✔ Paid
-                  </button>
-                </div>
-                <button type="button" class="sm-co-done-btn ${isBookingCheckedOut(bk) ? 'active' : ''}" onclick="toggleCheckoutCompleted('${bk.id}')" title="Mark checkout completed / room vacated">
-                  ${isBookingCheckedOut(bk) ? '✔ Checked Out' : '🚪 Check Out'}
+                ${paymentActionHtml}
+                <button type="button" class="sm-co-done-btn ${isCheckedOutNow ? 'active' : ''}" onclick="toggleCheckoutCompleted('${bk.id}')" title="Mark checkout completed">
+                  ${isCheckedOutNow ? '✔ Checked Out' : (isIntermediateTransfer ? '🚪 Mark Departed' : '🚪 Check Out')}
                 </button>
               </div>
               ${renderCheckoutHousekeepingBar(bk)}
@@ -10870,9 +10787,8 @@
                   <div class="sm-turnover-title" style="cursor: pointer;">
                     <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
                     <span>Daily Operations</span>
-                    <span class="sm-pill-in">${checkInsCount} Arrival${checkInsCount === 1 ? '' : 's'}</span>
-                    <span class="sm-pill-out">${checkOutsCount} Departure${checkOutsCount === 1 ? '' : 's'}</span>
-                    ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill">🔄 ${roomTransfersCount} Transfer</span>` : ''}
+                    <span class="sm-pill-in">${checkInsCount} In</span>
+                    <span class="sm-pill-out">${checkOutsCount} Out</span>
                     ${hkSummaryBadges}
                     <span class="sm-turnover-sub" style="margin:0;">· ${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
                   </div>
@@ -10882,12 +10798,9 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="sm-total-collect-badge ${totalToCollect > 0 ? 'has-balance' : 'is-paid'}">
-                    <span>Checkout Due:</span>
-                    <strong>₹${formatCurrency(totalToCollect)}</strong>
-                  </span>
+                  ${totalToCollect > 0 ? `<span class="sm-total-collect-badge has-balance"><span>Due:</span><strong>₹${formatCurrency(totalToCollect)}</strong></span>` : ''}
                   <button type="button" onclick="toggleTurnoversCollapse()" class="sm-tool-pill-btn" style="padding: 5px 11px; font-weight: 700; color: #0F172A; background: #F8FAFC; border-color: #CBD5E1;">
-                    Expand Operations ▾
+                    Expand ▾
                   </button>
                 </div>
               </div>
@@ -10901,14 +10814,13 @@
                   <div style="cursor: pointer;">
                     <div class="sm-turnover-title">
                       <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
-                      <span>Daily Operations &amp; Turnovers</span>
+                      <span>Daily Operations</span>
                       <span class="sm-pill-in">${checkInsCount} In</span>
                       <span class="sm-pill-out">${checkOutsCount} Out</span>
-                      ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill">🔄 ${roomTransfersCount} Transfer</span>` : ''}
                       ${hkSummaryBadges}
                     </div>
                     <div class="sm-turnover-sub">
-                      Schedule for <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
+                      ${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}
                       ${activeTurnoverDate !== todayIsoStr ? `<button type="button" onclick="setTurnoverDate(null)" class="sm-today-btn" style="padding: 1px 7px; font-size: 10px; margin-left: 6px; height: auto;">Reset to Today</button>` : ''}
                     </div>
                   </div>
@@ -10918,10 +10830,6 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <span class="sm-total-collect-badge ${totalToCollect > 0 ? 'has-balance' : 'is-paid'}">
-                    <span>Checkout Due:</span>
-                    <strong>₹${formatCurrency(totalToCollect)}</strong>
-                  </span>
                   <button type="button" onclick="toggleUpcomingCheckouts()" class="sm-tool-pill-btn" style="padding: 5px 10px; font-size: 11.5px;">
                     ${showUpcomingCheckouts ? 'Hide Next 7D' : 'Next 7 Days'}
                   </button>
