@@ -73,6 +73,33 @@ function calculateNights(checkIn: string, checkOut: string): number {
   return Math.max(1, isNaN(diffDays) ? 1 : diffDays);
 }
 
+/**
+ * Checks whether EVERY night in [checkIn, checkOut) is already covered by
+ * one or more active bookings/blocks in the supplied list.
+ * Prevents echo loops when Booking.com mirrors (or merges) our exported
+ * website unavailability blocks back into its export feed.
+ */
+function isDateRangeCoveredByBookings(checkIn: string, checkOut: string, bookings: any[]): boolean {
+  if (!bookings || bookings.length === 0) return false;
+  const start = new Date(`${checkIn}T00:00:00Z`);
+  const end = new Date(`${checkOut}T00:00:00Z`);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) return false;
+
+  const totalNights = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  if (totalNights <= 0 || totalNights > 365) return false;
+
+  const cursor = new Date(start.getTime());
+  for (let i = 0; i < totalNights; i++) {
+    const nightIso = cursor.toISOString().slice(0, 10);
+    const covered = bookings.some(
+      b => b.check_in_date <= nightIso && b.check_out_date > nightIso
+    );
+    if (!covered) return false;
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return true;
+}
+
 function extractIcsProperty(eventContent: string, propName: string): string | null {
   const regex = new RegExp(`^${propName}(?:;[^:]*)?:(.*)$`, 'im');
   const match = eventContent.match(regex);
@@ -195,19 +222,22 @@ async function recordSyncLog(
 }
 
 // =============================================================================
-// 1. OUTBOUND iCAL EXPORT — STRICT DIRECT-BOOKING-ONLY FOR EXTERNAL CHANNELS
+// 1. OUTBOUND iCAL EXPORT — WEBSITE UNAVAILABILITY -> BOOKING.COM (TWO-WAY)
 // =============================================================================
 
 /**
  * GET /api/ical/export/:property
  *
- * Synchronisation rules enforced:
- * - For Airbnb (?target=airbnb), Booking.com (?target=bookingcom), or default room feeds:
- *   STRICTLY export ONLY bookings whose source is "Direct Booking".
- *   - NEVER export Airbnb bookings to Booking.com or Airbnb.
- *   - NEVER export Booking.com bookings to Airbnb or Booking.com.
- * - Only if ?scope=all is explicitly passed (e.g. host's personal read-only Google Calendar)
- *   will all active stays be included.
+ * Booking.com Two-Way Synchronisation rules:
+ * - For Booking.com (?target=bookingcom) or per-room feeds:
+ *   Export EVERY active (non-cancelled) unavailable stay/block on the website
+ *   calendar — Direct Bookings, Airbnb stays, Blocked/Maintenance dates, and
+ *   any other channel — so anything unavailable on the website becomes
+ *   unavailable on Booking.com.
+ * - Exclude ONLY Booking.com's own bookings (source === 'Booking.com') to
+ *   prevent echo/lock-in loops when guests cancel on Booking.com.
+ * - If ?scope=all is explicitly passed for all.ics (personal read-only Google /
+ *   Apple Calendar), include all active stays including Booking.com.
  */
 icalRoute.get('/export/:property', async (c) => {
   try {
@@ -219,6 +249,11 @@ icalRoute.get('/export/:property', async (c) => {
 
     let query = `SELECT * FROM bookings WHERE status != 'Cancelled'`;
     const params: any[] = [];
+
+    if (!includeAllForPersonalReadOnly) {
+      // Keep outbound Booking.com feed fast & focused on recent/upcoming unavailability
+      query += ` AND check_out_date >= date('now', '-30 days')`;
+    }
 
     if (cleanProp.toLowerCase() !== 'all') {
       query += ` AND LOWER(property) = LOWER(?)`;
@@ -232,13 +267,13 @@ icalRoute.get('/export/:property', async (c) => {
     const bookings = results || [];
     const nowStamp = toIcalTimestamp();
     const calName = cleanProp.toLowerCase() === 'all'
-      ? (includeAllForPersonalReadOnly ? 'Elite Homes - All Bookings (Read-Only)' : 'Elite Homes - Direct Bookings')
-      : `${cleanProp} - Elite Homes Direct Bookings`;
+      ? (includeAllForPersonalReadOnly ? 'Elite Homes - All Bookings (Read-Only)' : 'Elite Homes - Unavailable Dates (Booking.com Sync)')
+      : `${cleanProp} - Elite Homes Availability (Booking.com Sync)`;
 
     const icsLines: string[] = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Elite Homes//Channel Sync v2//EN',
+      'PRODID:-//Elite Homes//Booking.com Two-Way Sync v3//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       `X-WR-CALNAME:${escapeIcalText(calName)}`,
@@ -250,9 +285,11 @@ icalRoute.get('/export/:property', async (c) => {
     for (const bk of bookings as any[]) {
       const source = classifyBookingSource(bk);
 
-      // STRICT LOOP-PREVENTION RULE:
-      // External channel exports (Airbnb, Booking.com, and per-room feeds) MUST ONLY export Direct Bookings.
-      if (!includeAllForPersonalReadOnly && source !== 'Direct Booking') {
+      // TWO-WAY BOOKING.COM LOOP-PREVENTION RULE:
+      // Export ALL website unavailability (Direct Booking, Airbnb, Blocked, Other)
+      // to Booking.com, excluding ONLY Booking.com's own reservations so Booking.com
+      // cancellations release dates cleanly without echo lock-in.
+      if (!includeAllForPersonalReadOnly && source === 'Booking.com') {
         continue;
       }
 
@@ -266,16 +303,19 @@ icalRoute.get('/export/:property', async (c) => {
         checkOutIcal = toIcalDate(nextDay.toISOString().split('T')[0]);
       }
 
-      // Deterministic, stable UID per booking so Airbnb & Booking.com update in-place without duplicating
-      const uid = `direct-${bk.id}@elitehomes-portal.workers.dev`;
+      // Deterministic, stable UID per booking/block so Booking.com updates in-place cleanly
+      const uidPrefix = source === 'Direct Booking' ? 'direct' : 'unavailable';
+      const uid = `${uidPrefix}-${bk.id}@elitehomes-portal.workers.dev`;
       const updatedDate = bk.updated_at ? new Date(String(bk.updated_at).replace(' ', 'T') + (String(bk.updated_at).includes('Z') ? '' : 'Z')) : new Date();
       const lastModStamp = toIcalTimestamp(updatedDate);
-      // Monotonic SEQUENCE from updated_at guarantees OTAs apply date changes reliably
+      // Monotonic SEQUENCE from updated_at guarantees Booking.com applies date changes reliably
       const seqNum = isNaN(updatedDate.getTime()) ? 1 : Math.max(1, Math.floor(updatedDate.getTime() / 1000) % 10000000);
 
       const summary = includeAllForPersonalReadOnly
         ? `${bk.property} - ${bk.guest_name || 'Reserved'} (${source})`
-        : `Direct Booking - ${bk.property}`;
+        : (source === 'Blocked'
+            ? `Closed - Not available (${bk.property})`
+            : `Unavailable - ${bk.property} (${source})`);
 
       const description = [
         `Source: ${source}`,
@@ -294,6 +334,7 @@ icalRoute.get('/export/:property', async (c) => {
       icsLines.push(`SUMMARY:${escapeIcalText(summary)}`);
       icsLines.push(`DESCRIPTION:${escapeIcalText(description)}`);
       icsLines.push(`X-ELITEHOMES-SOURCE:${escapeIcalText(source)}`);
+      icsLines.push(`X-ELITEHOMES-BOOKING-ID:${escapeIcalText(String(bk.id || ''))}`);
       icsLines.push('STATUS:CONFIRMED');
       icsLines.push('TRANSP:OPAQUE');
       icsLines.push('END:VEVENT');
@@ -353,10 +394,9 @@ icalRoute.get('/feeds', async (c) => {
       const pLower = String(p.name || '').toLowerCase();
       return {
         ...p,
-        exportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics`,
-        airbnbExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=airbnb`,
+        syncMode: 'booking.com-only',
+        exportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=bookingcom`,
         bookingComExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=bookingcom`,
-        airbnbSyncStatus: latestByPropSource[`${pLower}::airbnb`] || null,
         bookingComSyncStatus: latestByPropSource[`${pLower}::booking.com`] || null
       };
     });
@@ -436,7 +476,7 @@ icalRoute.get('/logs', async (c) => {
 });
 
 // =============================================================================
-// 3. INDEPENDENT, LOOP-PROOF INBOUND SYNC ENGINE (HTTP + CRON)
+// 3. BOOKING.COM-ONLY TWO-WAY INBOUND SYNC ENGINE (HTTP + CRON)
 // =============================================================================
 
 export async function executeIcalSync(
@@ -444,12 +484,11 @@ export async function executeIcalSync(
   targetProperty?: string | null,
   executionCtx?: any,
   triggerType: 'cron' | 'manual' = 'manual',
-  targetSource?: 'Airbnb' | 'Booking.com' | null
+  _targetSource?: 'Booking.com' | null
 ) {
   let propQuery = `
     SELECT * FROM properties
-    WHERE (airbnb_ical_url IS NOT NULL AND trim(airbnb_ical_url) != '')
-       OR (booking_com_ical_url IS NOT NULL AND trim(booking_com_ical_url) != '')
+    WHERE booking_com_ical_url IS NOT NULL AND trim(booking_com_ical_url) != ''
   `;
   const propParams: any[] = [];
 
@@ -466,7 +505,7 @@ export async function executeIcalSync(
   if (properties.length === 0) {
     return {
       success: true,
-      message: 'No external Airbnb or Booking.com iCal URLs configured. Add room iCal URLs in iCal Channel Manager.',
+      message: 'No Booking.com iCal URLs configured. Add room Booking.com export links in Booking.com Calendar Sync.',
       stats: {
         totalImported: 0,
         totalUpdated: 0,
@@ -490,17 +529,10 @@ export async function executeIcalSync(
   const errors: string[] = [];
 
   for (const prop of properties as any[]) {
-    // Independent channel feeds per room — Airbnb and Booking.com never cross-sync through us
-    const feeds: Array<{ url: string; source: 'Airbnb' | 'Booking.com' }> = [];
-    if (prop.airbnb_ical_url && String(prop.airbnb_ical_url).trim().startsWith('http')) {
-      if (!targetSource || targetSource === 'Airbnb') {
-        feeds.push({ url: String(prop.airbnb_ical_url).trim(), source: 'Airbnb' });
-      }
-    }
+    // Strictly Booking.com two-way sync only (Airbnb iCal sync disabled)
+    const feeds: Array<{ url: string; source: 'Booking.com' }> = [];
     if (prop.booking_com_ical_url && String(prop.booking_com_ical_url).trim().startsWith('http')) {
-      if (!targetSource || targetSource === 'Booking.com') {
-        feeds.push({ url: String(prop.booking_com_ical_url).trim(), source: 'Booking.com' });
-      }
+      feeds.push({ url: String(prop.booking_com_ical_url).trim(), source: 'Booking.com' });
     }
 
     let anyFeedSucceededForRoom = false;
@@ -589,12 +621,13 @@ export async function executeIcalSync(
             continue;
           }
 
-          // GUARD 1: Echo Loop Prevention — never re-import our own exported Direct Booking events
+          // GUARD 1: Direct Echo Loop Prevention — never re-import our own exported website unavailability events
           const uidLower = uid.toLowerCase();
           if (
             uidLower.includes('@elitehomes-portal.workers.dev') ||
             uidLower.startsWith('direct-bk_') ||
-            (ownSourceTag && ownSourceTag.toLowerCase().includes('direct'))
+            uidLower.startsWith('unavailable-') ||
+            Boolean(ownSourceTag)
           ) {
             feedSkipped++;
             continue;
@@ -705,17 +738,21 @@ export async function executeIcalSync(
             b => b.status !== 'Cancelled' && b.check_in_date < checkOut! && b.check_out_date > checkIn
           );
 
-          // GUARD 2: Direct Booking Echo Prevention
-          // If an active Direct Booking covers these dates AND incoming event is a generic OTA block
-          // (no reservation code, generic summary), it's the OTA echoing back our exported Direct Booking!
-          const overlappingDirect = activeOverlaps.find(b => classifyBookingSource(b) === 'Direct Booking');
-          if (overlappingDirect && meta.isGenericBlockSummary) {
+          // GUARD 2: Two-Way Website Unavailability Echo Prevention
+          // Because our outbound feed exports ALL website unavailability (Direct Bookings, Airbnb stays,
+          // Blocked dates, etc.) to Booking.com, Booking.com may mirror (or merge) those blocked dates
+          // back as generic "CLOSED - Not available" events. If EVERY night of a generic Booking.com block
+          // is already covered by non-Booking.com active unavailability on our website, it is an echo — skip it!
+          const nonBookingActiveBookings = roomBookings.filter(
+            b => b.status !== 'Cancelled' && classifyBookingSource(b) !== 'Booking.com'
+          );
+          if (meta.isGenericBlockSummary && isDateRangeCoveredByBookings(checkIn, checkOut, nonBookingActiveBookings)) {
             feedSkipped++;
             continue;
           }
 
           // GUARD 3: Same-Source Manual Booking Deduplication (zero duplicates!)
-          // If host manually entered this exact Airbnb or Booking.com stay with same dates before sync ran,
+          // If host manually entered this exact Booking.com stay with same dates before sync ran,
           // attach external_uid to it without overwriting guest name, payout, or status!
           const sameSourceManualMatch = activeOverlaps.find(
             b =>
@@ -738,22 +775,9 @@ export async function executeIcalSync(
             continue;
           }
 
-          // GUARD 4: Cross-Channel Shadow Block Isolation
-          // Airbnb sends "Airbnb (Not available)" when it blocks dates from another imported calendar.
-          // Never import generic "Not available" blocks that mirror an existing booking from the other OTA!
+          // GUARD 4: Genuine Conflict Detection — NEVER overwrite an existing booking from another source!
           const otherSourceOverlap = activeOverlaps.find(b => classifyBookingSource(b) !== feed.source);
-          if (otherSourceOverlap && meta.isAirbnbNotAvailable) {
-            feedSkipped++;
-            continue;
-          }
-          if (otherSourceOverlap && meta.isGenericBlockSummary &&
-              otherSourceOverlap.check_in_date === checkIn && otherSourceOverlap.check_out_date === checkOut) {
-            feedSkipped++;
-            continue;
-          }
-
-          // GUARD 5: Genuine Conflict Detection — NEVER overwrite an existing booking from another source!
-          let importNote = `Imported via ${feed.source} iCal sync on ${todayIso}`;
+          let importNote = `Imported via Booking.com two-way iCal sync on ${todayIso}`;
           if (meta.phoneHint) {
             importNote += ` | Phone hint: ${meta.phoneHint}`;
           }
@@ -911,14 +935,19 @@ export async function executeIcalSync(
   };
 }
 
-// 4. POST /api/ical/sync - Manual sync (all rooms, single room, or single channel)
+// 4. POST /api/ical/sync - Manual two-way Booking.com sync (all rooms or single room)
 icalRoute.post('/sync', async (c) => {
   try {
     const body = await c.req.json().catch(() => ({}));
     const targetProperty = body.property ? String(body.property).trim() : null;
     const rawSource = body.source ? String(body.source).trim() : null;
-    const targetSource = (rawSource === 'Airbnb' || rawSource === 'Booking.com') ? rawSource : null;
-    const result = await executeIcalSync(c.env, targetProperty, c.executionCtx, 'manual', targetSource);
+    if (rawSource && rawSource.toLowerCase() === 'airbnb') {
+      return c.json({
+        success: false,
+        error: 'Calendar sync is configured exclusively for Booking.com two-way sync (Airbnb iCal sync is disabled).'
+      }, 400);
+    }
+    const result = await executeIcalSync(c.env, targetProperty, c.executionCtx, 'manual', 'Booking.com');
     return c.json(result);
   } catch (err: any) {
     console.error('[iCal Sync] Fatal sync error:', err);

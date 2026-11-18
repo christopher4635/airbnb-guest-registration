@@ -5691,13 +5691,13 @@
         </div>
       </div>
 
-      <!-- MODAL 5: Two-Way iCal Channel Sync Modal -->
+      <!-- MODAL 5: Booking.com Two-Way iCal Calendar Sync Modal -->
       <div class="modal-backdrop" id="modal-ical-sync">
         <div class="modal-dialog" style="max-width: 720px;">
           <div class="modal-header">
             <div>
-              <h3>🔄 iCal Channel Manager &amp; Two-Way Sync</h3>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Sync calendars with Airbnb, Booking.com, VRBO &amp; Google Calendar</p>
+              <h3>🔄 Booking.com Two-Way Calendar Sync</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Automatic two-way availability sync exclusively between your website calendar and Booking.com</p>
             </div>
             <button type="button" class="modal-close-btn" onclick="closeIcalSyncModal()">&times;</button>
           </div>
@@ -5707,16 +5707,16 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
               <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 12px; font-size: 12px; line-height: 1.5; color: #166534;">
                 <strong style="display: flex; align-items: center; gap: 4px; font-size: 13px; margin-bottom: 4px;">
-                  <span>📤</span> Outbound Sync (This Portal &rarr; Channels)
+                  <span>📤</span> Website &rarr; Booking.com (Outbound)
                 </strong>
-                Copy each room's <strong>Outgoing iCal Link</strong> below and paste it into Airbnb &amp; Booking.com. Bookings made here automatically block dates on those platforms!
+                Copy each room's <strong>Outgoing iCal Link</strong> and paste it into Booking.com. Any unavailable date here (Direct Bookings, Airbnb, Blocked dates) automatically blocks those dates on Booking.com!
               </div>
 
               <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 12px; font-size: 12px; line-height: 1.5; color: #1E40AF;">
                 <strong style="display: flex; align-items: center; gap: 4px; font-size: 13px; margin-bottom: 4px;">
-                  <span>📥</span> Inbound Sync (Channels &rarr; This Portal)
+                  <span>📥</span> Booking.com &rarr; Website (Inbound)
                 </strong>
-                Paste your Airbnb &amp; Booking.com export links below. Click <strong>"Sync All Channels Now"</strong> to fetch all external reservations into your calendar instantly!
+                Paste each room's <strong>Booking.com Export Link</strong> below. New Booking.com bookings, changes, and cancellations sync into your website calendar automatically every 10 minutes!
               </div>
             </div>
 
@@ -5745,10 +5745,10 @@
             <div style="display: flex; gap: 8px;">
               <button type="button" class="btn btn-outline" onclick="closeIcalSyncModal()">Close</button>
               <button type="button" class="btn btn-outline" onclick="saveIcalFeedUrls()" style="border-color: #3B82F6; color: #1D4ED8;">
-                💾 Save Feed URLs
+                💾 Save Links
               </button>
-              <button type="button" class="btn btn-primary" id="btn-sync-all-channels" onclick="triggerChannelSyncNow()" style="background: #10B981; border-color: #10B981;">
-                🔄 Sync All Channels Now
+              <button type="button" class="btn btn-primary" id="btn-sync-all-channels" onclick="triggerChannelSyncNow()" style="background: #003580; border-color: #003580;">
+                🔄 Sync Booking.com Now
               </button>
             </div>
           </div>
@@ -10508,9 +10508,9 @@
 
           <span class="pms-toolbar-divider"></span>
 
-          <button type="button" id="btn-sync-all-ical" onclick="syncAllIcalFeeds()" class="sm-sync-btn" title="Sync Airbnb &amp; Booking.com iCal feeds">
+          <button type="button" id="btn-sync-all-ical" onclick="syncAllIcalFeeds()" class="sm-sync-btn" title="Two-way calendar sync with Booking.com">
             <span id="sync-ical-icon"><i data-lucide="refresh-cw"></i></span>
-            <span id="sync-ical-text">Sync</span>
+            <span id="sync-ical-text">Sync Booking.com</span>
           </button>
 
           <div class="pms-tools-dropdown">
@@ -10523,7 +10523,7 @@
               <div class="pms-tools-menu-label">Property Utilities</div>
               <button type="button" class="pms-tools-item" onclick="closePmsToolsMenu(); openIcalSyncModal();">
                 <i data-lucide="link-2"></i>
-                <span>iCal Channel Feeds</span>
+                <span>Booking.com iCal Sync</span>
               </button>
               <button type="button" class="pms-tools-item" onclick="closePmsToolsMenu(); openQuickBlockModal();">
                 <i data-lucide="lock"></i>
@@ -11971,7 +11971,7 @@
         if (!window.AirbnbAPI || typeof window.AirbnbAPI.syncIcalChannels !== 'function') {
           throw new Error("Channel sync API client not available.");
         }
-        const res = await window.AirbnbAPI.syncIcalChannels();
+        const res = await window.AirbnbAPI.syncIcalChannels(null, 'Booking.com');
         if (res && res.success) {
           const fresh = await window.AirbnbAPI.getBookings();
           if (Array.isArray(fresh)) {
@@ -11980,7 +11980,7 @@
           }
           await fetchProperties();
           renderBookingsPortal();
-          showToast(`⚡ Calendars Synced! ${res.stats?.totalImported || 0} imported, ${res.stats?.totalUpdated || 0} updated, deduplicated cleanly.`);
+          showToast(`⚡ Booking.com Synced! +${res.stats?.totalImported || 0} new, ~${res.stats?.totalUpdated || 0} updated, -${res.stats?.totalCancelled || 0} cancelled.`);
         } else {
           throw new Error(res?.error || 'Sync request failed');
         }
@@ -11989,7 +11989,7 @@
         showToast(`❌ Sync Error: ${err.message}`);
       } finally {
         if (icon) icon.classList.remove('is-spinning');
-        if (text) text.textContent = 'Sync Calendars';
+        if (text) text.textContent = 'Sync Booking.com';
         if (btn) btn.disabled = false;
       }
     };
@@ -14222,52 +14222,44 @@
             </div>
           </div>
 
-          <!-- Outbound / Outgoing iCal Feed -->
+          <!-- Outbound / Outgoing iCal Feed (Website -> Booking.com) -->
           <div style="margin-top: 10px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 6px; padding: 10px 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
               <span style="font-weight: 700; color: #166534; font-size: 11px;">
-                📤 Outgoing Calendar Feed (Copy &amp; paste this into Airbnb / Booking.com):
+                📤 Outgoing Booking.com Feed (All website unavailable dates &rarr; Booking.com):
               </span>
-              <a href="${exportUrl}" target="_blank" style="font-size: 11px; color: #15803D; text-decoration: underline;" title="Download or preview live .ics feed">📥 Test Feed</a>
+              <a href="${exportUrl}?target=bookingcom" target="_blank" style="font-size: 11px; color: #15803D; text-decoration: underline;" title="Download or preview live .ics feed">📥 Test Feed</a>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-              <input type="text" readonly value="${exportUrl}" style="background: #FFFFFF; font-family: monospace; font-size: 11px; height: 32px; flex: 1; border: 1px solid #86EFAC; color: #15803D; padding: 0 8px; border-radius: 4px; user-select: all;" onclick="this.select()">
-              <button type="button" class="btn btn-outline" onclick="copyIcalUrl('${exportUrl}', this)" style="height: 32px; padding: 0 12px; font-size: 12px; background: #FFFFFF; border-color: #86EFAC; color: #166534; white-space: nowrap; font-weight: 600;">
+              <input type="text" readonly value="${exportUrl}?target=bookingcom" style="background: #FFFFFF; font-family: monospace; font-size: 11px; height: 32px; flex: 1; border: 1px solid #86EFAC; color: #15803D; padding: 0 8px; border-radius: 4px; user-select: all;" onclick="this.select()">
+              <button type="button" class="btn btn-outline" onclick="copyIcalUrl('${exportUrl}?target=bookingcom', this)" style="height: 32px; padding: 0 12px; font-size: 12px; background: #FFFFFF; border-color: #86EFAC; color: #166534; white-space: nowrap; font-weight: 600;">
                 📋 Copy Link
               </button>
             </div>
           </div>
 
-          <!-- Inbound / Incoming Channel Links (Airbnb & Booking.com) -->
+          <!-- Inbound / Incoming Booking.com Link -->
           <div style="margin-top: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <span style="font-weight: 700; color: #334155; font-size: 11px;">
-                📥 Incoming Calendar Feeds (Paste your channel calendar links below):
+                📥 Incoming Booking.com Feed (Booking.com &rarr; Website Calendar):
               </span>
               <span style="font-size: 10px; color: #64748B;">
-                ${p.last_synced_at ? '🕒 Last synced: ' + new Date(p.last_synced_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '🕒 Not synced yet'}
+                ${p.last_synced_at ? '🕒 Last synced: ' + new Date(String(p.last_synced_at).replace(' ', 'T') + (String(p.last_synced_at).includes('Z') ? '' : 'Z')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '🕒 Not synced yet'}
               </span>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <div>
-                <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">
-                  Airbnb Calendar Link:
-                </label>
-                <input type="url" id="room-feed-airbnb-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 12px; height: 34px; width: 100%; border: 1px solid #CBD5E1; border-radius: 4px; padding: 0 8px;">
-              </div>
-              <div>
-                <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">
-                  Booking.com / Other Link:
-                </label>
-                <input type="url" id="room-feed-booking-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 34px; width: 100%; border: 1px solid #CBD5E1; border-radius: 4px; padding: 0 8px;">
-              </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 3px;">
+                Booking.com Export iCal URL:
+              </label>
+              <input type="url" id="room-feed-booking-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 34px; width: 100%; border: 1px solid #CBD5E1; border-radius: 4px; padding: 0 8px;">
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
               <button type="button" class="btn btn-outline" onclick="saveSingleRoomFeeds('${escapeJsString(p.name)}', ${idx}, this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #1D4ED8; border-color: #BFDBFE;">
-                💾 Save Links
+                💾 Save Link
               </button>
-              <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(p.name)}', this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
-                🔄 Sync This Room
+              <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(p.name)}', this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #1E40AF; border-color: #BFDBFE; background: #EFF6FF;">
+                🔄 Sync Booking.com
               </button>
             </div>
           </div>
@@ -14277,10 +14269,7 @@
     }
 
     window.saveSingleRoomFeeds = async function(propName, idx, btn) {
-      const airbnbInput = document.getElementById(`room-feed-airbnb-${idx}`) || document.getElementById(`feed-airbnb-${idx}`);
-      const bookingInput = document.getElementById(`room-feed-booking-${idx}`) || document.getElementById(`feed-booking-${idx}`);
-      
-      const airbnbIcalUrl = airbnbInput ? airbnbInput.value.trim() : '';
+      const bookingInput = document.getElementById(`feed-booking-${idx}`) || document.getElementById(`room-feed-booking-${idx}`);
       const bookingComIcalUrl = bookingInput ? bookingInput.value.trim() : '';
 
       const origText = btn ? btn.textContent : '';
@@ -14291,15 +14280,15 @@
 
       try {
         if (window.AirbnbAPI && typeof window.AirbnbAPI.updateIcalFeeds === 'function') {
-          await window.AirbnbAPI.updateIcalFeeds(propName, { airbnbIcalUrl, bookingComIcalUrl });
+          await window.AirbnbAPI.updateIcalFeeds(propName, { bookingComIcalUrl });
         }
         await fetchProperties();
-        showToast(`💾 Feeds saved for "${propName}"!`);
+        showToast(`💾 Booking.com link saved for "${propName}"!`);
       } catch(err) {
-        alert(`Failed to save feeds for ${propName}: ` + err.message);
+        alert(`Failed to save Booking.com link for ${propName}: ` + err.message);
       } finally {
         if (btn) {
-          btn.textContent = origText || '💾 Save Links';
+          btn.textContent = origText || '💾 Save Link';
           btn.disabled = false;
         }
       }
@@ -14313,21 +14302,19 @@
       }
 
       try {
-        // Save feeds first if inputs exist
+        // Save Booking.com feed first if input exists
         const propIdx = loadedProperties.findIndex(p => p.name === propName);
         if (propIdx >= 0) {
-          const airbnbInput = document.getElementById(`room-feed-airbnb-${propIdx}`) || document.getElementById(`feed-airbnb-${propIdx}`);
-          const bookingInput = document.getElementById(`room-feed-booking-${propIdx}`) || document.getElementById(`feed-booking-${propIdx}`);
-          if (airbnbInput || bookingInput) {
+          const bookingInput = document.getElementById(`feed-booking-${propIdx}`) || document.getElementById(`room-feed-booking-${propIdx}`);
+          if (bookingInput) {
             await window.AirbnbAPI.updateIcalFeeds(propName, {
-              airbnbIcalUrl: airbnbInput ? airbnbInput.value.trim() : '',
-              bookingComIcalUrl: bookingInput ? bookingInput.value.trim() : ''
+              bookingComIcalUrl: bookingInput.value.trim()
             });
           }
         }
 
-        const res = await window.AirbnbAPI.syncIcalChannels(propName);
-        if (res.success) {
+        const res = await window.AirbnbAPI.syncIcalChannels(propName, 'Booking.com');
+        if (res.success || res.stats) {
           const fresh = await window.AirbnbAPI.getBookings();
           if (Array.isArray(fresh)) {
             currentBookings = fresh;
@@ -14336,7 +14323,8 @@
           await fetchProperties();
           renderRoomsList();
           renderBookingsPortal();
-          showToast(`🔄 "${propName}" synced! ${res.stats?.totalImported || 0} imported, ${res.stats?.totalUpdated || 0} updated.`);
+          const st = res.stats || {};
+          showToast(`🔄 "${propName}" Booking.com synced! +${st.totalImported || 0} new, ~${st.totalUpdated || 0} upd, -${st.totalCancelled || 0} canc.`);
         } else {
           throw new Error(res.error || "Room sync failed");
         }
@@ -14344,7 +14332,7 @@
         alert(`Failed to sync ${propName}: ` + err.message);
       } finally {
         if (btn) {
-          btn.innerHTML = origText || '🔄 Sync This Room';
+          btn.innerHTML = origText || '🔄 Sync Booking.com';
           btn.disabled = false;
         }
       }
@@ -14517,7 +14505,7 @@
     };
 
     // =========================================================================
-    // 7. INDEPENDENT ROOM-WISE iCAL CHANNEL SYNC (ZERO-LOOP ARCHITECTURE)
+    // 7. BOOKING.COM TWO-WAY ROOM-WISE iCAL SYNC
     // =========================================================================
     window.openIcalSyncModal = async function(targetRoomName = null) {
       await fetchProperties();
@@ -14529,7 +14517,7 @@
       container.innerHTML = '';
       filePropSelect.innerHTML = '';
 
-      // Fetch per-channel feed health + recent sync logs from Cloudflare D1
+      // Fetch Booking.com feed health + recent sync logs from Cloudflare D1
       let feedsWithHealth = [];
       let recentLogs = [];
       try {
@@ -14538,25 +14526,24 @@
           if (feedRes && Array.isArray(feedRes.data)) feedsWithHealth = feedRes.data;
         }
         if (window.AirbnbAPI && typeof window.AirbnbAPI.getIcalLogs === 'function') {
-          const logRes = await window.AirbnbAPI.getIcalLogs(15);
+          const logRes = await window.AirbnbAPI.getIcalLogs(20, null, 'Booking.com');
           if (logRes && Array.isArray(logRes.data)) recentLogs = logRes.data;
         }
       } catch (e) {}
 
       const healthByName = new Map(feedsWithHealth.map(f => [String(f.name || '').toLowerCase(), f]));
 
-      // Clean Independent Sync Architecture Banner
+      // Clean Booking.com Two-Way Sync Architecture Banner
       const archBanner = document.createElement('div');
       archBanner.style.cssText = 'background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 12.5px; color: #0F172A;';
       archBanner.innerHTML = `
         <div style="font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; color: #0F172A;">
-          <span>🛡️</span> <strong>Independent Room-Wise iCal Sync (Zero Echo Loops)</strong>
+          <span>🛡️</span> <strong>Booking.com Two-Way Availability Sync (Active)</strong>
         </div>
         <div style="font-size: 12px; line-height: 1.55; color: #334155;">
-          <div>• <strong>Airbnb → Website (Independent)</strong>: Airbnb bookings &amp; cancellations sync directly to your website calendar. Never pushed to Booking.com.</div>
-          <div>• <strong>Booking.com → Website (Independent)</strong>: Booking.com bookings &amp; cancellations sync directly to your website calendar. Never pushed to Airbnb.</div>
-          <div>• <strong>Direct Bookings → Both Platforms</strong>: <strong>Only</strong> bookings marked as <strong>Direct Booking</strong> are exported to both Airbnb &amp; Booking.com.</div>
-          <div>• <strong>Auto-Sync</strong>: Runs every 10 minutes on Cloudflare Workers with full error logging &amp; cancellation reconciliation.</div>
+          <div>• <strong>Website &rarr; Booking.com</strong>: Any date marked unavailable on your website calendar (<strong>Direct Bookings, Airbnb stays, Blocked / Maintenance dates</strong>) is exported to Booking.com so those dates automatically become unavailable on Booking.com.</div>
+          <div>• <strong>Booking.com &rarr; Website</strong>: New Booking.com bookings, date changes, and cancellations sync directly into your website calendar every 10 minutes.</div>
+          <div>• <strong>Zero Echo Loops</strong>: Booking.com's own bookings are excluded from the outbound feed, and echoed Booking.com closure blocks are automatically ignored.</div>
         </div>
       `;
       container.appendChild(archBanner);
@@ -14582,7 +14569,6 @@
           ? window.AirbnbAPI.getIcalExportUrl(prop.name)
           : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(prop.name)}.ics`;
 
-        const airbnbImportTargetUrl = `${baseExportUrl}?target=airbnb`;
         const bookingComImportTargetUrl = `${baseExportUrl}?target=bookingcom`;
 
         const card = document.createElement('div');
@@ -14593,72 +14579,42 @@
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="room-color-dot" style="background: ${color}; width: 11px; height: 11px; border-radius: 50%; display: inline-block;"></span>
               <strong style="font-size: 14.5px; color: #0F172A;">${escapeHtml(prop.name)}</strong>
+              ${formatChannelHealthPill(health.bookingComSyncStatus)}
             </div>
             <span style="font-size: 11px; color: var(--text-muted);">
               ${prop.last_synced_at ? '🕒 Last Sync: ' + new Date(String(prop.last_synced_at).replace(' ', 'T') + (String(prop.last_synced_at).includes('Z') ? '' : 'Z')).toLocaleString() : '🕒 Not synced yet'}
             </span>
           </div>
 
-          <!-- Outbound Direct-Bookings-Only Export URLs -->
-          <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div style="background: #FFF5F5; border: 1px solid #FECDD3; border-radius: var(--radius-sm); padding: 8px 10px;">
-              <label style="font-size: 11px; font-weight: 700; color: #9F1239; display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
-                <span>🔴</span> Paste into Airbnb Import:
+          <!-- Outbound Website Availability -> Booking.com Import URL -->
+          <div style="margin-top: 12px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 9px 11px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px;">
+              <label style="font-size: 11.5px; font-weight: 700; color: #1E40AF; display: flex; align-items: center; gap: 4px; margin: 0;">
+                <span>🔵</span> Outbound Link — Paste into Booking.com Import Calendar:
               </label>
-              <div style="font-size: 10px; color: #881337; margin-bottom: 6px;">Exports <strong>Direct Bookings ONLY</strong> to Airbnb</div>
-              <div class="feed-copy-box" style="margin-top: 0;">
-                <span class="feed-url-text" style="font-size: 10px;">${airbnbImportTargetUrl}</span>
-                <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${airbnbImportTargetUrl}', this)" style="background: #FF385C; color: #fff; border: none; font-size: 10px; padding: 2px 6px;">
-                  📋 Copy
-                </button>
-              </div>
+              <a href="${bookingComImportTargetUrl}" target="_blank" style="font-size: 10.5px; color: #1D4ED8; text-decoration: underline;">Preview .ics</a>
             </div>
-
-            <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 8px 10px;">
-              <label style="font-size: 11px; font-weight: 700; color: #1E40AF; display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
-                <span>🔵</span> Paste into Booking.com Import:
-              </label>
-              <div style="font-size: 10px; color: #1E3A8A; margin-bottom: 6px;">Exports <strong>Direct Bookings ONLY</strong> to Booking.com</div>
-              <div class="feed-copy-box" style="margin-top: 0;">
-                <span class="feed-url-text" style="font-size: 10px;">${bookingComImportTargetUrl}</span>
-                <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${bookingComImportTargetUrl}', this)" style="background: #003580; color: #fff; border: none; font-size: 10px; padding: 2px 6px;">
-                  📋 Copy
-                </button>
-              </div>
+            <div style="font-size: 10.5px; color: #1E3A8A; margin-bottom: 6px;">Exports <strong>all website unavailable dates</strong> (Direct Bookings, Airbnb stays &amp; Blocked dates) so Booking.com closes those dates automatically.</div>
+            <div class="feed-copy-box" style="margin-top: 0;">
+              <span class="feed-url-text" style="font-size: 10.5px;">${bookingComImportTargetUrl}</span>
+              <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${bookingComImportTargetUrl}', this)" style="background: #003580; color: #fff; border: none; font-size: 10.5px; padding: 3px 8px;">
+                📋 Copy Link
+              </button>
             </div>
           </div>
 
-          <!-- Independent Inbound Channel URL Inputs -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 3px;">
-                <label style="font-size: 11px; font-weight: 700; color: #334155; margin: 0;">Airbnb Inbound iCal URL:</label>
-                ${formatChannelHealthPill(health.airbnbSyncStatus)}
-              </div>
-              <input type="text" id="feed-airbnb-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 12px; height: 34px;">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 0;">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 3px;">
-                <label style="font-size: 11px; font-weight: 700; color: #334155; margin: 0;">Booking.com Inbound iCal URL:</label>
-                ${formatChannelHealthPill(health.bookingComSyncStatus)}
-              </div>
-              <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 34px;">
-            </div>
+          <!-- Inbound Booking.com Export URL Input -->
+          <div class="form-group" style="margin-top: 10px; margin-bottom: 0;">
+            <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">📥 Inbound Link — Paste Booking.com Export iCal URL:</label>
+            <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?t=..." style="font-size: 12px; height: 34px;">
           </div>
 
           <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; flex-wrap: wrap;">
             <button type="button" class="btn btn-outline" onclick="saveSingleRoomFeeds('${escapeJsString(prop.name)}', ${idx}, this)" style="height: 29px; padding: 0 11px; font-size: 11px; font-weight: 600; color: #1D4ED8; border-color: #BFDBFE;">
-              💾 Save Links
+              💾 Save Link
             </button>
-            <button type="button" class="btn btn-outline" onclick="syncSingleChannel('${escapeJsString(prop.name)}', 'Airbnb', this)" style="height: 29px; padding: 0 10px; font-size: 11px; font-weight: 600; color: #9F1239; border-color: #FECDD3; background: #FFF5F5;">
-              🔄 Sync Airbnb
-            </button>
-            <button type="button" class="btn btn-outline" onclick="syncSingleChannel('${escapeJsString(prop.name)}', 'Booking.com', this)" style="height: 29px; padding: 0 10px; font-size: 11px; font-weight: 600; color: #1E40AF; border-color: #BFDBFE; background: #EFF6FF;">
+            <button type="button" class="btn btn-outline" onclick="syncSingleChannel('${escapeJsString(prop.name)}', 'Booking.com', this)" style="height: 29px; padding: 0 11px; font-size: 11px; font-weight: 700; color: #1E40AF; border-color: #BFDBFE; background: #EFF6FF;">
               🔄 Sync Booking.com
-            </button>
-            <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(prop.name)}', this)" style="height: 29px; padding: 0 11px; font-size: 11px; font-weight: 700; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
-              🔄 Sync Room
             </button>
           </div>
         `;
@@ -14767,19 +14723,15 @@
     };
 
     window.saveIcalFeedUrls = async function() {
-      const inputs = document.querySelectorAll('#ical-feeds-list-container input[id*="airbnb"], #ical-feeds-list-container input[id*="booking"], #rooms-list-container input[id*="airbnb"], #rooms-list-container input[id*="booking"]');
+      const modalInputs = document.querySelectorAll('#ical-feeds-list-container input[id*="booking"]');
+      const inputs = modalInputs.length > 0 ? modalInputs : document.querySelectorAll('#rooms-list-container input[id*="booking"]');
       const feedsByProp = {};
 
       inputs.forEach(input => {
         const propName = input.getAttribute('data-prop');
         if (!propName) return;
         if (!feedsByProp[propName]) feedsByProp[propName] = {};
-
-        if (input.id.includes('airbnb')) {
-          feedsByProp[propName].airbnbIcalUrl = input.value.trim();
-        } else if (input.id.includes('booking')) {
-          feedsByProp[propName].bookingComIcalUrl = input.value.trim();
-        }
+        feedsByProp[propName].bookingComIcalUrl = input.value.trim();
       });
 
       if (window.AirbnbAPI && typeof window.AirbnbAPI.updateIcalFeeds === 'function') {
@@ -14788,9 +14740,9 @@
             await window.AirbnbAPI.updateIcalFeeds(propName, feedsByProp[propName]);
           }
           await fetchProperties();
-          showToast("💾 iCal feed URLs saved successfully!");
+          showToast("💾 Booking.com iCal feed URLs saved successfully!");
         } catch(e) {
-          alert("Error saving feed URLs: " + e.message);
+          alert("Error saving Booking.com feed URLs: " + e.message);
         }
       }
     };
@@ -14801,11 +14753,11 @@
       const origText = btn ? btn.innerHTML : '';
 
       if (btn) {
-        btn.innerHTML = '⏳ Syncing Airbnb &amp; Booking.com...';
+        btn.innerHTML = '⏳ Syncing Booking.com...';
         btn.disabled = true;
       }
 
-      // 1. Auto-save current input values first
+      // 1. Auto-save current Booking.com input values first
       await saveIcalFeedUrls();
 
       try {
@@ -14813,7 +14765,7 @@
           throw new Error("Cloudflare iCal sync API client not available.");
         }
 
-        const res = await window.AirbnbAPI.syncIcalChannels();
+        const res = await window.AirbnbAPI.syncIcalChannels(null, 'Booking.com');
         if (res.success || res.stats) {
           const fresh = await window.AirbnbAPI.getBookings();
           if (Array.isArray(fresh)) {
@@ -14825,9 +14777,9 @@
           renderRoomsList();
           renderBookingsPortal();
 
-          // Refresh logs panel inside modal
+          // Refresh Booking.com logs panel inside modal
           try {
-            const logRes = await window.AirbnbAPI.getIcalLogs(15);
+            const logRes = await window.AirbnbAPI.getIcalLogs(20, null, 'Booking.com');
             const logsPanel = document.getElementById('ical-sync-logs-panel');
             if (logsPanel && logRes && Array.isArray(logRes.data)) {
               logsPanel.innerHTML = renderIcalSyncLogsHtml(logRes.data);
@@ -14842,15 +14794,15 @@
             banner.style.border = hasErrors ? '1px solid #F59E0B' : '1px solid #10B981';
             banner.style.color = hasErrors ? '#92400E' : '#065F46';
             banner.innerHTML = `
-              <strong>${hasErrors ? '⚠️ Sync Completed with Warnings' : '✅ Independent Channel Sync Complete!'}</strong><br>
+              <strong>${hasErrors ? '⚠️ Booking.com Sync Completed with Warnings' : '✅ Booking.com Two-Way Sync Complete!'}</strong><br>
               +${st.totalImported || 0} imported · ~${st.totalUpdated || 0} updated · -${st.totalCancelled || 0} cancelled${st.totalConflicts > 0 ? ` · <strong style="color:#B45309;">⚠️ ${st.totalConflicts} conflict(s)</strong>` : ''}
               ${hasErrors ? `<br><small style="color:#B91C1C;">Errors: ${st.errors.map(escapeHtml).join(' | ')}</small>` : ''}
             `;
           }
 
-          showToast(`✅ Sync Complete: +${st.totalImported || 0} new, ~${st.totalUpdated || 0} upd, -${st.totalCancelled || 0} cancelled`);
+          showToast(`✅ Booking.com Sync Complete: +${st.totalImported || 0} new, ~${st.totalUpdated || 0} upd, -${st.totalCancelled || 0} cancelled`);
         } else {
-          throw new Error(res.error || "Channel sync failed.");
+          throw new Error(res.error || "Booking.com sync failed.");
         }
       } catch(err) {
         if (banner) {
@@ -14860,10 +14812,10 @@
           banner.style.color = '#991B1B';
           banner.textContent = '❌ Sync Failed: ' + err.message;
         }
-        alert("iCal Sync Error: " + err.message);
+        alert("Booking.com iCal Sync Error: " + err.message);
       } finally {
         if (btn) {
-          btn.innerHTML = origText || '🔄 Sync All Channels Now';
+          btn.innerHTML = origText || '🔄 Sync Booking.com Now';
           btn.disabled = false;
         }
       }
@@ -14888,7 +14840,7 @@
         btn.textContent = origText;
         btn.classList.remove('copied');
       }, 2000);
-      showToast("📋 Calendar link copied! Paste into Airbnb or Booking.com.");
+      showToast("📋 Calendar link copied! Paste into Booking.com Extranet → Sync Calendars.");
     }
 
     function fallbackCopy(text, btn) {
