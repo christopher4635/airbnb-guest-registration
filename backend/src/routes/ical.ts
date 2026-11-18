@@ -43,6 +43,20 @@ function escapeIcalText(val: string): string {
     .replace(/\r?\n/g, '\\n');
 }
 
+function foldIcalLine(line: string): string {
+  // RFC 5545 Section 3.1: lines should be folded at <= 75 characters
+  if (line.length <= 74) return line;
+  const parts: string[] = [];
+  let remaining = line;
+  parts.push(remaining.slice(0, 74));
+  remaining = remaining.slice(74);
+  while (remaining.length > 0) {
+    parts.push(' ' + remaining.slice(0, 73));
+    remaining = remaining.slice(73);
+  }
+  return parts.join('\r\n');
+}
+
 function parseIcsDate(rawVal: string): string | null {
   if (!rawVal) return null;
   const val = rawVal.split(':').pop() || rawVal;
@@ -219,12 +233,27 @@ async function recordSyncLog(
  * - Personal Read-Only (?scope=all on all.ics):
  *   Export ALL active bookings across all channels.
  */
-icalRoute.get('/export/:property', async (c) => {
+async function generateOutboundIcsResponse(
+  c: any,
+  rawProp: string,
+  targetOverride?: string | null
+) {
   try {
-    const rawProp = c.req.param('property');
-    const cleanProp = decodeURIComponent(rawProp.replace(/\.ics$/i, '')).trim();
-    const target = (c.req.query('target') || c.req.query('channel') || '').toLowerCase().trim();
+    const cleanParam = decodeURIComponent(rawProp.replace(/\.ics$/i, '')).trim();
+    const target = (targetOverride || c.req.query('target') || c.req.query('channel') || '').toLowerCase().trim();
     const scope = (c.req.query('scope') || '').toLowerCase().trim();
+
+    // Resolve either room ID (e.g. prop_1793346773822_um49) OR room Name (e.g. Luna (Studio Room))
+    let cleanProp = cleanParam;
+    if (cleanParam.toLowerCase() !== 'all') {
+      const propMatch: any = await c.env.DB.prepare(`
+        SELECT name FROM properties WHERE id = ? OR LOWER(name) = LOWER(?) LIMIT 1
+      `).bind(cleanParam, cleanParam).first();
+      if (propMatch && propMatch.name) {
+        cleanProp = propMatch.name;
+      }
+    }
+
     const includeAllForPersonalReadOnly = (scope === 'all' && !target && cleanProp.toLowerCase() === 'all');
 
     let query = `SELECT * FROM bookings WHERE status != 'Cancelled'`;
@@ -334,7 +363,7 @@ icalRoute.get('/export/:property', async (c) => {
     }
 
     icsLines.push('END:VCALENDAR');
-    const finalIcs = icsLines.join('\r\n') + '\r\n';
+    const finalIcs = icsLines.map(foldIcalLine).join('\r\n') + '\r\n';
 
     return new Response(finalIcs, {
       status: 200,
@@ -351,7 +380,12 @@ icalRoute.get('/export/:property', async (c) => {
     console.error('[iCal Export] Error generating master outbound feed:', err);
     return c.text('Error generating calendar feed: ' + err.message, 500);
   }
-});
+}
+
+// Clean, zero-special-character, query-free OTA import URLs (maximum Airbnb & Booking.com compatibility)
+icalRoute.get('/airbnb/:property', async (c) => generateOutboundIcsResponse(c, c.req.param('property'), 'airbnb'));
+icalRoute.get('/bookingcom/:property', async (c) => generateOutboundIcsResponse(c, c.req.param('property'), 'bookingcom'));
+icalRoute.get('/export/:property', async (c) => generateOutboundIcsResponse(c, c.req.param('property'), null));
 
 // =============================================================================
 // 2. ROOM-WISE OTA MAPPINGS, FEEDS & MASTER SYNCHRONISATION DASHBOARD
@@ -392,8 +426,8 @@ icalRoute.get('/feeds', async (c) => {
         ...p,
         syncMode: 'master-hub-two-way',
         exportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics`,
-        airbnbExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=airbnb`,
-        bookingComExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=bookingcom`,
+        airbnbExportUrl: `${origin}/api/ical/airbnb/${encodeURIComponent(p.id)}.ics`,
+        bookingComExportUrl: `${origin}/api/ical/bookingcom/${encodeURIComponent(p.id)}.ics`,
         inboundWebhookAirbnb: `${origin}/api/sync/webhook/airbnb`,
         inboundWebhookBookingCom: `${origin}/api/sync/webhook/bookingcom`,
         airbnbSyncStatus: latestByPropSource[`${pLower}::airbnb`] || null,
@@ -575,8 +609,8 @@ icalRoute.get('/dashboard', async (c) => {
         const avail = await recalculateRoomAvailability(c.env.DB, p.name);
         return {
           ...p,
-          airbnbExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=airbnb`,
-          bookingComExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.name)}.ics?target=bookingcom`,
+          airbnbExportUrl: `${origin}/api/ical/airbnb/${encodeURIComponent(p.id)}.ics`,
+          bookingComExportUrl: `${origin}/api/ical/bookingcom/${encodeURIComponent(p.id)}.ics`,
           airbnbSyncStatus: latestByPropSource[`${pLower}::airbnb`] || null,
           bookingComSyncStatus: latestByPropSource[`${pLower}::booking.com`] || null,
           availability: {
