@@ -4634,105 +4634,121 @@
       }
     }
 
-    /* Room Housekeeping & Readiness Strip (Post-Checkout Cleaning Workflow) */
-    .pms-hk-strip {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 18px;
-      background: #FAFBFD;
-      border-bottom: 1px solid #E2E8F0;
-      flex-wrap: wrap;
+    /* Room Status Hover Popover on Daily Operations (Zero UI Clutter) */
+    .pms-ops-hover-anchor {
+      position: relative;
     }
 
-    .pms-hk-strip-label {
+    .pms-ops-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 270px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.06);
+      z-index: 150;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .pms-ops-hover-anchor.is-left-align .pms-ops-popover {
+      right: auto;
+      left: 0;
+    }
+
+    .pms-ops-hover-anchor::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      height: 10px;
+    }
+
+    .pms-ops-hover-anchor:hover .pms-ops-popover,
+    .pms-ops-popover:hover {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .pms-ops-pop-head {
       font-size: 10.5px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.45px;
       color: #64748B;
+      padding-bottom: 7px;
+      margin-bottom: 7px;
+      border-bottom: 1px solid #F1F5F9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pms-ops-pop-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pms-ops-pop-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      padding: 3px 2px;
+    }
+
+    .pms-ops-pop-room {
+      font-weight: 700;
+      color: #0F172A;
+      white-space: nowrap;
+    }
+
+    .pms-ops-pop-right {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .pms-ops-pop-status {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      margin-right: 4px;
-      white-space: nowrap;
+      font-size: 11.5px;
+      font-weight: 700;
     }
+    .pms-ops-pop-status.is-available { color: #047857; }
+    .pms-ops-pop-status.is-occupied { color: #4338CA; }
+    .pms-ops-pop-status.is-needs-cleaning { color: #B45309; }
+    .pms-ops-pop-status.is-cleaning { color: #1D4ED8; }
 
-    .pms-hk-rooms-grid {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-      flex: 1;
-    }
-
-    .pms-hk-room-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-radius: 9px;
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
-      font-size: 12px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .pms-hk-room-chip.is-needs-cleaning {
-      border-color: #FCD34D;
-      background: #FFFBEB;
-    }
-
-    .pms-hk-room-chip.is-cleaning {
-      border-color: #93C5FD;
-      background: #EFF6FF;
-    }
-
-    .pms-hk-room-chip.is-available {
-      border-color: #A7F3D0;
-      background: #ECFDF5;
-    }
-
-    .pms-hk-room-chip.is-due-out {
-      border-color: #FECDD3;
-      background: #FFF1F2;
-    }
-
-    .pms-hk-dot {
-      width: 8px;
-      height: 8px;
+    .pms-ops-pop-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .pms-hk-dot.is-needs-cleaning { background: #F59E0B; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22); }
-    .pms-hk-dot.is-cleaning { background: #3B82F6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22); }
-    .pms-hk-dot.is-available { background: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
-    .pms-hk-dot.is-due-out { background: #F43F5E; box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2); }
-    .pms-hk-dot.is-occupied { background: #6366F1; }
-
-    .pms-hk-room-name {
-      font-weight: 800;
-      color: #0F172A;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    .pms-hk-room-status {
-      font-size: 11px;
-      font-weight: 700;
-      color: #475569;
-      white-space: nowrap;
-    }
-    .pms-hk-room-chip.is-needs-cleaning .pms-hk-room-status { color: #B45309; }
-    .pms-hk-room-chip.is-cleaning .pms-hk-room-status { color: #1D4ED8; }
-    .pms-hk-room-chip.is-available .pms-hk-room-status { color: #047857; }
-    .pms-hk-room-chip.is-due-out .pms-hk-room-status { color: #BE123C; }
+    .pms-ops-pop-dot.is-available { background: #10B981; }
+    .pms-ops-pop-dot.is-occupied { background: #6366F1; }
+    .pms-ops-pop-dot.is-needs-cleaning { background: #F59E0B; }
+    .pms-ops-pop-dot.is-cleaning { background: #3B82F6; }
 
     .pms-hk-quick-btn {
-      padding: 2.5px 8px;
-      border-radius: 6px;
-      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 10px;
       font-weight: 700;
       border: 1px solid #CBD5E1;
       background: #FFFFFF;
@@ -4802,6 +4818,20 @@
       color: #047857;
       border-color: #10B981;
       box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25);
+    }
+
+    .sm-turnover-box {
+      overflow: visible !important;
+    }
+    .sm-turnover-head {
+      border-radius: 14px 14px 0 0;
+    }
+    .sm-turnover-box.sm-turnover-collapsed .sm-turnover-head {
+      border-radius: 14px;
+    }
+    .sm-turnovers-split-grid {
+      border-radius: 0 0 14px 14px;
+      overflow: hidden;
     }
 
   </style>
@@ -10401,6 +10431,81 @@
         }
       });
 
+      // Compute calendar-accurate Room Status for Hover Popover on Daily Operations
+      let needsCleaningCount = 0;
+      let inCleaningCount = 0;
+      const roomStatusPopoverRowsHtml = visibleProps.map(prop => {
+        const outBk = outBookings.find(b => matchesProperty(b.property, prop));
+        const tonightBk = currentBookings.find(b =>
+          b.status !== 'Cancelled' && b.status !== 'Blocked' && b.platform !== 'Blocked' &&
+          matchesProperty(b.property, prop) &&
+          ((b.checkInDate <= activeTurnoverDate && b.checkOutDate > activeTurnoverDate) ||
+           (b.checkInDate === activeTurnoverDate && b.checkOutDate === activeTurnoverDate))
+        );
+        const isOccupiedTonight = tonightBk && (
+          tonightBk.checkInDate < activeTurnoverDate ||
+          isSameRoomContinuationCheckIn(tonightBk, currentBookings) ||
+          tonightBk.status === 'Checked In' ||
+          tonightBk.turnoverStatus === 'checked_in'
+        );
+
+        let statusClass = 'is-available';
+        let statusText = 'Available';
+        let actionBtnHtml = '';
+
+        if (isOccupiedTonight) {
+          statusClass = 'is-occupied';
+          statusText = 'Occupied';
+        } else if (outBk && !isBookingCheckedOut(outBk)) {
+          statusClass = 'is-occupied';
+          statusText = 'Occupied';
+        } else if (outBk && isBookingCheckedOut(outBk)) {
+          const hk = getCheckoutHousekeepingStatus(outBk);
+          if (hk === 'needs_cleaning') {
+            needsCleaningCount++;
+            statusClass = 'is-needs-cleaning';
+            statusText = 'Needs Cleaning';
+            actionBtnHtml = `<button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="event.stopPropagation(); setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and available">✓ Clean</button>`;
+          } else if (hk === 'cleaning') {
+            inCleaningCount++;
+            statusClass = 'is-cleaning';
+            statusText = 'Cleaning';
+            actionBtnHtml = `<button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="event.stopPropagation(); setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and available">✓ Available</button>`;
+          } else {
+            statusClass = 'is-available';
+            statusText = 'Available';
+          }
+        } else if (tonightBk && tonightBk.turnoverStatus === 'cleaning') {
+          inCleaningCount++;
+          statusClass = 'is-cleaning';
+          statusText = 'Cleaning';
+          actionBtnHtml = `<button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="event.stopPropagation(); setRoomTurnoverStatus('${tonightBk.id}', 'ready')" title="Mark ready">✓ Ready</button>`;
+        }
+
+        return `
+          <div class="pms-ops-pop-row">
+            <span class="pms-ops-pop-room">${escapeHtml(prop)}:</span>
+            <span class="pms-ops-pop-right">
+              <span class="pms-ops-pop-status ${statusClass}">
+                <span class="pms-ops-pop-dot ${statusClass}"></span>
+                <span>${statusText}</span>
+              </span>
+              ${actionBtnHtml}
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      const roomStatusPopoverHtml = `
+        <div class="pms-ops-pop-head">
+          <span>Room Status</span>
+          <span>${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
+        </div>
+        <div class="pms-ops-pop-list">
+          ${roomStatusPopoverRowsHtml}
+        </div>
+      `;
+
       // 2. Clean 4-Card Executive KPI Strip
       const shortMonthName = monthNames[currentCalMonth].slice(0, 3);
       statsEl.innerHTML = `
@@ -10447,7 +10552,7 @@
           </div>
         </div>
 
-        <div class="pms-kpi-card is-interactive" onclick="toggleTurnoversCollapse(false); document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });" title="Jump to Daily Operations">
+        <div class="pms-kpi-card is-interactive pms-ops-hover-anchor" onclick="toggleTurnoversCollapse(false); document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });" title="Hover for Room Status · Click to open Daily Operations">
           <div class="pms-kpi-top">
             <span class="pms-kpi-label"><i data-lucide="bell" style="color:#64748B;"></i> Daily Operations</span>
             <span class="pms-kpi-badge ${totalToCollect > 0 ? 'is-amber' : 'is-green'}">${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
@@ -10460,7 +10565,10 @@
           </div>
           <div class="pms-kpi-foot">
             <span>Checkout Due: <strong style="color:${totalToCollect > 0 ? '#B91C1C' : '#047857'}; font-family:'JetBrains Mono', monospace;">₹${formatCurrency(totalToCollect)}</strong></span>
-            <span style="color:#4F46E5; font-weight:700;">View &rarr;</span>
+            <span style="color:#4F46E5; font-weight:700;">Room Status ▾</span>
+          </div>
+          <div class="pms-ops-popover" onclick="event.stopPropagation();">
+            ${roomStatusPopoverHtml}
           </div>
         </div>
       `;
@@ -10758,145 +10866,6 @@
           `;
         }
 
-        // Compute Live Room Readiness & Housekeeping Strip across all visible properties
-        let needsCleaningCount = 0;
-        let inCleaningCount = 0;
-        const roomReadinessChipsHtml = visibleProps.map(prop => {
-          const outBk = outBookings.find(b => matchesProperty(b.property, prop));
-          const inBk = inBookings.find(b => matchesProperty(b.property, prop));
-          const stayingBk = currentBookings.find(b =>
-            b.status !== 'Cancelled' && b.status !== 'Blocked' && b.platform !== 'Blocked' &&
-            matchesProperty(b.property, prop) &&
-            b.checkInDate < activeTurnoverDate && b.checkOutDate > activeTurnoverDate
-          );
-
-          // 1. Departing guest checked out today -> Track post-checkout cleaning -> Available for Check-in
-          if (outBk && isBookingCheckedOut(outBk)) {
-            if (inBk && (inBk.turnoverStatus === 'checked_in' || inBk.status === 'Checked In')) {
-              const firstName = (inBk.guestName || 'Guest').split(' ')[0];
-              return `
-                <div class="pms-hk-room-chip">
-                  <span class="pms-hk-dot is-occupied"></span>
-                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                  <span class="pms-hk-room-status">Occupied · ${escapeHtml(firstName)}</span>
-                </div>
-              `;
-            }
-
-            const hk = getCheckoutHousekeepingStatus(outBk);
-            if (hk === 'needs_cleaning') {
-              needsCleaningCount++;
-              return `
-                <div class="pms-hk-room-chip is-needs-cleaning">
-                  <span class="pms-hk-dot is-needs-cleaning"></span>
-                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                  <span class="pms-hk-room-status">Needs Cleaning</span>
-                  <button type="button" class="pms-hk-quick-btn" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'cleaning')" title="Start housekeeping">🧹 Start</button>
-                  <button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and ready for check-in">✓ Clean</button>
-                </div>
-              `;
-            }
-            if (hk === 'cleaning') {
-              inCleaningCount++;
-              return `
-                <div class="pms-hk-room-chip is-cleaning">
-                  <span class="pms-hk-dot is-cleaning"></span>
-                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                  <span class="pms-hk-room-status">In Cleaning</span>
-                  <button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and available for check-in">✓ Mark Available</button>
-                </div>
-              `;
-            }
-            return `
-              <div class="pms-hk-room-chip is-available">
-                <span class="pms-hk-dot is-available"></span>
-                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                <span class="pms-hk-room-status">Available for Check-in</span>
-                <button type="button" class="pms-hk-quick-btn" onclick="setCheckoutHousekeepingStatus('${outBk.id}', 'needs_cleaning')" title="Mark room as needing cleaning again">↺</button>
-              </div>
-            `;
-          }
-
-          // 2. Departing guest NOT yet checked out
-          if (outBk) {
-            const outTime = getBookingCheckoutTime(outBk);
-            return `
-              <div class="pms-hk-room-chip is-due-out">
-                <span class="pms-hk-dot is-due-out"></span>
-                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                <span class="pms-hk-room-status">Due Checkout (${escapeHtml(outTime)})</span>
-                <button type="button" class="pms-hk-quick-btn" onclick="toggleCheckoutCompleted('${outBk.id}')" title="Mark guest checked out">Check Out</button>
-              </div>
-            `;
-          }
-
-          // 3. Continuing in-house guest (no checkout today)
-          if (stayingBk) {
-            const firstName = (stayingBk.guestName || 'Guest').split(' ')[0];
-            return `
-              <div class="pms-hk-room-chip">
-                <span class="pms-hk-dot is-occupied"></span>
-                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                <span class="pms-hk-room-status">Occupied · ${escapeHtml(firstName)}</span>
-              </div>
-            `;
-          }
-
-          // 4. Arrival scheduled today (room already vacant)
-          if (inBk) {
-            const isCheckedIn = (inBk.turnoverStatus === 'checked_in' || inBk.status === 'Checked In');
-            const firstName = (inBk.guestName || 'Guest').split(' ')[0];
-            if (isCheckedIn) {
-              return `
-                <div class="pms-hk-room-chip">
-                  <span class="pms-hk-dot is-occupied"></span>
-                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                  <span class="pms-hk-room-status">Occupied · ${escapeHtml(firstName)}</span>
-                </div>
-              `;
-            }
-            if (inBk.turnoverStatus === 'cleaning') {
-              inCleaningCount++;
-              return `
-                <div class="pms-hk-room-chip is-cleaning">
-                  <span class="pms-hk-dot is-cleaning"></span>
-                  <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                  <span class="pms-hk-room-status">In Cleaning</span>
-                  <button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="setRoomTurnoverStatus('${inBk.id}', 'ready')">✓ Mark Ready</button>
-                </div>
-              `;
-            }
-            return `
-              <div class="pms-hk-room-chip is-available">
-                <span class="pms-hk-dot is-available"></span>
-                <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-                <span class="pms-hk-room-status">Available · Arrival ${escapeHtml(getBookingArrivalTime(inBk))}</span>
-              </div>
-            `;
-          }
-
-          // 5. Vacant & Available for Check-in
-          return `
-            <div class="pms-hk-room-chip is-available">
-              <span class="pms-hk-dot is-available"></span>
-              <span class="pms-hk-room-name">${escapeHtml(prop)}</span>
-              <span class="pms-hk-room-status">Available for Check-in</span>
-            </div>
-          `;
-        }).join('');
-
-        const roomStatusStripHtml = `
-          <div class="pms-hk-strip">
-            <span class="pms-hk-strip-label">
-              <i data-lucide="sparkles" style="color:#4F46E5;"></i>
-              <span>Room Status</span>
-            </span>
-            <div class="pms-hk-rooms-grid">
-              ${roomReadinessChipsHtml}
-            </div>
-          </div>
-        `;
-
         const hkSummaryBadges = `
           ${needsCleaningCount > 0 ? `<span class="pms-kpi-badge is-amber">🧹 ${needsCleaningCount} Needs Cleaning</span>` : ''}
           ${inCleaningCount > 0 ? `<span class="pms-kpi-badge is-indigo">🧼 ${inCleaningCount} Cleaning</span>` : ''}
@@ -10905,9 +10874,9 @@
         if (isTurnoversCollapsed) {
           turnoversEl.innerHTML = `
             <div class="sm-turnover-box sm-turnover-collapsed">
-              <div class="sm-turnover-head" style="${(needsCleaningCount > 0 || inCleaningCount > 0) ? 'border-bottom: 1px solid #F1F5F9;' : ''}">
-                <div class="sm-turnover-head-left">
-                  <div class="sm-turnover-title">
+              <div class="sm-turnover-head">
+                <div class="sm-turnover-head-left pms-ops-hover-anchor is-left-align">
+                  <div class="sm-turnover-title" style="cursor: pointer;">
                     <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
                     <span>Daily Operations</span>
                     <span class="sm-pill-in">${checkInsCount} Arrival${checkInsCount === 1 ? '' : 's'}</span>
@@ -10915,6 +10884,9 @@
                     ${roomTransfersCount > 0 ? `<span class="sm-co-transfer-pill">🔄 ${roomTransfersCount} Transfer</span>` : ''}
                     ${hkSummaryBadges}
                     <span class="sm-turnover-sub" style="margin:0;">· ${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
+                  </div>
+                  <div class="pms-ops-popover" onclick="event.stopPropagation();">
+                    ${roomStatusPopoverHtml}
                   </div>
                 </div>
 
@@ -10928,15 +10900,14 @@
                   </button>
                 </div>
               </div>
-              ${(needsCleaningCount > 0 || inCleaningCount > 0) ? roomStatusStripHtml : ''}
             </div>
           `;
         } else {
           turnoversEl.innerHTML = `
             <div class="sm-turnover-box">
               <div class="sm-turnover-head">
-                <div class="sm-turnover-head-left">
-                  <div>
+                <div class="sm-turnover-head-left pms-ops-hover-anchor is-left-align">
+                  <div style="cursor: pointer;">
                     <div class="sm-turnover-title">
                       <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
                       <span>Daily Operations &amp; Turnovers</span>
@@ -10949,6 +10920,9 @@
                       Schedule for <strong>${activeTurnoverDate === todayIsoStr ? 'Today (' + todayIsoStr + ')' : activeTurnoverDate}</strong>
                       ${activeTurnoverDate !== todayIsoStr ? `<button type="button" onclick="setTurnoverDate(null)" class="sm-today-btn" style="padding: 1px 7px; font-size: 10px; margin-left: 6px; height: auto;">Reset to Today</button>` : ''}
                     </div>
+                  </div>
+                  <div class="pms-ops-popover" onclick="event.stopPropagation();">
+                    ${roomStatusPopoverHtml}
                   </div>
                 </div>
 
@@ -10965,9 +10939,6 @@
                   </button>
                 </div>
               </div>
-
-              <!-- Live Room Status & Housekeeping Readiness Strip -->
-              ${roomStatusStripHtml}
 
               <!-- 50:50 Split Grid: Left Arrivals | Right Departures -->
               <div class="sm-turnovers-split-grid">
