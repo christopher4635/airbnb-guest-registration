@@ -7869,6 +7869,31 @@
       };
     }
 
+    // Check if a booking's check-in is simply a SAME-ROOM continuation of an immediately preceding leg
+    // (e.g. Airbnb leg 17-18 in 2 BHK -> Direct leg 18-20 in 2 BHK: guest already checked in, no room change)
+    function isSameRoomContinuationCheckIn(booking, allBookings) {
+      if (!booking) return false;
+      const split = getSplitStayInfo(booking, allBookings || currentBookings);
+      if (!split || !split.isSplit || !Array.isArray(split.legs)) return false;
+      return split.legs.some(prev =>
+        prev.id !== booking.id &&
+        prev.checkOutDate === booking.checkInDate &&
+        matchesProperty(prev.property, booking.property)
+      );
+    }
+
+    // Check if a booking's check-out is simply a SAME-ROOM continuation into an immediately following leg
+    function isSameRoomContinuationCheckOut(booking, allBookings) {
+      if (!booking) return false;
+      const split = getSplitStayInfo(booking, allBookings || currentBookings);
+      if (!split || !split.isSplit || !Array.isArray(split.legs)) return false;
+      return split.legs.some(next =>
+        next.id !== booking.id &&
+        next.checkInDate === booking.checkOutDate &&
+        matchesProperty(next.property, booking.property)
+      );
+    }
+
     // Manual Checkout Collection Handlers (Changeable / Corrected Manually by Host)
     async function saveManualCollectionAmount(bookingId, newAmount) {
       const b = currentBookings.find(x => x.id === bookingId);
@@ -9886,12 +9911,19 @@
     function toggleTurnoversCollapse(forceState) {
       const todayIsoStr = new Date().toISOString().slice(0, 10);
       const activeTurnoverDate = turnoverSelectedDate || todayIsoStr;
+      const inBookings = currentBookings.filter(b => {
+        if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
+        if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
+        if (b.checkInDate !== activeTurnoverDate) return false;
+        return !isSameRoomContinuationCheckIn(b, currentBookings);
+      });
       const outBookings = currentBookings.filter(b => {
         if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
         if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
-        return b.checkOutDate === activeTurnoverDate;
+        if (b.checkOutDate !== activeTurnoverDate) return false;
+        return !isSameRoomContinuationCheckOut(b, currentBookings);
       });
-      const defaultCollapsed = (outBookings.length === 0);
+      const defaultCollapsed = (outBookings.length === 0 && inBookings.length === 0);
       const curr = (localStorage.getItem('turnovers_collapsed') !== null ? (localStorage.getItem('turnovers_collapsed') === 'true') : defaultCollapsed);
       const nextState = (typeof forceState === 'boolean') ? forceState : !curr;
       try {
@@ -10064,13 +10096,17 @@
       const inBookings = currentBookings.filter(b => {
         if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
         if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
-        return b.checkInDate === activeTurnoverDate;
+        if (b.checkInDate !== activeTurnoverDate) return false;
+        // Hide mid-stay same-room continuations (e.g. Airbnb -> Offline in the exact same room)
+        return !isSameRoomContinuationCheckIn(b, currentBookings);
       });
 
       const outBookings = currentBookings.filter(b => {
         if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
         if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
-        return b.checkOutDate === activeTurnoverDate;
+        if (b.checkOutDate !== activeTurnoverDate) return false;
+        // Hide mid-stay same-room continuations (only show actual checkouts or room-change transfers)
+        return !isSameRoomContinuationCheckOut(b, currentBookings);
       });
 
       const checkInsCount = inBookings.length;
@@ -10167,7 +10203,8 @@
           upcomingCheckouts = currentBookings.filter(b => {
             if (b.status === 'Cancelled' || b.status === 'Blocked' || b.platform === 'Blocked') return false;
             if (selectedPropFilter !== 'ALL' && !matchesProperty(b.property, selectedPropFilter)) return false;
-            return next7Days.includes(b.checkOutDate);
+            if (!next7Days.includes(b.checkOutDate)) return false;
+            return !isSameRoomContinuationCheckOut(b, currentBookings);
           }).sort((a, b) => a.checkOutDate.localeCompare(b.checkOutDate));
         }
 
@@ -10208,7 +10245,7 @@
           const split = getSplitStayInfo(bk, currentBookings);
           let transferNotice = '';
           if (split.isSplit) {
-            const prevLeg = split.legs.find(l => l.checkOutDate === bk.checkInDate && l.id !== bk.id);
+            const prevLeg = split.legs.find(l => l.checkOutDate === bk.checkInDate && l.id !== bk.id && !matchesProperty(l.property, bk.property));
             if (prevLeg) {
               transferNotice = `<span class="sm-co-transfer-pill" style="font-size: 10px;">🔄 From ${escapeHtml(prevLeg.property)}</span>`;
             }
@@ -10330,7 +10367,13 @@
 
           // Case B: Final Leg of Split Stay
           if (split.isSplit && split.isFinal) {
-            const chainProps = split.legs.map(l => l.property).join(' → ');
+            const uniqueProps = [];
+            split.legs.forEach(l => {
+              if (!uniqueProps.some(up => matchesProperty(up, l.property))) uniqueProps.push(l.property);
+            });
+            const splitBadgeLabel = uniqueProps.length > 1
+              ? uniqueProps.join(' → ')
+              : `Continuous Stay (${split.totalNights}n)`;
             const dueAmt = split.combinedBalance;
             const isSettled = (dueAmt === 0 && split.totalAmount > 0);
 
@@ -10340,7 +10383,7 @@
                   <div class="sm-co-guest-name">
                     <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
                     <strong>${escapeHtml(bk.guestName)}</strong>
-                    <span class="sm-co-split-tag">🔄 ${escapeHtml(chainProps)}</span>
+                    <span class="sm-co-split-tag">🔄 ${escapeHtml(splitBadgeLabel)}</span>
                     <span class="sm-co-platform-pill ${platClass}">${escapeHtml(bk.platform || 'Direct')}</span>
                   </div>
                   <div class="sm-co-actions">
