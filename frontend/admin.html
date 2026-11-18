@@ -4292,6 +4292,66 @@
       border-color: #0F172A;
     }
 
+    /* Departures / Checkouts Foreground "CHECKED OUT" Rubber Stamp Overlay */
+    .sm-turnover-row.is-checked-out-stamped {
+      position: relative;
+      overflow: hidden;
+      background: #F8FAFC;
+      border-color: #CBD5E1;
+    }
+
+    .sm-turnover-row.is-checked-out-stamped > .sm-turnover-row-main,
+    .sm-turnover-row.is-checked-out-stamped > .sm-turnover-row-footer {
+      opacity: 0.36;
+      filter: grayscale(0.28);
+      transition: opacity 0.2s ease, filter 0.2s ease;
+    }
+
+    .sm-turnover-row.is-checked-out-stamped:hover > .sm-turnover-row-main,
+    .sm-turnover-row.is-checked-out-stamped:hover > .sm-turnover-row-footer {
+      opacity: 0.78;
+      filter: grayscale(0);
+    }
+
+    .pms-checkout-stamp {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .pms-checkout-stamp-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 18px;
+      border: 2.5px solid #059669;
+      border-radius: 7px;
+      background: rgba(236, 253, 245, 0.92);
+      color: #047857;
+      font-size: 13.5px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      transform: rotate(-6deg);
+      box-shadow: 0 6px 16px rgba(5, 150, 105, 0.18), inset 0 0 0 2px rgba(5, 150, 105, 0.16);
+      backdrop-filter: blur(1.5px);
+      animation: pmsStampPop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+      transition: opacity 0.2s ease;
+    }
+
+    .sm-turnover-row.is-checked-out-stamped:hover .pms-checkout-stamp-label {
+      opacity: 0.32;
+    }
+
+    @keyframes pmsStampPop {
+      0% { transform: scale(1.38) rotate(-10deg); opacity: 0; }
+      100% { transform: scale(1) rotate(-6deg); opacity: 1; }
+    }
+
     /* 4. Unified Calendar & Reservations Workspace Card */
     .pms-workspace-card {
       background: #FFFFFF;
@@ -10807,7 +10867,12 @@
           }
 
           return `
-            <div class="sm-turnover-row ${isIntermediateTransfer ? 'is-room-transfer' : ''}">
+            <div class="sm-turnover-row ${isIntermediateTransfer ? 'is-room-transfer' : ''} ${isCheckedOutNow ? 'is-checked-out-stamped' : ''}">
+              ${isCheckedOutNow ? `
+                <div class="pms-checkout-stamp" aria-label="Checked Out">
+                  <span class="pms-checkout-stamp-label">✔ CHECKED OUT</span>
+                </div>
+              ` : ''}
               <div class="sm-turnover-row-main">
                 <div class="sm-co-guest-name">
                   <span class="sm-co-prop-pill">${escapeHtml(bk.property)}</span>
