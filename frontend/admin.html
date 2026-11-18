@@ -10654,13 +10654,39 @@
         </button>
       `;
 
-      // Button 4: Checked-In
+      // Button 4: Checked-In -> Hide all turnover/checked-in buttons (already shown next to arrival time)
+      // and instead display customer details (phone number) + Request ID / View ID action!
       const isCheckedInActive = (currentStatus === 'checked_in' || bk.status === 'Checked In');
       if (isCheckedInActive) {
+        const cleanPhone = (bk.phone || '').replace(/[^0-9]/g, '');
+        const idDocsCount = (typeof getBookingIdDocuments === 'function') ? getBookingIdDocuments(bk).length : 0;
+
+        const phoneHtml = bk.phone
+          ? `<a href="tel:${escapeHtml(bk.phone)}" style="display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; color:#0F172A; text-decoration:none; background:#F8FAFC; border:1px solid #E2E8F0; padding:3px 9px; border-radius:6px;" title="Call ${escapeHtml(bk.guestName)}">📞 ${escapeHtml(bk.phone)}</a>`
+          : `<button type="button" onclick="openEditBookingModal('${bk.id}')" style="display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600; color:#64748B; background:#F8FAFC; border:1px dashed #CBD5E1; padding:3px 9px; border-radius:6px; cursor:pointer;" title="Add guest phone number">📞 + Add Phone</button>`;
+
+        const waHtml = cleanPhone.length >= 10
+          ? `<a href="https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}" target="_blank" style="display:inline-flex; align-items:center; gap:3px; font-size:11.5px; font-weight:600; color:#047857; text-decoration:none; background:#ECFDF5; border:1px solid #A7F3D0; padding:3px 8px; border-radius:6px;" title="Message ${escapeHtml(bk.guestName)} on WhatsApp">💬</a>`
+          : '';
+
+        const idActionHtml = idDocsCount > 0
+          ? `<button type="button" onclick="openBookingIdsQuickModal('${bk.id}')" style="display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#0369A1; background:#E0F2FE; border:1px solid #7DD3FC; padding:3px 10px; border-radius:6px; cursor:pointer;" title="View uploaded Guest ID(s)">🪪 View ID (${idDocsCount})</button>`
+          : `<button type="button" onclick="requestGuestIdForBooking('${bk.id}')" style="display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:#B45309; background:#FEF3C7; border:1px solid #F59E0B; padding:3px 10px; border-radius:6px; cursor:pointer;" title="Send Guest ID upload link via WhatsApp">📲 Request ID</button>
+             <button type="button" onclick="copyGuestIdLinkForBooking('${bk.id}')" style="display:inline-flex; align-items:center; font-size:11px; font-weight:600; color:#475569; background:#F8FAFC; border:1px solid #CBD5E1; padding:3px 7px; border-radius:6px; cursor:pointer;" title="Copy Guest ID form link">📋</button>`;
+
+        const undoHtml = `<button type="button" onclick="setRoomTurnoverStatus('${bk.id}', 'ready')" style="font-size:10.5px; font-weight:600; color:#94A3B8; background:transparent; border:none; padding:2px 4px; cursor:pointer;" title="Undo Check-In">↺</button>`;
+
         return `
-          <button type="button" class="sm-status-btn is-checked-in active" onclick="setRoomTurnoverStatus('${bk.id}', 'ready')" title="Guest is checked in (click to undo check-in)">
-            🚪 Checked-In
-          </button>
+          <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              ${phoneHtml}
+              ${waHtml}
+            </div>
+            <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+              ${idActionHtml}
+              ${undoHtml}
+            </div>
+          </div>
         `;
       }
 
@@ -11181,9 +11207,9 @@
                     ${escapeHtml(bk.guestName)}
                   </button>
                   ${transferNotice}
-                  ${bk.phone ? `<a href="tel:${bk.phone}" class="pms-icon-link" title="Call ${escapeHtml(bk.phone)}">📞</a>` : ''}
-                  ${cleanPhone.length >= 10 ? `<a href="https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}" target="_blank" class="pms-icon-link" title="WhatsApp ${escapeHtml(bk.guestName)}">💬</a>` : ''}
-                  ${idDocsCount > 0 ? `<button type="button" class="pms-icon-link" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${idDocsCount} uploaded Guest ID(s)" style="background:#F0F9FF; border-color:#BAE6FD;">🪪</button>` : ''}
+                  ${!isCheckedIn && bk.phone ? `<a href="tel:${bk.phone}" class="pms-icon-link" title="Call ${escapeHtml(bk.phone)}">📞</a>` : ''}
+                  ${!isCheckedIn && cleanPhone.length >= 10 ? `<a href="https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}" target="_blank" class="pms-icon-link" title="WhatsApp ${escapeHtml(bk.guestName)}">💬</a>` : ''}
+                  ${!isCheckedIn && idDocsCount > 0 ? `<button type="button" class="pms-icon-link" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${idDocsCount} uploaded Guest ID(s)" style="background:#F0F9FF; border-color:#BAE6FD;">🪪</button>` : ''}
                 </div>
                 <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                   <button type="button" class="sm-time-pill-btn" onclick="openQuickTimeModal('${bk.id}', 'checkin')" title="Adjust arrival time (Standard: 2:00 PM)">
@@ -11194,7 +11220,7 @@
               </div>
 
               <div class="sm-turnover-row-footer">
-                <div class="sm-turnover-status-group">
+                <div class="sm-turnover-status-group" style="${isCheckedIn ? 'width: 100%;' : ''}">
                   ${renderTurnoverStatusButtons(bk, outBookings)}
                 </div>
               </div>
@@ -13191,13 +13217,13 @@
     function getBookingGuestFormUrl(customBooking = null) {
       const b = customBooking || (editingBookingId ? currentBookings.find(x => x && x.id === editingBookingId) : null);
 
-      const name = (document.getElementById('mb-guest-name')?.value || b?.guestName || '').trim();
-      const code = (document.getElementById('mb-res-code')?.value || b?.reservationCode || (b ? b.id : '') || editingBookingId || '').trim();
-      let checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
-      let checkout = (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '').trim();
-      const phone = (document.getElementById('mb-phone')?.value || b?.phone || '').trim();
-      const email = (document.getElementById('mb-email')?.value || b?.email || '').trim();
-      let guests = (document.getElementById('mb-guests-count')?.value || b?.guestsCount || '1').toString().trim();
+      const name = (customBooking ? (customBooking.guestName || '') : (document.getElementById('mb-guest-name')?.value || b?.guestName || '')).trim();
+      const code = (customBooking ? (customBooking.reservationCode || customBooking.id || '') : (document.getElementById('mb-res-code')?.value || b?.reservationCode || (b ? b.id : '') || editingBookingId || '')).trim();
+      let checkin = (customBooking ? (customBooking.checkInDate || '') : (document.getElementById('mb-checkin')?.value || b?.checkInDate || '')).trim();
+      let checkout = (customBooking ? (customBooking.checkOutDate || '') : (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '')).trim();
+      const phone = (customBooking ? (customBooking.phone || '') : (document.getElementById('mb-phone')?.value || b?.phone || '')).trim();
+      const email = (customBooking ? (customBooking.email || '') : (document.getElementById('mb-email')?.value || b?.email || '')).trim();
+      let guests = (customBooking ? (customBooking.guestsCount || '1') : (document.getElementById('mb-guests-count')?.value || b?.guestsCount || '1')).toString().trim();
 
       // Resolve continuous / split stay dates across all linked legs
       if (typeof getSplitStayInfo === 'function') {
@@ -13267,10 +13293,10 @@
     function sendGuestIdWhatsApp(customBooking = null) {
       const b = customBooking || (editingBookingId ? currentBookings.find(x => x && x.id === editingBookingId) : null);
       const url = getBookingGuestFormUrl(b);
-      const guestName = (document.getElementById('mb-guest-name')?.value || b?.guestName || 'Guest').trim();
-      let checkin = (document.getElementById('mb-checkin')?.value || b?.checkInDate || '').trim();
-      let checkout = (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '').trim();
-      let phone = (document.getElementById('mb-phone')?.value || b?.phone || '').replace(/[^0-9]/g, '');
+      const guestName = (customBooking ? (customBooking.guestName || 'Guest') : (document.getElementById('mb-guest-name')?.value || b?.guestName || 'Guest')).trim();
+      let checkin = (customBooking ? (customBooking.checkInDate || '') : (document.getElementById('mb-checkin')?.value || b?.checkInDate || '')).trim();
+      let checkout = (customBooking ? (customBooking.checkOutDate || '') : (document.getElementById('mb-checkout')?.value || b?.checkOutDate || '')).trim();
+      let phone = (customBooking ? (customBooking.phone || '') : (document.getElementById('mb-phone')?.value || b?.phone || '')).replace(/[^0-9]/g, '');
 
       // Resolve continuous / split stay dates across all linked legs
       if (typeof getSplitStayInfo === 'function') {
@@ -13304,6 +13330,25 @@
       const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
       window.open(waUrl, '_blank');
     }
+
+    window.requestGuestIdForBooking = function(bookingId) {
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+      sendGuestIdWhatsApp(b);
+    };
+
+    window.copyGuestIdLinkForBooking = function(bookingId) {
+      const b = currentBookings.find(x => x && x.id === bookingId);
+      if (!b) return;
+      const url = getBookingGuestFormUrl(b);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(url).then(() => {
+          if (typeof showToast === 'function') showToast(`📋 Guest ID link copied for ${b.guestName}!`);
+        }).catch(() => prompt('Copy Guest ID form link:', url));
+      } else {
+        prompt('Copy Guest ID form link:', url);
+      }
+    };
 
     function renderModalGuestIds() {
       const container = document.getElementById('mb-guest-ids-list');
