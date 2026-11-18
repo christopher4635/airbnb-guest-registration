@@ -405,31 +405,30 @@ export function getDashboardHtml(): string {
 
       </div>
 
-      <!-- Quick Legend Bar (shown on desktop for monthly view) -->
-      <div id="legendBar" class="hidden sm:flex items-center gap-3 sm:gap-6 text-xs text-slate-600 mb-3 px-1 flex-wrap">
-        <span class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Legend:</span>
-        <div class="flex items-center gap-1.5">
-          <span class="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-[10px] border border-emerald-300">P</span>
-          <span>Present (Default)</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="w-5 h-5 rounded-md bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-[10px] border border-rose-300">A</span>
-          <span>Absent</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="w-5 h-5 rounded-md bg-sky-100 text-sky-800 font-bold flex items-center justify-center text-[10px] border border-sky-300">DO</span>
-          <span>Day Off</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <span class="w-5 h-5 rounded-md bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-[10px] border border-amber-300">L</span>
-          <span>Leave (Deducts quota)</span>
-        </div>
-      </div>
-
       <!-- ===================================================================== -->
       <!-- VIEW 1: MONTHLY SHEET (Responsive Cards on Mobile, Table on Desktop) -->
       <!-- ===================================================================== -->
       <div id="monthlyViewSection" class="hidden flex-1 flex flex-col gap-3">
+        <!-- Quick Legend Bar (shown on desktop for monthly view only) -->
+        <div id="legendBar" class="hidden sm:flex items-center gap-3 sm:gap-6 text-xs text-slate-600 mb-1 px-1 flex-wrap">
+          <span class="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Legend:</span>
+          <div class="flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-[10px] border border-emerald-300">P</span>
+            <span>Present (Default)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-md bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-[10px] border border-rose-300">A</span>
+            <span>Absent</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-md bg-sky-100 text-sky-800 font-bold flex items-center justify-center text-[10px] border border-sky-300">DO</span>
+            <span>Day Off</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-md bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-[10px] border border-amber-300">L</span>
+            <span>Leave (Deducts quota)</span>
+          </div>
+        </div>
         
         <!-- Mobile Monthly Overview Section (Phone screens < md) -->
         <div id="monthlyMobileSection" class="md:hidden flex flex-col gap-3">
@@ -3805,7 +3804,10 @@ export function getDashboardHtml(): string {
 
       // Controls visibility
       document.getElementById("monthControlBar").classList.toggle("hidden", view === "directory" || view === "daily" || view === "finances");
-      document.getElementById("legendBar").classList.toggle("hidden", view !== "monthly");
+      const legendEl = document.getElementById("legendBar");
+      if (legendEl) {
+        legendEl.classList.toggle("sm:flex", view === "monthly");
+      }
       document.getElementById("btnMarkAllPresent").classList.toggle("hidden", view === "payroll" || view === "finances");
 
       renderActiveView();
