@@ -4731,6 +4731,7 @@
     }
     .pms-ops-pop-status.is-available { color: #047857; }
     .pms-ops-pop-status.is-occupied { color: #4338CA; }
+    .pms-ops-pop-status.is-checking-out { color: #E11D48; }
     .pms-ops-pop-status.is-needs-cleaning { color: #B45309; }
     .pms-ops-pop-status.is-cleaning { color: #1D4ED8; }
 
@@ -4742,6 +4743,7 @@
     }
     .pms-ops-pop-dot.is-available { background: #10B981; }
     .pms-ops-pop-dot.is-occupied { background: #6366F1; }
+    .pms-ops-pop-dot.is-checking-out { background: #F43F5E; }
     .pms-ops-pop-dot.is-needs-cleaning { background: #F59E0B; }
     .pms-ops-pop-dot.is-cleaning { background: #3B82F6; }
 
@@ -10457,29 +10459,18 @@
           statusClass = 'is-occupied';
           statusText = 'Occupied';
         } else if (outBk && !isBookingCheckedOut(outBk)) {
-          statusClass = 'is-occupied';
-          statusText = 'Occupied';
+          statusClass = 'is-checking-out';
+          statusText = 'Checking Out';
         } else if (outBk && isBookingCheckedOut(outBk)) {
           const hk = getCheckoutHousekeepingStatus(outBk);
-          if (hk === 'needs_cleaning') {
-            needsCleaningCount++;
-            statusClass = 'is-needs-cleaning';
-            statusText = 'Needs Cleaning';
-            actionBtnHtml = `<button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="event.stopPropagation(); setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and available">✓ Clean</button>`;
-          } else if (hk === 'cleaning') {
-            inCleaningCount++;
-            statusClass = 'is-cleaning';
-            statusText = 'Cleaning';
-            actionBtnHtml = `<button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="event.stopPropagation(); setCheckoutHousekeepingStatus('${outBk.id}', 'available')" title="Mark clean and available">✓ Available</button>`;
-          } else {
-            statusClass = 'is-available';
-            statusText = 'Available';
-          }
+          if (hk === 'needs_cleaning') needsCleaningCount++;
+          else if (hk === 'cleaning') inCleaningCount++;
+          statusClass = 'is-available';
+          statusText = 'Available';
         } else if (tonightBk && tonightBk.turnoverStatus === 'cleaning') {
           inCleaningCount++;
-          statusClass = 'is-cleaning';
-          statusText = 'Cleaning';
-          actionBtnHtml = `<button type="button" class="pms-hk-quick-btn is-primary-clean" onclick="event.stopPropagation(); setRoomTurnoverStatus('${tonightBk.id}', 'ready')" title="Mark ready">✓ Ready</button>`;
+          statusClass = 'is-available';
+          statusText = 'Available';
         }
 
         return `
