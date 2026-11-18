@@ -8324,17 +8324,16 @@
       const split = getSplitStayInfo(b, currentBookings);
       const targetLegs = (split.isSplit && split.legs.length > 0) ? split.legs : [b];
 
-      // Optimistically update memory and localStorage immediately
+      // Optimistically update payment status ONLY (Paid and Check Out are strictly independent)
       targetLegs.forEach(leg => {
         leg.manualCollectionAmount = 0;
         leg.paymentStatus = 'Paid in Full';
-        leg.checkedOut = true;
         const rev = getBookingRevenue(leg);
         if (rev > 0) {
           leg.advancePaid = rev;
           leg.advance = rev;
         }
-        const tag = `Collect: ₹0 (Paid in Full) | [Checked-Out]`;
+        const tag = `Collect: ₹0 (Paid in Full)`;
         if (leg.notes && leg.notes.includes('Collect:')) {
           leg.notes = leg.notes.replace(/Collect:\s*₹?[0-9,]+(?:\s*\([^)]*\))?/i, tag);
         } else if (leg.notes) {
@@ -9909,6 +9908,23 @@
       return isNaN(val) ? 0 : val;
     }
 
+    // Per-night rate for multi-night stays so calendar day cells display nightly price (while hover shows total stay amount)
+    function getPerNightAmount(b) {
+      if (!b || b.status === 'Blocked' || b.platform === 'Blocked') return 0;
+      const total = (typeof getBookingRevenue === 'function' ? getBookingRevenue(b) : 0) || parsePayoutNumber(b.payout);
+      if (!total || total <= 0) return 0;
+      let nights = parseInt(b.nights, 10);
+      if (!nights || nights < 1) {
+        if (b.checkInDate && b.checkOutDate) {
+          const diff = Math.round((new Date(b.checkOutDate) - new Date(b.checkInDate)) / 86400000);
+          nights = Math.max(1, isNaN(diff) ? 1 : diff);
+        } else {
+          nights = 1;
+        }
+      }
+      return Math.round(total / nights);
+    }
+
     function changeCalendarMonth(delta) {
       currentCalMonth += delta;
       if (currentCalMonth < 0) {
@@ -10280,10 +10296,13 @@
     }
 
     // Helper to compute countdown badge for Check-in and Checkout
-    function calculateCountdownBadge(targetDateStr, targetTimeStr, isCheckout = false, isPaid = false, isCheckedIn = false) {
+    function calculateCountdownBadge(targetDateStr, targetTimeStr, isCheckout = false, isCheckedOut = false, isCheckedIn = false) {
       if (!targetDateStr) return '';
       if (!isCheckout && isCheckedIn) {
         return `<span class="sm-countdown-pill sm-cd-done" style="background:#DCFCE7; color:#15803D; border-color:#BBF7D0;">✔ Checked In</span>`;
+      }
+      if (isCheckout && isCheckedOut) {
+        return `<span class="sm-countdown-pill sm-cd-done">✔ Checked Out</span>`;
       }
       const todayIso = new Date().toISOString().slice(0, 10);
       const now = new Date();
@@ -10323,9 +10342,6 @@
           const badgeClass = (isCheckout && diffMins <= 90) ? 'sm-cd-urgent' : 'sm-cd-soon';
           return `<span class="sm-countdown-pill ${badgeClass}">⏳ in ${timeText}</span>`;
         } else {
-          if (isCheckout && isPaid) {
-            return `<span class="sm-countdown-pill sm-cd-done">✔ Checked Out</span>`;
-          }
           const pastMins = Math.floor(-diffMs / 60000);
           const h = Math.floor(pastMins / 60);
           const m = pastMins % 60;
@@ -10775,8 +10791,8 @@
           const isIntermediateTransfer = (split.isSplit && split.isIntermediate);
           const dueAmt = (split.isSplit && split.isFinal) ? split.combinedBalance : fin.balance;
           const isPaid = isIntermediateTransfer ? true : (dueAmt === 0);
-          const outCountdown = calculateCountdownBadge(bk.checkOutDate, outTime, true, isPaid);
           const isCheckedOutNow = isBookingCheckedOut(bk);
+          const outCountdown = calculateCountdownBadge(bk.checkOutDate, outTime, true, isCheckedOutNow);
 
           let transferBadge = '';
           if (isIntermediateTransfer) {
@@ -11155,7 +11171,8 @@
                             platLabel = 'Booking';
                           }
 
-                          const kAmt = isBlocked ? '🔒' : formatKAmount(bk.payout);
+                          const perNightAmt = isBlocked ? 0 : getPerNightAmount(bk);
+                          const kAmt = isBlocked ? '🔒' : formatKAmount(perNightAmt);
                           const guestFirstName = isBlocked ? 'Blocked' : (bk.guestName || 'Guest').split(' ')[0];
                           const stayInfo = ` (${bk.checkInDate} to ${bk.checkOutDate}, ${bk.nights || 1} nts)`;
 
@@ -11165,7 +11182,7 @@
                               onmouseenter="showBookingHoverPopup(event, '${bk.id}')"
                               onmousemove="positionHoverPopup(event)"
                               onmouseleave="hideBookingHoverPopup()"
-                              title="Booked: ${escapeHtml(bk.payout || 'Missing payout')} [${escapeHtml(bk.platform || platLabel)}] - ${escapeHtml(bk.guestName)}${stayInfo}${hasOverlap ? ' [⚠️ Date Collision]' : ''}"
+                              title="Booked: ${escapeHtml(bk.payout || 'Missing payout')} (₹${formatCurrency(perNightAmt)}/night) [${escapeHtml(bk.platform || platLabel)}] - ${escapeHtml(bk.guestName)}${stayInfo}${hasOverlap ? ' [⚠️ Date Collision]' : ''}"
                               class="sm-booked-cell ${isToday ? 'is-today-cell' : ''}"
                             >
                               <span class="sm-booking-chip ${chipClass}" style="position: relative;">
@@ -11177,9 +11194,9 @@
                             </td>
                           `;
                         } else {
-                          // Turnover or multiple bookings on this day
-                          const totalAmt = cellBookings.reduce((s, b) => s + parsePayoutNumber(b.payout), 0);
-                          const kAmt = totalAmt > 0 ? `₹${Math.round(totalAmt / 1000 * 10) / 10}k` : '—';
+                          // Turnover or multiple bookings on this day (sum per-night rates for this night)
+                          const totalAmt = cellBookings.reduce((s, b) => s + getPerNightAmount(b), 0);
+                          const kAmt = totalAmt > 0 ? formatKAmount(totalAmt) : '—';
                           const guestsList = cellBookings.map(b => b.guestName).join(' & ');
 
                           return `
@@ -11255,7 +11272,7 @@
                 dateBookings = dateBookings.filter(b => isPrimaryWebsiteBooking(b) || !propPrimaryMap.has(b.property));
               }
 
-              const totalDay = dateBookings.reduce((s, b) => s + parsePayoutNumber(b.payout), 0);
+              const totalDay = dateBookings.reduce((s, b) => s + getPerNightAmount(b), 0);
               const bookedUnitsCount = dateBookings.length;
               const totalUnits = (selectedPropFilter !== 'ALL' ? 1 : visibleProps.length);
               const dayOccPct = totalUnits > 0 ? Math.round((bookedUnitsCount / totalUnits) * 100) : 0;
@@ -11282,7 +11299,7 @@
                       const isBookingCom = platLower.includes('booking');
                       const pTag = isAirbnb ? 'Ab·' : (isBookingCom ? 'OTA·' : 'Dir·');
                       const itemBg = isAirbnb ? 'sm-mitem-airbnb' : (isBookingCom ? 'sm-mitem-booking' : 'sm-mitem-direct');
-                      const kAmt = formatKAmount(b.payout);
+                      const kAmt = formatKAmount(getPerNightAmount(b));
                       return `
                         <div
                           onclick="event.stopPropagation(); openEditBookingModal('${b.id}')"
