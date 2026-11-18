@@ -255,98 +255,95 @@ export function getDashboardHtml(): string {
   <div id="appContainer" class="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
 
     <!-- Top Navigation Bar -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs w-full max-w-full overflow-hidden">
-      <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full min-w-0 max-w-full">
-        <div class="flex items-center justify-between h-14 sm:h-16 gap-1.5 sm:gap-2 w-full min-w-0">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs w-full max-w-full overflow-hidden">
+      <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 w-full min-w-0 max-w-full">
+        <div class="flex items-center justify-between h-11 sm:h-13 gap-1.5 sm:gap-2 w-full min-w-0">
           
           <!-- Logo & Brand -->
-          <div class="flex items-center gap-1.5 sm:gap-3 shrink min-w-0">
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-100 shrink-0">
-              <i data-lucide="building-2" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+          <div class="flex items-center gap-1.5 sm:gap-2.5 shrink min-w-0">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-xs shrink-0">
+              <i data-lucide="building-2" class="w-4 h-4"></i>
             </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-1 sm:gap-2">
-                <span class="font-bold text-slate-900 text-sm sm:text-lg leading-tight tracking-tight truncate">Xsquare Hotel</span>
-                <span class="hidden sm:inline-flex px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full items-center gap-1 shrink-0">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>4 Rooms</span>
-                </span>
-              </div>
-              <p class="hidden sm:block text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">Operations · Sales & Expenses Hub</p>
+            <div class="min-w-0 flex items-center gap-1.5">
+              <span class="font-bold text-slate-900 text-sm sm:text-base leading-tight tracking-tight truncate">Xsquare Hotel</span>
+              <span class="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full items-center gap-1 shrink-0">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>4 Rooms</span>
+              </span>
             </div>
           </div>
 
           <!-- Quick Top Actions & Role Badge -->
-          <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
             <!-- Sync Cloud Button -->
-            <button id="btnSyncNow" onclick="syncAllDataNow()" title="Sync and refresh all records from Cloud D1" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition shadow-2xs active:scale-95 cursor-pointer">
+            <button id="btnSyncNow" onclick="syncAllDataNow()" title="Sync and refresh all records from Cloud D1" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition active:scale-95 cursor-pointer">
               <i data-lucide="refresh-cw" id="syncNowIcon" class="w-3.5 h-3.5 text-indigo-600"></i>
               <span class="hidden sm:inline">Sync</span>
             </button>
 
             <!-- Download Android APK Button -->
-            <a href="/app.apk" download="elite-havens-app.apk" title="Download Android App APK" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shadow-2xs active:scale-95 cursor-pointer">
+            <a href="/app.apk" download="elite-havens-app.apk" title="Download Android App APK" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition active:scale-95 cursor-pointer">
               <i data-lucide="smartphone" class="w-3.5 h-3.5 text-emerald-600"></i>
-              <span class="hidden md:inline">Android App</span>
+              <span class="hidden lg:inline">App</span>
             </a>
 
-            <div id="userRoleBadge" class="hidden sm:inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
-              <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-              <span>Admin Access</span>
+            <div id="userRoleBadge" class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+              <span>Admin</span>
             </div>
-            <button id="btnAdminSecurity" onclick="openAdminSecurityModal()" title="Change PIN" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
+            <button id="btnAdminSecurity" onclick="openAdminSecurityModal()" title="Change PIN" class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
               <i data-lucide="key-round" class="w-3.5 h-3.5 text-slate-600"></i>
-              <span>Change PIN</span>
+              <span class="hidden lg:inline">PIN</span>
             </button>
-            <button id="btnLeaveRules" onclick="openLeavePolicyModal()" title="Leave Policy" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
+            <button id="btnLeaveRules" onclick="openLeavePolicyModal()" title="Leave Policy" class="hidden md:inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
               <i data-lucide="sliders" class="w-3.5 h-3.5 text-slate-600"></i>
-              <span>Leave Rules</span>
+              <span class="hidden lg:inline">Leaves</span>
             </button>
-            <button id="btnBillingSettings" onclick="openBillingSettingsModal()" title="Invoice &amp; Bank Settings" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
+            <button id="btnBillingSettings" onclick="openBillingSettingsModal()" title="Invoice &amp; Bank Settings" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer">
               <i data-lucide="receipt" class="w-3.5 h-3.5 text-slate-600"></i>
-              <span>Invoice Settings</span>
+              <span class="hidden lg:inline">Bill Settings</span>
             </button>
-            <button id="btnHeaderAddStaff" onclick="openStaffModal()" title="Add Staff" class="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition cursor-pointer">
+            <button id="btnHeaderAddStaff" onclick="openStaffModal()" title="Add Staff" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-2xs transition cursor-pointer">
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
               <span class="hidden sm:inline">Add Staff</span>
             </button>
-            <button onclick="lockApp()" title="Lock / Switch User" class="inline-flex items-center gap-1 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-600 border border-slate-200 transition cursor-pointer">
+            <button onclick="lockApp()" title="Lock / Switch User" class="inline-flex items-center gap-1 p-1.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-600 border border-slate-200 transition cursor-pointer">
               <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-              <span class="hidden sm:inline">Switch</span>
+              <span class="hidden md:inline">Switch</span>
             </button>
           </div>
 
         </div>
       </div>
 
-      <!-- Properties & Primary View Tabs (Touch friendly scroll on mobile) -->
-      <div class="bg-slate-50/95 border-t border-slate-200 px-2.5 sm:px-6 lg:px-8 w-full max-w-full overflow-hidden">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between py-1.5 gap-1.5 sm:gap-2 w-full min-w-0 max-w-full">
+      <!-- Primary View Tabs (Single sleek row; property summary inline on desktop only) -->
+      <div class="bg-slate-50/95 border-t border-slate-200/80 px-2 sm:px-4 lg:px-6 w-full max-w-full overflow-hidden">
+        <div class="max-w-7xl mx-auto flex items-center justify-between py-1 gap-2 w-full min-w-0 max-w-full">
           
-          <!-- Properties Selector -->
-          <div id="propertyTabs" class="w-full md:w-auto min-w-0 max-w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar scrollbar-none py-0.5 flex-nowrap">
+          <!-- Properties Indicator (Desktop only — avoids duplicate banner on mobile) -->
+          <div id="propertyTabs" class="hidden lg:flex items-center gap-1.5 shrink-0">
             <!-- Rendered by JS -->
           </div>
           
           <!-- View Switcher Tabs (Sales & Expenses is 1st for Admin) -->
-          <div class="w-full md:w-auto min-w-0 max-w-full flex items-center bg-slate-200/80 p-0.5 sm:p-1 rounded-xl overflow-x-auto no-scrollbar scrollbar-none flex-nowrap">
-            <button id="viewTabFinances" onclick="switchView('finances')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+          <div class="w-full lg:w-auto min-w-0 max-w-full flex items-center bg-slate-200/80 p-0.5 rounded-xl overflow-x-auto no-scrollbar scrollbar-none flex-nowrap">
+            <button id="viewTabFinances" onclick="switchView('finances')" class="px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition shadow-xs bg-white text-indigo-600 flex items-center gap-1 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="trending-up" class="w-3.5 h-3.5 text-indigo-600"></i>
               <span>Sales & Expenses</span>
             </button>
-            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+            <button id="viewTabDaily" onclick="switchView('daily')" class="px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
               <span>Daily Roll Call</span>
             </button>
-            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+            <button id="viewTabMonthly" onclick="switchView('monthly')" class="px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
               <span>Monthly Sheet</span>
             </button>
-            <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+            <button id="viewTabPayroll" onclick="switchView('payroll')" class="px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
-              <span>Salary & Payroll</span>
+              <span>Payroll</span>
             </button>
-            <button id="viewTabDirectory" onclick="switchView('directory')" class="px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1.5 whitespace-nowrap cursor-pointer shrink-0">
+            <button id="viewTabDirectory" onclick="switchView('directory')" class="px-2 sm:px-3 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition text-slate-600 hover:text-slate-900 flex items-center gap-1 whitespace-nowrap cursor-pointer shrink-0">
               <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-600"></i>
               <span>Staff & Docs</span>
             </button>
@@ -357,10 +354,10 @@ export function getDashboardHtml(): string {
     </header>
 
     <!-- Main Content Area -->
-    <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 flex-1 flex flex-col">
+    <main class="max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-6 py-2.5 sm:py-3.5 pb-16 sm:pb-6 flex-1 flex flex-col">
       
       <!-- Month & Action Controls Bar (shown for Attendance & Payroll) -->
-      <div id="monthControlBar" class="hidden flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div id="monthControlBar" class="hidden flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5 bg-white p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs">
         
         <!-- Month Selector -->
         <div class="flex items-center gap-2">
@@ -550,90 +547,84 @@ export function getDashboardHtml(): string {
       <!-- ===================================================================== -->
       <!-- VIEW 3: SALARY & PAYROLL PORTAL                                       -->
       <!-- ===================================================================== -->
-      <div id="payrollViewSection" class="hidden flex-1 flex flex-col gap-4">
+      <div id="payrollViewSection" class="hidden flex-1 flex flex-col gap-2.5 sm:gap-3">
         
         <!-- Payroll Summary Stat Cards (Includes Total Bonuses!) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
-          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Base Payroll</div>
-            <div id="statBaseSalary" class="text-base sm:text-lg font-bold text-slate-900 mt-1">₹0</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Total monthly base</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs">
+            <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Base Payroll</div>
+            <div id="statBaseSalary" class="text-sm sm:text-base font-bold text-slate-900 mt-0.5 font-mono">₹0</div>
+            <div class="text-[10px] text-slate-400">Monthly base</div>
           </div>
-          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Advances & Deduc</div>
-            <div id="statDeductions" class="text-base sm:text-lg font-bold text-rose-600 mt-1">₹0</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Advances + Unpaid</div>
+          <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs">
+            <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Deductions</div>
+            <div id="statDeductions" class="text-sm sm:text-base font-bold text-rose-600 mt-0.5 font-mono">₹0</div>
+            <div class="text-[10px] text-slate-400">Advances + Unpaid</div>
           </div>
-          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/30 shadow-xs">
-            <div class="text-[10px] sm:text-[11px] font-semibold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+          <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-emerald-200 bg-emerald-50/30 shadow-2xs">
+            <div class="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
               <i data-lucide="gift" class="w-3 h-3 text-emerald-600"></i>
               <span>Total Bonus</span>
             </div>
-            <div id="statBonuses" class="text-base sm:text-lg font-bold text-emerald-700 mt-1">₹0</div>
-            <div class="text-[10px] text-emerald-600 mt-0.5">Bonuses added</div>
+            <div id="statBonuses" class="text-sm sm:text-base font-bold text-emerald-700 mt-0.5 font-mono">₹0</div>
+            <div class="text-[10px] text-emerald-600">Bonuses added</div>
           </div>
-          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-indigo-200 bg-indigo-50/20 shadow-xs">
-            <div class="text-[10px] sm:text-[11px] font-semibold text-indigo-700 uppercase tracking-wider">Total Net Due</div>
-            <div id="statNetPayout" class="text-base sm:text-lg font-bold text-indigo-700 mt-1">₹0</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">Net month payout</div>
+          <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-indigo-200 bg-indigo-50/20 shadow-2xs">
+            <div class="text-[10px] font-semibold text-indigo-700 uppercase tracking-wider">Net Due</div>
+            <div id="statNetPayout" class="text-sm sm:text-base font-bold text-indigo-700 mt-0.5 font-mono">₹0</div>
+            <div class="text-[10px] text-slate-400">Net payout</div>
           </div>
-          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50/40 shadow-xs">
-            <div class="text-[10px] sm:text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Paid Amount</div>
-            <div id="statPaidAmount" class="text-base sm:text-lg font-bold text-emerald-700 mt-1">₹0</div>
-            <div id="statPaidCount" class="text-[10px] text-emerald-600 font-medium mt-0.5">0 staff paid</div>
+          <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-2xs">
+            <div class="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider">Paid</div>
+            <div id="statPaidAmount" class="text-sm sm:text-base font-bold text-emerald-700 mt-0.5 font-mono">₹0</div>
+            <div id="statPaidCount" class="text-[10px] text-emerald-600 font-medium">0 staff paid</div>
           </div>
-          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-amber-200 bg-amber-50/40 shadow-xs">
-            <div class="text-[10px] sm:text-[11px] font-semibold text-amber-800 uppercase tracking-wider">Pending Payout</div>
-            <div id="statPendingAmount" class="text-base sm:text-lg font-bold text-amber-700 mt-1">₹0</div>
-            <div id="statPendingCount" class="text-[10px] text-amber-600 font-medium mt-0.5">0 staff unpaid</div>
+          <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-amber-200 bg-amber-50/40 shadow-2xs">
+            <div class="text-[10px] font-semibold text-amber-800 uppercase tracking-wider">Pending</div>
+            <div id="statPendingAmount" class="text-sm sm:text-base font-bold text-amber-700 mt-0.5 font-mono">₹0</div>
+            <div id="statPendingCount" class="text-[10px] text-amber-600 font-medium">0 staff unpaid</div>
           </div>
         </div>
 
         <!-- Formula Explanation Card -->
-        <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-3.5 flex items-center justify-between flex-wrap gap-2 text-xs text-indigo-900">
-          <div class="flex items-center gap-2">
-            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-            <span><strong>Leave Protection & Bonus:</strong> Salary is protected by leave balance. Net Payout = <strong>Base − Unpaid Deduc + Bonus − Advance</strong>.</span>
+        <div class="bg-indigo-50/60 border border-indigo-200/80 rounded-xl p-2 sm:p-2.5 flex items-center justify-between flex-wrap gap-1.5 text-[11px] text-indigo-900">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+            <span><strong>Net Payout</strong> = Base − Unpaid Deduc + Bonus − Advance</span>
           </div>
-          <span class="text-[11px] font-semibold bg-white/80 px-2 py-0.5 rounded-md text-indigo-700 border border-indigo-200">Daily Rate = Base Salary ÷ Total Month Days</span>
+          <span class="text-[10px] font-semibold bg-white/80 px-2 py-0.5 rounded-md text-indigo-700 border border-indigo-200">Daily Rate = Base ÷ Month Days</span>
         </div>
 
         <!-- Payroll Table -->
-        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex-1 flex flex-col">
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden flex-1 flex flex-col">
           <!-- Mobile Scroll Indicator -->
-          <div class="sm:hidden px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+          <div class="sm:hidden px-2.5 py-1.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[10px] text-slate-500">
             <span class="flex items-center gap-1">
-              <i data-lucide="move-horizontal" class="w-3.5 h-3.5 text-slate-400"></i>
-              <span>Swipe left / right to view full payroll</span>
+              <i data-lucide="move-horizontal" class="w-3 h-3 text-slate-400"></i>
+              <span>Swipe to view full payroll</span>
             </span>
-            <span class="font-bold text-emerald-600">Name is locked</span>
+            <span class="font-bold text-emerald-600">Name locked</span>
           </div>
           <div class="overflow-x-auto flex-1">
             <table class="w-full text-left border-collapse text-xs">
               <thead class="text-slate-500 uppercase font-semibold text-[10px] tracking-wider bg-slate-50 border-b border-slate-200 select-none">
                 <tr>
-                  <th class="sticky-col-header py-3 px-3.5 min-w-[190px] border-r border-slate-200">Staff & Property</th>
-                  <th class="py-3 px-3 text-right min-w-[90px]">Base Salary</th>
-                  <th class="py-3 px-2 text-center min-w-[50px]">Days</th>
-                  <th class="py-3 px-3 text-right min-w-[85px]">Daily Rate</th>
-                  <th class="py-3 px-3 text-center min-w-[110px]">Attendance</th>
-                  <th class="py-3 px-3 text-center min-w-[90px]" title="Accumulated leave balance carried forward">Leave Bal</th>
-                  <th class="py-3 px-3 text-right min-w-[100px]" title="Deductions for days exceeding available leave balance">Unpaid Deduc</th>
-                  <th class="py-3 px-3 text-right min-w-[95px]">Gross Earned</th>
-                  <th class="py-3 px-3 text-right min-w-[100px]">Advance (Deduc)</th>
-                  <th class="py-3 px-3 text-right min-w-[125px] bg-emerald-50/50 text-emerald-900 border-x border-emerald-100">Bonus (Add)</th>
-                  <th class="py-3 px-3.5 text-right font-bold text-emerald-800 bg-emerald-50/70 min-w-[100px]">Net Payout</th>
-                  <th class="py-3 px-3 text-center min-w-[95px]">Bank / QR</th>
-                  <th class="py-3 px-3 text-center min-w-[100px]">Payment Status</th>
-                  <th class="py-3 px-2 text-center min-w-[50px]">Slip</th>
+                  <th class="sticky-col-header py-2.5 px-3 min-w-[140px] sm:min-w-[180px] border-r border-slate-200">Staff</th>
+                  <th class="py-2.5 px-2.5 text-right min-w-[85px]">Base</th>
+                  <th class="py-2.5 px-2 text-center min-w-[45px]">Days</th>
+                  <th class="py-2.5 px-2.5 text-right min-w-[80px]">Rate</th>
+                  <th class="py-2.5 px-2.5 text-center min-w-[100px]">Attendance</th>
+                  <th class="py-2.5 px-2.5 text-center min-w-[80px]" title="Accumulated leave balance carried forward">Leave Bal</th>
+                  <th class="py-2.5 px-2.5 text-right min-w-[90px]" title="Deductions for days exceeding available leave balance">Unpaid</th>
+                  <th class="py-2.5 px-2.5 text-right min-w-[85px]">Earned</th>
+                  <th class="py-2.5 px-2.5 text-right min-w-[90px]">Advance</th>
+                  <th class="py-2.5 px-2.5 text-right min-w-[110px] bg-emerald-50/50 text-emerald-900 border-x border-emerald-100">Bonus</th>
+                  <th class="py-2.5 px-3 text-right font-bold text-emerald-800 bg-emerald-50/70 min-w-[95px]">Net Payout</th>
+                  <th class="py-2.5 px-2.5 text-center min-w-[85px]">Bank / QR</th>
+                  <th class="py-2.5 px-2.5 text-center min-w-[95px]">Status</th>
+                  <th class="py-2.5 px-2 text-center min-w-[45px]">Slip</th>
                 </tr>
               </thead>
-              <tbody id="payrollTableBody" class="divide-y divide-slate-100">
-                <!-- Rendered by JS -->
-              </tbody>
-            </table>
-          </div>
-        </div>
               <tbody id="payrollTableBody" class="divide-y divide-slate-100">
                 <!-- Rendered by JS -->
               </tbody>
@@ -646,27 +637,27 @@ export function getDashboardHtml(): string {
       <!-- ===================================================================== -->
       <!-- VIEW 4: STAFF DIRECTORY & DOCUMENTS                                   -->
       <!-- ===================================================================== -->
-      <div id="directoryViewSection" class="hidden flex-1 flex flex-col gap-4">
+      <div id="directoryViewSection" class="hidden flex-1 flex flex-col gap-2.5 sm:gap-3">
         
-        <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h3 class="text-base font-bold text-slate-900">Staff Directory & Documents</h3>
-            <p class="text-xs text-slate-500">Contact numbers, addresses, salaries and uploaded identity documents</p>
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">Staff Directory & Documents</h3>
+            <p class="text-[11px] text-slate-500">Contacts, salaries and identity documents</p>
           </div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" onclick="toggleShowFormerStaff()" class="former-staff-toggle-btn hidden inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer" title="Show or hide staff who left">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <button type="button" onclick="toggleShowFormerStaff()" class="former-staff-toggle-btn hidden inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer" title="Show or hide staff who left">
               <i data-lucide="history" class="w-3.5 h-3.5"></i>
               <span class="former-staff-toggle-label">Show Left Staff</span>
             </button>
-            <button onclick="openStaffModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition">
+            <button onclick="openStaffModal()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer">
               <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-              <span>Add New Staff</span>
+              <span>Add Staff</span>
             </button>
           </div>
         </div>
 
         <!-- Staff Cards Grid -->
-        <div id="directoryStaffGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div id="directoryStaffGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
           <!-- Rendered by JS -->
         </div>
 
@@ -675,8 +666,8 @@ export function getDashboardHtml(): string {
       <!-- ===================================================================== -->
       <!-- VIEW 5: SALES & EXPENSES (Manager Daily Entry & Admin Revenue Hub)    -->
       <!-- ===================================================================== -->
-      <div id="financesViewSection" class="flex-1 flex flex-col gap-4">
-        <div id="financesViewContent" class="flex-1 flex flex-col gap-4">
+      <div id="financesViewSection" class="flex-1 flex flex-col gap-2.5 sm:gap-3">
+        <div id="financesViewContent" class="flex-1 flex flex-col gap-2.5 sm:gap-3">
           <!-- Dynamically populated by renderFinancesView() -->
         </div>
       </div>
@@ -684,8 +675,8 @@ export function getDashboardHtml(): string {
     </main>
 
     <!-- Footer -->
-    <footer class="mt-auto border-t border-slate-200 bg-white py-3 px-4 text-center text-xs text-slate-400">
-      Xsquare Hotel Hub · Connected to Cloudflare D1 · Secure Access
+    <footer class="mt-auto border-t border-slate-200 bg-white py-2 px-3 text-center text-[11px] text-slate-400">
+      Xsquare Hotel Hub · Cloud D1 Synced
     </footer>
 
   </div>
@@ -2715,10 +2706,10 @@ export function getDashboardHtml(): string {
       type="button"
       id="aiChatFab"
       onclick="openAiBookingChat()"
-      class="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs sm:text-sm font-bold shadow-xl shadow-indigo-500/30 active:scale-95 transition cursor-pointer"
+      class="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40 inline-flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold shadow-lg shadow-indigo-500/30 active:scale-95 transition cursor-pointer"
     >
-      <i data-lucide="sparkles" class="w-4 h-4"></i>
-      <span>AI Book Room</span>
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+      <span>AI Book</span>
     </button>
 
     <!-- Chat Drawer -->
@@ -3051,11 +3042,10 @@ export function getDashboardHtml(): string {
 
       if (currentUserRole === "manager" && currentManagerInfo) {
         badge.innerHTML = \`
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="sm:hidden">Manager</span>
-          <span class="hidden sm:inline">Manager: \${escapeHtml(currentManagerInfo.name)} (\${escapeHtml(currentManagerInfo.property_name || 'Property')})</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>\${escapeHtml(currentManagerInfo.name)}</span>
         \`;
-        badge.className = "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0";
+        badge.className = "hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0";
 
         if (btnAdminSecurity) btnAdminSecurity.style.display = "none";
         if (btnLeaveRules) btnLeaveRules.style.display = "none";
@@ -3071,11 +3061,10 @@ export function getDashboardHtml(): string {
         activePropertyId = currentManagerInfo.property_id || "all";
       } else {
         badge.innerHTML = \`
-          <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
-          <span class="sm:hidden">Admin</span>
-          <span class="hidden sm:inline">Admin Access</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+          <span>Admin</span>
         \`;
-        badge.className = "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0";
+        badge.className = "hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0";
 
         if (btnAdminSecurity) btnAdminSecurity.style.display = "";
         if (btnLeaveRules) btnLeaveRules.style.display = "";
@@ -3699,10 +3688,10 @@ export function getDashboardHtml(): string {
 
       const count = staffList.filter(s => s.active !== 0).length;
       container.innerHTML = \`
-        <div class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-xs flex items-center gap-2 shrink-0">
-          <i data-lucide="hotel" class="w-4 h-4"></i>
+        <div class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200/80 flex items-center gap-1.5 shrink-0">
+          <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
           <span>Xsquare Hotel</span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] bg-indigo-800 text-white font-semibold">4 Rooms · \${count} Staff</span>
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-100 text-indigo-700 font-semibold">4 Rooms · \${count} Staff</span>
         </div>
       \`;
       updatePropertyAllowanceBanner();
@@ -6270,28 +6259,21 @@ export function getDashboardHtml(): string {
         .slice(0, 10);
 
       container.innerHTML = \`
-        <!-- Manager Header & Date Navigation -->
-        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
-              <i data-lucide="building" class="w-4 h-4 text-indigo-600"></i>
-              \${escapeHtml(propName)}
-            </span>
-            <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-[11px] font-bold \${typeInfo.badgeClass}">
-              \${escapeHtml(typeInfo.label)}
-            </span>
+        <!-- Compact Manager Header & Date Navigation -->
+        <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="flex items-center gap-1.5 flex-wrap">
             \${statusBadge}
             \${hasLodging ? \`
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold \${isMgrOccGreen ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300 shadow-2xs' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
-                <i data-lucide="percent" class="w-3.5 h-3.5 \${isMgrOccGreen ? 'text-emerald-600' : 'text-slate-500'}"></i>
-                <span>Occupancy: \${todayOccPct}% (\${todayBookings.length}/\${totalRoomsCount} Rooms)\${isMgrOccGreen ? ' 🟢 (>50%)' : ''}</span>
+              <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold \${isMgrOccGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-700 border border-slate-200'}">
+                <i data-lucide="percent" class="w-3 h-3 \${isMgrOccGreen ? 'text-emerald-600' : 'text-slate-500'}"></i>
+                <span>Occ: \${todayOccPct}% (\${todayBookings.length}/\${totalRoomsCount})</span>
               </span>
             \` : ''}
           </div>
 
           <!-- Date Control -->
-          <div class="flex items-center gap-1.5 self-start sm:self-auto">
-            <button type="button" onclick="changeFinanceDate(-1)" title="Previous Day" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer">
+          <div class="flex items-center gap-1 self-start sm:self-auto">
+            <button type="button" onclick="changeFinanceDate(-1)" title="Previous Day" class="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer">
               <i data-lucide="chevron-left" class="w-4 h-4"></i>
             </button>
             <input
@@ -6299,12 +6281,12 @@ export function getDashboardHtml(): string {
               id="mgrFinanceDate"
               value="\${managerFinanceDate}"
               onchange="onManagerFinanceDateChange(this.value)"
-              class="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs text-slate-800 cursor-pointer"
+              class="px-2.5 py-1 text-xs font-bold rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 cursor-pointer"
             />
-            <button type="button" onclick="changeFinanceDate(1)" title="Next Day" class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer">
+            <button type="button" onclick="changeFinanceDate(1)" title="Next Day" class="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 border border-slate-200 transition active:scale-95 cursor-pointer">
               <i data-lucide="chevron-right" class="w-4 h-4"></i>
             </button>
-            <button type="button" onclick="goToFinanceToday()" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer">
+            <button type="button" onclick="goToFinanceToday()" class="px-2 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer">
               Today
             </button>
           </div>
@@ -6312,41 +6294,35 @@ export function getDashboardHtml(): string {
 
         <!-- CONDITIONAL MODULE 1: ROOM BOOKINGS & AUTOMATED LODGING -->
         \${hasLodging ? \`
-          <div class="bg-white p-4 sm:p-6 rounded-3xl border border-indigo-100/90 shadow-sm flex flex-col gap-5">
-            <div class="flex items-center justify-between border-b border-indigo-50 pb-3 flex-wrap gap-2">
-              <div>
-                <div class="flex items-center gap-2.5 flex-wrap">
-                  <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <i data-lucide="door-closed" class="w-5 h-5 text-indigo-600"></i>
-                    <span>Room Bookings & Lodging Revenue</span>
-                  </h3>
-
-                </div>
-                <p class="text-xs text-slate-500 mt-0.5">Select a room and record the booking. Lodging online & cash amounts are calculated automatically.</p>
-              </div>
-              <div class="text-right">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">Lodging Total</span>
-                <span class="text-xl sm:text-2xl font-black font-mono text-indigo-950">₹<span id="mgrLodgingSubtotal">\${formatCurrency(lodgingSub)}</span></span>
+          <div class="bg-white p-3 sm:p-4 rounded-2xl border border-indigo-100/90 shadow-2xs flex flex-col gap-3">
+            <div class="flex items-center justify-between border-b border-indigo-50 pb-2 gap-2">
+              <h3 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
+                <span>Room Bookings</span>
+              </h3>
+              <div class="text-right flex items-baseline gap-1.5">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600">Lodging</span>
+                <span class="text-base sm:text-xl font-black font-mono text-indigo-950">₹<span id="mgrLodgingSubtotal">\${formatCurrency(lodgingSub)}</span></span>
               </div>
             </div>
 
             <!-- Room Status Chips -->
             <div>
-              <div class="flex items-center justify-between mb-2">
-                <label class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                  <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  Rooms Status for \${managerFinanceDate}
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1">
+                  <i data-lucide="layout-grid" class="w-3 h-3 text-indigo-600"></i>
+                  Rooms (\${managerFinanceDate})
                 </label>
-                <span class="text-[11px] font-bold \${todayBookings.length > propRooms.length ? 'text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200' : (todayBookings.length > 0 ? 'text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200' : 'text-slate-500')}">\${todayBookings.length}/\${propRooms.length} rooms booked</span>
+                <span class="text-[10px] font-bold \${todayBookings.length > propRooms.length ? 'text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200' : (todayBookings.length > 0 ? 'text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200' : 'text-slate-500')}">\${todayBookings.length}/\${propRooms.length} booked</span>
               </div>
 
               \${propRooms.length === 0 ? \`
-                <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
                   <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-amber-600"></i>
-                  <span>No rooms configured for this property yet. Admin can add rooms in Manage Rooms.</span>
+                  <span>No rooms configured yet.</span>
                 </div>
               \` : \`
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   \${propRooms.map(rm => {
                     const rmBookings = todayBookings.filter(b => b.room_id === rm.id);
                     const count = rmBookings.length;
@@ -6355,19 +6331,16 @@ export function getDashboardHtml(): string {
                     return \`
                       <div
                         onclick="quickBookSelectRoom('\${rm.id}')"
-                        class="p-3 rounded-2xl border transition cursor-pointer select-none \${isBooked ? 'bg-indigo-50/70 border-indigo-300 ring-1 ring-indigo-200' : 'bg-slate-50/70 hover:bg-white border-slate-200'}"
+                        class="p-2.5 rounded-xl border transition cursor-pointer select-none \${isBooked ? 'bg-indigo-50/70 border-indigo-300' : 'bg-slate-50/70 hover:bg-white border-slate-200'}"
                       >
-                        <div class="flex items-center justify-between mb-1">
-                          <span class="text-xs font-black text-slate-900 flex items-center gap-1">
-                            <i data-lucide="door-closed" class="w-3.5 h-3.5 \${isBooked ? 'text-indigo-600' : 'text-slate-400'}"></i>
-                            Room \${escapeHtml(rm.room_number)}
-                          </span>
-                          <span class="text-[10px] px-1.5 py-0.5 rounded-md font-bold \${isBooked ? (count > 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800') : 'bg-emerald-100 text-emerald-800'}">
-                            \${isBooked ? (count > 1 ? \`\${count}x Booked\` : 'Booked') : 'Vacant'}
+                        <div class="flex items-center justify-between mb-0.5">
+                          <span class="text-xs font-black text-slate-900">Rm \${escapeHtml(rm.room_number)}</span>
+                          <span class="text-[9px] px-1.5 py-0.2 rounded font-bold \${isBooked ? (count > 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800') : 'bg-emerald-100 text-emerald-800'}">
+                            \${isBooked ? (count > 1 ? \`\${count}x\` : 'Booked') : 'Vacant'}
                           </span>
                         </div>
                         <div class="text-[11px] text-slate-500 flex items-center justify-between">
-                          <span>\${escapeHtml(rm.room_type || 'Standard')}</span>
+                          <span class="truncate">\${escapeHtml(rm.room_type || 'Std')}</span>
                           <span class="font-mono font-bold \${isBooked ? 'text-indigo-900' : 'text-slate-600'}">
                             \${isBooked ? \`₹\${formatCurrency(totalRm)}\` : \`₹\${formatCurrency(rm.base_price || 0)}\`}
                           </span>
@@ -6380,96 +6353,38 @@ export function getDashboardHtml(): string {
             </div>
 
             <!-- Quick Booking Input Card -->
-            <div class="bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 p-4 sm:p-5 rounded-2xl border border-indigo-100 space-y-3.5">
-              <div class="flex items-center justify-between flex-wrap gap-2">
-                <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
-                  <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-600"></i>
-                  Quick Room Booking (Supports Multiple Bookings per Room / Day)
+            <div class="bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 p-3 sm:p-4 rounded-xl border border-indigo-100 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="text-[11px] font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  Quick Room Booking
                 </h4>
-                <div class="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onclick="openAiBookingChat()"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-2xs transition cursor-pointer"
-                  >
-                    <i data-lucide="sparkles" class="w-3 h-3"></i>
-                    <span>AI Chat Book</span>
-                  </button>
-                  <span class="text-[11px] text-indigo-600 font-medium hidden sm:inline">Click room above or select below</span>
-                </div>
+                <button
+                  type="button"
+                  onclick="openAiBookingChat()"
+                  class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shadow-2xs transition cursor-pointer"
+                >
+                  <i data-lucide="sparkles" class="w-3 h-3"></i>
+                  <span>AI Chat Book</span>
+                </button>
               </div>
 
-              <!-- Stay Duration Quick Select -->
-              <div class="space-y-2 pt-1">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-xs font-bold text-slate-700 flex items-center gap-1 mr-1">
-                      <i data-lucide="moon" class="w-3.5 h-3.5 text-indigo-600"></i>
-                      <span>Stay:</span>
-                    </span>
-                    <button
-                      type="button"
-                      id="btnMgrStay1"
-                      onclick="mgrQuickSetNights(1)"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs"
-                    >
-                      1 Night (\${managerFinanceDate})
-                    </button>
-                    <button
-                      type="button"
-                      id="btnMgrStay2"
-                      onclick="mgrQuickSetNights(2)"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                    >
-                      2 Nights
-                    </button>
-                    <button
-                      type="button"
-                      id="btnMgrStay3"
-                      onclick="mgrQuickSetNights(3)"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                    >
-                      3 Nights
-                    </button>
-                    <button
-                      type="button"
-                      id="btnMgrStay4"
-                      onclick="mgrQuickSetNights(4)"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                    >
-                      4 Nights
-                    </button>
-                    <button
-                      type="button"
-                      id="btnMgrStay5"
-                      onclick="mgrQuickSetNights(5)"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                    >
-                      5 Nights
-                    </button>
-                    <button
-                      type="button"
-                      id="btnMgrStay7"
-                      onclick="mgrQuickSetNights(7)"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                    >
-                      7 Nights
-                    </button>
-                    <button
-                      type="button"
-                      id="btnMgrStayCustom"
-                      onclick="toggleMgrCustomRange()"
-                      class="px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
-                    >
-                      📅 Custom Dates
-                    </button>
-                  </div>
-                  <!-- Stepper -->
-                  <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2 py-0.5 shadow-2xs">
-                    <button type="button" onclick="mgrStepNights(-1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">−</button>
-                    <span id="mgrNightsCountBadge" class="text-xs font-black text-indigo-700 font-mono px-1">1 Night</span>
-                    <button type="button" onclick="mgrStepNights(1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">+</button>
-                  </div>
+              <!-- Stay Duration Quick Select (Single sleek scrollable row on mobile) -->
+              <div class="flex items-center justify-between gap-1.5">
+                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 flex-nowrap min-w-0">
+                  <button type="button" id="btnMgrStay1" onclick="mgrQuickSetNights(1)" class="px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-indigo-600 text-white shadow-2xs">1N</button>
+                  <button type="button" id="btnMgrStay2" onclick="mgrQuickSetNights(2)" class="px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">2N</button>
+                  <button type="button" id="btnMgrStay3" onclick="mgrQuickSetNights(3)" class="px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">3N</button>
+                  <button type="button" id="btnMgrStay4" onclick="mgrQuickSetNights(4)" class="px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">4N</button>
+                  <button type="button" id="btnMgrStay5" onclick="mgrQuickSetNights(5)" class="px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">5N</button>
+                  <button type="button" id="btnMgrStay7" onclick="mgrQuickSetNights(7)" class="px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">7N</button>
+                  <button type="button" id="btnMgrStayCustom" onclick="toggleMgrCustomRange()" class="px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200">📅 Dates</button>
+                </div>
+                <!-- Stepper -->
+                <div class="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg px-1.5 py-0.5 shrink-0">
+                  <button type="button" onclick="mgrStepNights(-1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">−</button>
+                  <span id="mgrNightsCountBadge" class="text-[11px] font-black text-indigo-700 font-mono px-1">1N</span>
+                  <button type="button" onclick="mgrStepNights(1)" class="w-5 h-5 flex items-center justify-center font-bold text-slate-500 hover:text-indigo-600 cursor-pointer">+</button>
                 </div>
               </div>
 
@@ -7116,27 +7031,19 @@ export function getDashboardHtml(): string {
 
     function updateMgrStayPillStyles() {
       const standardPills = [1, 2, 3, 4, 5, 7];
+      const activeCls = "px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-indigo-600 text-white shadow-2xs";
+      const idleCls = "px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
       standardPills.forEach(p => {
         const btn = document.getElementById("btnMgrStay" + p);
-        if (btn) {
-          if (mgrStayNights === p) {
-            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
-          } else {
-            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
-          }
-        }
+        if (btn) btn.className = mgrStayNights === p ? activeCls : idleCls;
       });
       const btnCustom = document.getElementById("btnMgrStayCustom");
       if (btnCustom) {
-        if (!standardPills.includes(mgrStayNights)) {
-          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
-        } else {
-          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
-        }
+        btnCustom.className = !standardPills.includes(mgrStayNights) ? activeCls : idleCls;
       }
       const badge = document.getElementById("mgrNightsCountBadge");
       if (badge) {
-        badge.innerText = \`\${mgrStayNights} Night\${mgrStayNights > 1 ? 's' : ''}\`;
+        badge.innerText = \`\${mgrStayNights}N\`;
       }
       const rangeSec = document.getElementById("mgrStayRangeSection");
       if (rangeSec) {
@@ -7171,27 +7078,19 @@ export function getDashboardHtml(): string {
       const nights = calculateStayNights(checkIn, checkOut, includeCheckout);
       mgrStayNights = nights;
       const standardPills = [1, 2, 3, 4, 5, 7];
+      const activeCls = "px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-indigo-600 text-white shadow-2xs";
+      const idleCls = "px-2 py-1 text-[11px] font-bold rounded-lg transition cursor-pointer whitespace-nowrap shrink-0 bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
       standardPills.forEach(p => {
         const btn = document.getElementById("btnMgrStay" + p);
-        if (btn) {
-          if (mgrStayNights === p) {
-            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
-          } else {
-            btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
-          }
-        }
+        if (btn) btn.className = mgrStayNights === p ? activeCls : idleCls;
       });
       const btnCustom = document.getElementById("btnMgrStayCustom");
       if (btnCustom) {
-        if (!standardPills.includes(mgrStayNights)) {
-          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-indigo-600 text-white shadow-xs";
-        } else {
-          btnCustom.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer bg-white text-slate-700 hover:bg-slate-100 border border-slate-200";
-        }
+        btnCustom.className = !standardPills.includes(mgrStayNights) ? activeCls : idleCls;
       }
       const countBadge = document.getElementById("mgrNightsCountBadge");
       if (countBadge) {
-        countBadge.innerText = \`\${mgrStayNights} Night\${mgrStayNights > 1 ? 's' : ''}\`;
+        countBadge.innerText = \`\${mgrStayNights}N\`;
       }
 
       const summaryText = document.getElementById("mgrRangeSummaryText");
@@ -7700,32 +7599,35 @@ export function getDashboardHtml(): string {
     // -------------------------------------------------------------------------
     function renderAdminFinancesView(container) {
       container.innerHTML = \`
-        <div class="space-y-4">
-          <!-- Admin Subnavigation Tabs -->
-          <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/80 w-full sm:w-auto self-start overflow-x-auto">
+        <div class="space-y-2.5 sm:space-y-3">
+          <!-- Admin Subnavigation Tabs (Compact 3-col on mobile, inline on desktop) -->
+          <div class="grid grid-cols-3 sm:inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 w-full sm:w-auto">
             <button
               type="button"
               onclick="setAdminFinanceSubTab('dashboard')"
-              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
+              class="px-2 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 \${adminFinanceSubTab === 'dashboard' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
             >
-              <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
-              <span>Financial Performance</span>
+              <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="sm:hidden">Overview</span>
+              <span class="hidden sm:inline">Financial Performance</span>
             </button>
             <button
               type="button"
               onclick="setAdminFinanceSubTab('calendar')"
-              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'calendar' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
+              class="px-2 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 \${adminFinanceSubTab === 'calendar' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
             >
-              <i data-lucide="calendar" class="w-4 h-4"></i>
-              <span>Room Bookings Calendar</span>
+              <i data-lucide="calendar" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="sm:hidden">Calendar</span>
+              <span class="hidden sm:inline">Room Calendar</span>
             </button>
             <button
               type="button"
               onclick="setAdminFinanceSubTab('rooms')"
-              class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center gap-2 \${adminFinanceSubTab === 'rooms' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
+              class="px-2 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition whitespace-nowrap cursor-pointer flex items-center justify-center gap-1.5 \${adminFinanceSubTab === 'rooms' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}"
             >
-              <i data-lucide="door-closed" class="w-4 h-4"></i>
-              <span>Manage Rooms (4 Rooms)</span>
+              <i data-lucide="door-closed" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="sm:hidden">Rooms (4)</span>
+              <span class="hidden sm:inline">Manage Rooms (4)</span>
             </button>
           </div>
 
@@ -7816,166 +7718,146 @@ export function getDashboardHtml(): string {
       const isTodayOccupancyGreen = todayOccupancyPct > 50;
 
       container.innerHTML = \`
-        <div class="space-y-4">
-          <!-- Admin Filter & Action Bar -->
-          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <!-- Active Business Indicator -->
-              <div class="flex items-center gap-1.5">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-indigo-50 text-indigo-800 border border-indigo-200">
-                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  <span>Xsquare Hotel</span>
-                  <span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-indigo-100 text-indigo-700">4 Rooms Active</span>
-                </span>
-              </div>
-
+        <div class="space-y-2.5 sm:space-y-3">
+          <!-- Compact Month & Action Bar -->
+          <div class="bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5">
               <!-- Month Selector -->
-              <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
-                <button onclick="changeFinanceMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+              <div class="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                <button onclick="changeFinanceMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-md hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
                   <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
                 </button>
-                <span id="adminFinanceMonthLabel" class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
+                <span id="adminFinanceMonthLabel" class="px-2 text-xs font-bold text-slate-800 min-w-[96px] sm:min-w-[110px] text-center select-none">
                   \${MONTH_NAMES[financeMonth]} \${financeYear}
                 </span>
-                <button onclick="changeFinanceMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                <button onclick="changeFinanceMonth(1)" title="Next Month" class="w-7 h-7 rounded-md hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
                   <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
                 </button>
               </div>
-              <button onclick="goToFinanceCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
-                Current
+              <button onclick="goToFinanceCurrentMonth()" class="text-[11px] font-semibold px-2 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                Today
               </button>
             </div>
 
-            <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            <div class="flex items-center gap-1.5">
               <button
                 type="button"
                 onclick="openFinanceModal()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-2xs transition cursor-pointer"
               >
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Add Record</span>
+                <span>Add</span><span class="hidden sm:inline"> Record</span>
               </button>
               <button
                 type="button"
                 onclick="exportFinancesCSV()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition cursor-pointer"
+                title="Export CSV"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition cursor-pointer"
               >
                 <i data-lucide="download" class="w-3.5 h-3.5 text-slate-500"></i>
-                <span>Export CSV</span>
+                <span class="hidden sm:inline">CSV</span>
               </button>
             </div>
           </div>
 
-          <!-- Dynamic Executive Summary Cards (with Occupancy % Green if > 50%) -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <!-- Dynamic Executive Summary Cards (Compact 2x3 mobile, 6-col desktop; Occupancy Green if >50%) -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             <!-- Card 1: Gross Revenue -->
-            <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-              <div>
-                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                  <span>Gross Revenue</span>
-                  <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-indigo-500"></i>
-                </div>
-                <div class="text-lg sm:text-xl font-black text-slate-900 font-mono mt-1">₹\${formatCurrency(grossRevenue)}</div>
+            <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                <span>Revenue</span>
+                <i data-lucide="indian-rupee" class="w-3 h-3 text-indigo-500"></i>
               </div>
-              <div class="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 font-medium">
-                \${records.length} daily entries
+              <div class="text-base sm:text-lg font-black text-slate-900 font-mono mt-0.5">₹\${formatCurrency(grossRevenue)}</div>
+              <div class="text-[10px] text-slate-400 mt-1 pt-1 border-t border-slate-100 font-medium truncate">
+                \${records.length} entries
               </div>
             </div>
 
             <!-- Card 2: Lodging Sales -->
-            <div class="bg-white p-3.5 rounded-2xl border border-indigo-100 shadow-xs flex flex-col justify-between">
-              <div>
-                <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center justify-between">
-                  <span>Lodging Sales</span>
-                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-500"></i>
-                </div>
-                <div class="text-lg sm:text-xl font-black text-indigo-950 font-mono mt-1">
-                  ₹\${formatCurrency(totalLodging)}
-                </div>
+            <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-indigo-100 shadow-2xs flex flex-col justify-between">
+              <div class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center justify-between">
+                <span>Lodging</span>
+                <i data-lucide="hotel" class="w-3 h-3 text-indigo-500"></i>
               </div>
-              <div class="text-[10px] text-indigo-800 mt-2 pt-2 border-t border-indigo-50 font-medium truncate">
-                On: ₹\${formatCurrency(totalLodgingOnline)} · Cash: ₹\${formatCurrency(totalLodgingCash)}
+              <div class="text-base sm:text-lg font-black text-indigo-950 font-mono mt-0.5">
+                ₹\${formatCurrency(totalLodging)}
+              </div>
+              <div class="text-[10px] text-indigo-700/80 mt-1 pt-1 border-t border-indigo-50 font-medium truncate">
+                On ₹\${formatCurrency(totalLodgingOnline)} · Cs ₹\${formatCurrency(totalLodgingCash)}
               </div>
             </div>
 
             <!-- Card 3: Month Room Occupancy % (Green if > 50%) -->
-            <div class="p-3.5 rounded-2xl shadow-xs flex flex-col justify-between transition \${isMonthOccupancyGreen ? 'bg-emerald-50/90 border-2 border-emerald-400 text-emerald-950 ring-2 ring-emerald-200/50' : 'bg-white border border-slate-200'}">
-              <div>
-                <div class="text-[10px] font-bold uppercase tracking-wider flex items-center justify-between \${isMonthOccupancyGreen ? 'text-emerald-700' : 'text-slate-400'}">
-                  <span>Month Occupancy</span>
-                  <i data-lucide="percent" class="w-3.5 h-3.5 \${isMonthOccupancyGreen ? 'text-emerald-600' : 'text-slate-400'}"></i>
-                </div>
-                <div class="flex items-baseline gap-2 mt-1">
-                  <span class="text-xl sm:text-2xl font-black font-mono \${isMonthOccupancyGreen ? 'text-emerald-700' : 'text-slate-900'}">\${monthOccupancyPct}%</span>
-                  \${isMonthOccupancyGreen ? '<span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 >50%</span>' : '<span class="text-[10px] text-slate-400 font-medium">Standard</span>'}
-                </div>
+            <div class="p-2.5 sm:p-3 rounded-xl shadow-2xs flex flex-col justify-between transition \${isMonthOccupancyGreen ? 'bg-emerald-50/90 border-2 border-emerald-400 text-emerald-950' : 'bg-white border border-slate-200'}">
+              <div class="text-[10px] font-bold uppercase tracking-wider flex items-center justify-between \${isMonthOccupancyGreen ? 'text-emerald-700' : 'text-slate-400'}">
+                <span>Month Occ.</span>
+                <i data-lucide="percent" class="w-3 h-3 \${isMonthOccupancyGreen ? 'text-emerald-600' : 'text-slate-400'}"></i>
               </div>
-              <div class="text-[10px] mt-2 pt-2 border-t \${isMonthOccupancyGreen ? 'border-emerald-200/70 text-emerald-800 font-semibold' : 'border-slate-100 text-slate-500 font-medium'} truncate">
-                \${bookedNightsCount} / \${totalCapacity} room-nights
+              <div class="flex items-baseline gap-1.5 mt-0.5">
+                <span class="text-base sm:text-lg font-black font-mono \${isMonthOccupancyGreen ? 'text-emerald-700' : 'text-slate-900'}">\${monthOccupancyPct}%</span>
+                \${isMonthOccupancyGreen ? '<span class="px-1 py-0.2 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">&gt;50%</span>' : ''}
+              </div>
+              <div class="text-[10px] mt-1 pt-1 border-t \${isMonthOccupancyGreen ? 'border-emerald-200/70 text-emerald-800 font-semibold' : 'border-slate-100 text-slate-400 font-medium'} truncate">
+                \${bookedNightsCount}/\${totalCapacity} nights
               </div>
             </div>
 
             <!-- Card 4: Today's Occupancy % (Green if > 50%) -->
-            <div class="p-3.5 rounded-2xl shadow-xs flex flex-col justify-between transition \${isTodayOccupancyGreen ? 'bg-emerald-50/90 border-2 border-emerald-400 text-emerald-950 ring-2 ring-emerald-200/50' : 'bg-white border border-slate-200'}">
-              <div>
-                <div class="text-[10px] font-bold uppercase tracking-wider flex items-center justify-between \${isTodayOccupancyGreen ? 'text-emerald-700' : 'text-slate-400'}">
-                  <span>Today Occupancy</span>
-                  <i data-lucide="door-open" class="w-3.5 h-3.5 \${isTodayOccupancyGreen ? 'text-emerald-600' : 'text-slate-400'}"></i>
-                </div>
-                <div class="flex items-baseline gap-2 mt-1">
-                  <span class="text-xl sm:text-2xl font-black font-mono \${isTodayOccupancyGreen ? 'text-emerald-700' : 'text-slate-900'}">\${todayOccupancyPct}%</span>
-                  \${isTodayOccupancyGreen ? '<span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 >50%</span>' : '<span class="text-[10px] text-slate-400 font-medium">Standard</span>'}
-                </div>
+            <div class="p-2.5 sm:p-3 rounded-xl shadow-2xs flex flex-col justify-between transition \${isTodayOccupancyGreen ? 'bg-emerald-50/90 border-2 border-emerald-400 text-emerald-950' : 'bg-white border border-slate-200'}">
+              <div class="text-[10px] font-bold uppercase tracking-wider flex items-center justify-between \${isTodayOccupancyGreen ? 'text-emerald-700' : 'text-slate-400'}">
+                <span>Today Occ.</span>
+                <i data-lucide="door-open" class="w-3 h-3 \${isTodayOccupancyGreen ? 'text-emerald-600' : 'text-slate-400'}"></i>
               </div>
-              <div class="text-[10px] mt-2 pt-2 border-t \${isTodayOccupancyGreen ? 'border-emerald-200/70 text-emerald-800 font-semibold' : 'border-slate-100 text-slate-500 font-medium'} truncate">
-                \${todayBookedCount} of \${totalHotelRooms} rooms booked
+              <div class="flex items-baseline gap-1.5 mt-0.5">
+                <span class="text-base sm:text-lg font-black font-mono \${isTodayOccupancyGreen ? 'text-emerald-700' : 'text-slate-900'}">\${todayOccupancyPct}%</span>
+                \${isTodayOccupancyGreen ? '<span class="px-1 py-0.2 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">&gt;50%</span>' : ''}
+              </div>
+              <div class="text-[10px] mt-1 pt-1 border-t \${isTodayOccupancyGreen ? 'border-emerald-200/70 text-emerald-800 font-semibold' : 'border-slate-100 text-slate-400 font-medium'} truncate">
+                \${todayBookedCount}/\${totalHotelRooms} booked
               </div>
             </div>
 
             <!-- Card 5: Operating Expenses -->
-            <div class="bg-white p-3.5 rounded-2xl border border-rose-100 shadow-xs flex flex-col justify-between">
-              <div>
-                <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center justify-between">
-                  <span>Total Expenses</span>
-                  <i data-lucide="receipt" class="w-3.5 h-3.5 text-rose-500"></i>
-                </div>
-                <div class="text-lg sm:text-xl font-black text-rose-700 font-mono mt-1">₹\${formatCurrency(totalExpenses)}</div>
+            <div class="bg-white p-2.5 sm:p-3 rounded-xl border border-rose-100 shadow-2xs flex flex-col justify-between">
+              <div class="text-[10px] font-bold text-rose-600 uppercase tracking-wider flex items-center justify-between">
+                <span>Expenses</span>
+                <i data-lucide="receipt" class="w-3 h-3 text-rose-500"></i>
               </div>
-              <div class="text-[11px] text-rose-700 mt-2 pt-2 border-t border-rose-50 font-medium">
-                \${grossRevenue > 0 ? Math.round((totalExpenses / grossRevenue) * 100) : 0}% expense ratio
+              <div class="text-base sm:text-lg font-black text-rose-700 font-mono mt-0.5">₹\${formatCurrency(totalExpenses)}</div>
+              <div class="text-[10px] text-rose-700/80 mt-1 pt-1 border-t border-rose-50 font-medium truncate">
+                \${grossRevenue > 0 ? Math.round((totalExpenses / grossRevenue) * 100) : 0}% of rev
               </div>
             </div>
 
             <!-- Card 6: Net Operating Profit -->
-            <div class="bg-white p-3.5 rounded-2xl border \${netOperatingProfit < 0 ? 'border-rose-200' : 'border-emerald-200'} shadow-xs flex flex-col justify-between">
-              <div>
-                <div class="text-[10px] font-bold \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'} uppercase tracking-wider flex items-center justify-between">
-                  <span>Net Profit</span>
-                  <i data-lucide="trending-up" class="w-3.5 h-3.5 \${netOperatingProfit < 0 ? 'text-rose-500' : 'text-emerald-600'}"></i>
-                </div>
-                <div class="text-lg sm:text-xl font-black font-mono mt-1 \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'}">
-                  ₹\${formatCurrency(netOperatingProfit)}
-                </div>
+            <div class="bg-white p-2.5 sm:p-3 rounded-xl border \${netOperatingProfit < 0 ? 'border-rose-200' : 'border-emerald-200'} shadow-2xs flex flex-col justify-between">
+              <div class="text-[10px] font-bold \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'} uppercase tracking-wider flex items-center justify-between">
+                <span>Net Profit</span>
+                <i data-lucide="trending-up" class="w-3 h-3 \${netOperatingProfit < 0 ? 'text-rose-500' : 'text-emerald-600'}"></i>
               </div>
-              <div class="text-[11px] mt-2 pt-2 border-t \${netOperatingProfit < 0 ? 'border-rose-50 text-rose-600' : 'border-emerald-50 text-emerald-800'} font-medium">
+              <div class="text-base sm:text-lg font-black font-mono mt-0.5 \${netOperatingProfit < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                ₹\${formatCurrency(netOperatingProfit)}
+              </div>
+              <div class="text-[10px] mt-1 pt-1 border-t \${netOperatingProfit < 0 ? 'border-rose-50 text-rose-600' : 'border-emerald-50 text-emerald-700'} font-medium truncate">
                 Margin: \${profitMarginPct}%
               </div>
             </div>
           </div>
 
-          <!-- Xsquare Hotel Room-by-Room Occupancy & Performance (4 Rooms) -->
-          <div class="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col gap-3">
-            <div class="flex items-center justify-between flex-wrap gap-2">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
-                <span>Xsquare Hotel — Room-by-Room Occupancy & Performance (\${MONTH_NAMES[financeMonth]} \${financeYear})</span>
+          <!-- Room-by-Room Occupancy & Performance (Compact 2x2 mobile, 4-col desktop) -->
+          <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col gap-2">
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="door-closed" class="w-3.5 h-3.5 text-indigo-600"></i>
+                <span>Room Performance</span>
               </h4>
-              <span class="text-xs font-bold px-2.5 py-1 rounded-full \${isMonthOccupancyGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-700'}">
-                Overall Occupancy: \${monthOccupancyPct}% (\${bookedNightsCount}/\${totalCapacity} nights)
+              <span class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full \${isMonthOccupancyGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-700'}">
+                \${monthOccupancyPct}% (\${bookedNightsCount}/\${totalCapacity})
               </span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
               \${displayRooms.map(rm => {
                 const roomNights = monthBookings.filter(b => b.room_id === rm.id || String(b.room_number) === String(rm.room_number)).length;
                 const roomOccPct = daysInMonth > 0 ? Math.round((roomNights / daysInMonth) * 100) : 0;
@@ -7986,38 +7868,31 @@ export function getDashboardHtml(): string {
                 const isBookedToday = todayBookings.some(b => b.room_id === rm.id || String(b.room_number) === String(rm.room_number));
 
                 return \`
-                  <div class="p-4 rounded-2xl border \${isRoomGreen ? 'border-2 border-emerald-400 bg-emerald-50/50 shadow-xs' : 'border-slate-200 bg-slate-50/50'} flex flex-col justify-between gap-3">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-1.5">
-                        <i data-lucide="hotel" class="w-4 h-4 \${isRoomGreen ? 'text-emerald-700' : 'text-indigo-600'}"></i>
-                        <span class="text-sm font-black text-slate-900">Room \${escapeHtml(rm.room_number)}</span>
-                      </div>
-                      <span class="text-[10px] px-2 py-0.5 rounded-full font-bold \${isRoomGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-700'}">
-                        \${isRoomGreen ? '🟢 ' : ''}\${roomOccPct}% \${isRoomGreen ? '(>50%)' : ''}
+                  <div class="p-2.5 sm:p-3 rounded-xl border \${isRoomGreen ? 'border-emerald-400 bg-emerald-50/50' : 'border-slate-200 bg-slate-50/50'} flex flex-col justify-between gap-1.5">
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full \${isBookedToday ? 'bg-emerald-500' : 'bg-slate-300'}" title="\${isBookedToday ? 'Booked Today' : 'Vacant Today'}"></span>
+                        Rm \${escapeHtml(rm.room_number)}
+                      </span>
+                      <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold \${isRoomGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200/80 text-slate-700'}">
+                        \${roomOccPct}%
                       </span>
                     </div>
 
-                    <div class="space-y-1 text-xs">
+                    <div class="space-y-0.5 text-[11px]">
                       <div class="flex items-center justify-between text-slate-500">
-                        <span>Type:</span>
-                        <span class="font-semibold text-slate-800">\${escapeHtml(rm.room_type || 'Standard')} (₹\${formatCurrency(rm.base_price || 0)}/night)</span>
+                        <span>Nights</span>
+                        <span class="font-bold font-mono text-slate-900">\${roomNights}/\${daysInMonth}</span>
                       </div>
                       <div class="flex items-center justify-between text-slate-500">
-                        <span>Booked Nights:</span>
-                        <span class="font-bold font-mono text-slate-900">\${roomNights} / \${daysInMonth} nights</span>
-                      </div>
-                      <div class="flex items-center justify-between text-slate-500">
-                        <span>Month Revenue:</span>
+                        <span>Revenue</span>
                         <span class="font-bold font-mono text-indigo-900">₹\${formatCurrency(roomRev)}</span>
                       </div>
                     </div>
 
-                    <div class="pt-2 border-t \${isRoomGreen ? 'border-emerald-200' : 'border-slate-200'} flex items-center justify-between text-[11px]">
-                      <span class="text-slate-500 font-medium">Today's Status:</span>
-                      \${isBookedToday
-                        ? '<span class="inline-flex items-center gap-1 font-bold text-emerald-700"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Booked Today</span>'
-                        : '<span class="inline-flex items-center gap-1 font-medium text-slate-400"><span class="w-2 h-2 rounded-full bg-slate-300"></span> Vacant Today</span>'
-                      }
+                    <div class="pt-1 border-t \${isRoomGreen ? 'border-emerald-200/70' : 'border-slate-200/70'} flex items-center justify-between text-[10px]">
+                      <span class="text-slate-400 truncate">\${escapeHtml(rm.room_type || 'Std')} · ₹\${formatCurrency(rm.base_price || 0)}</span>
+                      <span class="font-bold shrink-0 \${isBookedToday ? 'text-emerald-700' : 'text-slate-400'}">\${isBookedToday ? 'Booked' : 'Vacant'}</span>
                     </div>
                   </div>
                 \`;
@@ -8026,28 +7901,24 @@ export function getDashboardHtml(): string {
           </div>
 
           <!-- Itemized Daily Records Table (Desktop) & Cards (Mobile) -->
-          <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                  <i data-lucide="table" class="w-4 h-4 text-slate-500"></i>
-                  Daily Breakdown Records
-                </h4>
-                <p class="text-[11px] text-slate-400">Detailed logs submitted by property managers and admin</p>
-              </div>
-              <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
-                \${records.length} Records
+          <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col overflow-hidden">
+            <div class="px-3 py-2.5 sm:px-4 sm:py-3 border-b border-slate-100 flex items-center justify-between gap-2">
+              <h4 class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <i data-lucide="table" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>Daily Records</span>
+              </h4>
+              <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
+                \${records.length} days
               </span>
             </div>
 
             \${records.length === 0 ? \`
-              <div class="text-center py-12 px-4 flex flex-col items-center justify-center">
-                <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-2">
-                  <i data-lucide="receipt" class="w-6 h-6"></i>
+              <div class="text-center py-8 px-4 flex flex-col items-center justify-center">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mb-2">
+                  <i data-lucide="receipt" class="w-5 h-5"></i>
                 </div>
-                <h5 class="text-sm font-bold text-slate-700">No Financial Records Found</h5>
-                <p class="text-xs text-slate-400 mt-1 max-w-sm">No daily sales or expenses entered for this month / business yet.</p>
-                <button type="button" onclick="openFinanceModal()" class="mt-4 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer">
+                <h5 class="text-xs sm:text-sm font-bold text-slate-700">No Records for \${MONTH_NAMES[financeMonth]}</h5>
+                <button type="button" onclick="openFinanceModal()" class="mt-3 px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer">
                   + Record Daily Sales
                 </button>
               </div>
@@ -8057,15 +7928,14 @@ export function getDashboardHtml(): string {
                 <table class="w-full text-left text-xs text-slate-700">
                   <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     <tr>
-                      <th class="py-3 px-3.5">Date</th>
-                      <th class="py-3 px-3.5">Business</th>
-                      <th class="py-3 px-3.5">Revenue Breakdown</th>
-                      <th class="py-3 px-3.5">Other</th>
-                      <th class="py-3 px-3.5 font-bold text-slate-900">Total Sales</th>
-                      <th class="py-3 px-3.5 font-bold text-rose-700">Expenses</th>
-                      <th class="py-3 px-3.5 font-bold text-slate-900">Net Profit</th>
-                      <th class="py-3 px-3.5">Submitted By</th>
-                      <th class="py-3 px-3.5 text-right">Actions</th>
+                      <th class="py-2 px-3">Date</th>
+                      <th class="py-2 px-3">Revenue Breakdown</th>
+                      <th class="py-2 px-2.5">Other</th>
+                      <th class="py-2 px-2.5 font-bold text-slate-900">Sales</th>
+                      <th class="py-2 px-2.5 font-bold text-rose-700">Expenses</th>
+                      <th class="py-2 px-2.5 font-bold text-slate-900">Net Profit</th>
+                      <th class="py-2 px-2.5">By</th>
+                      <th class="py-2 px-3 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100">
@@ -8076,55 +7946,48 @@ export function getDashboardHtml(): string {
                       const rLodging = (r.lodging_online || 0) + rLodgingCash;
                       const rFooding = (r.fooding_online || 0) + rFoodingCash;
                       const rServices = (r.services_online || 0) + (r.services_cash || 0);
-                      const ti = getBusinessTypeInfo(rProp);
 
                       return \`
                         <tr class="hover:bg-slate-50/80 transition">
-                          <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">\${r.date}</td>
-                          <td class="py-3 px-3.5 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700">
-                              \${escapeHtml(r.property_name || 'Business')}
-                            </span>
-                          </td>
-                          <td class="py-3 px-3.5 whitespace-nowrap">
-                            <div class="space-y-1">
+                          <td class="py-2 px-3 font-bold text-slate-900 whitespace-nowrap">\${r.date}</td>
+                          <td class="py-2 px-3 whitespace-nowrap">
+                            <div class="flex items-center gap-2 flex-wrap">
                               \${rLodging > 0 || rProp?.has_lodging === 1 ? \`
-                                <div>
-                                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700">Lodging: ₹\${formatCurrency(rLodging)}</span>
-                                  <span class="text-[9px] text-slate-400">(On ₹\${formatCurrency(r.lodging_online)} · Cs ₹\${formatCurrency(rLodgingCash)})</span>
-                                </div>
+                                <span>
+                                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700">Lodg ₹\${formatCurrency(rLodging)}</span>
+                                  <span class="text-[9px] text-slate-400">(On \${formatCurrency(r.lodging_online)} · Cs \${formatCurrency(rLodgingCash)})</span>
+                                </span>
                               \` : ''}
                               \${rFooding > 0 || rProp?.has_fooding === 1 ? \`
-                                <div>
-                                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700">Fooding: ₹\${formatCurrency(rFooding)}</span>
-                                  <span class="text-[9px] text-slate-400">(On ₹\${formatCurrency(r.fooding_online)} · Cs ₹\${formatCurrency(rFoodingCash)})</span>
-                                </div>
+                                <span>
+                                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">Food ₹\${formatCurrency(rFooding)}</span>
+                                  <span class="text-[9px] text-slate-400">(On \${formatCurrency(r.fooding_online)} · Cs \${formatCurrency(rFoodingCash)})</span>
+                                </span>
                               \` : ''}
                               \${rServices > 0 || rProp?.has_services === 1 ? \`
-                                <div>
-                                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700">\${escapeHtml(rProp?.services_label || 'Services')}: ₹\${formatCurrency(rServices)}</span>
-                                  <span class="text-[9px] text-slate-400">(On ₹\${formatCurrency(r.services_online)} · Cs ₹\${formatCurrency(r.services_cash)})</span>
-                                </div>
+                                <span>
+                                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700">\${escapeHtml(rProp?.services_label || 'Serv')} ₹\${formatCurrency(rServices)}</span>
+                                </span>
                               \` : ''}
                             </div>
                           </td>
-                          <td class="py-3 px-3.5 font-mono text-slate-600 whitespace-nowrap">₹\${formatCurrency(r.other_sales)}</td>
-                          <td class="py-3 px-3.5 font-black text-emerald-700 font-mono whitespace-nowrap">₹\${formatCurrency(r.total_sales)}</td>
-                          <td class="py-3 px-3.5 whitespace-nowrap">
+                          <td class="py-2 px-2.5 font-mono text-slate-600 whitespace-nowrap">₹\${formatCurrency(r.other_sales)}</td>
+                          <td class="py-2 px-2.5 font-black text-emerald-700 font-mono whitespace-nowrap">₹\${formatCurrency(r.total_sales)}</td>
+                          <td class="py-2 px-2.5 whitespace-nowrap">
                             <div class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</div>
-                            \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic max-w-[150px] truncate" title="\${escapeHtml(r.expense_notes)}">\${escapeHtml(r.expense_notes)}</div>\` : ''}
+                            \${r.expense_notes ? \`<div class="text-[10px] text-slate-500 italic max-w-[140px] truncate" title="\${escapeHtml(r.expense_notes)}">\${escapeHtml(r.expense_notes)}</div>\` : ''}
                           </td>
-                          <td class="py-3 px-3.5 font-black font-mono whitespace-nowrap \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
+                          <td class="py-2 px-2.5 font-black font-mono whitespace-nowrap \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
                             ₹\${formatCurrency(r.net_revenue)}
                           </td>
-                          <td class="py-3 px-3.5 text-[11px] text-slate-500 whitespace-nowrap">\${escapeHtml(r.submitted_by || 'Staff')}</td>
-                          <td class="py-3 px-3.5 text-right whitespace-nowrap">
+                          <td class="py-2 px-2.5 text-[11px] text-slate-500 whitespace-nowrap">\${escapeHtml(r.submitted_by || 'Staff')}</td>
+                          <td class="py-2 px-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
                               <button
                                 type="button"
                                 onclick="openFinanceModal('\${r.id}')"
                                 title="Edit Record"
-                                class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
+                                class="p-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
                               >
                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                               </button>
@@ -8132,7 +7995,7 @@ export function getDashboardHtml(): string {
                                 type="button"
                                 onclick="handleDeleteFinance('\${r.id}')"
                                 title="Delete Record"
-                                class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                class="p-1 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                               >
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                               </button>
@@ -8146,7 +8009,7 @@ export function getDashboardHtml(): string {
               </div>
 
               <!-- Mobile Cards View (< md) -->
-              <div class="md:hidden divide-y divide-slate-100 p-3 space-y-3">
+              <div class="md:hidden p-2 space-y-2">
                 \${records.map(r => {
                   const rProp = properties.find(p => p.id === r.property_id);
                   const rLodgingCash = r.lodging_cash ?? r.lodging_offline ?? 0;
@@ -8156,72 +8019,44 @@ export function getDashboardHtml(): string {
                   const rServices = (r.services_online || 0) + (r.services_cash || 0);
 
                   return \`
-                    <div class="bg-slate-50/60 p-3.5 rounded-2xl border border-slate-200/80 flex flex-col gap-2.5 shadow-2xs">
+                    <div class="bg-slate-50/70 p-2.5 rounded-xl border border-slate-200/80 flex flex-col gap-1.5">
                       <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-1.5">
-                          <span class="text-xs font-bold text-slate-900">\${r.date}</span>
-                          <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-white border border-slate-200 text-slate-700">
-                            \${escapeHtml(r.property_name || 'Business')}
-                          </span>
-                        </div>
+                        <span class="text-xs font-bold text-slate-900 font-mono">\${r.date}</span>
                         <div class="flex items-center gap-1">
-                          <button type="button" onclick="openFinanceModal('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 cursor-pointer">
+                          <button type="button" onclick="openFinanceModal('\${r.id}')" class="p-1 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 cursor-pointer">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                           </button>
-                          <button type="button" onclick="handleDeleteFinance('\${r.id}')" class="p-1.5 rounded-lg bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 cursor-pointer">
+                          <button type="button" onclick="handleDeleteFinance('\${r.id}')" class="p-1 rounded-lg bg-white border border-slate-200 text-rose-500 hover:bg-rose-50 cursor-pointer">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                           </button>
                         </div>
                       </div>
 
-                      <div class="grid grid-cols-2 gap-2 text-xs bg-white p-2.5 rounded-xl border border-slate-100">
-                        \${rProp?.has_lodging === 1 ? \`
-                          <div>
-                            <span class="text-[10px] font-bold text-indigo-700 uppercase">Lodging</span>
-                            <div class="font-mono font-bold text-indigo-950">₹\${formatCurrency(rLodging)}</div>
-                            <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.lodging_online)} · Cs ₹\${formatCurrency(rLodgingCash)}</div>
-                          </div>
-                        \` : ''}
-                        \${rProp?.has_fooding === 1 ? \`
-                          <div>
-                            <span class="text-[10px] font-bold text-amber-700 uppercase">Fooding</span>
-                            <div class="font-mono font-bold text-amber-950">₹\${formatCurrency(rFooding)}</div>
-                            <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.fooding_online)} · Cs ₹\${formatCurrency(rFoodingCash)}</div>
-                          </div>
-                        \` : ''}
-                        \${rProp?.has_services === 1 ? \`
-                          <div>
-                            <span class="text-[10px] font-bold text-purple-700 uppercase">\${escapeHtml(rProp?.services_label || 'Services')}</span>
-                            <div class="font-mono font-bold text-purple-950">₹\${formatCurrency(rServices)}</div>
-                            <div class="text-[9px] text-slate-400">On ₹\${formatCurrency(r.services_online)} · Cs ₹\${formatCurrency(r.services_cash)}</div>
-                          </div>
-                        \` : ''}
+                      <div class="grid grid-cols-3 gap-1.5 text-[11px] bg-white p-2 rounded-lg border border-slate-100">
                         <div>
-                          <span class="text-[10px] font-bold text-slate-500 uppercase">Other Sales</span>
-                          <div class="font-mono font-bold text-slate-700">₹\${formatCurrency(r.other_sales)}</div>
+                          <span class="text-[9px] text-slate-400 uppercase font-bold block">Sales</span>
+                          <span class="font-black text-emerald-700 font-mono">₹\${formatCurrency(r.total_sales)}</span>
+                        </div>
+                        <div class="text-center">
+                          <span class="text-[9px] text-slate-400 uppercase font-bold block">Expenses</span>
+                          <span class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</span>
+                        </div>
+                        <div class="text-right">
+                          <span class="text-[9px] text-slate-400 uppercase font-bold block">Net Profit</span>
+                          <span class="font-black font-mono \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">₹\${formatCurrency(r.net_revenue)}</span>
                         </div>
                       </div>
 
-                      <div class="flex items-center justify-between text-xs pt-1">
-                        <div>
-                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Sales</span>
-                          <div class="font-black text-emerald-700 font-mono">₹\${formatCurrency(r.total_sales)}</div>
-                        </div>
-                        <div class="text-center">
-                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Expenses</span>
-                          <div class="font-bold text-rose-700 font-mono">₹\${formatCurrency(r.expenses_total)}</div>
-                        </div>
-                        <div class="text-right">
-                          <span class="text-[10px] text-slate-400 uppercase font-semibold">Net Profit</span>
-                          <div class="font-black font-mono \${(r.net_revenue || 0) < 0 ? 'text-rose-600' : 'text-emerald-700'}">
-                            ₹\${formatCurrency(r.net_revenue)}
-                          </div>
-                        </div>
+                      <div class="flex items-center gap-2 flex-wrap text-[10px] text-slate-600 px-0.5">
+                        \${rLodging > 0 ? \`<span><b class="text-indigo-700">Lodg:</b> ₹\${formatCurrency(rLodging)} <span class="text-slate-400">(On \${formatCurrency(r.lodging_online)}/Cs \${formatCurrency(rLodgingCash)})</span></span>\` : ''}
+                        \${rFooding > 0 ? \`<span><b class="text-amber-700">Food:</b> ₹\${formatCurrency(rFooding)}</span>\` : ''}
+                        \${rServices > 0 ? \`<span><b class="text-purple-700">Serv:</b> ₹\${formatCurrency(rServices)}</span>\` : ''}
+                        \${(r.other_sales || 0) > 0 ? \`<span><b>Other:</b> ₹\${formatCurrency(r.other_sales)}</span>\` : ''}
                       </div>
 
                       \${r.expense_notes ? \`
-                        <div class="text-[10px] text-slate-600 bg-rose-50/60 p-2 rounded-lg border border-rose-100">
-                          <strong class="text-rose-800">Expense Notes:</strong> \${escapeHtml(r.expense_notes)}
+                        <div class="text-[10px] text-rose-800 bg-rose-50/70 px-2 py-1 rounded-lg border border-rose-100 truncate">
+                          <strong>Exp:</strong> \${escapeHtml(r.expense_notes)}
                         </div>
                       \` : ''}
                     </div>
@@ -8265,74 +8100,69 @@ export function getDashboardHtml(): string {
       const monthLodgingTotal = monthLodgingOnline + monthLodgingCash;
 
       container.innerHTML = \`
-        <div class="space-y-4">
-          <!-- Calendar Controls Bar -->
-          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <!-- Business Indicator -->
+        <div class="space-y-2.5 sm:space-y-3">
+          <!-- Compact Calendar Controls Bar -->
+          <div class="bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div class="flex items-center justify-between md:justify-start gap-1.5 flex-wrap">
               <div class="flex items-center gap-1.5">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  <span>Xsquare Hotel (4 Rooms)</span>
-                </span>
+                <!-- Month Navigation -->
+                <div class="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                  <button onclick="changeCalendarMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-md hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <span class="px-2 text-xs font-bold text-slate-800 min-w-[96px] sm:min-w-[110px] text-center select-none">
+                    \${MONTH_NAMES[financeMonth]} \${financeYear}
+                  </span>
+                  <button onclick="changeCalendarMonth(1)" title="Next Month" class="w-7 h-7 rounded-md hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
+                    <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+
+                <button onclick="goToCalendarCurrentMonth()" class="text-[11px] font-semibold px-2 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                  Today
+                </button>
               </div>
 
-              <!-- Month Navigation -->
-              <div class="flex items-center bg-slate-100 rounded-xl p-0.5 border border-slate-200">
-                <button onclick="changeCalendarMonth(-1)" title="Previous Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
-                  <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i>
-                </button>
-                <span class="px-2.5 text-xs font-bold text-slate-800 min-w-[110px] text-center select-none">
-                  \${MONTH_NAMES[financeMonth]} \${financeYear}
-                </span>
-                <button onclick="changeCalendarMonth(1)" title="Next Month" class="w-7 h-7 rounded-lg hover:bg-white text-slate-600 flex items-center justify-center transition cursor-pointer">
-                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                </button>
-              </div>
-
-              <button onclick="goToCalendarCurrentMonth()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
-                Today
-              </button>
-            </div>
-
-            <!-- View Switcher & Actions -->
-            <div class="flex items-center gap-2 self-start md:self-auto flex-wrap">
-              <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+              <!-- View Switcher -->
+              <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                 <button
                   type="button"
                   onclick="setCalendarViewMode('matrix')"
-                  class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'matrix' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+                  class="px-2 sm:px-2.5 py-1 text-[11px] font-bold rounded-md transition cursor-pointer flex items-center gap-1 \${calendarViewMode === 'matrix' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
                 >
-                  <i data-lucide="grid" class="w-3.5 h-3.5"></i>
-                  <span>Matrix (Rooms × Days)</span>
+                  <i data-lucide="grid" class="w-3 h-3"></i>
+                  <span>Matrix</span>
                 </button>
                 <button
                   type="button"
                   onclick="setCalendarViewMode('calendar')"
-                  class="px-3 py-1 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1.5 \${calendarViewMode === 'calendar' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+                  class="px-2 sm:px-2.5 py-1 text-[11px] font-bold rounded-md transition cursor-pointer flex items-center gap-1 \${calendarViewMode === 'calendar' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
                 >
-                  <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-                  <span>Monthly Grid</span>
+                  <i data-lucide="calendar" class="w-3 h-3"></i>
+                  <span>Month</span>
                 </button>
               </div>
+            </div>
 
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-1.5 flex-wrap">
               <button
                 type="button"
                 onclick="openAiBookingChat()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl shadow-xs transition cursor-pointer"
+                class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition cursor-pointer"
               >
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span>AI Chat Book</span>
+                <span>AI Book</span>
               </button>
 
               <button
                 type="button"
                 onclick="openGuestTravelHistoryModal()"
                 title="Search Guest Travel & Stay History"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition cursor-pointer"
+                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition cursor-pointer"
               >
                 <i data-lucide="history" class="w-3.5 h-3.5 text-indigo-600"></i>
-                <span>Guest History</span>
+                <span>History</span>
               </button>
 
               \${currentUserRole === 'admin' ? \`
@@ -8340,76 +8170,79 @@ export function getDashboardHtml(): string {
                   type="button"
                   onclick="openBillingSettingsModal()"
                   title="Invoice &amp; Bank Settings"
-                  class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition cursor-pointer"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition cursor-pointer"
                 >
                   <i data-lucide="receipt" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  <span>Invoice Settings</span>
+                  <span class="hidden sm:inline">Bill Settings</span>
+                  <span class="sm:hidden">Bills</span>
                 </button>
               \` : ''}
 
               <button
                 type="button"
                 onclick="openRoomBookingModal(null, null, null)"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer"
+                class="ml-auto md:ml-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-2xs transition cursor-pointer"
               >
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>+ Book Room</span>
+                <span>Book Room</span>
               </button>
             </div>
           </div>
 
-          <!-- Calendar Summary Stats Bar with Occupancy % (Green if > 50%) -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Configured Rooms</span>
-              <span class="text-base sm:text-lg font-black text-slate-900">\${propRooms.length} Rooms</span>
+          <!-- Compact Calendar Summary Stats Bar (Occupancy % Green if > 50%) -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between sm:block">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rooms</span>
+              <span class="text-sm sm:text-base font-black text-slate-900">\${propRooms.length}</span>
             </div>
-            <div class="p-3 rounded-2xl shadow-2xs \${isOccGreen ? 'bg-emerald-50 border-2 border-emerald-400 text-emerald-900 ring-1 ring-emerald-200' : 'bg-white border border-slate-200'}">
-              <span class="text-[10px] font-bold uppercase tracking-wider block \${isOccGreen ? 'text-emerald-700 font-black' : 'text-slate-400'}">Occupancy %</span>
-              <div class="flex items-center gap-1.5 mt-0.5">
-                <span class="text-base sm:text-lg font-black font-mono \${isOccGreen ? 'text-emerald-700' : 'text-indigo-600'}">\${occupancyPct}%</span>
-                \${isOccGreen ? '<span class="text-[9px] px-1.5 py-0.2 rounded-full font-black bg-emerald-100 text-emerald-800 border border-emerald-300">🟢 >50%</span>' : ''}
+            <div class="p-2 sm:p-2.5 rounded-xl shadow-2xs flex items-center justify-between sm:block \${isOccGreen ? 'bg-emerald-50 border-2 border-emerald-400 text-emerald-900' : 'bg-white border border-slate-200'}">
+              <span class="text-[10px] font-bold uppercase tracking-wider block \${isOccGreen ? 'text-emerald-700 font-black' : 'text-slate-400'}">Occupancy</span>
+              <div class="flex items-center gap-1">
+                <span class="text-sm sm:text-base font-black font-mono \${isOccGreen ? 'text-emerald-700' : 'text-indigo-600'}">\${occupancyPct}%</span>
+                \${isOccGreen ? '<span class="text-[9px] px-1 py-0.2 rounded-full font-black bg-emerald-100 text-emerald-800 border border-emerald-300">&gt;50%</span>' : ''}
               </div>
             </div>
-            <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Month Bookings</span>
-              <span class="text-base sm:text-lg font-black text-indigo-600">\${totalBookingsCount} Bookings</span>
+            <div class="bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between sm:block">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Bookings</span>
+              <span class="text-sm sm:text-base font-black text-indigo-600">\${totalBookingsCount}</span>
             </div>
-            <div class="bg-white p-3 rounded-2xl border border-indigo-100 shadow-2xs">
-              <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Lodging Total</span>
-              <span class="text-base sm:text-lg font-black font-mono text-indigo-950">₹\${formatCurrency(monthLodgingTotal)}</span>
-              <div class="text-[10px] text-slate-500 mt-1">On: ₹\${formatCurrency(monthLodgingOnline)} · Cs: ₹\${formatCurrency(monthLodgingCash)}</div>
+            <div class="bg-white p-2 sm:p-2.5 rounded-xl border border-indigo-100 shadow-2xs">
+              <div class="flex items-center justify-between sm:block">
+                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Lodging</span>
+                <span class="text-sm sm:text-base font-black font-mono text-indigo-950">₹\${formatCurrency(monthLodgingTotal)}</span>
+              </div>
+              <div class="text-[9px] sm:text-[10px] text-slate-500 truncate mt-0.5">On ₹\${formatCurrency(monthLodgingOnline)} · Cs ₹\${formatCurrency(monthLodgingCash)}</div>
             </div>
           </div>
 
-          <!-- Legend Bar -->
-          <div class="flex items-center gap-4 text-[11px] text-slate-600 flex-wrap px-2">
-            <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Legend:</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Online Booking</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Cash Booking</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Split (Cash + Online)</span>
-            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Multiple Bookings (2x, 3x)</span>
-            <span class="inline-flex items-center gap-1.5"><span>🪪</span> ID Attached</span>
+          <!-- Compact Legend Bar -->
+          <div class="flex items-center gap-x-3 gap-y-1 text-[10px] text-slate-600 flex-wrap px-1">
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-200 border border-slate-300"></span> Vacant</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Online</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Cash</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span> Split</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-700"></span> 2x+</span>
+            <span class="inline-flex items-center gap-0.5"><span>🪪</span> ID</span>
           </div>
 
           <!-- RENDER MATRIX OR MONTHLY VIEW -->
           \${calendarViewMode === 'matrix' ? renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) : renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings)}
         </div>
       \`;
-    }\n
+    }
+
     // Helper: Matrix Grid (Rooms x Days)
     function renderAdminMatrixGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) {
       const todayIso = new Date().toISOString().split("T")[0];
       const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
       return \`
-        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col">
           <div class="overflow-x-auto">
             <table class="w-full border-collapse text-left text-xs">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
-                  <th class="py-2.5 sm:py-3 px-2 sm:px-3.5 sticky left-0 z-20 bg-slate-100 min-w-[76px] sm:min-w-[130px] shadow-xs text-xs font-bold text-slate-700">Room</th>
+                  <th class="py-2 px-1.5 sm:px-3 sticky left-0 z-20 bg-slate-100 min-w-[66px] sm:min-w-[115px] shadow-xs text-[11px] sm:text-xs font-bold text-slate-700">Room</th>
                   \${days.map(d => {
                     const dayStr = String(d).padStart(2, "0");
                     const dateStr = \`\${currentMonthPrefix}-\${dayStr}\`;
@@ -8417,9 +8250,9 @@ export function getDashboardHtml(): string {
                     const dateObj = new Date(financeYear, financeMonth, d);
                     const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'narrow' });
                     return \`
-                      <th class="py-2.5 px-2 text-center min-w-[48px] border-l border-slate-200/60 \${isToday ? 'bg-indigo-100/70 text-indigo-900 font-black' : ''}">
-                        <div>\${d}</div>
-                        <div class="text-[9px] font-normal text-slate-400">\${dayName}</div>
+                      <th class="py-1.5 px-1 text-center min-w-[40px] sm:min-w-[46px] border-l border-slate-200/60 \${isToday ? 'bg-indigo-100/80 text-indigo-900 font-black' : ''}">
+                        <div class="leading-tight">\${d}</div>
+                        <div class="text-[8px] font-normal text-slate-400">\${dayName}</div>
                       </th>
                     \`;
                   }).join("")}
@@ -8429,13 +8262,13 @@ export function getDashboardHtml(): string {
                 \${propRooms.map(rm => {
                   return \`
                     <tr class="hover:bg-slate-50/70 transition">
-                      <td class="py-2 sm:py-2.5 px-2 sm:px-3.5 sticky left-0 z-10 bg-white shadow-xs font-bold text-slate-900 whitespace-nowrap text-xs">
-                        <div class="flex items-center gap-1 sm:gap-1.5">
-                          <i data-lucide="door-closed" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
+                      <td class="py-1.5 sm:py-2 px-1.5 sm:px-3 sticky left-0 z-10 bg-white shadow-xs font-bold text-slate-900 whitespace-nowrap text-[11px] sm:text-xs">
+                        <div class="flex items-center gap-1">
+                          <i data-lucide="door-closed" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-600 shrink-0"></i>
                           <span>Room \${escapeHtml(rm.room_number)}</span>
                         </div>
                         <div class="hidden sm:block text-[10px] text-slate-400 font-normal">
-                          \${activePropertyId === 'all' ? \`<span class="font-bold text-indigo-600 mr-1">\${escapeHtml(properties.find(p => p.id === rm.property_id)?.name || '')} ·</span>\` : ''}\${escapeHtml(rm.room_type || 'Standard')} · ₹\${formatCurrency(rm.base_price || 0)}
+                          \${escapeHtml(rm.room_type || 'Standard')} · ₹\${formatCurrency(rm.base_price || 0)}
                         </div>
                       </td>
 
@@ -8451,7 +8284,7 @@ export function getDashboardHtml(): string {
                             <td
                               onclick="openRoomBookingModal('\${rm.id}', '\${dateStr}', null)"
                               title="Vacant - Click to book"
-                              class="py-2 px-1 text-center border-l border-slate-100 hover:bg-indigo-50/50 cursor-pointer transition select-none \${isToday ? 'bg-indigo-50/20' : ''}"
+                              class="py-1.5 px-0.5 text-center border-l border-slate-100 hover:bg-indigo-50/50 cursor-pointer transition select-none \${isToday ? 'bg-indigo-50/20' : ''}"
                             >
                               <span class="inline-block w-2 h-2 rounded-full bg-slate-200 hover:bg-indigo-400 transition"></span>
                             </td>
@@ -8469,7 +8302,7 @@ export function getDashboardHtml(): string {
                           const stayInfo = isMultiDay ? \` (Multi-day stay: \${bk.check_in_date || ''} to \${bk.check_out_date || ''})\` : '';
                           const isAirbnb = (bk.platform || '').toLowerCase().includes('airbnb');
                           const isBookingCom = (bk.platform || '').toLowerCase().includes('booking');
-                          const platformTag = isAirbnb ? 'Airbnb' : (isBookingCom ? 'OTA' : (isSplit ? 'Split' : (isOnline ? 'On' : 'Cs')) + (isMultiDay ? '·Stay' : ''));
+                          const platformTag = isAirbnb ? 'Airbnb' : (isBookingCom ? 'OTA' : (isSplit ? 'Split' : (isOnline ? 'On' : 'Cs')) + (isMultiDay ? '·S' : ''));
                           const cellStyle = isAirbnb
                             ? 'bg-rose-100 text-rose-900 border border-rose-300'
                             : (isBookingCom
@@ -8483,12 +8316,12 @@ export function getDashboardHtml(): string {
                             <td
                               onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
                               title="Booked: ₹\${formatCurrency(bk.amount)} [\${bk.platform || (isSplit ? 'Split Cash+Online' : (isOnline ? 'Online' : 'Cash'))}]\${splitTooltip} - \${bk.guest_name || 'Guest'}\${hasId ? \` (🪪 \${idCount} ID\${idCount > 1 ? 's' : ''} Attached)\` : ''}\${stayInfo}"
-                              class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
+                              class="py-1 px-0.5 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
                             >
-                              <span class="relative inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${cellStyle}">
+                              <span class="relative inline-flex flex-col items-center justify-center px-1 py-0.5 rounded-md text-[10px] font-bold font-mono shadow-2xs hover:scale-105 transition \${cellStyle}">
                                 \${hasId ? \`<span class="absolute -top-1.5 -right-1 text-[8px] leading-none" title="\${idCount} Guest ID(s) Attached">🪪\${idCount > 1 ? \`<span class="text-[7px] font-black">\${idCount}</span>\` : ''}</span>\` : ''}
-                                <span>₹\${kAmt}k</span>
-                                <span class="text-[8px] uppercase tracking-tighter opacity-90">\${platformTag}</span>
+                                <span class="leading-tight">₹\${kAmt}k</span>
+                                <span class="text-[7px] uppercase tracking-tighter leading-tight opacity-90">\${platformTag}</span>
                               </span>
                             </td>
                           \`;
@@ -8500,12 +8333,12 @@ export function getDashboardHtml(): string {
                             <td
                               onclick="openRoomDayDetail('\${rm.id}', '\${dateStr}')"
                               title="\${count} Bookings: ₹\${formatCurrency(totalAmt)}\${totalIds > 0 ? \` (🪪 \${totalIds} ID\${totalIds > 1 ? 's' : ''} Attached)\` : ''} - Click to view details"
-                              class="py-1 px-1 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
+                              class="py-1 px-0.5 text-center border-l border-slate-100 cursor-pointer transition \${isToday ? 'bg-indigo-50/40' : ''}"
                             >
-                              <span class="relative inline-flex flex-col items-center justify-center px-1.5 py-0.5 rounded-lg text-[10px] font-bold font-mono bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs hover:scale-105 transition">
+                              <span class="relative inline-flex flex-col items-center justify-center px-1 py-0.5 rounded-md text-[10px] font-bold font-mono bg-purple-100 text-purple-900 border border-purple-200 shadow-2xs hover:scale-105 transition">
                                 \${totalIds > 0 ? \`<span class="absolute -top-1.5 -right-1 text-[8px] leading-none" title="\${totalIds} Guest ID(s) Attached">🪪\${totalIds > 1 ? \`<span class="text-[7px] font-black">\${totalIds}</span>\` : ''}</span>\` : ''}
-                                <span>\${count}x</span>
-                                <span class="text-[8px]">₹\${kAmt}k</span>
+                                <span class="leading-tight">\${count}x</span>
+                                <span class="text-[7px] leading-tight">₹\${kAmt}k</span>
                               </span>
                             </td>
                           \`;
@@ -8521,21 +8354,27 @@ export function getDashboardHtml(): string {
       \`;
     }
 
-    // Helper: Monthly 7-Day Grid Calendar View
+    // Helper: Monthly 7-Day Grid Calendar View (Mobile-Optimized)
     function renderAdminMonthlyGrid(propRooms, daysInMonth, currentMonthPrefix, monthBookings) {
       const todayIso = new Date().toISOString().split("T")[0];
       const firstDayOfWeek = new Date(financeYear, financeMonth, 1).getDay();
       const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
       return \`
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col gap-3">
-          <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 uppercase py-1 border-b border-slate-100">
-            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-2 sm:p-3 flex flex-col gap-1.5 sm:gap-2">
+          <div class="grid grid-cols-7 gap-1 text-center text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase py-1 border-b border-slate-100">
+            <div><span class="sm:hidden">S</span><span class="hidden sm:inline">Sun</span></div>
+            <div><span class="sm:hidden">M</span><span class="hidden sm:inline">Mon</span></div>
+            <div><span class="sm:hidden">T</span><span class="hidden sm:inline">Tue</span></div>
+            <div><span class="sm:hidden">W</span><span class="hidden sm:inline">Wed</span></div>
+            <div><span class="sm:hidden">T</span><span class="hidden sm:inline">Thu</span></div>
+            <div><span class="sm:hidden">F</span><span class="hidden sm:inline">Fri</span></div>
+            <div><span class="sm:hidden">S</span><span class="hidden sm:inline">Sat</span></div>
           </div>
 
-          <div class="grid grid-cols-7 gap-1.5">
+          <div class="grid grid-cols-7 gap-1 sm:gap-1.5">
             \${Array.from({ length: firstDayOfWeek }).map(() => \`
-              <div class="min-h-[85px] bg-slate-50/40 rounded-xl border border-dashed border-slate-100"></div>
+              <div class="min-h-[52px] sm:min-h-[82px] bg-slate-50/40 rounded-lg sm:rounded-xl border border-dashed border-slate-100"></div>
             \`).join("")}
 
             \${days.map(d => {
@@ -8544,6 +8383,7 @@ export function getDashboardHtml(): string {
               const isToday = dateStr === todayIso;
               const dateBookings = monthBookings.filter(b => b.date === dateStr);
               const totalDay = dateBookings.reduce((s, b) => s + (b.amount || 0), 0);
+              const kDay = Math.round(totalDay / 1000 * 10) / 10;
               const bookedRoomsCount = dateBookings.length;
               const totalRooms = propRooms.length;
               const dayOccPct = totalRooms > 0 ? Math.round((bookedRoomsCount / totalRooms) * 100) : 0;
@@ -8552,18 +8392,19 @@ export function getDashboardHtml(): string {
               return \`
                 <div
                   onclick="setManagerFinanceDate('\${dateStr}'); setAdminFinanceSubTab('dashboard');"
-                  class="min-h-[90px] p-2 rounded-2xl border transition flex flex-col justify-between cursor-pointer \${isToday ? 'bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200' : 'bg-slate-50/50 hover:bg-white border-slate-200'}"
+                  class="min-h-[52px] sm:min-h-[82px] p-1 sm:p-2 rounded-lg sm:rounded-xl border transition flex flex-col justify-between cursor-pointer \${isToday ? 'bg-indigo-50/60 border-indigo-300 ring-1 ring-indigo-200' : (isDayOccGreen ? 'bg-emerald-50/40 border-emerald-200 hover:bg-emerald-50/70' : 'bg-slate-50/50 hover:bg-white border-slate-200')}"
                 >
-                  <div class="flex items-center justify-between gap-1 flex-wrap">
-                    <span class="text-xs font-bold \${isToday ? 'text-indigo-600 font-black' : 'text-slate-800'}">\${d}</span>
+                  <div class="flex items-center justify-between gap-0.5">
+                    <span class="text-[10px] sm:text-xs font-bold \${isToday ? 'text-indigo-600 font-black' : 'text-slate-800'}">\${d}</span>
                     \${dateBookings.length > 0 ? \`
-                      <span class="text-[9px] px-1.5 py-0.5 rounded-md font-bold whitespace-nowrap \${isDayOccGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : (bookedRoomsCount > totalRooms ? 'bg-purple-100 text-purple-900 border border-purple-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200')}" title="\${bookedRoomsCount} booking(s) across \${totalRooms} rooms (\${dayOccPct}% occupancy)">
-                        \${isDayOccGreen ? '🟢 ' : ''}\${bookedRoomsCount}/\${totalRooms} (\${dayOccPct}%)
+                      <span class="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.2 rounded font-bold whitespace-nowrap \${isDayOccGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : (bookedRoomsCount > totalRooms ? 'bg-purple-100 text-purple-900 border border-purple-200' : 'bg-indigo-100 text-indigo-800 border border-indigo-200')}" title="\${bookedRoomsCount} booking(s) across \${totalRooms} rooms (\${dayOccPct}% occupancy)">
+                        <span class="sm:hidden">\${bookedRoomsCount}/\${totalRooms}</span>
+                        <span class="hidden sm:inline">\${bookedRoomsCount}/\${totalRooms} (\${dayOccPct}%)</span>
                       </span>
                     \` : ''}
                   </div>
 
-                  <div class="space-y-1 my-1 overflow-hidden">
+                  <div class="hidden sm:block space-y-0.5 my-1 overflow-hidden">
                     \${dateBookings.slice(0, 2).map(b => {
                       const bkCash = getBookingCashAmount(b);
                       const bkOnline = getBookingOnlineAmount(b);
@@ -8576,24 +8417,25 @@ export function getDashboardHtml(): string {
                           ? 'bg-purple-100/90 text-purple-950 border border-purple-200'
                           : (isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900'));
                       return \`
-                        <div class="text-[9px] truncate font-medium px-1.5 py-0.5 rounded-md flex items-center justify-between gap-1 \${itemBg}">
+                        <div class="text-[9px] truncate font-medium px-1 py-0.5 rounded flex items-center justify-between gap-1 \${itemBg}">
                           <span class="truncate">\${pTag}Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k</span>
                           \${(() => {
                             const c = parseGuestIdImages(b.guest_id_image).length;
-                            return c > 0 ? \`<span title="\${c} ID(s) Attached" class="text-[8px] shrink-0">🪪\${c > 1 ? \`<span class="text-[7px] font-black">\${c}</span>\` : ''}</span>\` : '';
+                            return c > 0 ? \`<span title="\${c} ID(s) Attached" class="text-[8px] shrink-0">🪪</span>\` : '';
                           })()}
                         </div>
                       \`;
                     }).join("")}
                     \${dateBookings.length > 2 ? \`
-                      <div class="text-[8px] text-slate-400 font-bold text-center">+\${dateBookings.length - 2} more</div>
+                      <div class="text-[8px] text-slate-400 font-bold text-center">+\${dateBookings.length - 2}</div>
                     \` : ''}
                   </div>
 
-                  <div class="pt-1 border-t border-slate-100/80 flex items-center justify-between text-[10px]">
-                    <span class="text-slate-400 font-medium">\${dateBookings.length ? 'Total:' : 'Vacant'}</span>
-                    <span class="font-mono font-bold \${totalDay > 0 ? 'text-indigo-950' : 'text-slate-400'}">
-                      \${totalDay > 0 ? \`₹\${formatCurrency(totalDay)}\` : '—'}
+                  <div class="pt-0.5 sm:pt-1 border-t border-slate-100/80 flex items-center justify-center sm:justify-between text-[9px] sm:text-[10px]">
+                    <span class="hidden sm:inline text-slate-400 font-medium">\${dateBookings.length ? 'Total' : '—'}</span>
+                    <span class="font-mono font-bold truncate \${totalDay > 0 ? 'text-indigo-950' : 'text-slate-300'}">
+                      <span class="sm:hidden">\${totalDay > 0 ? \`₹\${kDay}k\` : '·'}</span>
+                      <span class="hidden sm:inline">\${totalDay > 0 ? \`₹\${formatCurrency(totalDay)}\` : '—'}</span>
                     </span>
                   </div>
                 </div>
@@ -8688,142 +8530,60 @@ export function getDashboardHtml(): string {
         }
 
         container.innerHTML = \`
-          <div class="space-y-4">
-            <!-- Property Header Bar (Controlled by Top Bar) -->
-            <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Business:</span>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
-                  <span>\${escapeHtml(propName)}</span>
-                </span>
-                <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
-                  \${propRooms.length} Rooms
-                </span>
-              </div>
-
-              <button
-                type="button"
-                onclick="openManageRoomModal(null)"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto"
-              >
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>+ Add Single Room</span>
-              </button>
-            </div>
-
-            <!-- Quick Bulk Add Rooms Card -->
-            <div class="bg-gradient-to-br from-indigo-50/70 to-blue-50/40 p-4 sm:p-5 rounded-3xl border border-indigo-100 space-y-3">
-              <div class="flex items-center justify-between flex-wrap gap-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-                    <i data-lucide="layers" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Quick Bulk Add Rooms</h4>
-                    <p class="text-[11px] text-indigo-700/80">Add multiple rooms in one go to \${escapeHtml(propName)} (e.g. 101, 102, 103, 104)</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
-                <div class="sm:col-span-2">
-                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Numbers (Comma Separated) *</label>
-                  <input
-                    type="text"
-                    id="adminBulkRoomNumbers"
-                    placeholder="101, 102, 103, 104, 201, 202"
-                    class="w-full px-3 py-2 text-xs font-mono font-bold rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Room Type</label>
-                  <input
-                    type="text"
-                    id="adminBulkRoomType"
-                    value="Standard"
-                    placeholder="Standard, Deluxe"
-                    class="w-full px-3 py-2 text-xs rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-indigo-950 mb-1">Base Price ₹</label>
-                  <input
-                    type="number"
-                    id="adminBulkBasePrice"
-                    value="2000"
-                    step="1"
-                    min="0"
-                    placeholder="2000"
-                    class="w-full px-3 py-2 text-xs font-bold font-mono rounded-xl border border-indigo-200 bg-white focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
-                </div>
-              </div>
-
-              <div class="flex justify-end pt-1">
-                <button
-                  type="button"
-                  onclick="bulkAddAdminRooms()"
-                  class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-98 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
-                  <span>Bulk Add Rooms to \${escapeHtml(propName)}</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Rooms List Table -->
-            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-              <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <div class="space-y-2.5 sm:space-y-3">
+            <!-- Rooms List Table (Primary, right at top) -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+              <div class="px-3 py-2.5 sm:px-4 border-b border-slate-100 flex items-center justify-between gap-2">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                   <i data-lucide="door-closed" class="w-4 h-4 text-indigo-600"></i>
-                  Configured Rooms for \${escapeHtml(propName)}
+                  <span>Configured Rooms (\${propRooms.length})</span>
                 </h4>
-                <span class="text-xs font-semibold text-slate-500">\${propRooms.length} Active</span>
+                <button
+                  type="button"
+                  onclick="openManageRoomModal(null)"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-2xs transition cursor-pointer"
+                >
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add Room</span>
+                </button>
               </div>
 
               \${propRooms.length === 0 ? \`
-                <div class="p-8 text-center text-xs text-slate-400">
-                  No rooms added for \${escapeHtml(propName)} yet. Use the Quick Bulk Add form above to add rooms (101, 102, 103, 104).
+                <div class="p-6 text-center text-xs text-slate-400">
+                  No rooms added yet. Use Add Room or Bulk Add below.
                 </div>
               \` : \`
                 <div class="overflow-x-auto">
                   <table class="w-full text-left text-xs text-slate-700">
                     <thead class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                       <tr>
-                        <th class="py-3 px-4">Room Number</th>
-                        <th class="py-3 px-4">Type</th>
-                        <th class="py-3 px-4">Base Price</th>
-                        <th class="py-3 px-4">Status</th>
-                        <th class="py-3 px-4 text-right">Actions</th>
+                        <th class="py-2 px-3">Room</th>
+                        <th class="py-2 px-3">Type</th>
+                        <th class="py-2 px-3">Base Price</th>
+                        <th class="py-2 px-3 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                       \${propRooms.map(rm => \`
                         <tr class="hover:bg-slate-50/80 transition">
-                          <td class="py-3 px-4 font-black text-slate-900 text-sm whitespace-nowrap">
+                          <td class="py-2 px-3 font-black text-slate-900 text-xs sm:text-sm whitespace-nowrap">
                             Room \${escapeHtml(rm.room_number)}
                           </td>
-                          <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+                          <td class="py-2 px-3 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700">
                               \${escapeHtml(rm.room_type || 'Standard')}
                             </span>
                           </td>
-                          <td class="py-3 px-4 font-mono font-bold text-indigo-900 whitespace-nowrap">
+                          <td class="py-2 px-3 font-mono font-bold text-indigo-900 whitespace-nowrap">
                             ₹\${formatCurrency(rm.base_price || 0)}
                           </td>
-                          <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                              Active
-                            </span>
-                          </td>
-                          <td class="py-3 px-4 text-right whitespace-nowrap">
+                          <td class="py-2 px-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
                               <button
                                 type="button"
                                 onclick="openManageRoomModal('\${rm.id}')"
                                 title="Edit Room"
-                                class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
+                                class="p-1 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-indigo-600 transition cursor-pointer"
                               >
                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                               </button>
@@ -8831,7 +8591,7 @@ export function getDashboardHtml(): string {
                                 type="button"
                                 onclick="deleteAdminRoom('\${rm.id}')"
                                 title="Delete Room"
-                                class="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                class="p-1 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                               >
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                               </button>
@@ -8843,6 +8603,55 @@ export function getDashboardHtml(): string {
                   </table>
                 </div>
               \`}
+            </div>
+
+            <!-- Compact Quick Bulk Add Rooms Card -->
+            <div class="bg-slate-50/80 p-3 sm:p-4 rounded-2xl border border-slate-200/80 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-600"></i>
+                  <span>Quick Bulk Add Rooms</span>
+                </h4>
+                <button
+                  type="button"
+                  onclick="bulkAddAdminRooms()"
+                  class="px-3 py-1 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-2xs transition flex items-center gap-1 cursor-pointer"
+                >
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                  <span>Bulk Add</span>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="col-span-2">
+                  <input
+                    type="text"
+                    id="adminBulkRoomNumbers"
+                    placeholder="Room numbers: 105, 106, 201..."
+                    class="w-full px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    id="adminBulkRoomType"
+                    value="Standard"
+                    placeholder="Type (Standard)"
+                    class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    id="adminBulkBasePrice"
+                    value="2000"
+                    step="1"
+                    min="0"
+                    placeholder="Price ₹"
+                    class="w-full px-2.5 py-1.5 text-xs font-bold font-mono rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         \`;
