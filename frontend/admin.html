@@ -3616,6 +3616,7 @@
       #view-bookings,
       #view-finances,
       #view-entries,
+      #view-tasks,
       #view-settings,
       .modal,
       .modal-backdrop,
@@ -4352,6 +4353,174 @@
       100% { transform: scale(1) rotate(-6deg); opacity: 1; }
     }
 
+    /* 5. Property Tasks, Shopping List, Maintenance & Ideas Tab */
+    .ops-tasks-wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ops-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .ops-kpi-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+
+    .ops-kpi-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .ops-kpi-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0F172A;
+      line-height: 1.15;
+    }
+
+    .ops-kpi-sub {
+      font-size: 11px;
+      color: #64748B;
+    }
+
+    .ops-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+
+    .ops-quick-grid {
+      display: grid;
+      grid-template-columns: 2.2fr 1.1fr 1.1fr 0.85fr 0.85fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ops-quick-grid input,
+    .ops-quick-grid select {
+      height: 38px;
+      font-size: 12.5px;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      padding: 0 10px;
+      background: #FFFFFF;
+      color: #0F172A;
+    }
+
+    .ops-cat-pill {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 99px;
+      border: 1px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #334155;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+
+    .ops-cat-pill:hover {
+      background: #F8FAFC;
+      border-color: #94A3B8;
+    }
+
+    .ops-cat-pill.active {
+      background: #0F172A;
+      color: #FFFFFF;
+      border-color: #0F172A;
+    }
+
+    .ops-task-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      background: #FFFFFF;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .ops-task-row:hover {
+      border-color: #CBD5E1;
+      background: #FAFBFD;
+    }
+
+    .ops-task-row.is-done {
+      background: #F8FAFC;
+      opacity: 0.72;
+    }
+
+    .ops-task-row.is-urgent:not(.is-done) {
+      border-left: 3.5px solid #DC2626;
+    }
+
+    .ops-check-btn {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      border-radius: 6px;
+      border: 2px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #FFFFFF;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+      margin-top: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .ops-check-btn:hover {
+      border-color: #059669;
+    }
+
+    .ops-check-btn.checked {
+      background: #059669;
+      border-color: #059669;
+    }
+
+    .ops-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 900px) {
+      .ops-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .ops-quick-grid { grid-template-columns: 1fr 1fr; }
+    }
+
     /* 4. Unified Calendar & Reservations Workspace Card */
     .pms-workspace-card {
       background: #FFFFFF;
@@ -5010,6 +5179,11 @@
             <i data-lucide="id-card"></i>
             <span>Guest IDs</span>
             <span class="pms-nav-count" id="entries-count-badge">0</span>
+          </button>
+          <button type="button" class="tab-btn" id="tab-btn-tasks" onclick="switchAdminTab('tasks')">
+            <i data-lucide="clipboard-list"></i>
+            <span>Tasks &amp; Buy</span>
+            <span class="pms-nav-count" id="tasks-count-badge">0</span>
           </button>
           <button type="button" class="tab-btn" id="tab-btn-settings" onclick="switchAdminTab('settings')">
             <i data-lucide="settings"></i>
@@ -6515,6 +6689,186 @@
 
       </div> <!-- /view-settings -->
 
+      <!-- TAB 6: PROPERTY TASKS, SHOPPING LIST, MAINTENANCE & IMPROVEMENT IDEAS -->
+      <div id="view-tasks" style="display: none;">
+        <div class="ops-tasks-wrap">
+
+          <!-- Header & Quick Action -->
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #0F172A;">📋 Tasks, Shopping List &amp; Property Upkeep</h2>
+              <p style="margin: 2px 0 0 0; font-size: 12.5px; color: #64748B;">Track things to buy, room setup to-dos (like fresh flowers), maintenance fixes, improvement ideas &amp; stock alerts — synced live across devices.</p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-outline" onclick="copyShoppingListForWhatsApp()" style="height: 34px; padding: 0 12px; font-size: 12px; font-weight: 700; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
+                📲 Copy Shopping List (WhatsApp)
+              </button>
+              <button type="button" class="btn btn-outline" onclick="fetchPropertyTasks(true)" style="height: 34px; padding: 0 12px; font-size: 12px; font-weight: 600;">
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
+
+          <!-- 4-Card Summary KPI Strip -->
+          <div class="ops-kpi-grid" id="ops-tasks-kpi-strip">
+            <div class="ops-kpi-card">
+              <span class="ops-kpi-label">Open Items</span>
+              <span class="ops-kpi-val" id="ops-kpi-open">0</span>
+              <span class="ops-kpi-sub" id="ops-kpi-urgent-sub">0 urgent</span>
+            </div>
+            <div class="ops-kpi-card">
+              <span class="ops-kpi-label">🛒 To Buy</span>
+              <span class="ops-kpi-val" id="ops-kpi-buy">0</span>
+              <span class="ops-kpi-sub" id="ops-kpi-buy-cost">Est. ₹0</span>
+            </div>
+            <div class="ops-kpi-card">
+              <span class="ops-kpi-label">🔧 Maintenance</span>
+              <span class="ops-kpi-val" id="ops-kpi-maint">0</span>
+              <span class="ops-kpi-sub" id="ops-kpi-maint-sub">All clear</span>
+            </div>
+            <div class="ops-kpi-card">
+              <span class="ops-kpi-label">✔ Completed</span>
+              <span class="ops-kpi-val" id="ops-kpi-done" style="color: #059669;">0</span>
+              <span class="ops-kpi-sub">Done &amp; archived</span>
+            </div>
+          </div>
+
+          <!-- Quick Add Form -->
+          <div class="ops-card">
+            <div style="font-size: 12px; font-weight: 800; color: #0F172A; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <span>➕</span> Add New Item / Task
+            </div>
+            <div class="ops-quick-grid">
+              <input type="text" id="ops-new-title" placeholder="e.g. Add fresh flowers in Luna, Buy 4 hand towels, Fix AC leak..." onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddPropertyTask();}">
+              <select id="ops-new-category" title="Category">
+                <option value="buy">🛒 To Buy / Supplies</option>
+                <option value="todo">✅ To-Do / Room Setup</option>
+                <option value="maintenance">🔧 Maintenance Needed</option>
+                <option value="idea">💡 Improvement Idea</option>
+                <option value="alert">🚨 Guest / Stock Alert</option>
+              </select>
+              <select id="ops-new-room" title="Room / Property">
+                <option value="All Units">🏠 All Property / Common</option>
+              </select>
+              <select id="ops-new-priority" title="Priority">
+                <option value="normal">🟡 Normal</option>
+                <option value="urgent">🔴 Urgent</option>
+                <option value="low">🟢 Low</option>
+              </select>
+              <input type="number" id="ops-new-cost" min="0" step="10" placeholder="Est. ₹ (opt)">
+              <button type="button" class="btn btn-primary" id="btn-ops-quick-add" onclick="quickAddPropertyTask()" style="height: 38px; padding: 0 16px; font-size: 12.5px; font-weight: 700; white-space: nowrap;">
+                + Add
+              </button>
+            </div>
+            <div style="display: grid; grid-template-columns: 180px 1fr; gap: 8px; margin-top: 8px;">
+              <input type="date" id="ops-new-due" title="Optional due date" style="height: 34px; font-size: 12px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 10px; color: #334155;">
+              <input type="text" id="ops-new-notes" placeholder="Optional details: quantity, brand, shop/vendor contact, or notes..." style="height: 34px; font-size: 12px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 10px;" onkeydown="if(event.key==='Enter'){event.preventDefault();quickAddPropertyTask();}">
+            </div>
+          </div>
+
+          <!-- Filter & List Card -->
+          <div class="ops-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid #F1F5F9; padding-bottom: 12px;">
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="ops-cat-filter-pills">
+                <button type="button" class="ops-cat-pill active" data-cat="all" onclick="setOpsCategoryFilter('all')">All</button>
+                <button type="button" class="ops-cat-pill" data-cat="buy" onclick="setOpsCategoryFilter('buy')">🛒 To Buy</button>
+                <button type="button" class="ops-cat-pill" data-cat="todo" onclick="setOpsCategoryFilter('todo')">✅ To-Do</button>
+                <button type="button" class="ops-cat-pill" data-cat="maintenance" onclick="setOpsCategoryFilter('maintenance')">🔧 Maintenance</button>
+                <button type="button" class="ops-cat-pill" data-cat="idea" onclick="setOpsCategoryFilter('idea')">💡 Ideas</button>
+                <button type="button" class="ops-cat-pill" data-cat="alert" onclick="setOpsCategoryFilter('alert')">🚨 Alerts</button>
+              </div>
+
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <select id="ops-filter-room" onchange="renderPropertyTasks()" style="height: 32px; font-size: 12px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 8px;">
+                  <option value="ALL">All Rooms</option>
+                </select>
+                <select id="ops-filter-status" onchange="renderPropertyTasks()" style="height: 32px; font-size: 12px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 8px;">
+                  <option value="pending">Pending Only</option>
+                  <option value="all">Pending + Done</option>
+                  <option value="done">Completed Only</option>
+                </select>
+                <input type="text" id="ops-filter-search" oninput="renderPropertyTasks()" placeholder="Search items..." style="height: 32px; width: 165px; font-size: 12px; border: 1px solid #CBD5E1; border-radius: 8px; padding: 0 10px;">
+              </div>
+            </div>
+
+            <div id="ops-tasks-list-container" style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+        </div>
+      </div> <!-- /view-tasks -->
+
+      <!-- MODAL: Edit Property Task / Shopping Item -->
+      <div class="modal-backdrop" id="modal-edit-task">
+        <div class="modal-dialog" style="max-width: 520px;">
+          <div class="modal-header">
+            <h3>✏️ Edit Task / Item</h3>
+            <button type="button" class="modal-close-btn" onclick="closeEditTaskModal()">&times;</button>
+          </div>
+          <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+            <input type="hidden" id="edit-task-id">
+            <div class="form-group" style="margin: 0;">
+              <label>Title</label>
+              <input type="text" id="edit-task-title" placeholder="Task or item name">
+            </div>
+            <div class="form-row-2">
+              <div class="form-group" style="margin: 0;">
+                <label>Category</label>
+                <select id="edit-task-category">
+                  <option value="buy">🛒 To Buy / Supplies</option>
+                  <option value="todo">✅ To-Do / Room Setup</option>
+                  <option value="maintenance">🔧 Maintenance Needed</option>
+                  <option value="idea">💡 Improvement Idea</option>
+                  <option value="alert">🚨 Guest / Stock Alert</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label>Room / Property</label>
+                <select id="edit-task-room">
+                  <option value="All Units">🏠 All Property / Common</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group" style="margin: 0;">
+                <label>Priority</label>
+                <select id="edit-task-priority">
+                  <option value="urgent">🔴 Urgent</option>
+                  <option value="normal">🟡 Normal</option>
+                  <option value="low">🟢 Low</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label>Estimated Cost (₹)</label>
+                <input type="number" id="edit-task-cost" min="0" step="10" placeholder="0">
+              </div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group" style="margin: 0;">
+                <label>Due Date (Optional)</label>
+                <input type="date" id="edit-task-due">
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label>Status</label>
+                <select id="edit-task-status">
+                  <option value="pending">Pending</option>
+                  <option value="done">Completed</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label>Notes / Quantity / Vendor Details</label>
+              <textarea id="edit-task-notes" rows="3" placeholder="Quantity, brand, plumber contact, shop link..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 10px; font-size: 13px;"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" class="btn btn-outline" onclick="closeEditTaskModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveEditedTask()">💾 Save Changes</button>
+          </div>
+        </div>
+      </div>
+
       <!-- TAB 5: CUSTOMER BILLER & GST INVOICE GENERATOR -->
       <div id="view-biller" style="display: none;">
         <div class="biller-wrapper">
@@ -7300,22 +7654,26 @@
       const btnFinances = document.getElementById('tab-btn-finances');
       const btnBiller = document.getElementById('tab-btn-biller');
       const btnEntries = document.getElementById('tab-btn-entries');
+      const btnTasks = document.getElementById('tab-btn-tasks');
       const btnSettings = document.getElementById('tab-btn-settings');
       const viewBookings = document.getElementById('view-bookings');
       const viewFinances = document.getElementById('view-finances');
       const viewBiller = document.getElementById('view-biller');
       const viewEntries = document.getElementById('view-entries');
+      const viewTasks = document.getElementById('view-tasks');
       const viewSettings = document.getElementById('view-settings');
 
       if (btnBookings) btnBookings.classList.remove('active');
       if (btnFinances) btnFinances.classList.remove('active');
       if (btnBiller) btnBiller.classList.remove('active');
       if (btnEntries) btnEntries.classList.remove('active');
+      if (btnTasks) btnTasks.classList.remove('active');
       if (btnSettings) btnSettings.classList.remove('active');
       if (viewBookings) viewBookings.style.display = 'none';
       if (viewFinances) viewFinances.style.display = 'none';
       if (viewBiller) viewBiller.style.display = 'none';
       if (viewEntries) viewEntries.style.display = 'none';
+      if (viewTasks) viewTasks.style.display = 'none';
       if (viewSettings) viewSettings.style.display = 'none';
 
       if (tab === 'bookings') {
@@ -7334,6 +7692,10 @@
         if (btnEntries) btnEntries.classList.add('active');
         if (viewEntries) viewEntries.style.display = 'block';
         if (typeof fetchSubmissions === 'function') fetchSubmissions();
+      } else if (tab === 'tasks') {
+        if (btnTasks) btnTasks.classList.add('active');
+        if (viewTasks) viewTasks.style.display = 'block';
+        if (typeof fetchPropertyTasks === 'function') fetchPropertyTasks();
       } else if (tab === 'settings') {
         if (btnSettings) btnSettings.classList.add('active');
         if (viewSettings) viewSettings.style.display = 'block';
@@ -9861,10 +10223,11 @@
         }
       }, 60000);
 
-      // Silently pre-load guest submissions and trigger D1 bookings sync in background
+      // Silently pre-load guest submissions, tasks badge, and trigger D1 bookings sync in background
       setTimeout(async () => {
         try {
           if (typeof fetchSubmissions === 'function') await fetchSubmissions();
+          if (typeof fetchPropertyTasks === 'function') await fetchPropertyTasks();
           if (window.AirbnbAPI && typeof window.AirbnbAPI.syncSubmissionsToBookings === 'function') {
             await window.AirbnbAPI.syncSubmissionsToBookings();
           }
@@ -17143,6 +17506,402 @@
           btn.innerHTML = origText;
         }
       }
+    };
+
+    // =========================================================================
+    // PROPERTY TASKS, SHOPPING LIST, MAINTENANCE & IMPROVEMENT IDEAS
+    // =========================================================================
+    let propertyTasksList = [];
+    let opsActiveCategoryFilter = 'all';
+
+    const OPS_CATEGORY_META = {
+      buy: { label: '🛒 To Buy', bg: '#ECFDF5', color: '#047857', border: '#A7F3D0', expenseCat: 'Supplies' },
+      todo: { label: '✅ To-Do', bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE', expenseCat: 'Other' },
+      maintenance: { label: '🔧 Maintenance', bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA', expenseCat: 'Maintenance' },
+      idea: { label: '💡 Idea', bg: '#F5F3FF', color: '#6D28D9', border: '#DDD6FE', expenseCat: 'Other' },
+      alert: { label: '🚨 Alert', bg: '#FEF2F2', color: '#B91C1C', border: '#FECACA', expenseCat: 'Supplies' }
+    };
+
+    function populateTaskRoomSelects() {
+      const rooms = typeof getPropertiesList === 'function' ? getPropertiesList() : [];
+      const addSel = document.getElementById('ops-new-room');
+      const filterSel = document.getElementById('ops-filter-room');
+      const editSel = document.getElementById('edit-task-room');
+
+      if (addSel) {
+        const cur = addSel.value || 'All Units';
+        addSel.innerHTML = `<option value="All Units">🏠 All Property / Common</option>` +
+          rooms.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+        if ([...addSel.options].some(o => o.value === cur)) addSel.value = cur;
+      }
+
+      if (filterSel) {
+        const cur = filterSel.value || 'ALL';
+        filterSel.innerHTML = `<option value="ALL">All Rooms</option><option value="All Units">Common / All Units</option>` +
+          rooms.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+        if ([...filterSel.options].some(o => o.value === cur)) filterSel.value = cur;
+      }
+
+      if (editSel) {
+        const cur = editSel.value || 'All Units';
+        editSel.innerHTML = `<option value="All Units">🏠 All Property / Common</option>` +
+          rooms.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+        if ([...editSel.options].some(o => o.value === cur)) editSel.value = cur;
+      }
+    }
+
+    window.fetchPropertyTasks = async function(showFeedback = false) {
+      populateTaskRoomSelects();
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.getTasks === 'function') {
+          const data = await window.AirbnbAPI.getTasks();
+          propertyTasksList = Array.isArray(data) ? data : [];
+        }
+      } catch (err) {
+        console.warn('Error loading property tasks:', err);
+      }
+      renderPropertyTasks();
+      if (showFeedback && typeof showToast === 'function') {
+        showToast('🔄 Tasks & shopping list synced!');
+      }
+    };
+
+    window.setOpsCategoryFilter = function(cat) {
+      opsActiveCategoryFilter = cat || 'all';
+      document.querySelectorAll('#ops-cat-filter-pills .ops-cat-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-cat') === opsActiveCategoryFilter);
+      });
+      renderPropertyTasks();
+    };
+
+    window.quickAddPropertyTask = async function() {
+      const titleEl = document.getElementById('ops-new-title');
+      const catEl = document.getElementById('ops-new-category');
+      const roomEl = document.getElementById('ops-new-room');
+      const priEl = document.getElementById('ops-new-priority');
+      const costEl = document.getElementById('ops-new-cost');
+      const dueEl = document.getElementById('ops-new-due');
+      const notesEl = document.getElementById('ops-new-notes');
+      const btn = document.getElementById('btn-ops-quick-add');
+
+      const title = (titleEl?.value || '').trim();
+      if (!title) {
+        if (typeof showToast === 'function') showToast('Please enter an item or task first.');
+        if (titleEl) titleEl.focus();
+        return;
+      }
+
+      const payload = {
+        title,
+        category: catEl ? catEl.value : 'todo',
+        property: roomEl ? roomEl.value : 'All Units',
+        priority: priEl ? priEl.value : 'normal',
+        estimatedCost: costEl && costEl.value ? parseFloat(costEl.value) || 0 : 0,
+        dueDate: dueEl ? dueEl.value : '',
+        notes: (notesEl?.value || '').trim()
+      };
+
+      if (btn) { btn.disabled = true; btn.textContent = 'Adding...'; }
+      try {
+        const res = await window.AirbnbAPI.createTask(payload);
+        if (res && res.success && res.data) {
+          propertyTasksList.unshift(res.data);
+          if (titleEl) titleEl.value = '';
+          if (costEl) costEl.value = '';
+          if (dueEl) dueEl.value = '';
+          if (notesEl) notesEl.value = '';
+          if (priEl) priEl.value = 'normal';
+          renderPropertyTasks();
+          if (typeof showToast === 'function') showToast(`✅ Added "${title}"`);
+          if (titleEl) titleEl.focus();
+        } else {
+          throw new Error(res?.error || 'Could not save task.');
+        }
+      } catch (err) {
+        alert('Error adding task: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '+ Add'; }
+      }
+    };
+
+    window.togglePropertyTask = async function(id) {
+      const idx = propertyTasksList.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      const prevStatus = propertyTasksList[idx].status;
+      propertyTasksList[idx].status = prevStatus === 'done' ? 'pending' : 'done';
+      propertyTasksList[idx].completedAt = propertyTasksList[idx].status === 'done' ? new Date().toISOString() : null;
+      renderPropertyTasks();
+
+      try {
+        const res = await window.AirbnbAPI.toggleTask(id);
+        if (res && res.data) {
+          propertyTasksList[idx] = res.data;
+          renderPropertyTasks();
+        }
+      } catch (err) {
+        propertyTasksList[idx].status = prevStatus;
+        renderPropertyTasks();
+        alert('Could not update task status: ' + err.message);
+      }
+    };
+
+    window.openEditTaskModal = function(id) {
+      populateTaskRoomSelects();
+      const task = propertyTasksList.find(t => t.id === id);
+      if (!task) return;
+      document.getElementById('edit-task-id').value = task.id;
+      document.getElementById('edit-task-title').value = task.title || '';
+      document.getElementById('edit-task-category').value = task.category || 'todo';
+      const roomSel = document.getElementById('edit-task-room');
+      if (roomSel) {
+        if (![...roomSel.options].some(o => o.value === task.property)) {
+          const opt = document.createElement('option');
+          opt.value = task.property;
+          opt.textContent = task.property;
+          roomSel.appendChild(opt);
+        }
+        roomSel.value = task.property || 'All Units';
+      }
+      document.getElementById('edit-task-priority').value = task.priority || 'normal';
+      document.getElementById('edit-task-cost').value = task.estimatedCost || '';
+      document.getElementById('edit-task-due').value = task.dueDate || '';
+      document.getElementById('edit-task-status').value = task.status || 'pending';
+      document.getElementById('edit-task-notes').value = task.notes || '';
+      document.getElementById('modal-edit-task').style.display = 'flex';
+    };
+
+    window.closeEditTaskModal = function() {
+      const m = document.getElementById('modal-edit-task');
+      if (m) m.style.display = 'none';
+    };
+
+    window.saveEditedTask = async function() {
+      const id = document.getElementById('edit-task-id').value;
+      const title = (document.getElementById('edit-task-title').value || '').trim();
+      if (!title) { alert('Title cannot be empty.'); return; }
+
+      const payload = {
+        title,
+        category: document.getElementById('edit-task-category').value,
+        property: document.getElementById('edit-task-room').value,
+        priority: document.getElementById('edit-task-priority').value,
+        estimatedCost: parseFloat(document.getElementById('edit-task-cost').value) || 0,
+        dueDate: document.getElementById('edit-task-due').value || '',
+        status: document.getElementById('edit-task-status').value,
+        notes: (document.getElementById('edit-task-notes').value || '').trim()
+      };
+
+      try {
+        const res = await window.AirbnbAPI.updateTask(id, payload);
+        if (res && res.data) {
+          const idx = propertyTasksList.findIndex(t => t.id === id);
+          if (idx !== -1) propertyTasksList[idx] = res.data;
+          closeEditTaskModal();
+          renderPropertyTasks();
+          if (typeof showToast === 'function') showToast('💾 Task updated!');
+        }
+      } catch (err) {
+        alert('Error updating task: ' + err.message);
+      }
+    };
+
+    window.deletePropertyTask = async function(id) {
+      const task = propertyTasksList.find(t => t.id === id);
+      if (!task) return;
+      if (!confirm(`Delete "${task.title}"?`)) return;
+      try {
+        await window.AirbnbAPI.deleteTask(id);
+        propertyTasksList = propertyTasksList.filter(t => t.id !== id);
+        renderPropertyTasks();
+        if (typeof showToast === 'function') showToast('🗑️ Item removed.');
+      } catch (err) {
+        alert('Error deleting item: ' + err.message);
+      }
+    };
+
+    window.logTaskAsExpense = async function(id) {
+      const task = propertyTasksList.find(t => t.id === id);
+      if (!task) return;
+      const entered = prompt(`Log "${task.title}" as an expense in Finances.\n\nEnter actual amount spent (₹):`, task.estimatedCost > 0 ? String(task.estimatedCost) : '');
+      if (entered === null) return;
+      const amount = parseFloat(String(entered).replace(/[^0-9.]/g, ''));
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid positive amount.');
+        return;
+      }
+
+      const meta = OPS_CATEGORY_META[task.category] || OPS_CATEGORY_META.todo;
+      const todayIso = new Date().toISOString().slice(0, 10);
+      try {
+        await window.AirbnbAPI.createExpense({
+          title: task.title,
+          amount,
+          category: meta.expenseCat,
+          date: todayIso,
+          property: task.property || 'All Units',
+          notes: task.notes ? `${task.notes} (Logged from Tasks & Buy)` : 'Logged from Tasks & Buy'
+        });
+
+        if (task.status !== 'done') {
+          await window.AirbnbAPI.updateTask(task.id, { status: 'done', estimatedCost: amount });
+          task.status = 'done';
+          task.estimatedCost = amount;
+        }
+        renderPropertyTasks();
+        if (typeof showToast === 'function') showToast(`💰 Logged ₹${amount.toLocaleString('en-IN')} expense & marked done!`);
+      } catch (err) {
+        alert('Could not log expense: ' + err.message);
+      }
+    };
+
+    window.copyShoppingListForWhatsApp = function() {
+      const pendingBuy = propertyTasksList.filter(t => t.status !== 'done' && (t.category === 'buy' || t.category === 'alert'));
+      const pendingAll = pendingBuy.length > 0 ? pendingBuy : propertyTasksList.filter(t => t.status !== 'done');
+      if (pendingAll.length === 0) {
+        if (typeof showToast === 'function') showToast('No pending shopping items to copy!');
+        return;
+      }
+
+      const heading = pendingBuy.length > 0 ? '🛒 *Elite Homes — Shopping List*' : '📋 *Elite Homes — Pending Tasks*';
+      let totalEst = 0;
+      const lines = [heading, ''];
+      pendingAll.forEach((t, i) => {
+        const roomTag = t.property && t.property !== 'All Units' ? ` [${t.property}]` : '';
+        const priTag = t.priority === 'urgent' ? ' 🔴' : '';
+        const costTag = t.estimatedCost > 0 ? ` — ₹${Number(t.estimatedCost).toLocaleString('en-IN')}` : '';
+        if (t.estimatedCost > 0) totalEst += Number(t.estimatedCost);
+        lines.push(`${i + 1}. ${t.title}${roomTag}${costTag}${priTag}`);
+        if (t.notes) lines.push(`   _${t.notes}_`);
+      });
+      if (totalEst > 0) {
+        lines.push('', `💰 *Est. Total: ₹${totalEst.toLocaleString('en-IN')}*`);
+      }
+
+      const text = lines.join('\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          if (typeof showToast === 'function') showToast('📲 Shopping list copied! Ready to paste in WhatsApp.');
+        });
+      } else {
+        prompt('Copy shopping list:', text);
+      }
+    };
+
+    window.renderPropertyTasks = function() {
+      const pendingAll = propertyTasksList.filter(t => t.status !== 'done');
+      const doneAll = propertyTasksList.filter(t => t.status === 'done');
+      const urgentCount = pendingAll.filter(t => t.priority === 'urgent').length;
+      const buyPending = pendingAll.filter(t => t.category === 'buy');
+      const buyTotalEst = buyPending.reduce((acc, t) => acc + (Number(t.estimatedCost) || 0), 0);
+      const maintPending = pendingAll.filter(t => t.category === 'maintenance');
+      const maintUrgent = maintPending.filter(t => t.priority === 'urgent').length;
+
+      // Update top nav badge
+      const navBadge = document.getElementById('tasks-count-badge');
+      if (navBadge) navBadge.textContent = String(pendingAll.length);
+
+      // Update KPI strip
+      const elOpen = document.getElementById('ops-kpi-open');
+      const elUrgSub = document.getElementById('ops-kpi-urgent-sub');
+      const elBuy = document.getElementById('ops-kpi-buy');
+      const elBuyCost = document.getElementById('ops-kpi-buy-cost');
+      const elMaint = document.getElementById('ops-kpi-maint');
+      const elMaintSub = document.getElementById('ops-kpi-maint-sub');
+      const elDone = document.getElementById('ops-kpi-done');
+
+      if (elOpen) elOpen.textContent = String(pendingAll.length);
+      if (elUrgSub) {
+        elUrgSub.textContent = urgentCount > 0 ? `🔴 ${urgentCount} urgent` : 'No urgent items';
+        elUrgSub.style.color = urgentCount > 0 ? '#DC2626' : '#64748B';
+      }
+      if (elBuy) elBuy.textContent = String(buyPending.length);
+      if (elBuyCost) elBuyCost.textContent = `Est. ₹${Math.round(buyTotalEst).toLocaleString('en-IN')}`;
+      if (elMaint) elMaint.textContent = String(maintPending.length);
+      if (elMaintSub) {
+        elMaintSub.textContent = maintPending.length === 0 ? 'All clear' : (maintUrgent > 0 ? `🔴 ${maintUrgent} urgent fix` : `${maintPending.length} open fix(es)`);
+        elMaintSub.style.color = maintUrgent > 0 ? '#DC2626' : '#64748B';
+      }
+      if (elDone) elDone.textContent = String(doneAll.length);
+
+      const container = document.getElementById('ops-tasks-list-container');
+      if (!container) return;
+
+      const roomFilter = document.getElementById('ops-filter-room')?.value || 'ALL';
+      const statusFilter = document.getElementById('ops-filter-status')?.value || 'pending';
+      const searchQ = (document.getElementById('ops-filter-search')?.value || '').trim().toLowerCase();
+      const todayIso = new Date().toISOString().slice(0, 10);
+
+      const filtered = propertyTasksList.filter(t => {
+        if (opsActiveCategoryFilter !== 'all' && t.category !== opsActiveCategoryFilter) return false;
+        if (roomFilter !== 'ALL' && t.property !== roomFilter) return false;
+        if (statusFilter === 'pending' && t.status === 'done') return false;
+        if (statusFilter === 'done' && t.status !== 'done') return false;
+        if (searchQ) {
+          const hay = `${t.title} ${t.property} ${t.notes}`.toLowerCase();
+          if (!hay.includes(searchQ)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 34px 16px; color: #64748B; font-size: 13px;">
+            <div style="font-size: 28px; margin-bottom: 6px;">✨</div>
+            <strong>No matching items here.</strong><br>
+            <span style="font-size: 12px;">Use the bar above to add shopping items, room to-dos, maintenance fixes, or improvement ideas.</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => {
+        const meta = OPS_CATEGORY_META[t.category] || OPS_CATEGORY_META.todo;
+        const isDone = t.status === 'done';
+        const isUrgent = t.priority === 'urgent';
+        const isOverdue = Boolean(!isDone && t.dueDate && t.dueDate < todayIso);
+        const priPill = isUrgent
+          ? `<span class="ops-badge" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;">🔴 Urgent</span>`
+          : (t.priority === 'low'
+            ? `<span class="ops-badge" style="background:#F8FAFC;color:#64748B;border:1px solid #E2E8F0;">Low</span>`
+            : '');
+
+        return `
+          <div class="ops-task-row ${isDone ? 'is-done' : ''} ${isUrgent ? 'is-urgent' : ''}">
+            <div style="display: flex; align-items: flex-start; gap: 10px; min-width: 0; flex: 1;">
+              <button type="button" class="ops-check-btn ${isDone ? 'checked' : ''}" onclick="togglePropertyTask('${t.id}')" title="${isDone ? 'Mark pending' : 'Mark done'}">
+                ${isDone ? '✓' : ''}
+              </button>
+              <div style="min-width: 0; flex: 1;">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <span style="font-size: 13.5px; font-weight: 700; color: #0F172A; ${isDone ? 'text-decoration: line-through; color: #64748B;' : ''}">
+                    ${escapeHtml(t.title)}
+                  </span>
+                  <span class="ops-badge" style="background:${meta.bg};color:${meta.color};border:1px solid ${meta.border};">${meta.label}</span>
+                  <span class="ops-badge" style="background:#F1F5F9;color:#334155;border:1px solid #E2E8F0;">🏠 ${escapeHtml(t.property || 'All Units')}</span>
+                  ${priPill}
+                  ${t.estimatedCost > 0 ? `<span class="ops-badge" style="background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;">₹${Math.round(t.estimatedCost).toLocaleString('en-IN')}</span>` : ''}
+                  ${t.dueDate ? `<span class="ops-badge" style="background:${isOverdue ? '#FEF2F2' : '#F8FAFC'};color:${isOverdue ? '#DC2626' : '#475569'};border:1px solid ${isOverdue ? '#FECACA' : '#E2E8F0'};">📅 ${escapeHtml(t.dueDate)}${isOverdue ? ' (Overdue)' : ''}</span>` : ''}
+                </div>
+                ${t.notes ? `<div style="font-size: 12px; color: #475569; margin-top: 4px; line-height: 1.45;">${escapeHtml(t.notes)}</div>` : ''}
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+              ${(t.category === 'buy' || t.category === 'maintenance' || t.estimatedCost > 0) ? `
+                <button type="button" class="btn btn-outline" onclick="logTaskAsExpense('${t.id}')" title="Log spent amount directly into Finances & mark done" style="height: 28px; padding: 0 8px; font-size: 11px; font-weight: 600; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
+                  💰 Expense
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-outline" onclick="openEditTaskModal('${t.id}')" title="Edit item" style="height: 28px; padding: 0 8px; font-size: 11px;">
+                ✏️
+              </button>
+              <button type="button" class="btn btn-outline" onclick="deletePropertyTask('${t.id}')" title="Delete item" style="height: 28px; padding: 0 8px; font-size: 11px; color: #DC2626; border-color: #FECACA;">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
     };
 
   </script>

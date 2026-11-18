@@ -395,6 +395,49 @@
     },
 
     // --------------------------------------------------------------------------
+    // Property Tasks: To Buy, To-Do, Maintenance & Improvement Ideas (D1)
+    // --------------------------------------------------------------------------
+    getTasks: async function() {
+      try {
+        const res = await this.request('/api/tasks');
+        if (res && Array.isArray(res.data)) {
+          localStorage.setItem('airbnb_property_tasks_cache', JSON.stringify(res.data));
+          return res.data;
+        }
+      } catch (e) {
+        const cached = localStorage.getItem('airbnb_property_tasks_cache');
+        if (cached) return JSON.parse(cached);
+      }
+      return [];
+    },
+
+    createTask: async function(taskData) {
+      return await this.request('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify(taskData)
+      });
+    },
+
+    updateTask: async function(id, taskData) {
+      return await this.request(`/api/tasks/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(taskData)
+      });
+    },
+
+    toggleTask: async function(id) {
+      return await this.request(`/api/tasks/${encodeURIComponent(id)}/toggle`, {
+        method: 'PUT'
+      });
+    },
+
+    deleteTask: async function(id) {
+      return await this.request(`/api/tasks/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+    },
+
+    // --------------------------------------------------------------------------
     // iCal Calendar Sync (Outbound & Inbound Sync)
     // --------------------------------------------------------------------------
     getIcalFeeds: async function() {

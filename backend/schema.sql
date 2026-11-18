@@ -180,3 +180,21 @@ CREATE TABLE IF NOT EXISTS availability_audit_logs (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_avail_audit_created ON availability_audit_logs(created_at DESC);
+
+-- 9. Property Operations: Shopping List, To-Do, Maintenance & Improvement Ideas
+CREATE TABLE IF NOT EXISTS property_tasks (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'todo',   -- 'buy' | 'todo' | 'maintenance' | 'idea' | 'alert'
+    property TEXT NOT NULL DEFAULT 'All Units',
+    priority TEXT NOT NULL DEFAULT 'normal', -- 'urgent' | 'normal' | 'low'
+    status TEXT NOT NULL DEFAULT 'pending',  -- 'pending' | 'done'
+    estimated_cost REAL DEFAULT 0,
+    due_date TEXT,
+    notes TEXT,
+    completed_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_property_tasks_status ON property_tasks(status, category);
+CREATE INDEX IF NOT EXISTS idx_property_tasks_prop ON property_tasks(property);

@@ -11,6 +11,7 @@ import icalRoute, { executeIcalSync } from './routes/ical';
 import { processOutboxRetries } from './routes/syncEngine';
 import expensesRoute from './routes/expenses';
 import channelsRoute from './routes/channels';
+import tasksRoute from './routes/tasks';
 
 const app = new Hono<{ Bindings: Bindings }>();
 
@@ -59,6 +60,7 @@ app.route('/ical', icalRoute);
 app.route('/api/expenses', expensesRoute);
 app.route('/api/finances', expensesRoute);
 app.route('/api/channels', channelsRoute);
+app.route('/api/tasks', tasksRoute);
 
 // 4b. Common Unified Earnings Dashboard API
 app.get('/api/dashboard/earnings', async (c) => {
