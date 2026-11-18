@@ -2718,9 +2718,9 @@ export function getDashboardHtml(): string {
       <!-- Fixed Room Mapping Banner -->
       <div class="flex items-center gap-1.5 flex-wrap bg-blue-50/70 border border-blue-200/80 rounded-xl px-3 py-2 text-[11px] text-blue-950 shrink-0">
         <span class="font-bold uppercase text-[10px] text-blue-700 mr-1">Room Mapping:</span>
-        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Suite → Rm 101</span>
-        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Double → Rm 102 / 103 <span class="font-normal text-blue-600">(Auto-vacant)</span></span>
-        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Twin → Rm 104</span>
+        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Suite → Room 101</span>
+        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Double → Room 102 / 103 <span class="font-normal text-blue-600">(Auto-vacant)</span></span>
+        <span class="px-2 py-0.5 rounded-md bg-white border border-blue-200 font-bold">Twin → Room 104</span>
       </div>
 
       <!-- Mode Tabs -->
@@ -2766,7 +2766,7 @@ export function getDashboardHtml(): string {
               </div>
 
               <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Double #2 iCal URL <span class="text-slate-400 font-normal">(Optional — only if Booking.com gives a 2nd Double feed for Rm 103)</span></label>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Double #2 iCal URL <span class="text-slate-400 font-normal">(Optional — only if Booking.com gives a 2nd Double feed for Room 103)</span></label>
                 <input type="url" id="bcomDouble2Ical" placeholder="Optional 2nd Double room iCal URL" class="w-full px-2.5 py-1.5 text-xs font-mono rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-blue-500" />
               </div>
 
@@ -6519,7 +6519,7 @@ export function getDashboardHtml(): string {
                         class="p-2.5 rounded-xl border transition cursor-pointer select-none \${isBooked ? 'bg-indigo-50/70 border-indigo-300' : 'bg-slate-50/70 hover:bg-white border-slate-200'}"
                       >
                         <div class="flex items-center justify-between mb-0.5">
-                          <span class="text-xs font-black text-slate-900">Rm \${escapeHtml(rm.room_number)}</span>
+                          <span class="text-xs font-black text-slate-900">Room \${escapeHtml(rm.room_number)}</span>
                           <span class="text-[9px] px-1.5 py-0.2 rounded font-bold \${isBooked ? (count > 1 ? 'bg-purple-100 text-purple-800' : 'bg-indigo-100 text-indigo-800') : 'bg-emerald-100 text-emerald-800'}">
                             \${isBooked ? (count > 1 ? \`\${count}x\` : 'Booked') : 'Vacant'}
                           </span>
@@ -8057,7 +8057,7 @@ export function getDashboardHtml(): string {
                     <div class="flex items-center justify-between gap-1">
                       <span class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1">
                         <span class="w-2 h-2 rounded-full \${isBookedToday ? 'bg-emerald-500' : 'bg-slate-300'}" title="\${isBookedToday ? 'Booked Today' : 'Vacant Today'}"></span>
-                        Rm \${escapeHtml(rm.room_number)}
+                        Room \${escapeHtml(rm.room_number)}
                       </span>
                       <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold \${isRoomGreen ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200/80 text-slate-700'}">
                         \${roomOccPct}%
@@ -8614,7 +8614,7 @@ export function getDashboardHtml(): string {
                           : (isOnline ? 'bg-indigo-100/80 text-indigo-900' : 'bg-amber-100/80 text-amber-900'));
                       return \`
                         <div class="text-[9px] truncate font-medium px-1 py-0.5 rounded flex items-center justify-between gap-1 \${itemBg}">
-                          <span class="truncate">\${pTag}Rm \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k</span>
+                          <span class="truncate">\${pTag}Room \${escapeHtml(b.room_number)} · ₹\${Math.round(b.amount/1000*10)/10}k</span>
                           \${(() => {
                             const c = parseGuestIdImages(b.guest_id_image).length;
                             return c > 0 ? \`<span title="\${c} ID(s) Attached" class="text-[8px] shrink-0">🪪</span>\` : '';
