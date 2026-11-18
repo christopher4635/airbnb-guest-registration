@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { Bindings, Booking } from '../types';
+import { classifyBookingSource } from './ical';
 
 const bookingsRoute = new Hono<{ Bindings: Bindings }>();
 
@@ -32,6 +33,7 @@ function mapDbRowToBooking(row: any): Booking {
     nights: Number(row.nights) || 1,
     guestsCount: Number(row.guests_count) || 1,
     platform: row.platform || 'Direct',
+    source: classifyBookingSource(row),
     reservationCode: row.reservation_code || '',
     externalUid: row.external_uid || '',
     payout: row.payout || '',

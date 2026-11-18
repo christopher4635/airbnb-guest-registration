@@ -14500,7 +14500,7 @@
     };
 
     // =========================================================================
-    // 7. TWO-WAY ICAL CHANNEL SYNC (OUTBOUND & INBOUND)
+    // 7. INDEPENDENT ROOM-WISE iCAL CHANNEL SYNC (ZERO-LOOP ARCHITECTURE)
     // =========================================================================
     window.openIcalSyncModal = async function(targetRoomName = null) {
       await fetchProperties();
@@ -14512,28 +14512,57 @@
       container.innerHTML = '';
       filePropSelect.innerHTML = '';
 
-      // Two-Way Sync Architecture Banner
+      // Fetch per-channel feed health + recent sync logs from Cloudflare D1
+      let feedsWithHealth = [];
+      let recentLogs = [];
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.getIcalFeeds === 'function') {
+          const feedRes = await window.AirbnbAPI.getIcalFeeds();
+          if (feedRes && Array.isArray(feedRes.data)) feedsWithHealth = feedRes.data;
+        }
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.getIcalLogs === 'function') {
+          const logRes = await window.AirbnbAPI.getIcalLogs(15);
+          if (logRes && Array.isArray(logRes.data)) recentLogs = logRes.data;
+        }
+      } catch (e) {}
+
+      const healthByName = new Map(feedsWithHealth.map(f => [String(f.name || '').toLowerCase(), f]));
+
+      // Clean Independent Sync Architecture Banner
       const archBanner = document.createElement('div');
-      archBanner.style.cssText = 'background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #1E40AF;';
+      archBanner.style.cssText = 'background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 12.5px; color: #0F172A;';
       archBanner.innerHTML = `
-        <div style="font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
-          <span>🔄</span> <strong>Two-Way Calendar Sync Architecture (Airbnb ⇄ Website ⇄ Booking.com)</strong>
+        <div style="font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; color: #0F172A;">
+          <span>🛡️</span> <strong>Independent Room-Wise iCal Sync (Zero Echo Loops)</strong>
         </div>
-        <div style="font-size: 12px; line-height: 1.5; color: #1E3A8A;">
-          <div>• <strong>Airbnb (Primary Reference)</strong>: When a booking confirms on Airbnb, dates are automatically blocked on Booking.com &amp; your Website.</div>
-          <div>• <strong>Booking.com</strong>: When a booking confirms on Booking.com, dates are automatically blocked on Airbnb &amp; your Website.</div>
-          <div>• <strong>Website Direct</strong>: When a customer books directly on your website, dates are immediately blocked on both Airbnb &amp; Booking.com.</div>
-          <div>• <strong>Automated Edge Cron</strong>: Cloudflare Worker runs automatic synchronization every 10 minutes in the background.</div>
+        <div style="font-size: 12px; line-height: 1.55; color: #334155;">
+          <div>• <strong>Airbnb → Website (Independent)</strong>: Airbnb bookings &amp; cancellations sync directly to your website calendar. Never pushed to Booking.com.</div>
+          <div>• <strong>Booking.com → Website (Independent)</strong>: Booking.com bookings &amp; cancellations sync directly to your website calendar. Never pushed to Airbnb.</div>
+          <div>• <strong>Direct Bookings → Both Platforms</strong>: <strong>Only</strong> bookings marked as <strong>Direct Booking</strong> are exported to both Airbnb &amp; Booking.com.</div>
+          <div>• <strong>Auto-Sync</strong>: Runs every 10 minutes on Cloudflare Workers with full error logging &amp; cancellation reconciliation.</div>
         </div>
       `;
       container.appendChild(archBanner);
 
       const props = loadedProperties && loadedProperties.length > 0 ? loadedProperties : [];
 
+      function formatChannelHealthPill(statusObj) {
+        if (!statusObj) return '<span style="font-size:10px; color:#94A3B8; font-weight:600;">Not synced yet</span>';
+        const timeStr = statusObj.created_at ? new Date(String(statusObj.created_at).replace(' ', 'T') + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        if (statusObj.status === 'error') {
+          return `<span style="font-size:10px; font-weight:700; color:#B91C1C; background:#FEF2F2; border:1px solid #FECACA; padding:1px 6px; border-radius:4px;" title="${escapeHtml(statusObj.error_detail || statusObj.message || '')}">❌ Error (${timeStr})</span>`;
+        }
+        if (statusObj.status === 'warning' || statusObj.conflicts > 0) {
+          return `<span style="font-size:10px; font-weight:700; color:#B45309; background:#FFFBEB; border:1px solid #FDE68A; padding:1px 6px; border-radius:4px;" title="${escapeHtml(statusObj.message || '')}">⚠️ Conflict (${timeStr})</span>`;
+        }
+        return `<span style="font-size:10px; font-weight:700; color:#047857; background:#ECFDF5; border:1px solid #A7F3D0; padding:1px 6px; border-radius:4px;" title="${escapeHtml(statusObj.message || '')}">✔ Synced ${timeStr}</span>`;
+      }
+
       props.forEach((prop, idx) => {
         const color = prop.color || '#3B82F6';
-        const baseExportUrl = window.AirbnbAPI 
-          ? window.AirbnbAPI.getIcalExportUrl(prop.name) 
+        const health = healthByName.get(String(prop.name || '').toLowerCase()) || {};
+        const baseExportUrl = window.AirbnbAPI
+          ? window.AirbnbAPI.getIcalExportUrl(prop.name)
           : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(prop.name)}.ics`;
 
         const airbnbImportTargetUrl = `${baseExportUrl}?target=airbnb`;
@@ -14541,75 +14570,78 @@
 
         const card = document.createElement('div');
         card.className = 'room-manage-card';
-        card.style.background = '#FFFFFF';
-        card.style.border = '1px solid #E2E8F0';
-        card.style.borderRadius = 'var(--radius-md)';
-        card.style.padding = '14px 16px';
-        card.style.marginBottom = '14px';
-        card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+        card.style.cssText = 'background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);';
         card.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px; flex-wrap: wrap; gap: 6px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="room-color-dot" style="background: ${color}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
-              <strong style="font-size: 15px; color: var(--text-main);">${escapeHtml(prop.name)}</strong>
+              <span class="room-color-dot" style="background: ${color}; width: 11px; height: 11px; border-radius: 50%; display: inline-block;"></span>
+              <strong style="font-size: 14.5px; color: #0F172A;">${escapeHtml(prop.name)}</strong>
             </div>
             <span style="font-size: 11px; color: var(--text-muted);">
-              ${prop.last_synced_at ? '🕒 Last Synced: ' + new Date(prop.last_synced_at).toLocaleString() : '🕒 Not synced yet'}
+              ${prop.last_synced_at ? '🕒 Last Sync: ' + new Date(String(prop.last_synced_at).replace(' ', 'T') + (String(prop.last_synced_at).includes('Z') ? '' : 'Z')).toLocaleString() : '🕒 Not synced yet'}
             </span>
           </div>
 
-          <!-- Outbound Export URLs for 2-Way Sync -->
+          <!-- Outbound Direct-Bookings-Only Export URLs -->
           <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div style="background: #FFF5F5; border: 1px solid #FECDD3; border-radius: var(--radius-sm); padding: 8px 10px;">
-              <label style="font-size: 11px; font-weight: 700; color: #9F1239; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-                <span>🔴</span> Paste into Airbnb Calendar Import:
+              <label style="font-size: 11px; font-weight: 700; color: #9F1239; display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                <span>🔴</span> Paste into Airbnb Import:
               </label>
-              <div style="font-size: 10px; color: #881337; margin-bottom: 6px;">Blocks Booking.com &amp; Website bookings on Airbnb</div>
+              <div style="font-size: 10px; color: #881337; margin-bottom: 6px;">Exports <strong>Direct Bookings ONLY</strong> to Airbnb</div>
               <div class="feed-copy-box" style="margin-top: 0;">
                 <span class="feed-url-text" style="font-size: 10px;">${airbnbImportTargetUrl}</span>
                 <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${airbnbImportTargetUrl}', this)" style="background: #FF385C; color: #fff; border: none; font-size: 10px; padding: 2px 6px;">
-                  📋 Copy Link
+                  📋 Copy
                 </button>
               </div>
             </div>
 
             <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 8px 10px;">
-              <label style="font-size: 11px; font-weight: 700; color: #1E40AF; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-                <span>🔵</span> Paste into Booking.com Calendar Import:
+              <label style="font-size: 11px; font-weight: 700; color: #1E40AF; display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                <span>🔵</span> Paste into Booking.com Import:
               </label>
-              <div style="font-size: 10px; color: #1E3A8A; margin-bottom: 6px;">Blocks Airbnb &amp; Website bookings on Booking.com</div>
+              <div style="font-size: 10px; color: #1E3A8A; margin-bottom: 6px;">Exports <strong>Direct Bookings ONLY</strong> to Booking.com</div>
               <div class="feed-copy-box" style="margin-top: 0;">
                 <span class="feed-url-text" style="font-size: 10px;">${bookingComImportTargetUrl}</span>
                 <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${bookingComImportTargetUrl}', this)" style="background: #003580; color: #fff; border: none; font-size: 10px; padding: 2px 6px;">
-                  📋 Copy Link
+                  📋 Copy
                 </button>
               </div>
             </div>
           </div>
 
-          <!-- Inbound Channel URL Inputs -->
+          <!-- Independent Inbound Channel URL Inputs -->
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
             <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #334155;">
-                Airbnb Calendar Export URL:
-              </label>
-              <input type="text" id="feed-airbnb-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 12px; height: 36px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 3px;">
+                <label style="font-size: 11px; font-weight: 700; color: #334155; margin: 0;">Airbnb Inbound iCal URL:</label>
+                ${formatChannelHealthPill(health.airbnbSyncStatus)}
+              </div>
+              <input type="text" id="feed-airbnb-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 12px; height: 34px;">
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
-              <label style="font-size: 11px; margin-bottom: 3px; font-weight: 600; color: #334155;">
-                Booking.com Calendar Export URL:
-              </label>
-              <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 36px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 3px;">
+                <label style="font-size: 11px; font-weight: 700; color: #334155; margin: 0;">Booking.com Inbound iCal URL:</label>
+                ${formatChannelHealthPill(health.bookingComSyncStatus)}
+              </div>
+              <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?..." style="font-size: 12px; height: 34px;">
             </div>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
-            <button type="button" class="btn btn-outline" onclick="saveSingleRoomFeeds('${escapeJsString(prop.name)}', ${idx}, this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #1D4ED8; border-color: #BFDBFE;">
+          <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="saveSingleRoomFeeds('${escapeJsString(prop.name)}', ${idx}, this)" style="height: 29px; padding: 0 11px; font-size: 11px; font-weight: 600; color: #1D4ED8; border-color: #BFDBFE;">
               💾 Save Links
             </button>
-            <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(prop.name)}', this)" style="height: 30px; padding: 0 12px; font-size: 11px; font-weight: 600; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
-              🔄 Sync This Room
+            <button type="button" class="btn btn-outline" onclick="syncSingleChannel('${escapeJsString(prop.name)}', 'Airbnb', this)" style="height: 29px; padding: 0 10px; font-size: 11px; font-weight: 600; color: #9F1239; border-color: #FECDD3; background: #FFF5F5;">
+              🔄 Sync Airbnb
+            </button>
+            <button type="button" class="btn btn-outline" onclick="syncSingleChannel('${escapeJsString(prop.name)}', 'Booking.com', this)" style="height: 29px; padding: 0 10px; font-size: 11px; font-weight: 600; color: #1E40AF; border-color: #BFDBFE; background: #EFF6FF;">
+              🔄 Sync Booking.com
+            </button>
+            <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(prop.name)}', this)" style="height: 29px; padding: 0 11px; font-size: 11px; font-weight: 700; color: #047857; border-color: #A7F3D0; background: #ECFDF5;">
+              🔄 Sync Room
             </button>
           </div>
         `;
@@ -14622,27 +14654,95 @@
         filePropSelect.appendChild(opt);
       });
 
-      // Outbound All Properties Feed Box at the bottom
-      const allExportUrl = window.AirbnbAPI ? window.AirbnbAPI.getIcalExportUrl('all') : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/all.ics`;
+      // Personal Read-Only Combined Feed Box
+      const allExportUrl = window.AirbnbAPI
+        ? window.AirbnbAPI.getIcalExportUrl('all', null, 'all')
+        : `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/all.ics?scope=all`;
       const allBox = document.createElement('div');
-      allBox.style.padding = '10px 14px';
-      allBox.style.background = '#F0FDF4';
-      allBox.style.border = '1px solid #BBF7D0';
-      allBox.style.borderRadius = 'var(--radius-sm)';
+      allBox.style.cssText = 'padding: 10px 14px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-sm); margin-bottom: 14px;';
       allBox.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
           <div>
-            <strong style="font-size: 12px; color: #166534;">🌟 Combined Portfolio Feed (All Units in One Calendar):</strong>
-            <div style="font-family: monospace; font-size: 11px; color: #15803D; word-break: break-all;">${allExportUrl}</div>
+            <strong style="font-size: 12px; color: #166534;">📅 Personal Read-Only Calendar (All Units — for Google/Apple Calendar only):</strong>
+            <div style="font-family: monospace; font-size: 10.5px; color: #15803D; word-break: break-all;">${allExportUrl}</div>
           </div>
           <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${allExportUrl}', this)" style="background:#fff; border-color:#86EFAC; color:#166534;">
-            📋 Copy All-Units Feed
+            📋 Copy Read-Only Feed
           </button>
         </div>
       `;
       container.appendChild(allBox);
 
+      // Persistent Sync Health & Error Log Panel
+      const logsBox = document.createElement('div');
+      logsBox.id = 'ical-sync-logs-panel';
+      logsBox.style.cssText = 'background: #FAFBFD; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 12px 14px;';
+      logsBox.innerHTML = renderIcalSyncLogsHtml(recentLogs);
+      container.appendChild(logsBox);
+
       document.getElementById('modal-ical-sync').style.display = 'flex';
+    };
+
+    function renderIcalSyncLogsHtml(logs) {
+      if (!Array.isArray(logs) || logs.length === 0) {
+        return `
+          <div style="font-size: 12px; font-weight: 800; color: #0F172A; margin-bottom: 4px;">📋 Recent Sync Logs &amp; Errors</div>
+          <div style="font-size: 11.5px; color: #64748B;">No sync logs recorded yet. Click "Sync All Channels Now" to run an immediate sync.</div>
+        `;
+      }
+      const rows = logs.slice(0, 12).map(l => {
+        const badgeBg = l.status === 'error' ? '#FEF2F2' : (l.status === 'warning' ? '#FFFBEB' : '#ECFDF5');
+        const badgeColor = l.status === 'error' ? '#B91C1C' : (l.status === 'warning' ? '#B45309' : '#047857');
+        const badgeIcon = l.status === 'error' ? '❌' : (l.status === 'warning' ? '⚠️' : '✔');
+        const ts = l.created_at ? new Date(String(l.created_at).replace(' ', 'T') + (String(l.created_at).includes('Z') ? '' : 'Z')).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+        return `
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 6px 8px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px;">
+            <div style="min-width: 0;">
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span style="background:${badgeBg}; color:${badgeColor}; font-weight:800; font-size:10px; padding:1px 5px; border-radius:4px;">${badgeIcon} ${escapeHtml(l.source)}</span>
+                <strong style="color:#0F172A;">${escapeHtml(l.property)}</strong>
+                <span style="color:#94A3B8; font-size:10px; text-transform:uppercase;">${escapeHtml(l.trigger_type || 'manual')}</span>
+              </div>
+              <div style="color:#475569; margin-top:2px;">${escapeHtml(l.message || '')}</div>
+              ${l.error_detail ? `<div style="color:#B91C1C; font-size:10px; margin-top:2px; font-family:monospace;">${escapeHtml(l.error_detail)}</div>` : ''}
+            </div>
+            <span style="color:#94A3B8; font-size:10px; white-space:nowrap;">${ts}</span>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <strong style="font-size: 12px; color: #0F172A;">📋 Recent Sync Logs &amp; Error Audit (${logs.length})</strong>
+          <span style="font-size: 10.5px; color: #64748B;">Auto-logged on every cron &amp; manual sync</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto;">
+          ${rows}
+        </div>
+      `;
+    }
+
+    window.syncSingleChannel = async function(roomName, source, btnEl) {
+      const origText = btnEl ? btnEl.textContent : '';
+      if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳ Syncing...'; }
+      try {
+        await saveIcalFeedUrls();
+        const res = await window.AirbnbAPI.syncIcalChannels(roomName, source);
+        const fresh = await window.AirbnbAPI.getBookings();
+        if (Array.isArray(fresh)) {
+          currentBookings = fresh;
+          localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+        }
+        await fetchProperties();
+        renderBookingsPortal();
+        const st = res?.stats || {};
+        showToast(`✅ ${roomName} (${source}): +${st.totalImported || 0} new, ~${st.totalUpdated || 0} upd, -${st.totalCancelled || 0} canc`);
+        await openIcalSyncModal();
+      } catch (err) {
+        alert(`Error syncing ${source} for ${roomName}: ` + err.message);
+      } finally {
+        if (btnEl) { btnEl.disabled = false; btnEl.textContent = origText; }
+      }
     };
 
     window.closeIcalSyncModal = function() {
@@ -14684,7 +14784,7 @@
       const origText = btn ? btn.innerHTML : '';
 
       if (btn) {
-        btn.innerHTML = '⏳ Fetching Airbnb &amp; Booking.com...';
+        btn.innerHTML = '⏳ Syncing Airbnb &amp; Booking.com...';
         btn.disabled = true;
       }
 
@@ -14697,8 +14797,7 @@
         }
 
         const res = await window.AirbnbAPI.syncIcalChannels();
-        if (res.success) {
-          // Re-fetch fresh bookings from D1
+        if (res.success || res.stats) {
           const fresh = await window.AirbnbAPI.getBookings();
           if (Array.isArray(fresh)) {
             currentBookings = fresh;
@@ -14709,20 +14808,30 @@
           renderRoomsList();
           renderBookingsPortal();
 
-          // Show banner
+          // Refresh logs panel inside modal
+          try {
+            const logRes = await window.AirbnbAPI.getIcalLogs(15);
+            const logsPanel = document.getElementById('ical-sync-logs-panel');
+            if (logsPanel && logRes && Array.isArray(logRes.data)) {
+              logsPanel.innerHTML = renderIcalSyncLogsHtml(logRes.data);
+            }
+          } catch (e) {}
+
+          const st = res.stats || {};
+          const hasErrors = Array.isArray(st.errors) && st.errors.length > 0;
           if (banner) {
             banner.style.display = 'block';
-            banner.style.background = '#ECFDF5';
-            banner.style.border = '1px solid #10B981';
-            banner.style.color = '#065F46';
+            banner.style.background = hasErrors ? '#FFFBEB' : '#ECFDF5';
+            banner.style.border = hasErrors ? '1px solid #F59E0B' : '1px solid #10B981';
+            banner.style.color = hasErrors ? '#92400E' : '#065F46';
             banner.innerHTML = `
-              <strong>✅ Channel Sync Complete!</strong><br>
-              ${res.stats.totalImported} new reservation(s) imported, ${res.stats.totalUpdated} updated.
-              ${res.stats.errors && res.stats.errors.length > 0 ? `<br><small style="color:#B91C1C;">Errors: ${res.stats.errors.join(', ')}</small>` : ''}
+              <strong>${hasErrors ? '⚠️ Sync Completed with Warnings' : '✅ Independent Channel Sync Complete!'}</strong><br>
+              +${st.totalImported || 0} imported · ~${st.totalUpdated || 0} updated · -${st.totalCancelled || 0} cancelled${st.totalConflicts > 0 ? ` · <strong style="color:#B45309;">⚠️ ${st.totalConflicts} conflict(s)</strong>` : ''}
+              ${hasErrors ? `<br><small style="color:#B91C1C;">Errors: ${st.errors.map(escapeHtml).join(' | ')}</small>` : ''}
             `;
           }
 
-          showToast(`✅ iCal Sync Complete! ${res.stats.totalImported} imported, ${res.stats.totalUpdated} updated.`);
+          showToast(`✅ Sync Complete: +${st.totalImported || 0} new, ~${st.totalUpdated || 0} upd, -${st.totalCancelled || 0} cancelled`);
         } else {
           throw new Error(res.error || "Channel sync failed.");
         }

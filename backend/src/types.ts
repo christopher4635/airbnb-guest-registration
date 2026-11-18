@@ -25,7 +25,8 @@ export interface Booking {
   checkOutDate: string;       // YYYY-MM-DD
   nights: number;
   guestsCount: number;
-  platform: string;           // 'Direct' | 'Booking.com' | 'Airbnb' | 'Blocked'
+  platform: string;           // 'Direct' | 'Direct Booking' | 'Booking.com' | 'Airbnb' | 'Blocked'
+  source?: string;            // Canonical source: 'Airbnb' | 'Booking.com' | 'Direct Booking' | 'Blocked' | 'Other'
   reservationCode?: string;
   externalUid?: string;
   payout?: string;

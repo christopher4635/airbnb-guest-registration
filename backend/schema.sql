@@ -95,3 +95,24 @@ CREATE TABLE IF NOT EXISTS app_config (
     value TEXT NOT NULL,                     -- JSON serialized config
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- 5. Persistent iCal Sync Audit & Error Logs (Per Room & Per Channel)
+CREATE TABLE IF NOT EXISTS ical_sync_logs (
+    id TEXT PRIMARY KEY,
+    property TEXT NOT NULL,
+    source TEXT NOT NULL,                    -- 'Airbnb' | 'Booking.com'
+    trigger_type TEXT NOT NULL DEFAULT 'manual', -- 'cron' | 'manual'
+    status TEXT NOT NULL,                    -- 'success' | 'warning' | 'error'
+    events_found INTEGER DEFAULT 0,
+    imported INTEGER DEFAULT 0,
+    updated INTEGER DEFAULT 0,
+    cancelled INTEGER DEFAULT 0,
+    skipped INTEGER DEFAULT 0,
+    conflicts INTEGER DEFAULT 0,
+    message TEXT,
+    error_detail TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ical_logs_created ON ical_sync_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bookings_prop_uid ON bookings(property, external_uid);

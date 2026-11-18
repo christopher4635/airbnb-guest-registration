@@ -408,16 +408,31 @@
       });
     },
 
-    syncIcalChannels: async function(property = null) {
+    syncIcalChannels: async function(property = null, source = null) {
+      const payload = {};
+      if (property) payload.property = property;
+      if (source) payload.source = source;
       return await this.request('/api/ical/sync', {
         method: 'POST',
-        body: JSON.stringify(property ? { property } : {})
+        body: JSON.stringify(payload)
       });
     },
 
-    getIcalExportUrl: function(propertyName) {
+    getIcalLogs: async function(limit = 30, property = null, source = null) {
+      let url = `/api/ical/logs?limit=${encodeURIComponent(limit)}`;
+      if (property) url += `&property=${encodeURIComponent(property)}`;
+      if (source) url += `&source=${encodeURIComponent(source)}`;
+      return await this.request(url);
+    },
+
+    getIcalExportUrl: function(propertyName, target = null, scope = null) {
       const base = WORKER_BACKEND_URL;
-      return `${base}/api/ical/export/${encodeURIComponent(propertyName)}.ics`;
+      let url = `${base}/api/ical/export/${encodeURIComponent(propertyName)}.ics`;
+      const params = [];
+      if (target) params.push(`target=${encodeURIComponent(target)}`);
+      if (scope) params.push(`scope=${encodeURIComponent(scope)}`);
+      if (params.length > 0) url += '?' + params.join('&');
+      return url;
     },
 
     // --------------------------------------------------------------------------

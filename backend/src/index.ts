@@ -107,8 +107,8 @@ app.onError((err, c) => {
 export default {
   fetch: app.fetch,
   async scheduled(event: any, env: Bindings, ctx: any) {
-    console.log('[Cron] Triggering automatic 2-way iCal sync across Airbnb & Booking.com...');
-    ctx.waitUntil(executeIcalSync(env, null, ctx).then((stats: any) => {
+    console.log('[Cron] Triggering automatic independent iCal sync across Airbnb & Booking.com...');
+    ctx.waitUntil(executeIcalSync(env, null, ctx, 'cron').then((stats: any) => {
       console.log('[Cron] iCal sync completed:', stats.message);
     }).catch((err: any) => {
       console.error('[Cron] iCal sync failed:', err);
