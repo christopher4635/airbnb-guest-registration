@@ -10794,9 +10794,12 @@
                   <span class="sm-co-prop-pill">${escapeHtml(outBk.property)}</span>
                   ${statusLabel}
                 </div>
-                <button type="button" class="sm-tool-pill-btn" onclick="openAddBookingModal('${escapeJsString(outBk.property)}', '${activeTurnoverDate}')" title="Add walk-in booking for ${escapeHtml(outBk.property)}" style="font-size: 11px; color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; font-weight: 700;">
-                  + Book
-                </button>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 11px; font-weight: 700; color: #047857;">(Available)</span>
+                  <button type="button" class="sm-tool-pill-btn" onclick="openAddBookingModal('${escapeJsString(outBk.property)}', '${activeTurnoverDate}')" title="Add walk-in booking for ${escapeHtml(outBk.property)}" style="font-size: 11px; color: #4338CA; border-color: #C7D2FE; background: #EEF2FF; font-weight: 700;">
+                    + Book
+                  </button>
+                </div>
               </div>
 
               <div class="sm-turnover-row-footer">
