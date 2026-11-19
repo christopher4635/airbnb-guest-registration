@@ -11030,6 +11030,9 @@
       const isOccGreen = occupancyPct > 50;
       const receivedPct = monthLodgingTotal > 0 ? Math.round((monthReceivedTotal / monthLodgingTotal) * 100) : 0;
       const pendingStaysCount = monthCheckInBookings.filter(b => getBookingFinancials(b).balance > 0).length;
+      const adr = totalBookedNights > 0 ? Math.round(monthLodgingTotal / totalBookedNights) : 0;
+      const revpar = totalAvailableNights > 0 ? Math.round(monthLodgingTotal / totalAvailableNights) : 0;
+      const avgStayLength = totalBookingsCount > 0 ? (totalBookedNights / totalBookingsCount).toFixed(1) : '0';
 
       // 1. Unified Calendar Toolbar (Inside Workspace Card)
       controlsEl.innerHTML = `
@@ -11317,23 +11320,17 @@
           </div>
         </div>
 
-        <div class="pms-kpi-card is-interactive pms-ops-hover-anchor" onclick="toggleTurnoversCollapse(false); document.getElementById('sm-turnovers-container')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });" title="Hover for Room Status · Click to open Daily Operations">
+        <div class="pms-kpi-card" title="Average Daily Rate (ADR) and RevPAR performance for ${monthNames[currentCalMonth]} ${currentCalYear}">
           <div class="pms-kpi-top">
-            <span class="pms-kpi-label"><i data-lucide="bell" style="color:#64748B;"></i> Daily Operations</span>
-            <span class="pms-kpi-badge ${totalToCollect > 0 ? 'is-amber' : 'is-green'}">${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
+            <span class="pms-kpi-label"><i data-lucide="trending-up" style="color:#64748B;"></i> Avg Daily Rate (ADR)</span>
+            <span class="pms-kpi-badge is-indigo">RevPAR ₹${formatCurrency(revpar)}</span>
           </div>
-          <div class="pms-kpi-value pms-kpi-value-text" style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-            <span style="color:#047857;">${checkInsCount} Arrival</span>
-            <span style="color:#CBD5E1; font-weight:400;">|</span>
-            <span style="color:#E11D48;">${checkOutsCount} Checkout</span>
-            ${roomTransfersCount > 0 ? `<span class="pms-kpi-badge is-indigo" style="font-size:10px;">${roomTransfersCount} Xfer</span>` : ''}
+          <div class="pms-kpi-value">
+            ₹${formatCurrency(adr)} <span style="font-size: 13px; font-weight: 600; color: #64748B;">/ night</span>
           </div>
-          <div class="pms-kpi-foot" style="margin-top: 6px; font-size: 11.5px; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
-            <span><strong style="color:#059669;">✨ ${availableRoomsList.length} Avail</strong> · <strong style="color:#4338CA;">🏠 ${occupiedRoomsList.length} Occ</strong></span>
-            <span style="color:#4F46E5; font-weight:700;">Room Status ▾</span>
-          </div>
-          <div class="pms-ops-popover" onclick="event.stopPropagation();">
-            ${roomStatusPopoverHtml}
+          <div class="pms-kpi-foot">
+            <span>Avg Stay <strong>${avgStayLength}N</strong></span>
+            <span>RevPAR <strong>₹${formatCurrency(revpar)}</strong>/unit</span>
           </div>
         </div>
       `;
