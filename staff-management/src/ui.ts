@@ -3022,7 +3022,25 @@ export function getDashboardHtml(): string {
     let mobileMonthlyMode = "cards"; // 'cards' or 'table'
     const openStaffCalendars = new Set();
 
-    let properties = [];
+    const DEFAULT_XSQUARE_PROPERTY = {
+      id: "xsquare-hotel",
+      name: "Xsquare Hotel",
+      has_lodging: 1,
+      has_fooding: 0,
+      has_services: 0,
+      active: 1,
+      monthly_leave_allowance: 3
+    };
+
+    const DEFAULT_XSQUARE_ROOMS = [
+      { id: "room_101", property_id: "xsquare-hotel", room_number: "101", room_type: "Suite", standard_rate: 3000, base_price: 3000, active: 1 },
+      { id: "room_102", property_id: "xsquare-hotel", room_number: "102", room_type: "Double", standard_rate: 2000, base_price: 2000, active: 1 },
+      { id: "room_103", property_id: "xsquare-hotel", room_number: "103", room_type: "Double", standard_rate: 2000, base_price: 2000, active: 1 },
+      { id: "room_104", property_id: "xsquare-hotel", room_number: "104", room_type: "Twin", standard_rate: 2500, base_price: 2500, active: 1 }
+    ];
+
+    let d1QuotaExceeded = false;
+    let properties = [DEFAULT_XSQUARE_PROPERTY];
     let staffList = [];
     let showFormerStaff = false; // Toggle to include staff who left in current/future views
     let attendanceMap = {}; // { [staff_id_YYYY-MM-DD]: "present" | "absent" | "day_off" | "leave" }
@@ -3036,7 +3054,7 @@ export function getDashboardHtml(): string {
     let financeYear = new Date().getFullYear();
     let financeMonth = new Date().getMonth(); // 0-indexed
     let financeFilterProperty = "xsquare-hotel";
-    let roomsList = []; // Array of room records
+    let roomsList = DEFAULT_XSQUARE_ROOMS.slice(); // Array of room records
     let roomBookingsList = []; // Array of room_bookings records
     let adminFinanceSubTab = "dashboard"; // 'dashboard' | 'calendar' | 'rooms'
     let calendarSelectedProperty = "xsquare-hotel";
@@ -3277,14 +3295,20 @@ export function getDashboardHtml(): string {
     }
 
     function getScopedStaffList() {
-      const activePropIds = new Set(properties.filter(p => p.active !== 0).map(p => p.id));
+      if (!Array.isArray(properties) || properties.length === 0) {
+        properties = [DEFAULT_XSQUARE_PROPERTY];
+      }
+      if (!Array.isArray(staffList)) {
+        staffList = [];
+      }
+      const activePropIds = new Set(properties.filter(p => p && p.active !== 0).map(p => p.id));
       if (currentUserRole === "manager" && currentManagerInfo && currentManagerInfo.property_id) {
-        return staffList.filter(s => s.property_id === currentManagerInfo.property_id && activePropIds.has(s.property_id));
+        return staffList.filter(s => s && s.property_id === currentManagerInfo.property_id && activePropIds.has(s.property_id));
       }
       if (activePropertyId === 'all') {
-        return staffList.filter(s => activePropIds.has(s.property_id));
+        return staffList.filter(s => s && activePropIds.has(s.property_id));
       }
-      return staffList.filter(s => s.property_id === activePropertyId && activePropIds.has(s.property_id));
+      return staffList.filter(s => s && s.property_id === activePropertyId && activePropIds.has(s.property_id));
     }
 
     function getStaffJoinYM(staff) {
@@ -3683,15 +3707,61 @@ export function getDashboardHtml(): string {
     }
 
     async function fetchProperties() {
-      const res = await fetch("/api/properties", { headers: getAuthHeaders() });
-      if (res.status === 401) return lockApp();
-      properties = await res.json();
+      try {
+        const res = await fetch("/api/properties", { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          properties = data;
+          try { localStorage.setItem("staffsync_cache_properties", JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+        if (data && data.error && (String(data.error).includes("D1") || data.code === "D1_LIMIT_EXCEEDED" || String(data.error).includes("limit"))) {
+          d1QuotaExceeded = true;
+        }
+      } catch (err) {
+        console.warn("fetchProperties fallback:", err);
+      }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_properties");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            properties = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      properties = [DEFAULT_XSQUARE_PROPERTY];
     }
 
     async function fetchStaff() {
-      const res = await fetch("/api/staff", { headers: getAuthHeaders() });
-      if (res.status === 401) return lockApp();
-      staffList = await res.json();
+      try {
+        const res = await fetch("/api/staff", { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          staffList = data;
+          try { localStorage.setItem("staffsync_cache_staff", JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+        if (data && data.error && (String(data.error).includes("D1") || data.code === "D1_LIMIT_EXCEEDED" || String(data.error).includes("limit"))) {
+          d1QuotaExceeded = true;
+        }
+      } catch (err) {
+        console.warn("fetchStaff fallback:", err);
+      }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_staff");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            staffList = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      if (!Array.isArray(staffList)) staffList = [];
     }
 
     function getMonthQueryString() {
@@ -3701,16 +3771,28 @@ export function getDashboardHtml(): string {
 
     async function fetchAttendance() {
       const monthStr = getMonthQueryString();
-      const res = await fetch(\`/api/attendance?month=\${monthStr}\`, { headers: getAuthHeaders() });
-      if (res.status === 401) return lockApp();
-      const data = await res.json();
-      attendanceMap = {};
-      const records = Array.isArray(data) ? data : (data.records || []);
-      priorLeavesMap = (!Array.isArray(data) && data.prior_taken) ? data.prior_taken : {};
-      priorLeavesByMonthMap = (!Array.isArray(data) && data.prior_by_month) ? data.prior_by_month : {};
-      records.forEach(item => {
-        attendanceMap[\`\${item.staff_id}_\${item.date}\`] = item.status;
-      });
+      try {
+        const res = await fetch(\`/api/attendance?month=\${monthStr}\`, { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        attendanceMap = {};
+        const records = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
+        priorLeavesMap = (!Array.isArray(data) && data && data.prior_taken) ? data.prior_taken : {};
+        priorLeavesByMonthMap = (!Array.isArray(data) && data && data.prior_by_month) ? data.prior_by_month : {};
+        records.forEach(item => {
+          if (item && item.staff_id && item.date) {
+            attendanceMap[\`\${item.staff_id}_\${item.date}\`] = item.status;
+          }
+        });
+        if (records.length > 0) {
+          try { localStorage.setItem("staffsync_cache_att_" + monthStr, JSON.stringify(data)); } catch (e) {}
+        }
+      } catch (err) {
+        console.warn("fetchAttendance fallback:", err);
+        attendanceMap = attendanceMap || {};
+        priorLeavesMap = priorLeavesMap || {};
+        priorLeavesByMonthMap = priorLeavesByMonthMap || {};
+      }
     }
 
     // Carry-forward leave balance calculator:
@@ -3841,23 +3923,83 @@ export function getDashboardHtml(): string {
 
     async function fetchAdvances() {
       const monthStr = getMonthQueryString();
-      const res = await fetch(\`/api/advances?month=\${monthStr}\`, { headers: getAuthHeaders() });
-      if (res.status === 401) return lockApp();
-      advancesList = await res.json();
+      try {
+        const res = await fetch(\`/api/advances?month=\${monthStr}\`, { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          advancesList = data;
+          try { localStorage.setItem("staffsync_cache_adv_" + monthStr, JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+      } catch (e) {
+        console.warn("fetchAdvances fallback:", e);
+      }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_adv_" + monthStr);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            advancesList = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      if (!Array.isArray(advancesList)) advancesList = [];
     }
 
     async function fetchBonuses() {
       const monthStr = getMonthQueryString();
-      const res = await fetch(\`/api/bonuses?month=\${monthStr}\`, { headers: getAuthHeaders() });
-      if (res.status === 401) return lockApp();
-      bonusesList = await res.json();
+      try {
+        const res = await fetch(\`/api/bonuses?month=\${monthStr}\`, { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          bonusesList = data;
+          try { localStorage.setItem("staffsync_cache_bon_" + monthStr, JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+      } catch (e) {
+        console.warn("fetchBonuses fallback:", e);
+      }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_bon_" + monthStr);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            bonusesList = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      if (!Array.isArray(bonusesList)) bonusesList = [];
     }
 
     async function fetchPayments() {
       const monthStr = getMonthQueryString();
-      const res = await fetch(\`/api/payments?month=\${monthStr}\`, { headers: getAuthHeaders() });
-      if (res.status === 401) return lockApp();
-      paymentsList = await res.json();
+      try {
+        const res = await fetch(\`/api/payments?month=\${monthStr}\`, { headers: getAuthHeaders() });
+        if (res.status === 401) return lockApp();
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          paymentsList = data;
+          try { localStorage.setItem("staffsync_cache_pay_" + monthStr, JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+      } catch (e) {
+        console.warn("fetchPayments fallback:", e);
+      }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_pay_" + monthStr);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            paymentsList = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      if (!Array.isArray(paymentsList)) paymentsList = [];
     }
 
     // -------------------------------------------------------------------------
@@ -3871,7 +4013,8 @@ export function getDashboardHtml(): string {
       calendarSelectedProperty = "xsquare-hotel";
       financeFilterProperty = "xsquare-hotel";
 
-      const count = staffList.filter(s => s.active !== 0).length;
+      if (!Array.isArray(staffList)) staffList = [];
+      const count = staffList.filter(s => s && s.active !== 0).length;
       container.innerHTML = \`
         <div class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200/80 flex items-center gap-1.5 shrink-0">
           <i data-lucide="hotel" class="w-3.5 h-3.5 text-indigo-600"></i>
@@ -3880,6 +4023,32 @@ export function getDashboardHtml(): string {
         </div>
       \`;
       updatePropertyAllowanceBanner();
+      renderD1QuotaNotice();
+      refreshIcons();
+    }
+
+    function renderD1QuotaNotice() {
+      const existing = document.getElementById("d1QuotaBannerNotice");
+      if (!d1QuotaExceeded) {
+        if (existing) existing.remove();
+        return;
+      }
+      if (existing) return;
+      const main = document.querySelector("main");
+      if (!main) return;
+      const banner = document.createElement("div");
+      banner.id = "d1QuotaBannerNotice";
+      banner.className = "mb-2.5 px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-3 shadow-xs";
+      banner.innerHTML = \`
+        <div class="flex items-center gap-2 min-w-0">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0"></i>
+          <span class="leading-relaxed">
+            <strong>Cloudflare D1 Free Quota Limit Reached:</strong> Database reads paused until daily reset (00:00 UTC / 5:30 AM IST). All hub pages are fully operational using local cached data. To unlock unlimited queries, upgrade Cloudflare Workers to Paid (\$5/mo).
+          </span>
+        </div>
+        <button type="button" onclick="document.getElementById('d1QuotaBannerNotice')?.remove()" class="text-amber-700 hover:text-amber-950 font-bold px-2 py-0.5 shrink-0 text-sm cursor-pointer" title="Dismiss notice">&times;</button>
+      \`;
+      main.parentElement?.insertBefore(banner, main);
       refreshIcons();
     }
 
@@ -6284,12 +6453,29 @@ export function getDashboardHtml(): string {
         }
         const res = await fetch(url, { headers: getAuthHeaders() });
         if (res.status === 401) return lockApp();
-        if (res.ok) {
-          financesList = await res.json();
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          financesList = data;
+          try { localStorage.setItem("staffsync_cache_finances", JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+        if (data && data.error && (String(data.error).includes("D1") || data.code === "D1_LIMIT_EXCEEDED" || String(data.error).includes("limit"))) {
+          d1QuotaExceeded = true;
         }
       } catch (e) {
-        console.error("fetchFinances error:", e);
+        console.warn("fetchFinances fallback:", e);
       }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_finances");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            financesList = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      if (!Array.isArray(financesList)) financesList = [];
     }
 
     async function fetchRooms(propertyId = null) {
@@ -6302,12 +6488,29 @@ export function getDashboardHtml(): string {
         }
         const res = await fetch(url, { headers: getAuthHeaders() });
         if (res.status === 401) return lockApp();
-        if (res.ok) {
-          roomsList = await res.json();
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          roomsList = data;
+          try { localStorage.setItem("staffsync_cache_rooms", JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+        if (data && data.error && (String(data.error).includes("D1") || data.code === "D1_LIMIT_EXCEEDED" || String(data.error).includes("limit"))) {
+          d1QuotaExceeded = true;
         }
       } catch (e) {
-        console.error("fetchRooms error:", e);
+        console.warn("fetchRooms fallback:", e);
       }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_rooms");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            roomsList = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      roomsList = DEFAULT_XSQUARE_ROOMS.slice();
     }
 
     async function fetchRoomBookings(filter = {}) {
@@ -6337,12 +6540,29 @@ export function getDashboardHtml(): string {
         if (qs) url += \`?\${qs}\`;
         const res = await fetch(url, { headers: getAuthHeaders() });
         if (res.status === 401) return lockApp();
-        if (res.ok) {
-          roomBookingsList = await res.json();
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          roomBookingsList = data;
+          try { localStorage.setItem("staffsync_cache_bookings", JSON.stringify(data)); } catch (e) {}
+          return;
+        }
+        if (data && data.error && (String(data.error).includes("D1") || data.code === "D1_LIMIT_EXCEEDED" || String(data.error).includes("limit"))) {
+          d1QuotaExceeded = true;
         }
       } catch (e) {
-        console.error("fetchRoomBookings error:", e);
+        console.warn("fetchRoomBookings fallback:", e);
       }
+      try {
+        const cached = localStorage.getItem("staffsync_cache_bookings");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            roomBookingsList = parsed;
+            return;
+          }
+        }
+      } catch (e) {}
+      if (!Array.isArray(roomBookingsList)) roomBookingsList = [];
     }
 
     function renderFinancesView() {
@@ -7844,6 +8064,9 @@ export function getDashboardHtml(): string {
     // SUBTAB 1: ADMIN FINANCIAL DASHBOARD
     // -------------------------------------------------------------------------
     function renderAdminFinancialDashboard(container) {
+      if (!Array.isArray(financesList)) financesList = [];
+      if (!Array.isArray(roomsList) || roomsList.length === 0) roomsList = DEFAULT_XSQUARE_ROOMS.slice();
+      if (!Array.isArray(roomBookingsList)) roomBookingsList = [];
       const records = financesList.filter(f => !f.property_id || f.property_id === "xsquare-hotel");
 
       let totalLodgingOnline = 0;
@@ -8258,6 +8481,9 @@ export function getDashboardHtml(): string {
     // SUBTAB 2: ADMIN ROOM BOOKINGS CALENDAR (MATRIX & MONTHLY VIEWS)
     // -------------------------------------------------------------------------
     function renderAdminRoomCalendarView(container) {
+      if (!Array.isArray(financesList)) financesList = [];
+      if (!Array.isArray(roomsList) || roomsList.length === 0) roomsList = DEFAULT_XSQUARE_ROOMS.slice();
+      if (!Array.isArray(roomBookingsList)) roomBookingsList = [];
       // Month info
       const mStr = String(financeMonth + 1).padStart(2, "0");
       const currentMonthPrefix = financeYear + "-" + mStr;
@@ -8677,6 +8903,8 @@ export function getDashboardHtml(): string {
     // SUBTAB 3: ADMIN ROOM MANAGEMENT (ADD, BULK ADD, EDIT, DELETE ROOMS)
     // -------------------------------------------------------------------------
     function renderAdminRoomsManagement(container) {
+      if (!Array.isArray(properties) || properties.length === 0) properties = [DEFAULT_XSQUARE_PROPERTY];
+      if (!Array.isArray(roomsList) || roomsList.length === 0) roomsList = DEFAULT_XSQUARE_ROOMS.slice();
       const isAll = (activePropertyId === "all");
       const activeLodgingProps = properties.filter(p => p.active !== 0 && p.has_lodging === 1);
 

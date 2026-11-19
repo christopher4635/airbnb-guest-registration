@@ -2607,21 +2607,47 @@ export default {
 			return jsonResponse({ error: "Not Found" }, 404);
 		} catch (err: any) {
 			console.error("API Error:", err);
-			return jsonResponse({ error: err.message || "Internal server error" }, 500);
+			const isD1Limit = err?.message && (err.message.includes("exceeded D1's free tier") || err.message.includes("D1_ERROR") || err.message.includes("daily row read limit"));
+
+			// Graceful fallback for GET requests when Cloudflare D1 free daily quota is reached
+			if (isD1Limit && method === "GET") {
+				if (path === "/api/properties") {
+					return jsonResponse([
+						{ id: "xsquare-hotel", name: "Xsquare Hotel", has_lodging: 1, active: 1, monthly_leave_allowance: 3 }
+					], 200);
+				}
+				if (path === "/api/rooms") {
+					return jsonResponse([
+						{ id: "room_101", property_id: "xsquare-hotel", room_number: "101", room_type: "Suite", standard_rate: 3000, active: 1 },
+						{ id: "room_102", property_id: "xsquare-hotel", room_number: "102", room_type: "Double", standard_rate: 2000, active: 1 },
+						{ id: "room_103", property_id: "xsquare-hotel", room_number: "103", room_type: "Double", standard_rate: 2000, active: 1 },
+						{ id: "room_104", property_id: "xsquare-hotel", room_number: "104", room_type: "Twin", standard_rate: 2500, active: 1 }
+					], 200);
+				}
+				if (path === "/api/staff" || path === "/api/finances" || path.startsWith("/api/room-bookings") || path.startsWith("/api/advances") || path.startsWith("/api/bonuses") || path.startsWith("/api/payments")) {
+					return jsonResponse([], 200);
+				}
+				if (path.startsWith("/api/attendance")) {
+					return jsonResponse({ records: [], prior_taken: {}, prior_by_month: {} }, 200);
+				}
+				if (path === "/api/billing-settings") {
+					return jsonResponse(DEFAULT_BILLING_SETTINGS, 200);
+				}
+			}
+
+			return jsonResponse({
+				error: err.message || "Internal server error",
+				code: isD1Limit ? "D1_LIMIT_EXCEEDED" : "INTERNAL_ERROR"
+			}, 500);
 		}
 	},
 
-	// Background scheduled sync handler (Runs every 5 minutes via Cloudflare cron triggers)
+	// Background scheduled sync handler (Runs every 15 minutes via Cloudflare cron triggers)
 	async scheduled(event: any, env: Env, ctx: any): Promise<void> {
 		try {
 			await syncBookingComIcals(env, syncDailyFinanceLodging);
 		} catch (e) {
 			console.error("Scheduled Booking.com sync error:", e);
-		}
-		try {
-			await syncAirbnbBookingsToStaffSync(env, syncDailyFinanceLodging);
-		} catch (e) {
-			console.error("Scheduled Airbnb sync error:", e);
 		}
 	},
 };
