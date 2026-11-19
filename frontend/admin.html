@@ -11160,6 +11160,18 @@
         }
       });
 
+      let totalArrivalsDue = 0;
+      inBookings.forEach(b => {
+        const split = getSplitStayInfo(b, currentBookings);
+        if (split.isSplit && split.isIntermediate) {
+          // intermediate transfer
+        } else if (split.isSplit && split.isFinal) {
+          totalArrivalsDue += split.combinedBalance;
+        } else {
+          totalArrivalsDue += getBookingFinancials(b).balance;
+        }
+      });
+
       // Compute calendar-accurate Room Status for Daily Operations (Arrivals, Checkouts, Available, Occupied)
       let needsCleaningCount = 0;
       let inCleaningCount = 0;
@@ -11374,6 +11386,29 @@
             }
           }
 
+          const fin = getBookingFinancials(bk);
+          const isIntermediateTransfer = (split.isSplit && split.isIntermediate);
+          const dueAmt = (split.isSplit && split.isFinal) ? split.combinedBalance : fin.balance;
+          const isPaid = isIntermediateTransfer ? true : (dueAmt === 0 || fin.isPaid);
+
+          let paymentBadgeHtml = '';
+          if (isPaid) {
+            paymentBadgeHtml = `<span class="pms-paid-pill" style="font-size: 10.5px; padding: 2px 7px;" title="Booking is fully paid">✔ Paid</span>`;
+          } else if (dueAmt > 0) {
+            paymentBadgeHtml = `
+              <div style="display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                <button type="button" class="pms-due-chip" onclick="quickEditCollectionAmount('${bk.id}', ${dueAmt})" style="font-size: 10.5px; padding: 2px 7px; cursor: pointer;" title="Unpaid balance: ₹${formatCurrency(dueAmt)} — click to edit">
+                  ⚠️ Unpaid: ₹${formatCurrency(dueAmt)} <span style="font-size: 9.5px; opacity: 0.65;">✏️</span>
+                </button>
+                <button type="button" class="sm-co-paid-btn" onclick="markGuestFullyPaid('${bk.id}')" style="font-size: 10px; padding: 2px 7px; height: 21px;" title="Mark payment received">
+                  ✔ Mark Paid
+                </button>
+              </div>
+            `;
+          } else {
+            paymentBadgeHtml = `<span class="pms-due-chip" style="font-size: 10.5px; padding: 2px 7px; cursor: pointer;" onclick="openEditBookingModal('${bk.id}')" title="Payment status: Unpaid">⚠️ Unpaid</span>`;
+          }
+
           return `
             <div class="sm-turnover-row sm-checkin-row">
               <div class="sm-turnover-row-main">
@@ -11383,6 +11418,7 @@
                     ${escapeHtml(bk.guestName)}
                   </button>
                   ${transferNotice}
+                  ${paymentBadgeHtml}
                   ${!isCheckedIn && bk.phone ? `<a href="tel:${bk.phone}" class="pms-icon-link" title="Call ${escapeHtml(bk.phone)}">📞</a>` : ''}
                   ${!isCheckedIn && cleanPhone.length >= 10 ? `<a href="https://wa.me/${cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone}" target="_blank" class="pms-icon-link" title="WhatsApp ${escapeHtml(bk.guestName)}">💬</a>` : ''}
                   ${!isCheckedIn && idDocsCount > 0 ? `<button type="button" class="pms-icon-link" onclick="openBookingIdsQuickModal('${bk.id}')" title="View ${idDocsCount} uploaded Guest ID(s)" style="background:#F0F9FF; border-color:#BAE6FD;">🪪</button>` : ''}
@@ -11621,7 +11657,7 @@
                       <span class="sm-col-dot is-in"></span>
                       <span>Arrivals / Check-ins (${leftTotalCount})</span>
                     </div>
-                    <span class="sm-turnover-col-sub">${vacatedRoomsForPrep.length > 0 ? `${vacatedRoomsForPrep.length} Room Prep` : (activeTurnoverDate === todayIsoStr ? 'Expected Today' : activeTurnoverDate)}</span>
+                    <span class="sm-turnover-col-sub">${totalArrivalsDue > 0 ? `To Collect: ₹${formatCurrency(totalArrivalsDue)}` : (vacatedRoomsForPrep.length > 0 ? `${vacatedRoomsForPrep.length} Room Prep` : (activeTurnoverDate === todayIsoStr ? 'Expected Today' : activeTurnoverDate))}</span>
                   </div>
                   <div class="sm-turnover-list">
                     ${leftTotalCount > 0
