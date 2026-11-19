@@ -905,9 +905,14 @@ export async function executeIcalSync(
         eventsFound = eventBlocks.length;
         const seenUids = new Set<string>();
 
-        const roomBookingsRes = await env.DB.prepare(`
-          SELECT * FROM bookings WHERE LOWER(property) = LOWER(?)
-        `).bind(prop.name).all();
+        const roomBookingsRes = (triggerType === 'cron')
+          ? await env.DB.prepare(`
+              SELECT * FROM bookings
+              WHERE LOWER(property) = LOWER(?) AND check_out_date >= ?
+            `).bind(prop.name, todayIso).all()
+          : await env.DB.prepare(`
+              SELECT * FROM bookings WHERE LOWER(property) = LOWER(?)
+            `).bind(prop.name).all();
         const roomBookings: any[] = (roomBookingsRes.results || []) as any[];
 
         for (const block of eventBlocks) {
@@ -946,6 +951,13 @@ export async function executeIcalSync(
             const d = new Date(`${checkIn}T00:00:00Z`);
             d.setUTCDate(d.getUTCDate() + 1);
             checkOut = d.toISOString().split('T')[0];
+          }
+
+          // PAST DATES OPTIMIZATION: Only today and future dates need to be refreshed during cron!
+          // If check-out is in the past, skip it to eliminate unnecessary DB row reads and writes
+          if (triggerType === 'cron' && checkOut < todayIso) {
+            feedSkipped++;
+            continue;
           }
 
           const nights = calculateNights(checkIn, checkOut);
