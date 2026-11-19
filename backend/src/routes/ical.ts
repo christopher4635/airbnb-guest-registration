@@ -302,13 +302,22 @@ async function generateOutboundIcsResponse(
     for (const bk of bookings as any[]) {
       const source = classifyBookingSource(bk);
 
-      // HUB-AND-SPOKE ECHO PREVENTION:
-      // - Never echo Airbnb's own stays back to Airbnb
-      // - Never echo Booking.com's own stays back to Booking.com
-      // - Cross-propagate everything else through the Website Master Calendar!
+      // OUTBOUND EXPORT FOR OTAs:
+      // Airbnb and Booking.com sync directly with each other.
+      // Therefore, the website exports ONLY Website Direct Bookings, Manual Admin Bookings,
+      // and Administrative / Maintenance Date Blocks.
+      // We NEVER export OTA stays back to OTAs, avoiding duplicate blocks, lag, and echo loops.
       if (!includeAllForPersonalReadOnly) {
-        if (target === 'airbnb' && source === 'Airbnb') continue;
-        if ((target === 'bookingcom' || target === 'booking.com') && source === 'Booking.com') continue;
+        const isWebsiteOriginating = (
+          source === 'Direct Booking' ||
+          source === 'Manual Booking' ||
+          source === 'Blocked' ||
+          bk.status === 'Blocked' ||
+          (bk.platform && String(bk.platform).toLowerCase() === 'blocked')
+        );
+        if (!isWebsiteOriginating) {
+          continue; // Do not export OTA bookings back to OTAs!
+        }
       }
 
       const checkInIcal = toIcalDate(bk.check_in_date);
@@ -336,7 +345,7 @@ async function generateOutboundIcsResponse(
         ? `${bk.property} - ${bk.guest_name || 'Reserved'} (${source})`
         : source === 'Blocked'
           ? `Closed - Not available (${bk.property})`
-          : `Unavailable - ${bk.property} (${source})`;
+          : `Reserved - Direct Website Booking (${bk.property})`;
 
       const description = [
         `Master Source: Elite Homes Website`,
@@ -609,15 +618,17 @@ icalRoute.get('/dashboard', async (c) => {
         const avail = await recalculateRoomAvailability(c.env.DB, p.name);
         return {
           ...p,
-          airbnbExportUrl: `${origin}/api/ical/airbnb/${encodeURIComponent(p.id)}.ics`,
-          bookingComExportUrl: `${origin}/api/ical/bookingcom/${encodeURIComponent(p.id)}.ics`,
+          websiteExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.id)}.ics`,
+          airbnbExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.id)}.ics`,
+          bookingComExportUrl: `${origin}/api/ical/export/${encodeURIComponent(p.id)}.ics`,
           airbnbSyncStatus: latestByPropSource[`${pLower}::airbnb`] || null,
           bookingComSyncStatus: latestByPropSource[`${pLower}::booking.com`] || null,
           availability: {
             activeBookingsCount: avail.activeCount,
             unavailableRanges: avail.allUnavailableRanges.slice(0, 12),
-            exportedToAirbnbCount: avail.forAirbnb.length,
-            exportedToBookingComCount: avail.forBookingCom.length
+            exportedToAirbnbCount: (avail as any).forWebsiteExport?.length || avail.forAirbnb.length,
+            exportedToBookingComCount: (avail as any).forWebsiteExport?.length || avail.forBookingCom.length,
+            exportedToWebsiteCount: (avail as any).forWebsiteExport?.length || 0
           }
         };
       })
@@ -635,8 +646,9 @@ icalRoute.get('/dashboard', async (c) => {
       success: true,
       data: {
         masterTopology: {
-          sourceOfTruth: 'Website Master Calendar (Cloudflare D1)',
-          directOtaToOtaSync: false,
+          sourceOfTruth: 'Website Direct & Master Calendar (Cloudflare D1)',
+          directOtaToOtaSync: true,
+          topologyDescription: 'Direct Airbnb ↔ Booking.com connection with Website Direct Export',
           cronIntervalMinutes: 5,
           webhookEndpoints: {
             airbnb: `${origin}/api/sync/webhook/airbnb`,
@@ -1068,6 +1080,30 @@ export async function executeIcalSync(
             continue;
           }
 
+          // GUARD 2.5: Cross-OTA Direct Sync Deduplication
+          // Airbnb and Booking.com sync directly with each other. If an incoming OTA feed
+          // has dates that are ALREADY covered by an existing OTA booking in this room
+          // (e.g. Booking.com stay appearing inside Airbnb's feed, or vice-versa),
+          // treat it as the same stay and do not create a duplicate booking!
+          const existingOtaMatch = activeOverlaps.find(b => {
+            const src = classifyBookingSource(b);
+            return (src === 'Airbnb' || src === 'Booking.com');
+          });
+          if (existingOtaMatch) {
+            if (existingOtaMatch.check_in_date === checkIn && existingOtaMatch.check_out_date === checkOut) {
+              if (meta.reservationCode && !existingOtaMatch.external_reservation_id) {
+                await env.DB.prepare(`
+                  UPDATE bookings SET
+                    external_reservation_id = COALESCE(external_reservation_id, ?),
+                    updated_at = datetime('now')
+                  WHERE id = ?
+                `).bind(meta.reservationCode, existingOtaMatch.id).run();
+              }
+              feedSkipped++;
+              continue;
+            }
+          }
+
           // GUARD 3: Same-Source Manual Booking Deduplication
           const sameSourceManualMatch = activeOverlaps.find(
             b =>
@@ -1095,13 +1131,15 @@ export async function executeIcalSync(
           // GUARD 4: Atomic Room Lock + Genuine Conflict Detection (NEVER overwrite existing booking!)
           const lock = await acquireRoomInventoryLock(env.DB, prop.name, checkIn, checkOut, feed.source);
           try {
-            const otherSourceOverlap = activeOverlaps.find(b => classifyBookingSource(b) !== feed.source);
+            const directConflict = activeOverlaps.find(b => {
+              const src = classifyBookingSource(b);
+              return (src === 'Direct Booking' || src === 'Manual Booking');
+            });
             let importNote = `Imported via ${feed.source} iCal sync on ${todayIso} | Booking Mode: ${feed.source}`;
             if (meta.phoneHint) importNote += ` | Phone hint: ${meta.phoneHint}`;
             if (meta.totalPrice !== null) importNote += ` | Booked Rate: ${formatCurrencyAmount(meta.totalPrice, meta.currency)}`;
-            if (otherSourceOverlap) {
-              const otherSrc = classifyBookingSource(otherSourceOverlap);
-              importNote += ` | [⚠️ Inventory Conflict with existing ${otherSrc} booking: ${otherSourceOverlap.guest_name}]`;
+            if (directConflict) {
+              importNote += ` | [⚠️ Inventory Conflict with Direct Booking: ${directConflict.guest_name}]`;
               feedConflicts++;
             }
 
@@ -1151,14 +1189,14 @@ export async function executeIcalSync(
             await recordAvailabilityAudit(env.DB, {
               property: prop.name,
               bookingId: newId,
-              action: otherSourceOverlap ? 'conflict_detected' : 'imported',
+              action: directConflict ? 'conflict_detected' : 'imported',
               source: feed.source,
               bookingMode: feed.source,
               checkInDate: checkIn,
               checkOutDate: checkOut,
               newState: { guestName: meta.guestName, paymentStatus: 'Paid', otaPayoutStatus: 'Pending Settlement' },
-              details: otherSourceOverlap
-                ? `⚠️ Conflict during ${feed.source} iCal sync with existing booking ${otherSourceOverlap.id} (${otherSourceOverlap.guest_name}).`
+              details: directConflict
+                ? `⚠️ Conflict during ${feed.source} iCal sync with existing Direct booking ${directConflict.id} (${directConflict.guest_name}).`
                 : `Imported ${feed.source} stay (${checkIn} → ${checkOut}) with default payment_status = Paid.`
             });
 

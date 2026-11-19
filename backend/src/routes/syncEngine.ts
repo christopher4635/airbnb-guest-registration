@@ -242,6 +242,16 @@ export async function recalculateRoomAvailability(db: D1Database, property: stri
   const activeBookings = (results || []) as any[];
   const nonAirbnb = activeBookings.filter(b => classifyBookingSource(b) !== 'Airbnb');
   const nonBookingCom = activeBookings.filter(b => classifyBookingSource(b) !== 'Booking.com');
+  const websiteOriginating = activeBookings.filter(b => {
+    const src = classifyBookingSource(b);
+    return (
+      src === 'Direct Booking' ||
+      src === 'Manual Booking' ||
+      src === 'Blocked' ||
+      b.status === 'Blocked' ||
+      (b.platform && String(b.platform).toLowerCase() === 'blocked')
+    );
+  });
 
   return {
     property,
@@ -250,7 +260,9 @@ export async function recalculateRoomAvailability(db: D1Database, property: stri
     // Website -> Airbnb: blocks all website unavailability EXCEPT Airbnb's own stays
     forAirbnb: mergeDateIntervals(nonAirbnb),
     // Website -> Booking.com: blocks all website unavailability EXCEPT Booking.com's own stays
-    forBookingCom: mergeDateIntervals(nonBookingCom)
+    forBookingCom: mergeDateIntervals(nonBookingCom),
+    // Direct Website Export (Website -> OTAs): exports ONLY direct bookings, manual entries, and administrative blocks
+    forWebsiteExport: mergeDateIntervals(websiteOriginating)
   };
 }
 
@@ -665,13 +677,30 @@ export async function ingestExternalBookingEvent(
 
   try {
     // 3. Idempotency lookup across external_reservation_id / external_uid / reservation_code
-    const existing: any = await env.DB.prepare(`
+    let existing: any = await env.DB.prepare(`
       SELECT * FROM bookings
       WHERE (external_reservation_id IS NOT NULL AND external_reservation_id = ?)
          OR (external_uid IS NOT NULL AND external_uid = ?)
          OR (reservation_code IS NOT NULL AND reservation_code != '' AND reservation_code = ? AND LOWER(platform) = LOWER(?))
       LIMIT 1
     `).bind(externalResId || '__none__', externalUid || '__none__', externalResId || '__none__', source).first();
+
+    if (!existing && !isCancellation && checkInDate && checkOutDate) {
+      // Cross-synced reservation between Airbnb and Booking.com
+      const sameDatesOtaBooking: any = await env.DB.prepare(`
+        SELECT * FROM bookings
+        WHERE LOWER(property) = LOWER(?)
+          AND status != 'Cancelled'
+          AND check_in_date = ?
+          AND check_out_date = ?
+          AND (LOWER(platform) = 'airbnb' OR LOWER(platform) = 'booking.com' OR LOWER(platform) = 'ota')
+        LIMIT 1
+      `).bind(roomName, checkInDate, checkOutDate).first();
+
+      if (sameDatesOtaBooking) {
+        existing = sameDatesOtaBooking;
+      }
+    }
 
     const guestName = String(payload.guestName || payload.guest_name || payload.guest?.name || `${source} Guest`).trim();
     const phone = String(payload.phone || payload.guestPhone || payload.guest?.phone || '').trim();

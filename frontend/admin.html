@@ -6059,8 +6059,8 @@
         <div class="modal-dialog" style="max-width: 920px; width: 96%;">
           <div class="modal-header">
             <div>
-              <h3>🌐 Master Calendar &amp; Two-Way OTA Synchronisation Dashboard</h3>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Website as Single Source of Truth &mdash; <strong>Airbnb &harr; Website &harr; Booking.com</strong> (No direct OTA-to-OTA sync)</p>
+              <h3>🌐 Master Calendar &amp; Streamlined OTA Synchronisation</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 2px 0 0 0;">Direct <strong>Airbnb &harr; Booking.com</strong> Connection with <strong>Website Direct Calendar Export</strong></p>
             </div>
             <button type="button" class="modal-close-btn" onclick="closeIcalSyncModal()">&times;</button>
           </div>
@@ -6097,7 +6097,7 @@
                 💾 Save All Mappings
               </button>
               <button type="button" class="btn btn-primary" id="btn-sync-all-channels" onclick="triggerChannelSyncNow()" style="background: #0F172A; border-color: #0F172A;">
-                🔄 Sync Airbnb &amp; Booking.com Now
+                🔄 Sync OTA Calendars Now
               </button>
             </div>
           </div>
@@ -14896,46 +14896,51 @@
             </div>
           </div>
 
-          <!-- Room-Wise & Platform-Wise Calendar Sync (Airbnb left, Booking.com right) -->
+          <!-- Room-Wise Calendar Sync: Step 1 (Website Export) & Step 2 (OTA Inbound) -->
           <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;">
-            <!-- AIRBNB BOX -->
-            <div style="background: #FFF5F5; border: 1px solid #FECDD3; border-radius: 8px; padding: 10px 12px;">
+            <!-- STEP 1: WEBSITE CALENDAR EXPORT (TO OTAS) -->
+            <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 10px 12px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong style="color: #9F1239; font-size: 12px;">🔴 Airbnb &mdash; ${escapeHtml(p.name)}</strong>
-                <span style="font-size: 10px; font-weight: 700; color: ${p.airbnb_ical_url ? '#047857' : '#94A3B8'};">${p.airbnb_ical_url ? '✔ Linked' : 'Not linked'}</span>
+                <strong style="color: #166534; font-size: 12px;">🌐 Step 1: Export Website Calendar (To OTAs)</strong>
+                <span style="font-size: 10px; font-weight: 700; color: #16A34A;">Direct Stays Only</span>
               </div>
               <div style="margin-bottom: 8px;">
-                <div style="font-size: 10.5px; font-weight: 700; color: #881337; margin-bottom: 3px;">Step 1: Copy &amp; paste in Airbnb (<em>Import Calendar</em>)</div>
+                <div style="font-size: 10.5px; font-weight: 700; color: #14532D; margin-bottom: 3px;">Copy &amp; paste in Airbnb / Booking.com (<em>Import Calendar</em>)</div>
                 <div style="display: flex; gap: 6px; align-items: center;">
-                  <input type="text" readonly value="https://airbnb-management.elitehomes-portal.workers.dev/api/ical/airbnb/${encodeURIComponent(p.id || p.name)}.ics" style="background: #FFFFFF; font-family: monospace; font-size: 10px; height: 28px; flex: 1; border: 1px solid #FDA4AF; color: #9F1239; padding: 0 6px; border-radius: 4px; user-select: all;" onclick="this.select()">
-                  <button type="button" class="btn btn-outline" onclick="copyIcalUrl('https://airbnb-management.elitehomes-portal.workers.dev/api/ical/airbnb/${encodeURIComponent(p.id || p.name)}.ics', this)" style="height: 28px; padding: 0 9px; font-size: 10.5px; background: #FF385C; border-color: #FF385C; color: #FFFFFF; white-space: nowrap; font-weight: 700;">📋 Copy</button>
+                  <input type="text" readonly value="https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(p.id || p.name)}.ics" style="background: #FFFFFF; font-family: monospace; font-size: 10px; height: 28px; flex: 1; border: 1px solid #86EFAC; color: #166534; padding: 0 6px; border-radius: 4px; user-select: all;" onclick="this.select()">
+                  <button type="button" class="btn btn-outline" onclick="copyIcalUrl('https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(p.id || p.name)}.ics', this)" style="height: 28px; padding: 0 9px; font-size: 10.5px; background: #16A34A; border-color: #16A34A; color: #FFFFFF; white-space: nowrap; font-weight: 700;">📋 Copy</button>
                 </div>
               </div>
-              <div>
-                <div style="font-size: 10.5px; font-weight: 700; color: #881337; margin-bottom: 3px;">Step 2: Paste from Airbnb (<em>Export Calendar</em>)</div>
-                <input type="url" id="room-feed-airbnb-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 11.5px; height: 32px; width: 100%; border: 1px solid #FDA4AF; border-radius: 5px; padding: 0 8px; background: #FFFFFF;">
-              </div>
+              <div style="font-size: 10px; color: #15803D;">Blocks OTA dates when direct website bookings occur.</div>
             </div>
 
-            <!-- BOOKING.COM BOX -->
+            <!-- STEP 2: PRIMARY OTA CALENDAR FEED -->
             <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 10px 12px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong style="color: #1E40AF; font-size: 12px;">🔵 Booking.com &mdash; ${escapeHtml(p.name)}</strong>
-                <span style="font-size: 10px; font-weight: 700; color: ${p.booking_com_ical_url ? '#047857' : '#94A3B8'};">${p.booking_com_ical_url ? '✔ Linked' : 'Not linked'}</span>
+                <strong style="color: #1E40AF; font-size: 12px;">📡 Step 2: Primary OTA Feed (To Website)</strong>
+                <span style="font-size: 10px; font-weight: 700; color: ${(p.airbnb_ical_url || p.booking_com_ical_url) ? '#047857' : '#94A3B8'};">${(p.airbnb_ical_url || p.booking_com_ical_url) ? '✔ Connected' : 'Not linked'}</span>
               </div>
               <div style="margin-bottom: 8px;">
-                <div style="font-size: 10.5px; font-weight: 700; color: #1E3A8A; margin-bottom: 3px;">Step 1: Copy &amp; paste in Booking.com (<em>Import Calendar</em>)</div>
-                <div style="display: flex; gap: 6px; align-items: center;">
-                  <input type="text" readonly value="https://airbnb-management.elitehomes-portal.workers.dev/api/ical/bookingcom/${encodeURIComponent(p.id || p.name)}.ics" style="background: #FFFFFF; font-family: monospace; font-size: 10px; height: 28px; flex: 1; border: 1px solid #93C5FD; color: #1E40AF; padding: 0 6px; border-radius: 4px; user-select: all;" onclick="this.select()">
-                  <button type="button" class="btn btn-outline" onclick="copyIcalUrl('https://airbnb-management.elitehomes-portal.workers.dev/api/ical/bookingcom/${encodeURIComponent(p.id || p.name)}.ics', this)" style="height: 28px; padding: 0 9px; font-size: 10.5px; background: #003580; border-color: #003580; color: #FFFFFF; white-space: nowrap; font-weight: 700;">📋 Copy</button>
-                </div>
+                <div style="font-size: 10.5px; font-weight: 700; color: #1E3A8A; margin-bottom: 3px;">Paste link from Airbnb or Booking.com (<em>Export Calendar</em>)</div>
+                <input type="url" id="room-feed-ota-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.airbnb_ical_url || p.booking_com_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size: 11.5px; height: 32px; width: 100%; border: 1px solid #93C5FD; border-radius: 5px; padding: 0 8px; background: #FFFFFF;">
               </div>
-              <div>
-                <div style="font-size: 10.5px; font-weight: 700; color: #1E3A8A; margin-bottom: 3px;">Step 2: Paste from Booking.com (<em>Export Calendar</em>)</div>
-                <input type="url" id="room-feed-booking-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?t=..." style="font-size: 11.5px; height: 32px; width: 100%; border: 1px solid #93C5FD; border-radius: 5px; padding: 0 8px; background: #FFFFFF;">
-              </div>
+              <div style="font-size: 10px; color: #1D4ED8;">Blocks website dates when booked on OTAs.</div>
             </div>
           </div>
+
+          <details style="margin-top: 8px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 6px; padding: 6px 10px; font-size: 11px;">
+            <summary style="cursor: pointer; font-weight: 600; color: #64748B;">Advanced Channel Feeds (Separate Airbnb &amp; Booking.com links)</summary>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+              <div>
+                <label style="font-size: 10px; font-weight: 600; color: #9F1239; display: block; margin-bottom: 2px;">Airbnb Export Link:</label>
+                <input type="url" id="room-feed-airbnb-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.airbnb_ical_url || '')}" placeholder="Airbnb .ics URL" style="font-size: 11px; height: 28px; width: 100%; border: 1px solid #FDA4AF; border-radius: 4px; padding: 0 6px;">
+              </div>
+              <div>
+                <label style="font-size: 10px; font-weight: 600; color: #1E40AF; display: block; margin-bottom: 2px;">Booking.com Export Link:</label>
+                <input type="url" id="room-feed-booking-${idx}" data-prop="${escapeHtml(p.name)}" value="${escapeHtml(p.booking_com_ical_url || '')}" placeholder="Booking.com .ics URL" style="font-size: 11px; height: 28px; width: 100%; border: 1px solid #93C5FD; border-radius: 4px; padding: 0 6px;">
+              </div>
+            </div>
+          </details>
 
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
             <span style="font-size: 10.5px; color: #64748B;">
@@ -14959,6 +14964,7 @@
     }
 
     window.saveSingleRoomFeeds = async function(propName, idx, btn) {
+      const otaInput = document.getElementById(`feed-ota-${idx}`) || document.getElementById(`room-feed-ota-${idx}`);
       const airbnbInput = document.getElementById(`feed-airbnb-${idx}`) || document.getElementById(`room-feed-airbnb-${idx}`);
       const bookingInput = document.getElementById(`feed-booking-${idx}`) || document.getElementById(`room-feed-booking-${idx}`);
       const airbnbIdInput = document.getElementById(`map-airbnb-id-${idx}`);
@@ -14968,8 +14974,16 @@
       const secretInput = document.getElementById(`wh-secret-${idx}`);
 
       const payload = {};
-      if (airbnbInput) payload.airbnbIcalUrl = airbnbInput.value.trim();
-      if (bookingInput) payload.bookingComIcalUrl = bookingInput.value.trim();
+      if (otaInput && otaInput.value.trim()) {
+        const val = otaInput.value.trim();
+        if (val.includes('booking.com') || val.includes('booking')) {
+          payload.bookingComIcalUrl = val;
+        } else {
+          payload.airbnbIcalUrl = val;
+        }
+      }
+      if (airbnbInput && airbnbInput.value.trim()) payload.airbnbIcalUrl = airbnbInput.value.trim();
+      if (bookingInput && bookingInput.value.trim()) payload.bookingComIcalUrl = bookingInput.value.trim();
       if (airbnbIdInput) payload.airbnbListingId = airbnbIdInput.value.trim();
       if (bookingIdInput) payload.bookingComPropertyId = bookingIdInput.value.trim();
       if (airbnbWhInput) payload.airbnbWebhookUrl = airbnbWhInput.value.trim();
@@ -14992,9 +15006,33 @@
         alert(`Failed to save OTA mappings for ${propName}: ` + err.message);
       } finally {
         if (btn) {
-          btn.textContent = origText || '💾 Save Mapping';
+          btn.textContent = origText || '💾 Save Links';
           btn.disabled = false;
         }
+      }
+    };
+
+    window.saveAndSyncOtaFeed = async function(propName, idx, btn) {
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Saving &amp; Syncing...'; }
+      try {
+        await saveSingleRoomFeeds(propName, idx, null);
+        const res = await window.AirbnbAPI.syncIcalChannels(propName);
+        const fresh = await window.AirbnbAPI.getBookings();
+        if (Array.isArray(fresh)) {
+          currentBookings = fresh;
+          localStorage.setItem('airbnb_bookings', JSON.stringify(currentBookings));
+        }
+        await fetchProperties();
+        renderRoomsList();
+        renderBookingsPortal();
+        const st = res?.stats || {};
+        showToast(`✅ "${propName}" synced! +${st.totalImported || 0} new, ~${st.totalUpdated || 0} upd, -${st.totalCancelled || 0} canc`);
+        await openIcalSyncModal(propName);
+      } catch (err) {
+        alert(`Error syncing ${propName}: ` + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = origText || '💾 Save &amp; Sync Calendar'; }
       }
     };
 
@@ -15267,6 +15305,33 @@
         bookingCom: 'https://airbnb-management.elitehomes-portal.workers.dev/api/sync/webhook/bookingcom'
       };
 
+      // 0. TOP ARCHITECTURE BANNER (DIRECT OTA-TO-OTA + WEBSITE DIRECT EXPORT)
+      const archBanner = document.createElement('div');
+      archBanner.style.cssText = 'background:linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color:#FFFFFF; border-radius:10px; padding:12px 16px; margin-bottom:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08);';
+      archBanner.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <strong style="font-size:13px; color:#38BDF8;">⚡ Direct OTA Synchronisation Architecture</strong>
+          <span style="font-size:10.5px; background:rgba(56,189,248,0.18); border:1px solid rgba(56,189,248,0.4); color:#7DD3FC; padding:2px 8px; border-radius:99px; font-weight:800;">Fast &bull; No Middleman Lag</span>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin:10px 0; font-size:11.5px; font-weight:700;">
+          <div style="background:rgba(16,185,129,0.22); border:1px solid #10B981; color:#A7F3D0; padding:6px 12px; border-radius:8px;">
+            🌐 Website Direct Bookings
+          </div>
+          <span style="color:#94A3B8; font-size:13px;">──(Export)──►</span>
+          <div style="background:rgba(239,68,68,0.22); border:1px solid #EF4444; color:#FECDD3; padding:6px 12px; border-radius:8px;">
+            🔴 Airbnb
+          </div>
+          <span style="color:#38BDF8; font-size:14px;">◄──(Direct 2-Way Sync)──►</span>
+          <div style="background:rgba(59,130,246,0.22); border:1px solid #3B82F6; color:#BFDBFE; padding:6px 12px; border-radius:8px;">
+            🔵 Booking.com
+          </div>
+        </div>
+        <div style="font-size:10.5px; color:#94A3B8; line-height:1.5;">
+          Airbnb and Booking.com connect directly to each other for instant cross-channel date blocking. Your website exports only Direct Bookings &amp; Admin Blocks (preventing double-bookings on OTAs), and imports 1 OTA feed to block website dates.
+        </div>
+      `;
+      container.appendChild(archBanner);
+
       // 1. TOP CONNECTION STATUS & TRANSPORT HEALTH STRIP
       const statusGrid = document.createElement('div');
       statusGrid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px;';
@@ -15306,7 +15371,7 @@
             <div>Pending / Retrying: <strong>${outStats.pending + outStats.retrying}</strong> &bull; Failed: <strong style="color:${outStats.failed > 0 ? '#B91C1C' : '#0F172A'};">${outStats.failed}</strong></div>
             <div>Real-Time Acknowledged: <strong>${outStats.acknowledged}</strong></div>
             <div>Live iCal Feed Ready: <strong>${outStats.feedReady}</strong></div>
-            <div style="font-size:10px; color:#64748B; margin-top:3px;">Hub: Website &harr; Airbnb &bull; Website &harr; Booking.com</div>
+            <div style="font-size:10px; color:#64748B; margin-top:3px;">Hub: Direct Airbnb &harr; Booking.com + Website Direct Export</div>
           </div>
         </div>
       `;
@@ -15385,9 +15450,11 @@
 
       props.forEach((prop, idx) => {
         const color = prop.color || '#3B82F6';
-        const airbnbImportTargetUrl = prop.airbnbExportUrl || `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/airbnb/${encodeURIComponent(prop.id || prop.name)}.ics`;
-        const bookingComImportTargetUrl = prop.bookingComExportUrl || `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/bookingcom/${encodeURIComponent(prop.id || prop.name)}.ics`;
+        const websiteExportTargetUrl = prop.websiteExportUrl || `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(prop.id || prop.name)}.ics`;
+        const primaryOtaUrl = prop.airbnb_ical_url || prop.booking_com_ical_url || '';
+        const primaryOtaName = prop.airbnb_ical_url ? 'Airbnb' : (prop.booking_com_ical_url ? 'Booking.com' : 'OTA');
         const avail = prop.availability || { activeBookingsCount: 0, unavailableRanges: [], exportedToAirbnbCount: 0, exportedToBookingComCount: 0 };
+        const websiteDirectBlocksCount = avail.exportedToWebsiteCount !== undefined ? avail.exportedToWebsiteCount : (avail.exportedToAirbnbCount || 0);
 
         const rangeChips = (avail.unavailableRanges || []).slice(0, 6).map(r =>
           `<span style="display:inline-flex; align-items:center; gap:4px; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:5px; padding:2px 6px; font-size:10px; color:#334155;">${escapeHtml(r.startDate)} &rarr; ${escapeHtml(r.endDate)} <em style="color:#64748B;">(${escapeHtml((r.sources || []).join(', '))})</em></span>`
@@ -15403,81 +15470,91 @@
               <span class="room-color-dot" style="background:${color}; width:12px; height:12px; border-radius:50%; display:inline-block;"></span>
               <strong style="font-size:15.5px; color:#0F172A;">${escapeHtml(prop.name)}</strong>
               <span style="font-size:10.5px; font-weight:700; color:#0F766E; background:#F0FDFA; border:1px solid #99F6E4; padding:2px 8px; border-radius:99px;">${avail.activeBookingsCount} Active Stays/Blocks</span>
+              ${primaryOtaUrl ? `<span style="font-size:10.5px; font-weight:700; color:#047857; background:#ECFDF5; border:1px solid #A7F3D0; padding:2px 8px; border-radius:99px;">✔ Connected: ${primaryOtaName}</span>` : `<span style="font-size:10.5px; font-weight:600; color:#64748B; background:#F1F5F9; border:1px solid #CBD5E1; padding:2px 8px; border-radius:99px;">○ Not Connected</span>`}
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span style="font-size:11px; color:var(--text-muted);">
                 ${prop.last_synced_at ? '🕒 Last Sync: ' + fmtTs(prop.last_synced_at) : '🕒 Not synced yet'}
               </span>
-              <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(prop.name)}', this)" style="height:28px; padding:0 10px; font-size:11px; font-weight:700; color:#047857; border-color:#A7F3D0; background:#ECFDF5;">🔄 Sync Both</button>
+              <button type="button" class="btn btn-outline" onclick="syncSingleRoom('${escapeJsString(prop.name)}', this)" style="height:28px; padding:0 10px; font-size:11px; font-weight:700; color:#047857; border-color:#A7F3D0; background:#ECFDF5;">🔄 Sync Room</button>
             </div>
           </div>
 
-          <!-- TWO CLEAN SIDE-BY-SIDE PLATFORM CARDS: AIRBNB (LEFT) & BOOKING.COM (RIGHT) -->
+          <!-- TWO CLEAN ACTION CARDS: STEP 1 (WEBSITE EXPORT) & STEP 2 (PRIMARY OTA FEED) -->
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:12px; margin-top:12px;">
 
-            <!-- PLATFORM 1: AIRBNB -->
-            <div style="background:#FFF8F8; border:1px solid #FECDD3; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px;">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; border-bottom:1px solid #FFE4E6; padding-bottom:7px;">
-                <strong style="font-size:13px; color:#9F1239;">🔴 Airbnb &mdash; ${escapeHtml(prop.name)}</strong>
-                ${formatChannelHealthPill(prop.airbnbSyncStatus)}
+            <!-- STEP 1: EXPORT WEBSITE CALENDAR (TO AIRBNB / BOOKING.COM) -->
+            <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; border-bottom:1px solid #DCFCE7; padding-bottom:7px;">
+                <strong style="font-size:13px; color:#166534;">🌐 Step 1: Export Website Calendar (To OTAs)</strong>
+                <a href="${websiteExportTargetUrl}" target="_blank" style="font-size:10.5px; color:#15803D; text-decoration:underline;">Preview (${websiteDirectBlocksCount})</a>
               </div>
 
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                  <span style="font-size:11px; font-weight:700; color:#881337;">Step 1: Copy &amp; paste in Airbnb &rarr; <em>Import Calendar</em></span>
-                  <a href="${airbnbImportTargetUrl}" target="_blank" style="font-size:10px; color:#BE123C; text-decoration:underline;">Preview (${avail.exportedToAirbnbCount})</a>
+                  <span style="font-size:11px; font-weight:700; color:#14532D;">Copy &amp; paste in Airbnb &amp; Booking.com &rarr; <em>Import Calendar</em></span>
                 </div>
-                <div class="feed-copy-box" style="margin-top:0; background:#FFFFFF; border-color:#FDA4AF;">
-                  <span class="feed-url-text" style="font-size:10px; color:#9F1239;">${airbnbImportTargetUrl}</span>
-                  <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${airbnbImportTargetUrl}', this)" style="background:#FF385C; color:#fff; border:none; font-size:10.5px; padding:3px 9px; font-weight:700;">📋 Copy</button>
+                <div class="feed-copy-box" style="margin-top:0; background:#FFFFFF; border-color:#86EFAC;">
+                  <span class="feed-url-text" style="font-size:10px; color:#166534;">${websiteExportTargetUrl}</span>
+                  <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${websiteExportTargetUrl}', this)" style="background:#16A34A; color:#fff; border:none; font-size:10.5px; padding:3px 9px; font-weight:700;">📋 Copy</button>
                 </div>
               </div>
 
-              <div>
-                <label style="font-size:11px; font-weight:700; color:#881337; margin-bottom:4px; display:block;">Step 2: Paste link from Airbnb &rarr; <em>Export Calendar</em></label>
-                <input type="text" id="feed-airbnb-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size:11.5px; height:34px; width:100%; background:#FFFFFF; border:1px solid #FDA4AF; border-radius:6px; padding:0 8px;">
-              </div>
-
-              <div style="display:flex; justify-content:flex-end; margin-top:auto;">
-                <button type="button" class="btn btn-outline" onclick="syncSingleChannel('${escapeJsString(prop.name)}', 'Airbnb', this)" style="height:30px; padding:0 12px; font-size:11px; font-weight:700; color:#FFFFFF; border-color:#E11D48; background:#E11D48;">💾 Save &amp; Sync Airbnb</button>
+              <div style="font-size:10.5px; color:#15803D; line-height:1.45; margin-top:auto;">
+                ✔ Exports <strong>Direct Website Bookings</strong> &amp; <strong>Admin Blocks</strong> to keep Airbnb &amp; Booking.com blocked with zero middleman lag.
               </div>
             </div>
 
-            <!-- PLATFORM 2: BOOKING.COM -->
-            <div style="background:#F5F9FF; border:1px solid #BFDBFE; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+            <!-- STEP 2: CONNECT OTA CALENDAR (FROM AIRBNB / BOOKING.COM) -->
+            <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; border-bottom:1px solid #DBEAFE; padding-bottom:7px;">
-                <strong style="font-size:13px; color:#1E40AF;">🔵 Booking.com &mdash; ${escapeHtml(prop.name)}</strong>
-                ${formatChannelHealthPill(prop.bookingComSyncStatus)}
+                <strong style="font-size:13px; color:#1E40AF;">📡 Step 2: Connect OTA Calendar Link (To Website)</strong>
+                ${formatChannelHealthPill(prop.airbnbSyncStatus || prop.bookingComSyncStatus)}
               </div>
 
               <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                  <span style="font-size:11px; font-weight:700; color:#1E3A8A;">Step 1: Copy &amp; paste in Booking.com &rarr; <em>Import Calendar</em></span>
-                  <a href="${bookingComImportTargetUrl}" target="_blank" style="font-size:10px; color:#1D4ED8; text-decoration:underline;">Preview (${avail.exportedToBookingComCount})</a>
-                </div>
-                <div class="feed-copy-box" style="margin-top:0; background:#FFFFFF; border-color:#93C5FD;">
-                  <span class="feed-url-text" style="font-size:10px; color:#1E40AF;">${bookingComImportTargetUrl}</span>
-                  <button type="button" class="btn-copy-sm" onclick="copyIcalUrl('${bookingComImportTargetUrl}', this)" style="background:#003580; color:#fff; border:none; font-size:10.5px; padding:3px 9px; font-weight:700;">📋 Copy</button>
-                </div>
+                <label style="font-size:11px; font-weight:700; color:#1E3A8A; margin-bottom:4px; display:block;">Paste link from Airbnb or Booking.com &rarr; <em>Export Calendar</em></label>
+                <input type="text" id="feed-ota-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(primaryOtaUrl)}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size:11.5px; height:34px; width:100%; background:#FFFFFF; border:1px solid #93C5FD; border-radius:6px; padding:0 8px;">
               </div>
 
-              <div>
-                <label style="font-size:11px; font-weight:700; color:#1E3A8A; margin-bottom:4px; display:block;">Step 2: Paste link from Booking.com &rarr; <em>Export Calendar</em></label>
-                <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?t=..." style="font-size:11.5px; height:34px; width:100%; background:#FFFFFF; border:1px solid #93C5FD; border-radius:6px; padding:0 8px;">
-              </div>
-
-              <div style="display:flex; justify-content:flex-end; margin-top:auto;">
-                <button type="button" class="btn btn-outline" onclick="syncSingleChannel('${escapeJsString(prop.name)}', 'Booking.com', this)" style="height:30px; padding:0 12px; font-size:11px; font-weight:700; color:#FFFFFF; border-color:#003580; background:#003580;">💾 Save &amp; Sync Booking.com</button>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto; flex-wrap:wrap; gap:6px;">
+                <span style="font-size:10px; color:#1E40AF;">Blocks website dates when booked on OTAs</span>
+                <button type="button" class="btn btn-outline" onclick="saveAndSyncOtaFeed('${escapeJsString(prop.name)}', ${idx}, this)" style="height:30px; padding:0 12px; font-size:11px; font-weight:700; color:#FFFFFF; border-color:#2563EB; background:#2563EB;">💾 Save &amp; Sync Calendar</button>
               </div>
             </div>
 
           </div>
 
+          <!-- DIRECT OTA-TO-OTA CONNECTION GUIDE (COLLAPSIBLE) -->
+          <details style="margin-top:10px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:8px 12px; font-size:11px;">
+            <summary style="cursor:pointer; font-weight:700; color:#166534;">🔗 Direct Airbnb ↔ Booking.com Sync Guide (One-Time Setup)</summary>
+            <div style="margin-top:8px; line-height:1.6; color:#14532D;">
+              <ol style="margin:0 0 4px 18px; padding:0;">
+                <li><strong>Booking.com:</strong> Go to <em>Calendar &amp; Pricing</em> &rarr; <em>Sync calendars</em> &rarr; Click <em>Export calendar</em> and copy the link.</li>
+                <li><strong>Airbnb:</strong> Go to <em>Calendar</em> &rarr; <em>Availability settings</em> &rarr; Under <em>Connect other calendars</em>, click <em>Import calendar</em> &rarr; Name it "Booking.com" and paste the Booking.com link.</li>
+                <li><strong>Close the Loop:</strong> In Airbnb, click <em>Export calendar</em>, copy the Airbnb link &rarr; Paste it into Booking.com's <em>Import calendar</em> <strong>AND</strong> paste it into <strong>Step 2</strong> above!</li>
+              </ol>
+              <div style="font-size:10.5px; color:#15803D; font-weight:700; margin-top:4px;">
+                ✨ Result: Airbnb &amp; Booking.com cross-block each other directly, while your website stays 100% synchronized!
+              </div>
+            </div>
+          </details>
+
           <!-- COLLAPSED ADVANCED SETTINGS (Listing IDs, Real-Time API Webhooks, Protected Dates) -->
-          <details style="margin-top:10px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:8px; padding:8px 12px; font-size:11px;">
-            <summary style="cursor:pointer; font-weight:700; color:#475569;">⚙️ Advanced Settings (Optional: Listing IDs, Real-Time API Webhooks &amp; Blocked Dates)</summary>
+          <details style="margin-top:6px; background:#F8FAFC; border:1px dashed #CBD5E1; border-radius:8px; padding:8px 12px; font-size:11px;">
+            <summary style="cursor:pointer; font-weight:700; color:#475569;">⚙️ Advanced Settings (Separate Channels, Listing IDs, Webhooks &amp; Dates)</summary>
             <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
               <div style="font-size:10.5px; color:#64748B;">Website Room ID: <code style="background:#E2E8F0; color:#0F172A; padding:1px 6px; border-radius:4px;">${escapeHtml(prop.id || '')}</code></div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label style="font-size:10.5px; font-weight:600; color:#9F1239; display:block; margin-bottom:2px;">Airbnb Export URL (Inbound to website):</label>
+                  <input type="text" id="feed-airbnb-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/...ics" style="font-size:11.5px; height:30px; width:100%;">
+                </div>
+                <div>
+                  <label style="font-size:10.5px; font-weight:600; color:#1E40AF; display:block; margin-bottom:2px;">Booking.com Export URL (Inbound to website):</label>
+                  <input type="text" id="feed-booking-${idx}" data-prop="${escapeHtml(prop.name)}" value="${escapeHtml(prop.booking_com_ical_url || '')}" placeholder="https://ical.booking.com/v1/export?t=..." style="font-size:11.5px; height:30px; width:100%;">
+                </div>
+              </div>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                 <div>
                   <label style="font-size:10.5px; font-weight:600; color:#9F1239; display:block; margin-bottom:2px;">Airbnb Listing ID:</label>
@@ -15781,7 +15858,15 @@
         if (!feedsByProp[propName]) feedsByProp[propName] = {};
         const val = input.value.trim();
 
-        if (input.id.startsWith('feed-airbnb-') || input.id.startsWith('room-feed-airbnb-')) {
+        if (input.id.startsWith('feed-ota-') || input.id.startsWith('room-feed-ota-')) {
+          if (val) {
+            if (val.includes('booking.com') || val.includes('booking')) {
+              feedsByProp[propName].bookingComIcalUrl = val;
+            } else {
+              feedsByProp[propName].airbnbIcalUrl = val;
+            }
+          }
+        } else if (input.id.startsWith('feed-airbnb-') || input.id.startsWith('room-feed-airbnb-')) {
           feedsByProp[propName].airbnbIcalUrl = val;
         } else if (input.id.startsWith('feed-booking-') || input.id.startsWith('room-feed-booking-')) {
           feedsByProp[propName].bookingComIcalUrl = val;
