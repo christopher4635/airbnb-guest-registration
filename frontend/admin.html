@@ -4430,8 +4430,8 @@
 
     .sm-turnover-row.is-checked-out-stamped > .sm-turnover-row-main,
     .sm-turnover-row.is-checked-out-stamped > .sm-turnover-row-footer {
-      opacity: 0.36;
-      filter: grayscale(0.28);
+      opacity: 0.38;
+      filter: grayscale(0.4);
       transition: opacity 0.2s ease, filter 0.2s ease;
     }
 
@@ -4454,25 +4454,25 @@
     .pms-checkout-stamp-label {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 18px;
-      border: 2.5px solid #059669;
-      border-radius: 7px;
-      background: rgba(236, 253, 245, 0.92);
-      color: #047857;
-      font-size: 13.5px;
-      font-weight: 900;
-      letter-spacing: 0.16em;
+      gap: 5px;
+      padding: 4px 14px;
+      border: 1.8px solid #94A3B8;
+      border-radius: 6px;
+      background: rgba(241, 245, 249, 0.88);
+      color: #64748B;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      transform: rotate(-6deg);
-      box-shadow: 0 6px 16px rgba(5, 150, 105, 0.18), inset 0 0 0 2px rgba(5, 150, 105, 0.16);
-      backdrop-filter: blur(1.5px);
+      transform: rotate(-5deg);
+      box-shadow: 0 2px 8px rgba(100, 116, 139, 0.1), inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+      backdrop-filter: blur(1px);
       animation: pmsStampPop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.15);
       transition: opacity 0.2s ease;
     }
 
     .sm-turnover-row.is-checked-out-stamped:hover .pms-checkout-stamp-label {
-      opacity: 0.32;
+      opacity: 0.2;
     }
 
     @keyframes pmsStampPop {
