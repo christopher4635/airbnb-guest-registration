@@ -4132,14 +4132,14 @@
       margin-top: 2px;
     }
 
-    /* Daily Operations 4-Status Operational Strip: Arrival | Checkout | Room Available | Room Occupied */
+    /* Daily Operations Room Status Banner: Room Available | Room Occupied (50:50) */
     .sm-turnover-status-strip {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       background: #F8FAFC;
       border-top: 1px solid #F1F5F9;
       border-bottom: 1px solid #E2E8F0;
-      padding: 10px 18px;
+      padding: 9px 18px;
       gap: 12px;
     }
 
@@ -4226,9 +4226,9 @@
       box-shadow: 0 0 0 2px #C7D2FE;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 640px) {
       .sm-turnover-status-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         padding: 8px 12px;
         gap: 8px;
       }
@@ -11534,10 +11534,10 @@
                   <div class="sm-turnover-title" style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
                     <span>Daily Operations</span>
-                    <span class="sm-pill-in">Arrival: ${checkInsCount}</span>
-                    <span class="sm-pill-out">Checkout: ${checkOutsCount}</span>
-                    <span class="sm-pill-avail">Available: ${availableRoomsList.length}</span>
-                    <span class="sm-pill-occ">Occupied: ${occupiedRoomsList.length}</span>
+                    <span class="sm-pill-in">${checkInsCount} In</span>
+                    <span class="sm-pill-out">${checkOutsCount} Out</span>
+                    <span class="sm-pill-avail">${availableRoomsList.length} Available</span>
+                    <span class="sm-pill-occ">${occupiedRoomsList.length} Occupied</span>
                     ${hkSummaryBadges}
                     <span class="sm-turnover-sub" style="margin:0;">· ${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
                   </div>
@@ -11565,10 +11565,10 @@
                     <div class="sm-turnover-title" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
                       <span>Daily Operations</span>
-                      <span class="sm-pill-in">Arrival: ${checkInsCount}</span>
-                      <span class="sm-pill-out">Checkout: ${checkOutsCount}</span>
-                      <span class="sm-pill-avail">Available: ${availableRoomsList.length}</span>
-                      <span class="sm-pill-occ">Occupied: ${occupiedRoomsList.length}</span>
+                      <span class="sm-pill-in">${checkInsCount} In</span>
+                      <span class="sm-pill-out">${checkOutsCount} Out</span>
+                      <span class="sm-pill-avail">${availableRoomsList.length} Available</span>
+                      <span class="sm-pill-occ">${occupiedRoomsList.length} Occupied</span>
                       ${hkSummaryBadges}
                     </div>
                     <div class="sm-turnover-sub">
@@ -11591,30 +11591,8 @@
                 </div>
               </div>
 
-              <!-- Dedicated 4-Status Operational Strip: Arrival | Checkout | Room Available | Room Occupied -->
+              <!-- Dedicated Room Status Banner: Room Available | Room Occupied (50:50) -->
               <div class="sm-turnover-status-strip">
-                <div class="sm-turnover-metric is-arrival">
-                  <div class="sm-metric-label">
-                    <span class="sm-metric-dot is-in"></span>
-                    <span>Arrival</span>
-                  </div>
-                  <div class="sm-metric-val">
-                    <span class="sm-metric-count">${checkInsCount}</span>
-                    <span class="sm-metric-sub">${checkedInArrivalsCount > 0 ? `${checkedInArrivalsCount} Checked In` : (checkInsCount === 1 ? '1 Scheduled' : `${checkInsCount} Scheduled`)}</span>
-                  </div>
-                </div>
-
-                <div class="sm-turnover-metric is-checkout">
-                  <div class="sm-metric-label">
-                    <span class="sm-metric-dot is-out"></span>
-                    <span>Checkout</span>
-                  </div>
-                  <div class="sm-metric-val">
-                    <span class="sm-metric-count">${checkOutsCount}</span>
-                    <span class="sm-metric-sub">${checkedOutCount > 0 ? `${checkedOutCount} Checked Out` : (checkOutsCount === 1 ? '1 Scheduled' : `${checkOutsCount} Scheduled`)}</span>
-                  </div>
-                </div>
-
                 <div class="sm-turnover-metric is-avail" title="${availableRoomsList.map(r => `${r.name}: ${r.detail}`).join(' · ')}">
                   <div class="sm-metric-label">
                     <span class="sm-metric-dot is-avail"></span>
