@@ -112,11 +112,18 @@ export async function syncAirbnbBookingsToStaffSync(
 
 		let syncedCount = 0;
 		const affectedDates = new Set<string>();
+		const todayIso = new Date().toISOString().split("T")[0];
 
 		// 3. Process each booking
 		for (const ab of airbnbBookings) {
 			const externalId = ab.id;
 			if (!externalId) continue;
+
+			const checkOut = ab.checkOutDate || ab.checkInDate;
+			// Skip past dates: only today and future dates are synced by the background worker
+			if (checkOut && checkOut < todayIso) {
+				continue;
+			}
 
 			// If status is Cancelled, remove from room_bookings
 			if (ab.status === "Cancelled") {
@@ -136,7 +143,6 @@ export async function syncAirbnbBookingsToStaffSync(
 			if (!targetRoom) continue;
 
 			const checkIn = ab.checkInDate;
-			const checkOut = ab.checkOutDate || checkIn;
 			if (!checkIn || !/^\d{4}-\d{2}-\d{2}$/.test(checkIn)) continue;
 
 			// Compute stay dates (nights)

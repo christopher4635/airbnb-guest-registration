@@ -658,6 +658,12 @@ export async function syncBookingComIcals(
 			const activeExternalIds = new Set<string>();
 
 			for (const evt of parsedEvents) {
+				// Past dates optimization: Only today and future dates need to be refreshed!
+				// Past checkouts are already finalized; skip them completely to prevent unnecessary DB reads.
+				if (evt.checkOutDate && evt.checkOutDate < todayIso) {
+					continue;
+				}
+
 				if (evt.status === "confirmed") {
 					activeExternalIds.add(evt.externalBookingId);
 				}
