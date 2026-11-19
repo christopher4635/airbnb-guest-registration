@@ -1763,6 +1763,28 @@
       color: #991B1B;
       border: 1px solid #FECACA;
     }
+    .sm-pill-avail {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+    .sm-pill-occ {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      background: #EEF2FF;
+      color: #3730A3;
+      border: 1px solid #C7D2FE;
+    }
     .sm-turnover-sub {
       font-size: 10px;
       color: #64748B;
@@ -4108,6 +4130,111 @@
       font-size: 11.5px;
       color: #64748B;
       margin-top: 2px;
+    }
+
+    /* Daily Operations 4-Status Operational Strip: Arrival | Checkout | Room Available | Room Occupied */
+    .sm-turnover-status-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      background: #F8FAFC;
+      border-top: 1px solid #F1F5F9;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 10px 18px;
+      gap: 12px;
+    }
+
+    .sm-turnover-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 7px 11px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 9px;
+      transition: all 0.15s ease;
+    }
+
+    .sm-turnover-metric:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+
+    .sm-metric-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
+    }
+
+    .sm-metric-val {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sm-metric-count {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.1;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .sm-turnover-metric.is-arrival .sm-metric-count { color: #047857; }
+    .sm-turnover-metric.is-checkout .sm-metric-count { color: #E11D48; }
+    .sm-turnover-metric.is-avail .sm-metric-count { color: #059669; }
+    .sm-turnover-metric.is-occ .sm-metric-count { color: #4338CA; }
+
+    .sm-metric-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .sm-metric-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sm-metric-dot.is-in {
+      background: #10B981;
+      box-shadow: 0 0 0 2px #D1FAE5;
+    }
+
+    .sm-metric-dot.is-out {
+      background: #F43F5E;
+      box-shadow: 0 0 0 2px #FFE4E6;
+    }
+
+    .sm-metric-dot.is-avail {
+      background: #10B981;
+      box-shadow: 0 0 0 2px #A7F3D0;
+    }
+
+    .sm-metric-dot.is-occ {
+      background: #6366F1;
+      box-shadow: 0 0 0 2px #C7D2FE;
+    }
+
+    @media (max-width: 768px) {
+      .sm-turnover-status-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .sm-metric-count {
+        font-size: 16px;
+      }
     }
 
     .sm-turnovers-split-grid {
@@ -11014,6 +11141,8 @@
 
       const checkInsCount = inBookings.length;
       const checkOutsCount = outBookings.length;
+      const checkedInArrivalsCount = inBookings.filter(b => b.turnoverStatus === 'checked_in' || b.status === 'Checked In').length;
+      const checkedOutCount = outBookings.filter(b => isBookingCheckedOut(b)).length;
       let totalToCollect = 0;
       let roomTransfersCount = 0;
 
@@ -11028,44 +11157,94 @@
         }
       });
 
-      // Compute calendar-accurate Room Status for Hover Popover on Daily Operations
+      // Compute calendar-accurate Room Status for Daily Operations (Arrivals, Checkouts, Available, Occupied)
       let needsCleaningCount = 0;
       let inCleaningCount = 0;
+      const occupiedRoomsList = [];
+      const availableRoomsList = [];
+
+      function getPropShortName(name) {
+        if (!name) return '';
+        if (name.includes('Luna')) return 'Luna';
+        if (name.includes('Ripple')) return 'Ripple 1BHK';
+        if (name.includes('Demilune')) return 'Demilune';
+        if (name.includes('2 BHK')) return '2 BHK';
+        return name;
+      }
+
       const roomStatusPopoverRowsHtml = visibleProps.map(prop => {
         const outBk = outBookings.find(b => matchesProperty(b.property, prop));
+        const inBk = inBookings.find(b => matchesProperty(b.property, prop));
         const tonightBk = currentBookings.find(b =>
           b.status !== 'Cancelled' && b.status !== 'Blocked' && b.platform !== 'Blocked' &&
           matchesProperty(b.property, prop) &&
           ((b.checkInDate <= activeTurnoverDate && b.checkOutDate > activeTurnoverDate) ||
            (b.checkInDate === activeTurnoverDate && b.checkOutDate === activeTurnoverDate))
         );
-        const isOccupiedTonight = tonightBk && (
-          tonightBk.checkInDate < activeTurnoverDate ||
-          isSameRoomContinuationCheckIn(tonightBk, currentBookings) ||
-          tonightBk.status === 'Checked In' ||
-          tonightBk.turnoverStatus === 'checked_in'
-        );
 
+        const shortName = getPropShortName(prop);
         let statusClass = 'is-available';
         let statusText = 'Available';
-        let actionBtnHtml = '';
+        let detailText = '';
 
-        if (isOccupiedTonight) {
-          statusClass = 'is-occupied';
-          statusText = 'Occupied';
-        } else if (outBk && !isBookingCheckedOut(outBk)) {
-          statusClass = 'is-checking-out';
-          statusText = 'Checking Out';
-        } else if (outBk && isBookingCheckedOut(outBk)) {
-          const hk = getCheckoutHousekeepingStatus(outBk);
-          if (hk === 'needs_cleaning') needsCleaningCount++;
-          else if (hk === 'cleaning') inCleaningCount++;
-          statusClass = 'is-available';
-          statusText = 'Available';
-        } else if (tonightBk && tonightBk.turnoverStatus === 'cleaning') {
-          inCleaningCount++;
-          statusClass = 'is-available';
-          statusText = 'Available';
+        if (tonightBk) {
+          // Room is booked / occupied for tonight
+          const isCheckedIn = (
+            tonightBk.status === 'Checked In' ||
+            tonightBk.turnoverStatus === 'checked_in' ||
+            isSameRoomContinuationCheckIn(tonightBk, currentBookings)
+          );
+          const isPriorInHouse = tonightBk.checkInDate < activeTurnoverDate;
+
+          if (isCheckedIn) {
+            statusClass = 'is-occupied';
+            statusText = 'Occupied';
+            detailText = 'Checked In';
+            occupiedRoomsList.push({ name: prop, shortName, statusText, detail: detailText });
+          } else if (isPriorInHouse) {
+            statusClass = 'is-occupied';
+            statusText = 'Occupied';
+            detailText = 'In-House';
+            occupiedRoomsList.push({ name: prop, shortName, statusText, detail: detailText });
+          } else {
+            statusClass = 'is-occupied';
+            statusText = 'Arriving Today';
+            detailText = `Arriving (${getBookingArrivalTime(tonightBk)})`;
+            occupiedRoomsList.push({ name: prop, shortName, statusText: 'Occupied', detail: detailText });
+          }
+        } else {
+          // Room is unbooked / available for tonight
+          if (outBk && !isBookingCheckedOut(outBk)) {
+            statusClass = 'is-checking-out';
+            statusText = 'Checking Out';
+            detailText = `Departing (${getBookingCheckoutTime(outBk)})`;
+            availableRoomsList.push({ name: prop, shortName, statusText: 'Available', detail: 'Checking Out (Avail Tonight)' });
+          } else if (outBk && isBookingCheckedOut(outBk)) {
+            const hk = getCheckoutHousekeepingStatus(outBk);
+            if (hk === 'needs_cleaning') {
+              needsCleaningCount++;
+              statusClass = 'is-needs-cleaning';
+              statusText = 'Pending Cleaning';
+              detailText = 'Checked Out · Needs Cleaning';
+              availableRoomsList.push({ name: prop, shortName, statusText: 'Available', detail: 'Needs Cleaning' });
+            } else if (hk === 'cleaning') {
+              inCleaningCount++;
+              statusClass = 'is-cleaning';
+              statusText = 'Cleaning';
+              detailText = 'Housekeeping in Progress';
+              availableRoomsList.push({ name: prop, shortName, statusText: 'Available', detail: 'In Cleaning' });
+            } else {
+              statusClass = 'is-available';
+              statusText = 'Ready';
+              detailText = 'Clean & Ready';
+              availableRoomsList.push({ name: prop, shortName, statusText: 'Available', detail: 'Ready for Check-in' });
+            }
+          } else {
+            statusClass = 'is-available';
+            statusText = 'Available';
+            detailText = 'Vacant';
+            availableRoomsList.push({ name: prop, shortName, statusText: 'Available', detail: 'Vacant' });
+          }
         }
 
         return `
@@ -11076,7 +11255,7 @@
                 <span class="pms-ops-pop-dot ${statusClass}"></span>
                 <span>${statusText}</span>
               </span>
-              ${actionBtnHtml}
+              ${detailText ? `<span style="font-size: 10px; color: #94A3B8; margin-left: 4px;">(${escapeHtml(detailText)})</span>` : ''}
             </span>
           </div>
         `;
@@ -11143,14 +11322,14 @@
             <span class="pms-kpi-label"><i data-lucide="bell" style="color:#64748B;"></i> Daily Operations</span>
             <span class="pms-kpi-badge ${totalToCollect > 0 ? 'is-amber' : 'is-green'}">${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
           </div>
-          <div class="pms-kpi-value pms-kpi-value-text">
-            <span style="color:#047857;">${checkInsCount} In</span>
-            <span style="color:#CBD5E1; font-weight:400;">/</span>
-            <span style="color:#E11D48;">${checkOutsCount} Out</span>
+          <div class="pms-kpi-value pms-kpi-value-text" style="font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="color:#047857;">${checkInsCount} Arrival</span>
+            <span style="color:#CBD5E1; font-weight:400;">|</span>
+            <span style="color:#E11D48;">${checkOutsCount} Checkout</span>
             ${roomTransfersCount > 0 ? `<span class="pms-kpi-badge is-indigo" style="font-size:10px;">${roomTransfersCount} Xfer</span>` : ''}
           </div>
-          <div class="pms-kpi-foot">
-            <span>Checkout Due: <strong style="color:${totalToCollect > 0 ? '#B91C1C' : '#047857'}; font-family:'JetBrains Mono', monospace;">₹${formatCurrency(totalToCollect)}</strong></span>
+          <div class="pms-kpi-foot" style="margin-top: 6px; font-size: 11.5px; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;">
+            <span><strong style="color:#059669;">✨ ${availableRoomsList.length} Avail</strong> · <strong style="color:#4338CA;">🏠 ${occupiedRoomsList.length} Occ</strong></span>
             <span style="color:#4F46E5; font-weight:700;">Room Status ▾</span>
           </div>
           <div class="pms-ops-popover" onclick="event.stopPropagation();">
@@ -11352,11 +11531,13 @@
             <div class="sm-turnover-box sm-turnover-collapsed">
               <div class="sm-turnover-head">
                 <div class="sm-turnover-head-left pms-ops-hover-anchor is-left-align">
-                  <div class="sm-turnover-title" style="cursor: pointer;">
+                  <div class="sm-turnover-title" style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
                     <span>Daily Operations</span>
-                    <span class="sm-pill-in">${checkInsCount} In</span>
-                    <span class="sm-pill-out">${checkOutsCount} Out</span>
+                    <span class="sm-pill-in">Arrival: ${checkInsCount}</span>
+                    <span class="sm-pill-out">Checkout: ${checkOutsCount}</span>
+                    <span class="sm-pill-avail">Available: ${availableRoomsList.length}</span>
+                    <span class="sm-pill-occ">Occupied: ${occupiedRoomsList.length}</span>
                     ${hkSummaryBadges}
                     <span class="sm-turnover-sub" style="margin:0;">· ${activeTurnoverDate === todayIsoStr ? 'Today' : activeTurnoverDate}</span>
                   </div>
@@ -11381,11 +11562,13 @@
               <div class="sm-turnover-head">
                 <div class="sm-turnover-head-left pms-ops-hover-anchor is-left-align">
                   <div style="cursor: pointer;">
-                    <div class="sm-turnover-title">
+                    <div class="sm-turnover-title" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <i data-lucide="arrow-left-right" style="color:#4F46E5;"></i>
                       <span>Daily Operations</span>
-                      <span class="sm-pill-in">${checkInsCount} In</span>
-                      <span class="sm-pill-out">${checkOutsCount} Out</span>
+                      <span class="sm-pill-in">Arrival: ${checkInsCount}</span>
+                      <span class="sm-pill-out">Checkout: ${checkOutsCount}</span>
+                      <span class="sm-pill-avail">Available: ${availableRoomsList.length}</span>
+                      <span class="sm-pill-occ">Occupied: ${occupiedRoomsList.length}</span>
                       ${hkSummaryBadges}
                     </div>
                     <div class="sm-turnover-sub">
@@ -11405,6 +11588,53 @@
                   <button type="button" onclick="toggleTurnoversCollapse()" class="sm-tool-pill-btn" style="padding: 5px 10px; font-size: 11.5px; color: #64748B;">
                     Minimize ▴
                   </button>
+                </div>
+              </div>
+
+              <!-- Dedicated 4-Status Operational Strip: Arrival | Checkout | Room Available | Room Occupied -->
+              <div class="sm-turnover-status-strip">
+                <div class="sm-turnover-metric is-arrival">
+                  <div class="sm-metric-label">
+                    <span class="sm-metric-dot is-in"></span>
+                    <span>Arrival</span>
+                  </div>
+                  <div class="sm-metric-val">
+                    <span class="sm-metric-count">${checkInsCount}</span>
+                    <span class="sm-metric-sub">${checkedInArrivalsCount > 0 ? `${checkedInArrivalsCount} Checked In` : (checkInsCount === 1 ? '1 Scheduled' : `${checkInsCount} Scheduled`)}</span>
+                  </div>
+                </div>
+
+                <div class="sm-turnover-metric is-checkout">
+                  <div class="sm-metric-label">
+                    <span class="sm-metric-dot is-out"></span>
+                    <span>Checkout</span>
+                  </div>
+                  <div class="sm-metric-val">
+                    <span class="sm-metric-count">${checkOutsCount}</span>
+                    <span class="sm-metric-sub">${checkedOutCount > 0 ? `${checkedOutCount} Checked Out` : (checkOutsCount === 1 ? '1 Scheduled' : `${checkOutsCount} Scheduled`)}</span>
+                  </div>
+                </div>
+
+                <div class="sm-turnover-metric is-avail" title="${availableRoomsList.map(r => `${r.name}: ${r.detail}`).join(' · ')}">
+                  <div class="sm-metric-label">
+                    <span class="sm-metric-dot is-avail"></span>
+                    <span>Room Available</span>
+                  </div>
+                  <div class="sm-metric-val">
+                    <span class="sm-metric-count">${availableRoomsList.length}</span>
+                    <span class="sm-metric-sub">${availableRoomsList.length > 0 ? availableRoomsList.map(r => r.shortName).join(', ') : 'None'}</span>
+                  </div>
+                </div>
+
+                <div class="sm-turnover-metric is-occ" title="${occupiedRoomsList.map(r => `${r.name}: ${r.detail}`).join(' · ')}">
+                  <div class="sm-metric-label">
+                    <span class="sm-metric-dot is-occ"></span>
+                    <span>Room Occupied</span>
+                  </div>
+                  <div class="sm-metric-val">
+                    <span class="sm-metric-count">${occupiedRoomsList.length}</span>
+                    <span class="sm-metric-sub">${occupiedRoomsList.length > 0 ? occupiedRoomsList.map(r => r.shortName).join(', ') : 'None'}</span>
+                  </div>
                 </div>
               </div>
 
