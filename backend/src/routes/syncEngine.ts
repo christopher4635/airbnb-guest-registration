@@ -306,11 +306,17 @@ export async function recordAvailabilityAudit(
       entry.details || null
     ).run();
 
-    // Trim to latest 500 audit records
-    await db.prepare(`
-      DELETE FROM availability_audit_logs
-      WHERE id NOT IN (SELECT id FROM availability_audit_logs ORDER BY created_at DESC LIMIT 500)
-    `).run();
+    // Probabilistically trim audit logs (~1 in 20 writes) using indexed created_at
+    if (Math.random() < 0.05) {
+      const cutoffRow: any = await db.prepare(`
+        SELECT created_at FROM availability_audit_logs ORDER BY created_at DESC LIMIT 1 OFFSET 500
+      `).first();
+      if (cutoffRow && cutoffRow.created_at) {
+        await db.prepare(`
+          DELETE FROM availability_audit_logs WHERE created_at < ?
+        `).bind(cutoffRow.created_at).run();
+      }
+    }
   } catch (err) {
     console.error('[AuditLog] Failed to write availability_audit_logs:', err);
   }
@@ -498,11 +504,17 @@ export async function enqueueAndDispatchAvailabilityUpdate(
       }
     }
 
-    // Keep sync_outbox trimmed to latest 300 entries
-    await env.DB.prepare(`
-      DELETE FROM sync_outbox
-      WHERE id NOT IN (SELECT id FROM sync_outbox ORDER BY created_at DESC LIMIT 300)
-    `).run();
+    // Probabilistically trim sync_outbox (~1 in 20 writes) using indexed created_at
+    if (Math.random() < 0.05) {
+      const cutoffRow: any = await env.DB.prepare(`
+        SELECT created_at FROM sync_outbox ORDER BY created_at DESC LIMIT 1 OFFSET 300
+      `).first();
+      if (cutoffRow && cutoffRow.created_at) {
+        await env.DB.prepare(`
+          DELETE FROM sync_outbox WHERE created_at < ?
+        `).bind(cutoffRow.created_at).run();
+      }
+    }
   }
 
   if (dispatchPromises.length > 0) {

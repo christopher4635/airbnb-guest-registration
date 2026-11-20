@@ -203,12 +203,18 @@ async function recordSyncLog(
       entry.errorDetail || null
     ).run();
 
-    await env.DB.prepare(`
-      DELETE FROM ical_sync_logs
-      WHERE id NOT IN (
-        SELECT id FROM ical_sync_logs ORDER BY created_at DESC LIMIT 300
-      )
-    `).run();
+    // Probabilistically prune sync logs (~1 in 30 writes) using indexed created_at
+    // Prevents quadratic table-scan reads on every single iCal sync write
+    if (Math.random() < 0.03) {
+      const cutoffRow: any = await env.DB.prepare(`
+        SELECT created_at FROM ical_sync_logs ORDER BY created_at DESC LIMIT 1 OFFSET 300
+      `).first();
+      if (cutoffRow && cutoffRow.created_at) {
+        await env.DB.prepare(`
+          DELETE FROM ical_sync_logs WHERE created_at < ?
+        `).bind(cutoffRow.created_at).run();
+      }
+    }
   } catch (logErr) {
     console.error('[iCal Sync] Failed to write ical_sync_logs:', logErr);
   }

@@ -36,6 +36,8 @@ CREATE INDEX IF NOT EXISTS idx_bookings_dates ON bookings(check_in_date, check_o
 CREATE INDEX IF NOT EXISTS idx_bookings_property ON bookings(property);
 CREATE INDEX IF NOT EXISTS idx_bookings_external_uid ON bookings(external_uid);
 CREATE INDEX IF NOT EXISTS idx_bookings_ext_res_id ON bookings(external_reservation_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_res_code ON bookings(reservation_code);
+CREATE INDEX IF NOT EXISTS idx_bookings_lower_prop_checkout ON bookings(LOWER(property), check_out_date);
 
 -- 2. Properties / Rooms Table (Multi-room management, OTA Mappings & Two-Way Sync)
 CREATE TABLE IF NOT EXISTS properties (
@@ -142,6 +144,7 @@ CREATE TABLE IF NOT EXISTS inventory_locks (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_inv_locks_prop ON inventory_locks(property, expires_at);
+CREATE INDEX IF NOT EXISTS idx_inv_locks_expires ON inventory_locks(expires_at);
 
 -- 7. Outbound Availability Sync Queue (Real-Time Push + Retries + iCal Pull Readiness)
 CREATE TABLE IF NOT EXISTS sync_outbox (
