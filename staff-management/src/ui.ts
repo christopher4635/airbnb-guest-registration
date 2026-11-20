@@ -718,7 +718,7 @@ export function getDashboardHtml(): string {
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Property *</label>
-            <select id="staffProperty" required class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+            <select id="staffProperty" onchange="updateStaffJoiningHint()" required class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
               <!-- Populated by JS -->
             </select>
           </div>
@@ -749,15 +749,15 @@ export function getDashboardHtml(): string {
 
         <div>
           <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Custom Monthly Leave Allowance (Optional)</label>
-          <input type="number" step="0.5" id="staffCustomLeave" placeholder="Leave empty to use property default" class="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+          <input type="number" step="0.5" id="staffCustomLeave" oninput="updateStaffJoiningHint()" placeholder="Leave empty to use property default" class="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
           <p class="text-[11px] text-slate-400 mt-1">If blank, staff inherits the property's monthly allowance.</p>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Joining Date *</label>
-            <input type="date" id="staffJoiningDate" required class="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
-            <p class="text-[10px] text-slate-400 mt-0.5">Leaves accumulate monthly from joining</p>
+            <input type="date" id="staffJoiningDate" oninput="updateStaffJoiningHint()" required class="w-full text-sm px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+            <p id="staffJoiningHint" class="text-[10px] text-slate-400 mt-0.5">Leaves accumulate monthly from joining</p>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Opening Leave Balance</label>
@@ -3795,9 +3795,45 @@ export function getDashboardHtml(): string {
       }
     }
 
+    // Prorated joining month leave allowance by week of joining:
+    // Week 1 (Days 1–7): 3 days
+    // Week 2 (Days 8–14): 2 days
+    // Week 3 (Days 15–21): 1 day
+    // Week 4+ (Days 22–31): 0 days
+    function getJoiningMonthLeaveAllowance(effectiveJoinDate, monthlyAllowance = 3) {
+      if (!effectiveJoinDate) return monthlyAllowance;
+      // Founding staff who started at launch on or before 2026-10-31 get full month allowance for October
+      if (effectiveJoinDate <= '2026-10-31') return monthlyAllowance;
+
+      const parts = effectiveJoinDate.split('-');
+      const day = parseInt(parts[2], 10);
+      if (isNaN(day)) return monthlyAllowance;
+
+      if (day <= 7) {
+        return monthlyAllowance;
+      } else if (day <= 14) {
+        return Math.round((monthlyAllowance * (2 / 3)) * 10) / 10;
+      } else if (day <= 21) {
+        return Math.round((monthlyAllowance * (1 / 3)) * 10) / 10;
+      } else {
+        return 0;
+      }
+    }
+
+    function getJoiningWeekNumber(effectiveJoinDate) {
+      if (!effectiveJoinDate) return 1;
+      const parts = effectiveJoinDate.split('-');
+      const day = parseInt(parts[2], 10);
+      if (isNaN(day) || day <= 7) return 1;
+      if (day <= 14) return 2;
+      if (day <= 21) return 3;
+      return 4;
+    }
+
     // Carry-forward leave balance calculator:
     // Every employee renews by +3 (or custom/property allowance) each month.
-    // Unused leave balance carries forward: Available This Month = Allowance (3) + Carry Forward Balance.
+    // In their joining month, allowance is prorated by week: W1: 3, W2: 2, W3: 1, W4: 0.
+    // Unused leave balance carries forward: Available This Month = Allowance + Carry Forward Balance.
     // Leaves taken in current month are deducted from Available.
     function calculateStaffLeaveDetails(staff, year, month) {
       const prop = properties.find(p => p.id === staff.property_id) || { monthly_leave_allowance: 3 };
@@ -3835,6 +3871,9 @@ export function getDashboardHtml(): string {
       if (currentYM < joinYM) {
         return {
           monthlyAllowance: 0,
+          standardMonthlyAllowance: monthlyAllowance,
+          isProratedJoiningMonth: false,
+          joiningWeekNumber: getJoiningWeekNumber(effectiveJoinDate),
           monthsElapsed: 0,
           openingBalance: 0,
           carryForwardBalance: 0,
@@ -3867,9 +3906,13 @@ export function getDashboardHtml(): string {
           takenInMonth = priorLeavesByMonthMap[staff.id][ymStr];
         }
 
-        // Each prior month renewed by +monthlyAllowance
+        // In joining month, allowance was prorated; in subsequent months, standard monthly allowance
+        const monthAllowance = (ymStr === joinYM)
+          ? getJoiningMonthLeaveAllowance(effectiveJoinDate, monthlyAllowance)
+          : monthlyAllowance;
+
         // Unused leaves carry forward; if overdrawn, that month's salary was already deducted in payroll (min 0)
-        carryForwardBalance = Math.max(0, carryForwardBalance + monthlyAllowance - takenInMonth);
+        carryForwardBalance = Math.max(0, carryForwardBalance + monthAllowance - takenInMonth);
 
         mM++;
         if (mM > 12) {
@@ -3881,14 +3924,20 @@ export function getDashboardHtml(): string {
 
       // Fallback if priorLeavesByMonthMap had no data but total priorLeavesMap was provided
       if ((!priorLeavesByMonthMap || !priorLeavesByMonthMap[staff.id] || Object.keys(priorLeavesByMonthMap[staff.id]).length === 0) && priorLeavesMap && priorLeavesMap[staff.id]) {
+        const joinAllowance = getJoiningMonthLeaveAllowance(effectiveJoinDate, monthlyAllowance);
         const priorMonths = Math.max(0, monthsElapsed - 1);
-        const priorAccrued = openingBalance + (priorMonths * monthlyAllowance);
+        const priorAccrued = openingBalance + (priorMonths > 0 ? (joinAllowance + (priorMonths - 1) * monthlyAllowance) : 0);
         const priorTakenTotal = priorLeavesMap[staff.id] || 0;
         carryForwardBalance = Math.max(0, priorAccrued - priorTakenTotal);
       }
 
-      // Renewal for current month: Monthly Allowance (3) + Carry Forward Balance
-      const availableThisMonth = monthlyAllowance + carryForwardBalance;
+      // Allowance for current month: Prorated if current month is joining month, else full monthly allowance
+      const allowanceThisMonth = (currentYM === joinYM)
+        ? getJoiningMonthLeaveAllowance(effectiveJoinDate, monthlyAllowance)
+        : monthlyAllowance;
+
+      // Renewal for current month: Effective Allowance + Carry Forward Balance
+      const availableThisMonth = allowanceThisMonth + carryForwardBalance;
 
       // Count leaves taken in the current month directly from real-time attendanceMap
       const daysCount = getDaysInMonth(year, month);
@@ -3902,13 +3951,17 @@ export function getDashboardHtml(): string {
 
       const priorTaken = (priorLeavesMap && priorLeavesMap[staff.id]) || 0;
       const totalTaken = priorTaken + currentMonthLeaves;
-      const totalAccrued = openingBalance + (monthsElapsed * monthlyAllowance);
+      const joinAllowance = getJoiningMonthLeaveAllowance(effectiveJoinDate, monthlyAllowance);
+      const totalAccrued = openingBalance + (monthsElapsed > 0 ? (joinAllowance + (monthsElapsed - 1) * monthlyAllowance) : 0);
 
       // Remaining leave balance for current month: Available - Current Month Leaves
       const leaveBalance = availableThisMonth - currentMonthLeaves;
 
       return {
-        monthlyAllowance,
+        monthlyAllowance: allowanceThisMonth,
+        standardMonthlyAllowance: monthlyAllowance,
+        isProratedJoiningMonth: currentYM === joinYM && allowanceThisMonth !== monthlyAllowance,
+        joiningWeekNumber: getJoiningWeekNumber(effectiveJoinDate),
         monthsElapsed,
         openingBalance,
         carryForwardBalance,
@@ -4354,7 +4407,7 @@ export function getDashboardHtml(): string {
             <td class="py-2 px-1 text-center font-bold text-rose-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countA}</td>
             <td class="py-2 px-1 text-center font-bold text-amber-700 bg-white group-hover:bg-slate-50 border-l border-slate-200">\${countL}</td>
             <td class="py-2 px-2 text-center bg-white group-hover:bg-slate-50 border-l border-slate-200">
-              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${leaveRemaining.toFixed(1)} Bal">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Renewed: +\${leaveDetails.monthlyAllowance}\${leaveDetails.isProratedJoiningMonth ? ' (Prorated W' + leaveDetails.joiningWeekNumber + ')' : ''} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${leaveRemaining.toFixed(1)} Bal">
                 \${balanceText}
               </span>
             </td>
@@ -4377,7 +4430,7 @@ export function getDashboardHtml(): string {
                   \${staff.role ? \`<span>•</span><span>\${escapeHtml(staff.role)}</span>\` : ''}
                 </div>
               </div>
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${leaveRemaining.toFixed(1)} Bal">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold border \${balanceBadge}" title="Renewed: +\${leaveDetails.monthlyAllowance}\${leaveDetails.isProratedJoiningMonth ? ' (Prorated W' + leaveDetails.joiningWeekNumber + ')' : ''} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${leaveRemaining.toFixed(1)} Bal">
                 \${balanceText}
               </span>
             </div>
@@ -4583,7 +4636,7 @@ export function getDashboardHtml(): string {
                   <span class="text-indigo-600 font-semibold">\${escapeHtml(prop.name)}</span>
                   \${staff.role ? \`<span>•</span><span>\${escapeHtml(staff.role)}</span>\` : ''}
                   <span>•</span>
-                  <span class="px-1.5 py-0.2 rounded-md font-bold text-[10px] border \${balClass}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${bal.toFixed(1)} Bal">
+                  <span class="px-1.5 py-0.2 rounded-md font-bold text-[10px] border \${balClass}" title="Renewed: +\${leaveDetails.monthlyAllowance}\${leaveDetails.isProratedJoiningMonth ? ' (Prorated W' + leaveDetails.joiningWeekNumber + ')' : ''} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${bal.toFixed(1)} Bal">
                     \${bal > 0 ? '+' : ''}\${bal.toFixed(1)} Bal
                   </span>
                 </div>
@@ -4773,7 +4826,7 @@ export function getDashboardHtml(): string {
               </div>
             </td>
             <td class="py-3 px-3 text-center">
-              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border \${balance >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}" title="Renewed: +\${leaveDetails.monthlyAllowance} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${balance.toFixed(1)} Bal">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border \${balance >= 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}" title="Renewed: +\${leaveDetails.monthlyAllowance}\${leaveDetails.isProratedJoiningMonth ? ' (Prorated W' + leaveDetails.joiningWeekNumber + ')' : ''} | Carry Forward: +\${leaveDetails.carryForwardBalance.toFixed(1)} | Available: \${leaveDetails.availableThisMonth.toFixed(1)} | Taken: \${leaveDetails.currentMonthLeaves} | Remaining: \${balance.toFixed(1)} Bal">
                 \${balance > 0 ? '+' : ''}\${balance.toFixed(1)} Bal
               </span>
             </td>
@@ -5805,9 +5858,59 @@ export function getDashboardHtml(): string {
         btnDelete.classList.add("hidden");
       }
 
+      updateStaffJoiningHint();
       modal.classList.remove("hidden");
       modal.classList.add("flex");
       refreshIcons();
+    }
+
+    function updateStaffJoiningHint() {
+      const dateInput = document.getElementById("staffJoiningDate");
+      const hint = document.getElementById("staffJoiningHint");
+      if (!dateInput || !hint) return;
+      const val = dateInput.value;
+      if (!val) {
+        hint.innerHTML = "Leaves accumulate monthly from joining";
+        return;
+      }
+      const parts = val.split('-');
+      const day = parseInt(parts[2], 10);
+      if (isNaN(day)) {
+        hint.innerHTML = "Leaves accumulate monthly from joining";
+        return;
+      }
+
+      const customInput = document.getElementById("staffCustomLeave");
+      const customVal = customInput ? customInput.value : "";
+      const propSelect = document.getElementById("staffProperty");
+      const staffPropId = propSelect ? propSelect.value : "";
+      const prop = properties.find(p => p.id === staffPropId) || { monthly_leave_allowance: 3 };
+      const allowance = (customVal !== "" && customVal !== undefined && !isNaN(parseFloat(customVal)))
+        ? parseFloat(customVal)
+        : (parseFloat(prop.monthly_leave_allowance) || 3);
+
+      let prorated = allowance;
+      let weekLabel = "Week 1 (Days 1–7)";
+      let colorClass = "text-emerald-600 font-semibold";
+      if (day <= 7) {
+        prorated = allowance;
+        weekLabel = "Week 1 (Days 1–7)";
+        colorClass = "text-emerald-600 font-semibold";
+      } else if (day <= 14) {
+        prorated = Math.round((allowance * (2 / 3)) * 10) / 10;
+        weekLabel = "Week 2 (Days 8–14)";
+        colorClass = "text-indigo-600 font-semibold";
+      } else if (day <= 21) {
+        prorated = Math.round((allowance * (1 / 3)) * 10) / 10;
+        weekLabel = "Week 3 (Days 15–21)";
+        colorClass = "text-indigo-600 font-semibold";
+      } else {
+        prorated = 0;
+        weekLabel = "Week 4+ (Days 22–31)";
+        colorClass = "text-amber-600 font-semibold";
+      }
+
+      hint.innerHTML = '<span class="' + colorClass + '">' + weekLabel + ': Starts with ' + prorated.toFixed(1) + ' days leave for joining month</span>';
     }
 
     function closeStaffModal() {
