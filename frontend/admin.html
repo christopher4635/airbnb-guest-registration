@@ -1559,7 +1559,7 @@
     .sm-sticky-col-cell.clickable-room-col:hover {
       background: #F8FAFC !important;
     }
-    .sm-sticky-col-cell.clickable-room-col:hover .sm-prop-title-box span:first-of-type {
+    .sm-sticky-col-cell.clickable-room-col:hover .sm-prop-title-box span {
       color: #4F46E5;
     }
     .timeline-prop-name-box.clickable-room-col {
@@ -11878,13 +11878,9 @@
                       <td class="sm-sticky-col-cell clickable-room-col" onclick="openRoomQuickSettingsModal('${escapeJsString(prop)}')" title="Click for ${escapeHtml(prop)} settings &amp; manual sync">
                         <div class="sm-prop-title-box">
                           <i data-lucide="home" class="sm-prop-icon"></i>
-                          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(prop)}</span>
-                          <span style="margin-left: auto; font-size: 11px; opacity: 0.6;" title="Room settings">⚙️</span>
+                          <span>${escapeHtml(prop)}</span>
                         </div>
-                        <div class="sm-prop-sub" style="display: flex; justify-content: space-between; align-items: center;">
-                          <span>Elite Homes Listing</span>
-                          <span style="font-size: 9.5px; color: #4F46E5; font-weight: 700;">Settings &rsaquo;</span>
-                        </div>
+                        <div class="sm-prop-sub">Elite Homes Listing</div>
                       </td>
 
                       ${days.map(d => {
@@ -12811,15 +12807,9 @@
         row.innerHTML = `
           <div class="timeline-prop-name-box clickable-room-col" onclick="openRoomQuickSettingsModal('${escapeJsString(prop)}')" title="Click for ${escapeHtml(prop)} settings &amp; manual sync">
             <div class="timeline-prop-accent" style="background:${theme.color};"></div>
-            <div style="flex: 1; min-width: 0;">
-              <div class="timeline-prop-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;" title="${escapeHtml(prop)}">
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(prop)}</span>
-                <span style="font-size: 11px; opacity: 0.6;">⚙️</span>
-              </div>
-              <div class="timeline-prop-meta" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Elite Homes Listing</span>
-                <span style="font-size: 9px; color: #4F46E5; font-weight: 700;">Settings &rsaquo;</span>
-              </div>
+            <div>
+              <div class="timeline-prop-title" title="${escapeHtml(prop)}">${escapeHtml(prop)}</div>
+              <div class="timeline-prop-meta">Elite Homes Listing</div>
             </div>
           </div>
           <button type="button" class="timeline-quick-add-btn" onclick="openAddBookingModal('${escapeHtml(prop)}')" title="Add booking for ${escapeHtml(prop)}">+</button>
