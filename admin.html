@@ -1551,6 +1551,28 @@
       background: #FFFFFF;
       box-shadow: 2px 0 5px rgba(0,0,0,0.03);
       white-space: nowrap;
+      transition: background 0.15s ease;
+    }
+    .sm-sticky-col-cell.clickable-room-col {
+      cursor: pointer;
+    }
+    .sm-sticky-col-cell.clickable-room-col:hover {
+      background: #F8FAFC !important;
+    }
+    .sm-sticky-col-cell.clickable-room-col:hover .sm-prop-title-box span:first-of-type {
+      color: #4F46E5;
+    }
+    .timeline-prop-name-box.clickable-room-col {
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      border-radius: 6px;
+      padding: 2px 4px;
+    }
+    .timeline-prop-name-box.clickable-room-col:hover {
+      background: #F1F5F9;
+    }
+    .timeline-prop-name-box.clickable-room-col:hover .timeline-prop-title {
+      color: #4F46E5;
     }
     .sm-prop-title-box {
       display: flex;
@@ -6064,6 +6086,29 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-outline" onclick="closeRenameRoomModal()">Cancel</button>
             <button type="button" class="btn btn-primary" id="btn-confirm-rename" onclick="handleConfirmRenameRoom()">Save &amp; Rename</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: Quick Room Settings & Manual Sync -->
+      <div class="modal-backdrop" id="modal-room-quick-settings" style="display: none;">
+        <div class="modal-dialog" style="max-width: 620px; width: 94%;">
+          <div class="modal-header" style="align-items: center; border-bottom: 1px solid #E2E8F0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="rqs-color-dot" style="width: 14px; height: 14px; border-radius: 50%; background: #3B82F6; display: inline-block; flex-shrink: 0;"></span>
+              <div>
+                <h3 id="rqs-room-title" style="margin: 0; font-size: 16px; font-weight: 800; color: #0F172A;">Room Settings</h3>
+                <p id="rqs-room-subtitle" style="margin: 2px 0 0 0; font-size: 11.5px; color: var(--text-muted);">Synchronisation, Housekeeping &amp; Quick Controls</p>
+              </div>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeRoomQuickSettingsModal()">&times;</button>
+          </div>
+          <div class="modal-body" id="rqs-modal-body" style="padding: 16px 20px; max-height: 75vh; overflow-y: auto;">
+            <!-- Populated dynamically by openRoomQuickSettingsModal(propName) -->
+          </div>
+          <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; border-top: 1px solid #E2E8F0;">
+            <button type="button" class="btn btn-outline" id="rqs-btn-open-master" style="font-size: 11.5px; color: #334155; font-weight: 600;">🌐 Open Master Sync Dashboard</button>
+            <button type="button" class="btn btn-outline" onclick="closeRoomQuickSettingsModal()">Close</button>
           </div>
         </div>
       </div>
@@ -11830,12 +11875,16 @@
                 ${visibleProps.map(prop => {
                   return `
                     <tr class="sm-row">
-                      <td class="sm-sticky-col-cell">
+                      <td class="sm-sticky-col-cell clickable-room-col" onclick="openRoomQuickSettingsModal('${escapeJsString(prop)}')" title="Click for ${escapeHtml(prop)} settings &amp; manual sync">
                         <div class="sm-prop-title-box">
                           <i data-lucide="home" class="sm-prop-icon"></i>
-                          <span>${escapeHtml(prop)}</span>
+                          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(prop)}</span>
+                          <span style="margin-left: auto; font-size: 11px; opacity: 0.6;" title="Room settings">⚙️</span>
                         </div>
-                        <div class="sm-prop-sub">Elite Homes Listing</div>
+                        <div class="sm-prop-sub" style="display: flex; justify-content: space-between; align-items: center;">
+                          <span>Elite Homes Listing</span>
+                          <span style="font-size: 9.5px; color: #4F46E5; font-weight: 700;">Settings &rsaquo;</span>
+                        </div>
                       </td>
 
                       ${days.map(d => {
@@ -12760,11 +12809,17 @@
         const row = document.createElement('div');
         row.className = 'timeline-sidebar-row';
         row.innerHTML = `
-          <div class="timeline-prop-name-box">
+          <div class="timeline-prop-name-box clickable-room-col" onclick="openRoomQuickSettingsModal('${escapeJsString(prop)}')" title="Click for ${escapeHtml(prop)} settings &amp; manual sync">
             <div class="timeline-prop-accent" style="background:${theme.color};"></div>
-            <div>
-              <div class="timeline-prop-title" title="${escapeHtml(prop)}">${escapeHtml(prop)}</div>
-              <div class="timeline-prop-meta">Elite Homes Listing</div>
+            <div style="flex: 1; min-width: 0;">
+              <div class="timeline-prop-title" style="display: flex; align-items: center; justify-content: space-between; gap: 4px;" title="${escapeHtml(prop)}">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(prop)}</span>
+                <span style="font-size: 11px; opacity: 0.6;">⚙️</span>
+              </div>
+              <div class="timeline-prop-meta" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Elite Homes Listing</span>
+                <span style="font-size: 9px; color: #4F46E5; font-weight: 700;">Settings &rsaquo;</span>
+              </div>
             </div>
           </div>
           <button type="button" class="timeline-quick-add-btn" onclick="openAddBookingModal('${escapeHtml(prop)}')" title="Add booking for ${escapeHtml(prop)}">+</button>
@@ -15303,6 +15358,234 @@
       renderPropertyOptions();
       renderBookingsPortal();
       showToast(`Room "${name}" removed.`);
+    };
+
+    // =========================================================================
+    // 6B. QUICK ROOM SETTINGS & MANUAL SYNC MODAL (ACCESSIBLE FROM CALENDAR)
+    // =========================================================================
+    let currentQuickSettingsRoom = null;
+
+    window.openRoomQuickSettingsModal = async function(propName) {
+      currentQuickSettingsRoom = propName;
+      if (!loadedProperties || loadedProperties.length === 0) {
+        await fetchProperties();
+      }
+
+      const prop = (loadedProperties || []).find(p => matchesProperty(p.name, propName)) || { name: propName, id: propName, color: '#3B82F6' };
+      const theme = getPropertyTheme(propName);
+      const color = prop.color || theme.color || '#3B82F6';
+      const activeBookings = (currentBookings || []).filter(b => matchesProperty(b.property, propName) && b.status !== 'Cancelled');
+      const exportUrl = `https://airbnb-management.elitehomes-portal.workers.dev/api/ical/export/${encodeURIComponent(prop.id || prop.name)}.ics`;
+      const currentHk = localStorage.getItem('room_hk_' + propName) || 'available';
+      const isConnected = Boolean(prop.airbnb_ical_url);
+      const lastSyncText = prop.last_synced_at
+        ? new Date(String(prop.last_synced_at).replace(' ', 'T') + (String(prop.last_synced_at).includes('Z') ? '' : 'Z')).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : 'Never';
+
+      // Header styling
+      const colorDot = document.getElementById('rqs-color-dot');
+      if (colorDot) colorDot.style.background = color;
+      const titleEl = document.getElementById('rqs-room-title');
+      if (titleEl) titleEl.textContent = propName;
+      const subEl = document.getElementById('rqs-room-subtitle');
+      if (subEl) {
+        subEl.innerHTML = `${activeBookings.length} Active Stays/Blocks &bull; ${isConnected ? '<span style="color:#047857;font-weight:700;">🟢 Airbnb Connected</span>' : '<span style="color:#64748B;">⚪ Airbnb Not Connected</span>'} &bull; 🕒 Last Sync: <strong>${lastSyncText}</strong>`;
+      }
+
+      const masterBtn = document.getElementById('rqs-btn-open-master');
+      if (masterBtn) {
+        masterBtn.onclick = () => {
+          closeRoomQuickSettingsModal();
+          openIcalSyncModal(propName);
+        };
+      }
+
+      const modalBody = document.getElementById('rqs-modal-body');
+      if (modalBody) {
+        modalBody.innerHTML = `
+          <!-- SECTION 1: 🔄 OTA CALENDAR SYNCHRONISATION -->
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 15px;">🔄</span>
+                <strong style="font-size: 13.5px; color: #0F172A;">Calendar Synchronisation &amp; Airbnb Feeds</strong>
+              </div>
+              <span style="font-size: 11px; color: #64748B;">Auto-sync runs every 5 min</span>
+            </div>
+
+            <!-- Manual Sync Button -->
+            <button type="button" class="btn btn-primary" onclick="syncSingleRoomFromQuickSettings('${escapeJsString(propName)}', this)" style="background: #047857; border-color: #047857; color: #FFFFFF; font-weight: 700; width: 100%; height: 38px; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; border-radius: 8px;">
+              <span>🔄</span>
+              <span>Manual Sync Calendar Now</span>
+            </button>
+
+            <!-- Export Feed URL -->
+            <div style="margin-bottom: 12px; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-size: 11px; font-weight: 700; color: #0F172A; display: block;">1. Website Export Link (Paste into Airbnb):</label>
+                <span style="font-size: 10px; color: #047857; font-weight: 700; background: #ECFDF5; padding: 1px 6px; border-radius: 4px;">Outbound</span>
+              </div>
+              <p style="font-size: 10.5px; color: #64748B; margin: 0 0 6px 0; line-height: 1.4;">
+                Paste this link into <strong>Airbnb &rarr; Calendar &rarr; Availability &rarr; Connect Calendars &rarr; Import Calendar</strong>. This blocks Airbnb when dates are booked on your website.
+              </p>
+              <div style="display: flex; gap: 6px;">
+                <input type="text" id="rqs-export-url" readonly value="${exportUrl}" style="font-size: 11.5px; font-family: monospace; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px; flex: 1; min-width: 0;" />
+                <button type="button" class="btn btn-outline" onclick="copyRoomExportIcalUrl(this)" style="font-size: 11px; white-space: nowrap; font-weight: 700; height: 32px; padding: 0 10px;">📋 Copy Link</button>
+              </div>
+            </div>
+
+            <!-- Inbound Airbnb Feed URL -->
+            <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label style="font-size: 11px; font-weight: 700; color: #0F172A; display: block;">2. Airbnb Export Link (Read Airbnb into Website):</label>
+                <span style="font-size: 10px; color: #2563EB; font-weight: 700; background: #EFF6FF; padding: 1px 6px; border-radius: 4px;">Inbound</span>
+              </div>
+              <p style="font-size: 10.5px; color: #64748B; margin: 0 0 6px 0; line-height: 1.4;">
+                Paste the URL copied from <strong>Airbnb &rarr; Calendar &rarr; Availability &rarr; Export Calendar</strong> here:
+              </p>
+              <div style="display: flex; gap: 6px;">
+                <input type="url" id="rqs-airbnb-url" value="${escapeHtml(prop.airbnb_ical_url || '')}" placeholder="https://www.airbnb.com/calendar/ical/..." style="font-size: 11.5px; border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 10px; flex: 1; min-width: 0;" />
+                <button type="button" class="btn btn-outline" onclick="saveRoomAirbnbFeedFromQuickSettings('${escapeJsString(propName)}', this)" style="font-size: 11px; white-space: nowrap; font-weight: 700; color: #1D4ED8; border-color: #BFDBFE; height: 32px; padding: 0 10px;">💾 Save</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: 🧹 HOUSEKEEPING / TURNOVER STATUS -->
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <strong style="font-size: 13.5px; color: #0F172A;">🧹 Housekeeping &amp; Room Prep</strong>
+              <span style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; ${currentHk === 'available' ? 'background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;' : (currentHk === 'cleaning' ? 'background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;' : 'background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;')}">
+                ${currentHk === 'available' ? '✨ Ready for Check-in' : (currentHk === 'cleaning' ? '🧼 In Cleaning' : '🧹 Pending Cleaning')}
+              </span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+              <button type="button" class="btn btn-outline" onclick="setRoomHkFromQuickSettings('${escapeJsString(propName)}', 'needs_cleaning')" style="height: 34px; font-size: 11px; font-weight: 700; ${currentHk === 'needs_cleaning' ? 'background: #FEF3C7; border-color: #F59E0B; color: #92400E;' : 'color: #78350F;'}">
+                🧹 Pending
+              </button>
+              <button type="button" class="btn btn-outline" onclick="setRoomHkFromQuickSettings('${escapeJsString(propName)}', 'cleaning')" style="height: 34px; font-size: 11px; font-weight: 700; ${currentHk === 'cleaning' ? 'background: #DBEAFE; border-color: #3B82F6; color: #1E40AF;' : 'color: #1E3A8A;'}">
+                🧼 Cleaning
+              </button>
+              <button type="button" class="btn btn-outline" onclick="setRoomHkFromQuickSettings('${escapeJsString(propName)}', 'available')" style="height: 34px; font-size: 11px; font-weight: 700; ${currentHk === 'available' ? 'background: #D1FAE5; border-color: #10B981; color: #065F46;' : 'color: #064E3B;'}">
+                ✨ Ready
+              </button>
+            </div>
+          </div>
+
+          <!-- SECTION 3: ⚡ QUICK ACTIONS -->
+          <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px;">
+            <strong style="font-size: 13.5px; color: #0F172A; display: block; margin-bottom: 10px;">⚡ Quick Calendar Operations</strong>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px;">
+              <button type="button" class="btn btn-outline" onclick="closeRoomQuickSettingsModal(); openAddBookingModal('${escapeJsString(propName)}');" style="height: 34px; font-size: 11.5px; font-weight: 600; color: #0F172A; justify-content: flex-start;">
+                ➕ New Booking
+              </button>
+              <button type="button" class="btn btn-outline" onclick="quickBlockDatesForRoom('${escapeJsString(propName)}')" style="height: 34px; font-size: 11.5px; font-weight: 600; color: #B91C1C; border-color: #FECACA; justify-content: flex-start;">
+                🚫 Block Dates
+              </button>
+              <button type="button" class="btn btn-outline" onclick="closeRoomQuickSettingsModal(); openRenameRoomModal('${escapeJsString(propName)}', '${color}');" style="height: 34px; font-size: 11.5px; font-weight: 600; color: #2563EB; border-color: #BFDBFE; justify-content: flex-start;">
+                ✏️ Rename &amp; Color
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('modal-room-quick-settings').style.display = 'flex';
+    };
+
+    window.closeRoomQuickSettingsModal = function() {
+      const modal = document.getElementById('modal-room-quick-settings');
+      if (modal) modal.style.display = 'none';
+      currentQuickSettingsRoom = null;
+    };
+
+    window.syncSingleRoomFromQuickSettings = async function(propName, btn) {
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.innerHTML = '<span>⏳</span> <span>Syncing with Airbnb &amp; Database...</span>';
+        btn.disabled = true;
+      }
+      try {
+        await syncSingleRoom(propName, null);
+        await openRoomQuickSettingsModal(propName);
+      } catch (err) {
+        alert(`Sync error for ${propName}: ` + err.message);
+      } finally {
+        if (btn) {
+          btn.innerHTML = origText || '<span>🔄</span> <span>Manual Sync Calendar Now</span>';
+          btn.disabled = false;
+        }
+      }
+    };
+
+    window.saveRoomAirbnbFeedFromQuickSettings = async function(propName, btn) {
+      const input = document.getElementById('rqs-airbnb-url');
+      if (!input) return;
+      const url = input.value.trim();
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.innerHTML = '⏳ Saving...';
+        btn.disabled = true;
+      }
+      try {
+        if (window.AirbnbAPI && typeof window.AirbnbAPI.updateIcalFeeds === 'function') {
+          await window.AirbnbAPI.updateIcalFeeds(propName, { airbnbIcalUrl: url });
+        }
+        await fetchProperties();
+        showToast(`💾 Saved Airbnb feed URL for "${propName}"!`);
+        await openRoomQuickSettingsModal(propName);
+      } catch (err) {
+        alert(`Failed to save Airbnb link for ${propName}: ` + err.message);
+      } finally {
+        if (btn) {
+          btn.innerHTML = origText || '💾 Save';
+          btn.disabled = false;
+        }
+      }
+    };
+
+    window.copyRoomExportIcalUrl = function(btn) {
+      const input = document.getElementById('rqs-export-url');
+      if (!input) return;
+      const url = input.value;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('📋 Export calendar URL copied to clipboard!');
+          if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✔ Copied!';
+            setTimeout(() => { btn.innerHTML = orig; }, 2000);
+          }
+        }).catch(() => {
+          input.select();
+          document.execCommand('copy');
+          showToast('📋 Export calendar URL copied!');
+        });
+      } else {
+        input.select();
+        document.execCommand('copy');
+        showToast('📋 Export calendar URL copied!');
+      }
+    };
+
+    window.setRoomHkFromQuickSettings = async function(propName, status) {
+      await setAvailableRoomCleaningStatus(propName, status);
+      await openRoomQuickSettingsModal(propName);
+    };
+
+    window.quickBlockDatesForRoom = function(propName) {
+      closeRoomQuickSettingsModal();
+      openAddBookingModal(propName);
+      setTimeout(() => {
+        const statusEl = document.getElementById('mb-status');
+        if (statusEl) {
+          statusEl.value = 'Blocked';
+          statusEl.dispatchEvent(new Event('change'));
+        }
+        const guestEl = document.getElementById('mb-guest-name');
+        if (guestEl && !guestEl.value) {
+          guestEl.value = 'Maintenance / Blocked';
+        }
+      }, 60);
     };
 
     // =========================================================================

@@ -350,8 +350,8 @@ async function generateOutboundIcsResponse(
       const summary = includeAllForPersonalReadOnly
         ? `${bk.property} - ${bk.guest_name || 'Reserved'} (${source})`
         : source === 'Blocked'
-          ? `Closed - Not available (${bk.property})`
-          : `Reserved - Direct Website Booking (${bk.property})`;
+          ? `Closed - Not available`
+          : `Reserved`;
 
       const description = [
         `Master Source: Elite Homes Website`,
@@ -379,6 +379,22 @@ async function generateOutboundIcsResponse(
 
     icsLines.push('END:VCALENDAR');
     const finalIcs = icsLines.map(foldIcalLine).join('\r\n') + '\r\n';
+
+    // Log outbound export request for audit visibility and troubleshooting
+    try {
+      const ua = c.req.header('user-agent') || 'Unknown User-Agent';
+      const clientIp = c.req.header('cf-connecting-ip') || 'Unknown IP';
+      if (c.executionCtx && typeof c.executionCtx.waitUntil === 'function') {
+        c.executionCtx.waitUntil(
+          recordAvailabilityAudit(c.env.DB, {
+            property: cleanProp,
+            action: 'ical_export_requested',
+            source: ua.slice(0, 100),
+            details: `Exported ${bookings.length} event(s) (Target: ${target || 'default'}). IP: ${clientIp}`
+          })
+        );
+      }
+    } catch (_) {}
 
     return new Response(finalIcs, {
       status: 200,
